@@ -111,8 +111,11 @@ public class Interpreter implements Blob {
 			if (initialState != null) {
 				ImmutableList<Object> data = initialState.getData(info.token());
 				if(data != null)
+				{
 					for (Object o : data)
 						channel.push(o);
+					System.out.println(data.size() + " data has been pushed into " + info.token());
+				}
 			}
 		}
 		ImmutableSet.Builder<Token> inputTokens = ImmutableSet.builder(), outputTokens = ImmutableSet.builder();
@@ -146,8 +149,11 @@ public class Interpreter implements Blob {
 				{
 					ImmutableList<Object> data = initialState.getData(info.token());
 					if(data != null)
+					{
 						for (Object o : data)
 							channel.push(o);
+						System.out.println(data.size() + " data has been pushed into " + info.token());
+					}
 				}
 			}
 		}
