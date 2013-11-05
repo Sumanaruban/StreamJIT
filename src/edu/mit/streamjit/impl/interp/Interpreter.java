@@ -114,7 +114,7 @@ public class Interpreter implements Blob {
 				{
 					for (Object o : data)
 						channel.push(o);
-					System.out.println(data.size() + " data has been pushed into " + info.token());
+					// System.out.println(data.size() + " data has been pushed into " + info.token());
 				}
 			}
 		}
@@ -152,7 +152,7 @@ public class Interpreter implements Blob {
 					{
 						for (Object o : data)
 							channel.push(o);
-						System.out.println(data.size() + " data has been pushed into " + info.token());
+						// System.out.println(data.size() + " data has been pushed into " + info.token());
 					}
 				}
 			}
