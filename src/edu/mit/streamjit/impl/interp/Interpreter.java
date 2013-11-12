@@ -110,11 +110,14 @@ public class Interpreter implements Blob {
 			Workers.getInputChannels(info.downstream()).set(info.getDownstreamChannelIndex(), channel);
 			if (initialState != null) {
 				ImmutableList<Object> data = initialState.getData(info.token());
-				if(data != null)
-				{
-					for (Object o : data)
+				if(data != null) {
+					// System.out.print("DrainData data: " + info.token().toString() + " - "
+					// + data.size() + " - ");
+					for (Object o : data) {
+						// System.out.print(o.toString() + ", ");
 						channel.push(o);
-					// System.out.println(data.size() + " data has been pushed into " + info.token());
+					}
+					// System.out.print('\n');
 				}
 			}
 		}
@@ -148,11 +151,14 @@ public class Interpreter implements Blob {
 				if (initialState != null)
 				{
 					ImmutableList<Object> data = initialState.getData(info.token());
-					if(data != null)
-					{
-						for (Object o : data)
+					if(data != null) {
+						// System.out.print("DrainData data: " + info.token().toString() + " - "
+						// + data.size() + " - ");
+						for (Object o : data) {
+						// 	System.out.print(o.toString() + ", ");
 							channel.push(o);
-						// System.out.println(data.size() + " data has been pushed into " + info.token());
+						}
+						// System.out.print('\n');
 					}
 				}
 			}
