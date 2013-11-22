@@ -56,14 +56,14 @@ public class BlockingCommunicationManager implements CommunicationManager {
 		// communication. For the moment lets communicate with the local
 		// StreamNode through TCP port.
 		if (commTypes.containsKey(CommunicationType.LOCAL)) {
-			totalTcpConnections += 1;
+			totalTcpConnections += commTypes.get(CommunicationType.LOCAL);
 		}
 
 		ListenerSocket listnerSckt = new ListenerSocket(this.listenPort,
 				totalTcpConnections);
 		listnerSckt.start();
 		if (commTypes.containsKey(CommunicationType.LOCAL))
-			createTcpLocalStreamNode();
+			createTcpLocalStreamNode(commTypes.get(CommunicationType.LOCAL));
 		ImmutableMap.Builder<Integer, StreamNodeAgent> SNAgentMapbuilder = new ImmutableMap.Builder<>();
 		int nodeID = 1; // nodeID 0 goes to the controller instance. We need
 						// this, though it doesn't executes any workers,
@@ -115,22 +115,27 @@ public class BlockingCommunicationManager implements CommunicationManager {
 	}
 
 	/**
-	 * Creates JVM local {@link StreamNode}. Only one JVM local
-	 * {@link StreamNode} can exist.
+	 * Creates JVM local {@link StreamNode}s.
+	 * 
+	 * EDIT: 11-21-2013. Count argument has been introduced to be able to run
+	 * multiple StreamNodes in a single JVM for testing purpose.
 	 */
-	private void createTcpLocalStreamNode() {
-		new Thread() {
-			public void run() {
-				try {
-					Connection connection = ConnectionFactory.getConnection(
-							"127.0.0.1", listenPort, true);
-					StreamNode.getInstance(connection).start();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+	private void createTcpLocalStreamNode(int count) {
+		for (int i = 0; i < count; i++) {
+			new Thread() {
+				public void run() {
+					try {
+						Connection connection = ConnectionFactory
+								.getConnection("127.0.0.1", listenPort, true);
+						// StreamNode.getInstance(connection).start();
+						StreamNode.streamNode(connection).start();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
-			}
-		}.start();
+			}.start();
+		}
 	}
 
 	@Override

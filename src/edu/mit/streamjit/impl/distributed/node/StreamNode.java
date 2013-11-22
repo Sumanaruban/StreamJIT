@@ -168,6 +168,20 @@ public class StreamNode extends Thread {
 	}
 
 	/**
+	 * TODO: This method is introduced later to be able to run multiple
+	 * StreamNodes in a single JVM for testing purpose. This modification
+	 * actually breaks the initial design of this class, i.e., singleton
+	 * pattern. Lets go with this for the moment.
+	 * 
+	 * TODO: Once everything is stable, remove this method.
+	 * 
+	 * @return
+	 */
+	public static StreamNode streamNode(Connection con) {
+		return new StreamNode(con);
+	}
+
+	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
