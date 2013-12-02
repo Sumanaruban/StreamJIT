@@ -38,6 +38,7 @@ import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.Connection;
+import edu.mit.streamjit.impl.distributed.common.TCPConnection.FlowControl;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 
@@ -81,6 +82,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 
 	int count;
 
+	int sleepTime;
+
 	private ImmutableList<Object> unProcessedData;
 
 	public BlockingInputChannel(int bufSize, ConnectionProvider conProvider,
@@ -102,6 +105,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 		this.isClosed = false;
 		this.stopType = new AtomicInteger(0);
 		count = 0;
+		sleepTime = 250;
 		writer = fileWriter();
 	}
 
@@ -121,6 +125,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 
 	private void closeConnection() throws IOException {
 		// tcpConnection.closeConnection();
+		connection.softClose();
 		this.isClosed = true;
 	}
 
@@ -151,7 +156,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				try {
 					closeConnection();
 				} catch (IOException e) {
-					e.printStackTrace();
+					// e.printStackTrace();
 				}
 
 				if (writer != null) {
@@ -186,6 +191,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				writer.write('\n');
 			}
 
+			boolean needResume = false;
 			while (!this.buffer.write(obj)) {
 				if (debugLevel == 3) {
 					System.out.println(Thread.currentThread().getName()
@@ -196,6 +202,12 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					writer.write('\n');
 				}
 				try {
+					if (!needResume) {
+						// System.out.println(name + ": send PAUSE");
+						connection.writeObject(FlowControl.PAUSE);
+						needResume = true;
+					}
+
 					// TODO: Need to tune the sleep time.
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
@@ -210,7 +222,34 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					System.err
 							.println(name
 									+ " receiveData:Writing extra data in to extra buffer");
+					needResume = false;
 					break;
+				}
+			}
+
+			if (needResume) {
+				int capcity = buffer.capacity();
+				while ((buffer.size() > capcity * 0.9) && stopType.get() == 0) {
+					try {
+						// System.out.println(name
+						// + ": sleep at needResume. Buf size - "
+						// + buffer.size());
+						Thread.sleep(sleepTime);
+						if (buffer.size() > capcity * 0.5) {
+							sleepTime = Math.min(500, (int) (sleepTime * 1.25));
+						}
+						if (buffer.size() < capcity / 3) {
+							sleepTime = (int) (sleepTime * 0.75);
+						}
+
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				if (stopType.get() == 0) {
+					// System.out.println(name + ": send RESUME");
+					connection.writeObject(FlowControl.RESUME);
+					needResume = false;
 				}
 			}
 

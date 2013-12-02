@@ -285,4 +285,12 @@ public class TCPConnection implements Connection {
 					t.toString(), 0);
 		}
 	}
+
+	// TODO: need to add 
+	// 1. send #number of data only.
+	// 2. Reduce the send rate by half, quarter, 1/3, etc
+	public static enum FlowControl
+	{
+		PAUSE, RESUME;
+	}
 }

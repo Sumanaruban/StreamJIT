@@ -23,6 +23,7 @@ package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OptionalDataException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -32,6 +33,7 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.Connection;
+import edu.mit.streamjit.impl.distributed.common.TCPConnection.FlowControl;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 
@@ -67,6 +69,8 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 
 	private volatile boolean isFinal;
 
+	private volatile boolean pause;
+
 	private int count;
 
 	protected ImmutableList<Object> unProcessedData;
@@ -88,6 +92,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		this.debugLevel = debugLevel;
 		this.unProcessedData = null;
 		count = 0;
+		this.pause = false;
 		writer = fileWriter();
 	}
 
@@ -122,8 +127,13 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 						e.printStackTrace();
 					}
 				}
-				while (!stopFlag.get())
+
+				new Thread(new FlowController(), "FC-" + name).start();
+
+				while (!stopFlag.get()) {
 					sendData();
+					pause();
+				}
 
 				if (isFinal)
 					finalSend();
@@ -155,7 +165,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 	}
 
 	public final void sendData() {
-		while (this.buffer.size() > 0 && !stopFlag.get()) {
+		while (this.buffer.size() > 0 && !stopFlag.get() && !pause) {
 			send();
 		}
 	}
@@ -264,5 +274,54 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 	@Override
 	public Buffer getBuffer() {
 		return buffer;
+	}
+
+	/**
+	 * TODO: Consider using Countdown latch or cyclic barrier.
+	 */
+	private void pause() {
+		while (pause && !stopFlag.get()) {
+			try {
+				// System.out.println(name +
+				// ": On FlowControlPause. Buf size - "
+				// + buffer.size());
+				Thread.sleep(250);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private class FlowController implements Runnable {
+
+		@Override
+		public void run() {
+			while (true) {
+				try {
+					FlowControl f = connection.readObject();
+					switch (f) {
+						case PAUSE :
+							// System.out.println(name + ": received PAUSE");
+							pause = true;
+							break;
+						case RESUME :
+							// System.out.println(name + ": received RESUME");
+							pause = false;
+							break;
+						default :
+							throw new IllegalArgumentException();
+					}
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				} catch (OptionalDataException e) {
+					System.out
+							.println("OptionalDataException: Softclose called.");
+					break;
+				} catch (IOException e) {
+					// e.printStackTrace();
+					break;
+				}
+			}
+		}
 	}
 }
