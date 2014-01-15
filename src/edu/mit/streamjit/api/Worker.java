@@ -64,6 +64,8 @@ public abstract class Worker<I, O> implements StreamElement<I, O> {
 	 */
 	private int identifier = -1;
 
+	private int nodeID = -1;
+
 	void addPredecessor(Worker<?, ? extends I> predecessor, Channel<? extends I> channel) {
 		if (predecessor == null)
 			throw new NullPointerException();
@@ -146,6 +148,14 @@ public abstract class Worker<I, O> implements StreamElement<I, O> {
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "@" + (identifier != -1 ? identifier : hashCode());
+	}
+
+	public int getNodeID() {
+		return nodeID;
+	}
+
+	public void setNodeID(int nodeID) {
+		this.nodeID = nodeID;
 	}
 
 	//<editor-fold defaultstate="collapsed" desc="Friend pattern support (see impl.common.Workers)">

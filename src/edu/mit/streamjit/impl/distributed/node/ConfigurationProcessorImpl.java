@@ -275,6 +275,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		for (BlobSpecifier bs : blobList) {
 			Set<Integer> workIdentifiers = bs.getWorkerIdentifiers();
 			ImmutableSet<Worker<?, ?>> workerset = bs.getWorkers(source);
+			for (Worker<?, ?> w : workerset)
+				w.setNodeID(streamNode.getNodeID());
 			try {
 				BlobFactory bf = bs.getBlobFactory();
 				int maxCores = bs.getCores();
@@ -362,6 +364,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			Blob b = null;
 			Set<Integer> workIdentifiers = bs.getWorkerIdentifiers();
 			ImmutableSet<Worker<?, ?>> workerset = bs.getWorkers(source);
+			for (Worker<?, ?> w : workerset)
+				w.setNodeID(streamNode.getNodeID());
 			try {
 				BlobFactory bf = bs.getBlobFactory();
 				int maxCores = bs.getCores();
