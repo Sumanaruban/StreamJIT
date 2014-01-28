@@ -48,6 +48,8 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 
 	private int count;
 
+	private final int maxCount;
+
 	protected ImmutableList<Object> unProcessedData;
 
 	public BlockingOutputChannel(int bufSize, ConnectionProvider conProvider,
@@ -58,6 +60,12 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 
 	public BlockingOutputChannel(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName, int debugLevel) {
+		this(buffer, conProvider, conInfo, bufferTokenName, debugPrint, 0);
+	}
+
+	protected TCPOutputChannel(Buffer buffer,
+			TCPConnectionProvider conProvider, TCPConnectionInfo conInfo,
+			String bufferTokenName, int debugPrint, int maxCount) {
 		this.buffer = buffer;
 		this.conProvider = conProvider;
 		this.conInfo = conInfo;
@@ -67,6 +75,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		this.debugLevel = debugLevel;
 		this.unProcessedData = null;
 		count = 0;
+		this.maxCount = maxCount;
 		writer = fileWriter();
 	}
 
@@ -204,6 +213,10 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		if (count % 1000 == 0 && debugLevel == 2) {
 			System.out.println(Thread.currentThread().getName() + " Send - "
 					+ count + " no of items have been sent");
+		}
+
+		if (maxCount > 0 && count > maxCount) {
+			stop(false);
 		}
 	}
 

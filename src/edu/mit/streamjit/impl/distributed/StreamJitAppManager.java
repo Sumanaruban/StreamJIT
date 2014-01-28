@@ -318,11 +318,16 @@ public class StreamJitAppManager {
 		if (!bufferMap.containsKey(headToken))
 			throw new IllegalArgumentException(
 					"No head buffer in the passed bufferMap.");
+		int max = 0;
+
+		if (GlobalConstants.tune)
+			max = Math.max((int) (GlobalConstants.outputCount * 1.5),
+					GlobalConstants.outputCount + 50000);
 
 		if (headconInfo instanceof TCPConnectionInfo)
 			headChannel = new HeadChannel.TCPHeadChannel(
 					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0);
+					headconInfo, "headChannel - " + headToken.toString(), 0, max);
 		else if (headconInfo instanceof AsyncTCPConnectionInfo)
 			headChannel = new HeadChannel.AsyncHeadChannel(
 					bufferMap.get(headToken), controller.getConProvider(),

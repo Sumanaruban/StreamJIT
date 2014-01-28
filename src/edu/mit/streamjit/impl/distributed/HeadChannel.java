@@ -22,8 +22,8 @@ public class HeadChannel {
 	public static class TCPHeadChannel extends BlockingOutputChannel {
 
 		public TCPHeadChannel(Buffer buffer, ConnectionProvider conProvider,
-				ConnectionInfo conInfo, String bufferTokenName, int debugLevel) {
-			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel);
+				ConnectionInfo conInfo, String bufferTokenName, int debugLevel, int maxCount) {
+			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel, maxCount);
 		}
 
 		protected void fillUnprocessedData() {
