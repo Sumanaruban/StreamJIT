@@ -321,8 +321,7 @@ public class StreamJitAppManager {
 		int max = 0;
 
 		if (GlobalConstants.tune)
-			max = Math.max((int) (GlobalConstants.outputCount * 1.5),
-					GlobalConstants.outputCount + 50000);
+			max = (int) (GlobalConstants.outputCount * 1.5);
 
 		if (headconInfo instanceof TCPConnectionInfo)
 			headChannel = new HeadChannel.TCPHeadChannel(
