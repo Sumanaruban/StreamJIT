@@ -320,8 +320,8 @@ public class StreamJitAppManager {
 					"No head buffer in the passed bufferMap.");
 		int max = 0;
 
-		if (GlobalConstants.tune)
-			max = (int) (GlobalConstants.outputCount * 1.5);
+		if (GlobalConstants.tune > 0)
+			max = (int) (GlobalConstants.outputCount * 3);
 
 		if (headconInfo instanceof TCPConnectionInfo)
 			headChannel = new HeadChannel.TCPHeadChannel(
