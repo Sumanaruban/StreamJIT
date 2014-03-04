@@ -1,13 +1,11 @@
 package edu.mit.streamjit.impl.distributed.node;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
@@ -56,8 +54,6 @@ public class BlobsManagerImpl implements BlobsManager {
 	private final StreamNode streamNode;
 	private final TCPConnectionProvider conProvider;
 	private Map<Token, TCPConnectionInfo> conInfoMap;
-
-	private MonitorBuffers monBufs;
 
 	private final CTRLRDrainProcessor drainProcessor;
 
@@ -139,9 +135,6 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void stop() {
 		for (BlobExecuter be : blobExecuters.values())
 			be.stop();
-
-		if (monBufs != null)
-			monBufs.stopMonitoring();
 	}
 
 	// TODO: Buffer sizes, including head and tail buffers, must be optimized.
@@ -370,9 +363,6 @@ public class BlobsManagerImpl implements BlobsManager {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-
-			if (monBufs != null)
-				monBufs.stopMonitoring();
 		}
 
 		private void doDrain(boolean reqDrainData) {
