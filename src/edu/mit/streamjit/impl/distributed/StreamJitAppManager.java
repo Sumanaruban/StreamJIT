@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,9 +20,12 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.AbstractDrainer;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Command;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
@@ -39,6 +43,10 @@ import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcesso
 import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 
+/**
+ * @author Sumanan sumanan@mit.edu
+ * @since Oct 30, 2013
+ */
 public class StreamJitAppManager {
 
 	private SNDrainProcessorImpl dp = null;
@@ -48,6 +56,8 @@ public class StreamJitAppManager {
 	private ErrorProcessor ep = null;
 
 	private AppStatusProcessorImpl apStsPro = null;
+
+	private CompilationInfoProcessorImpl ciP = null;
 
 	private final Controller controller;
 
@@ -87,14 +97,15 @@ public class StreamJitAppManager {
 
 	public StreamJitAppManager(Controller controller, StreamJitApp app,
 			ConfigurationManager cfgManager) {
+		int noOfnodes = controller.getAllNodeIDs().size();
 		this.controller = controller;
 		this.app = app;
 		this.cfgManager = cfgManager;
 		this.status = AppStatus.NOT_STARTED;
 		this.exP = new SNExceptionProcessorImpl();
 		this.ep = new ErrorProcessorImpl();
-		this.apStsPro = new AppStatusProcessorImpl(controller.getAllNodeIDs()
-				.size());
+		this.apStsPro = new AppStatusProcessorImpl(noOfnodes);
+		this.ciP = new CompilationInfoProcessorImpl(noOfnodes);
 		controller.registerManager(this);
 		controller.newApp(cfgManager.getStaticConfiguration()); // TODO: Find a
 																// good calling
@@ -133,6 +144,9 @@ public class StreamJitAppManager {
 		}
 
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier);
+
+		ciP.waitforBufSizes();
+		sendNewbufSizes();
 
 		boolean isCompiled = apStsPro.waitForCompilation();
 
@@ -309,6 +323,10 @@ public class StreamJitAppManager {
 		return apStsPro;
 	}
 
+	public CompilationInfoProcessor compilationInfoProcessor() {
+		return ciP;
+	}
+
 	public AppStatus getStatus() {
 		return status;
 	}
@@ -316,6 +334,7 @@ public class StreamJitAppManager {
 	private void reset() {
 		exP.exConInfos = new HashSet<>();
 		apStsPro.reset();
+		ciP.reset();
 	}
 
 	public void stop() {
@@ -323,6 +342,70 @@ public class StreamJitAppManager {
 		tailChannel.reset();
 		controller.closeAll();
 		dp.drainer.stop();
+	}
+
+	/**
+	 * Calculates the input buffer sizes to avoid deadlocks. Added on
+	 * [2014-03-01]
+	 */
+	private void sendNewbufSizes() {
+		Map<Token, Integer> minInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minOutputBufCapacity = new HashMap<>();
+		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
+		Map<Token, Integer> IORatio = new HashMap<>();
+
+		for (BufferSizes b : ciP.bufSizes.values()) {
+			minInputBufCapacity.putAll(b.minInputBufCapacity);
+			minOutputBufCapacity.putAll(b.minOutputBufCapacity);
+		}
+		System.out.println("minInputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minInputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+		System.out.println("minOutputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minOutputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+
+		for (Token t : minInputBufCapacity.keySet()) {
+			if (t.isOverallInput())
+				continue;
+			int outSize = minOutputBufCapacity.get(t);
+			int inSize = minInputBufCapacity.get(t);
+			IORatio.put(t, (int) Math.ceil(((double) inSize) / outSize));
+		}
+
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			int mul = 1;
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				mul = Math.max(mul, IORatio.get(out));
+			}
+			System.out.println("Multiplication factor of blob "
+					+ blob.toString() + " is " + mul);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				int outSize = minOutputBufCapacity.get(out);
+				int inSize = minInputBufCapacity.get(out);
+				int newInSize = Math.max(outSize * mul, inSize);
+				finalInputBufCapacity.put(out, newInSize);
+			}
+		}
+
+		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
+				.build();
+
+		System.out.println("finalInputBufCapacity");
+		for (Map.Entry<Token, Integer> en : finalInputBuf.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+
+		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
+				finalInputBuf);
+		controller.sendToAll(me);
 	}
 
 	/**
@@ -492,6 +575,52 @@ public class StreamJitAppManager {
 				e.printStackTrace();
 			}
 			return !this.compilationError;
+		}
+	}
+
+	/**
+	 * Added on [2014-03-01]
+	 * 
+	 * @author sumanan
+	 * 
+	 */
+	private class CompilationInfoProcessorImpl
+			implements
+				CompilationInfoProcessor {
+
+		private Map<Integer, BufferSizes> bufSizes;
+
+		private final int noOfnodes;
+		private CountDownLatch bufSizeLatch;
+
+		@Override
+		public void process(BufferSizes bufferSizes) {
+			bufSizes.put(bufferSizes.machineID, bufferSizes);
+			bufSizeLatch.countDown();
+		}
+
+		private CompilationInfoProcessorImpl(int noOfnodes) {
+			this.noOfnodes = noOfnodes;
+		}
+
+		private void reset() {
+			bufSizes = new ConcurrentHashMap<>();
+			bufSizeLatch = new CountDownLatch(noOfnodes);
+		}
+
+		private void waitforBufSizes() {
+			try {
+				bufSizeLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			for (Integer nodeID : controller.getAllNodeIDs()) {
+				if (!bufSizes.containsKey(nodeID)) {
+					throw new AssertionError(
+							"Not all Stream nodes have sent the buffer size info");
+				}
+			}
 		}
 	}
 }
