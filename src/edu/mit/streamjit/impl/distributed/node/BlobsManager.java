@@ -21,6 +21,8 @@ public interface BlobsManager {
 
 	public CTRLCompilationInfoProcessor getCompilationInfoProcessor();
 
+	public CTRLCompilationInfoProcessor getCompilationInfoProcessor();
+
 	/**
 	 * For all final resource cleanup. Mainly all started threads must be
 	 * stopped safely.
