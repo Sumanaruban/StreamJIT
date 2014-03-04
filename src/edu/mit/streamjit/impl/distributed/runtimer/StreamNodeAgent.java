@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
@@ -284,6 +286,13 @@ public abstract class StreamNodeAgent {
 			assert manager != null : "StreamJitAppManager has not been set";
 			SNExceptionProcessor snExP = manager.exceptionProcessor();
 			snException.process(snExP);
+		}
+
+		@Override
+		public void visit(CompilationInfo compilationInfo) {
+			assert manager != null : "StreamJitAppManager has not been set";
+			CompilationInfoProcessor cip = manager.compilationInfoProcessor();
+			compilationInfo.process(cip);
 		}
 	}
 }
