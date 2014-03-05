@@ -163,7 +163,10 @@ public class BlobsManagerImpl implements BlobsManager {
 			int finalbufSize = finalMinInputCapacity.get(t);
 			assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
 			int bufSize = Math.max(finalbufSize, minOutputBufCapaciy.get(t));
-			addBuffer(t, bufSize, bufferMapBuilder);
+			// TODO: doubling the local buffer sizes. Without this deadlock
+			// occurred when draining. Need to find out exact reason. See
+			// StreamJit/Deadlock/deadlock folder.
+			addBuffer(t, 2 * bufSize, bufferMapBuilder);
 		}
 
 		for (Token t : globalInputTokens) {
