@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -54,6 +55,8 @@ public class BlobsManagerImpl implements BlobsManager {
 	private final StreamNode streamNode;
 	private final TCPConnectionProvider conProvider;
 	private Map<Token, TCPConnectionInfo> conInfoMap;
+
+	private MonitorBuffers monBufs;
 
 	private final CTRLRDrainProcessor drainProcessor;
 
@@ -118,6 +121,14 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void start() {
 		for (BlobExecuter be : blobExecuters.values())
 			be.start();
+
+		if (monBufs == null) {
+			System.out.println("Creating new MonitorBuffers");
+			monBufs = new MonitorBuffers();
+			monBufs.start();
+		} else
+			System.err
+					.println("Mon buffer is not null. Check the logic for bug");
 	}
 
 	/**
@@ -127,6 +138,9 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void stop() {
 		for (BlobExecuter be : blobExecuters.values())
 			be.stop();
+
+		if (monBufs != null)
+			monBufs.stopMonitoring();
 	}
 
 	// TODO: Buffer sizes, including head and tail buffers, must be optimized.
@@ -356,6 +370,9 @@ public class BlobsManagerImpl implements BlobsManager {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+
+			if (monBufs != null)
+				monBufs.stopMonitoring();
 		}
 
 		private void doDrain(boolean reqDrainData) {
@@ -445,6 +462,17 @@ public class BlobsManagerImpl implements BlobsManager {
 				}
 				// System.out.println("**********************************");
 			}
+
+			boolean isLastBlob = true;
+			for (BlobExecuter be : blobExecuters) {
+				if (be.drainState < 4) {
+					isLastBlob = false;
+					break;
+				}
+			}
+
+			if (isLastBlob && monBufs != null)
+				monBufs.stopMonitoring();
 
 			printDrainedStatus();
 		}
@@ -767,38 +795,46 @@ public class BlobsManagerImpl implements BlobsManager {
 		}
 	}
 
-	private class CTRLCompilationInfoProcessorImpl
-			implements
-				CTRLCompilationInfoProcessor {
+	private static int count = 0;
 
-		@Override
-		public void process(FinalBufferSizes finalBufferSizes) {
-			System.out.println("Processing FinalBufferSizes");
-			bufferMap = createBufferMap(blobSet,
-					finalBufferSizes.minInputBufCapacity);
+	private class MonitorBuffers extends Thread {
+		private final int id;
+		private final AtomicBoolean stopFlag;
+		int sleepTime = 25000;
+		MonitorBuffers() {
+			stopFlag = new AtomicBoolean(false);
+			id = count++;
+		}
 
-			for (Blob b : blobSet) {
-				b.installBuffers(bufferMap);
+		public void run() {
+
+			while (!stopFlag.get()) {
+				System.out.println("********Started*************** - " + id);
+				try {
+					Thread.sleep(sleepTime);
+				} catch (InterruptedException e) {
+				}
+				if (bufferMap == null) {
+					System.out.println("Buffer map is null...");
+					continue;
+				}
+				if (stopFlag.get())
+					break;
+				System.out.println("----------------------------------");
+				for (Map.Entry<Token, Buffer> en : bufferMap.entrySet()) {
+					System.out.println(en.getKey() + " - "
+							+ en.getValue().size());
+				}
+				System.out.println("----------------------------------");
 			}
 
-			Set<Token> locaTokens = getLocalTokens(blobSet);
-			blobExecuters = new HashSet<>();
-			for (Blob b : blobSet) {
-				ImmutableMap<Token, BoundaryInputChannel> inputChannels = createInputChannels(
-						Sets.difference(b.getInputs(), locaTokens), bufferMap);
-				ImmutableMap<Token, BoundaryOutputChannel> outputChannels = createOutputChannels(
-						Sets.difference(b.getOutputs(), locaTokens), bufferMap);
-				blobExecuters.add(new BlobExecuter(b, inputChannels,
-						outputChannels));
-			}
+			System.out.println("********Stopped*************** - " + id);
+		}
 
-			try {
-				streamNode.controllerConnection.writeObject(AppStatus.COMPILED);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-(??)		}
-(??)
+		public void stopMonitoring() {
+			System.out.println("MonitorBuffers: Stop monitoring");
+			stopFlag.set(true);
+			this.interrupt();
 		}
 	}
 }

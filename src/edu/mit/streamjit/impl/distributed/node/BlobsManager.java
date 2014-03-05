@@ -1,3 +1,4 @@
+
 package edu.mit.streamjit.impl.distributed.node;
 
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
@@ -18,8 +19,6 @@ public interface BlobsManager {
 	public CTRLRDrainProcessor getDrainProcessor();
 
 	public CommandProcessor getCommandProcessor();
-
-	public CTRLCompilationInfoProcessor getCompilationInfoProcessor();
 
 	public CTRLCompilationInfoProcessor getCompilationInfoProcessor();
 
