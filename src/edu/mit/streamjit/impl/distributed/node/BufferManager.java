@@ -302,6 +302,7 @@ public interface BufferManager {
 		// consider adding some tuning factor
 		private ImmutableMap<Token, Integer> calculateBufferSizes(
 				Set<Blob> blobSet, Map<Token, Integer> finalMinInputCapacity) {
+			final int bufScale = 1;
 			ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder = ImmutableMap
 					.builder();
 
@@ -331,29 +332,28 @@ public interface BufferManager {
 				int localbufSize = minInputBufCapaciy.get(t);
 				int finalbufSize = finalMinInputCapacity.get(t);
 				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-				int bufSize = Math
-						.max(finalbufSize, minOutputBufCapaciy.get(t));
+				int outbufSize = minOutputBufCapaciy.get(t);
 				// TODO: doubling the local buffer sizes. Without this deadlock
 				// occurred when draining. Need to find out exact reason. See
 				// StreamJit/Deadlock/deadlock folder.
-				addBuffer(t, 2*bufSize, bufferSizeMapBuilder);
+				addBuffer(t, bufScale * (outbufSize + finalbufSize), bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalInputTokens) {
 				int localbufSize = minInputBufCapaciy.get(t);
 				if (t.isOverallInput()) {
-					addBuffer(t, localbufSize, bufferSizeMapBuilder);
+					addBuffer(t, bufScale * localbufSize, bufferSizeMapBuilder);
 					continue;
 				}
 
 				int finalbufSize = finalMinInputCapacity.get(t);
 				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-				addBuffer(t, finalbufSize, bufferSizeMapBuilder);
+				addBuffer(t, bufScale * finalbufSize, bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalOutputTokens) {
 				int bufSize = minOutputBufCapaciy.get(t);
-				addBuffer(t, bufSize, bufferSizeMapBuilder);
+				addBuffer(t, bufScale * bufSize, bufferSizeMapBuilder);
 			}
 			return bufferSizeMapBuilder.build();
 		}
