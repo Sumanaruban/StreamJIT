@@ -302,7 +302,10 @@ public interface BufferManager {
 		// consider adding some tuning factor
 		private ImmutableMap<Token, Integer> calculateBufferSizes(
 				Set<Blob> blobSet, Map<Token, Integer> finalMinInputCapacity) {
-			final int bufScale = 1;
+			/**
+			 * bufScale must be at least 2. Otherwise deadlock may occur.
+			 */
+			final int bufScale = 2;
 			ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder = ImmutableMap
 					.builder();
 
