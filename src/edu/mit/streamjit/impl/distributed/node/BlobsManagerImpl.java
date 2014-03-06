@@ -807,9 +807,8 @@ public class BlobsManagerImpl implements BlobsManager {
 		}
 
 		public void run() {
-
+			System.out.println("********Started*************** - " + id);
 			while (!stopFlag.get()) {
-				System.out.println("********Started*************** - " + id);
 				try {
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
