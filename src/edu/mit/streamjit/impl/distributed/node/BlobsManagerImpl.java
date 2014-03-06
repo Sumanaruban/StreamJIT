@@ -149,7 +149,10 @@ public class BlobsManagerImpl implements BlobsManager {
 	private ImmutableMap<Token, Buffer> createBufferMap(Set<Blob> blobSet,
 			Map<Token, Integer> finalMinInputCapacity) {
 
-		final int bufScale = 1;
+		/**
+		 * bufScale must be at least 2. Otherwise deadlock may occur.
+		 */
+		final int bufScale = 2;
 		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
 				.<Token, Buffer> builder();
 
