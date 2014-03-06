@@ -144,6 +144,8 @@ public class BlobsManagerImpl implements BlobsManager {
 	// consider adding some tuning factor
 	private ImmutableMap<Token, Buffer> createBufferMap(Set<Blob> blobSet,
 			Map<Token, Integer> finalMinInputCapacity) {
+
+		final int bufScale = 1;
 		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
 				.<Token, Buffer> builder();
 
@@ -173,28 +175,29 @@ public class BlobsManagerImpl implements BlobsManager {
 			int localbufSize = minInputBufCapaciy.get(t);
 			int finalbufSize = finalMinInputCapacity.get(t);
 			assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-			int bufSize = Math.max(finalbufSize, minOutputBufCapaciy.get(t));
+			int outbufSize = minOutputBufCapaciy.get(t);
 			// TODO: doubling the local buffer sizes. Without this deadlock
 			// occurred when draining. Need to find out exact reason. See
 			// StreamJit/Deadlock/deadlock folder.
-			addBuffer(t, 2 * bufSize, bufferMapBuilder);
+			addBuffer(t, bufScale * (outbufSize + finalbufSize),
+					bufferMapBuilder);
 		}
 
 		for (Token t : globalInputTokens) {
 			int localbufSize = minInputBufCapaciy.get(t);
 			if (t.isOverallInput()) {
-				addBuffer(t, localbufSize, bufferMapBuilder);
+				addBuffer(t, bufScale * localbufSize, bufferMapBuilder);
 				continue;
 			}
 
 			int finalbufSize = finalMinInputCapacity.get(t);
 			assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-			addBuffer(t, finalbufSize, bufferMapBuilder);
+			addBuffer(t, bufScale * finalbufSize, bufferMapBuilder);
 		}
 
 		for (Token t : globalOutputTokens) {
 			int bufSize = minOutputBufCapaciy.get(t);
-			addBuffer(t, bufSize, bufferMapBuilder);
+			addBuffer(t, bufScale * bufSize, bufferMapBuilder);
 		}
 		return bufferMapBuilder.build();
 	}
@@ -702,9 +705,8 @@ public class BlobsManagerImpl implements BlobsManager {
 		}
 
 		public void run() {
-
+			System.out.println("********Started*************** - " + id);
 			while (!stopFlag.get()) {
-				System.out.println("********Started*************** - " + id);
 				try {
 					Thread.sleep(sleepTime);
 				} catch (InterruptedException e) {
