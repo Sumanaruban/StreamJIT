@@ -74,6 +74,9 @@ import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.ilpsolve.ILPSolver;
+import edu.mit.streamjit.util.ilpsolve.ILPSolver.LinearExpr;
+import edu.mit.streamjit.util.ilpsolve.ILPSolver.Variable;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -291,7 +294,7 @@ public class StreamJitAppManager {
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier);
 
 		ciP.waitforBufSizes();
-		sendNewbufSizes();
+		sendNewbufSizes2();
 
 		boolean isCompiled = apStsPro.waitForCompilation();
 		logger.compilationFinished(isCompiled, "");
@@ -449,6 +452,117 @@ public class StreamJitAppManager {
 					continue;
 				mul = Math.max(mul, IORatio.get(out));
 			}
+			System.out.println("Multiplication factor of blob "
+					+ blob.toString() + " is " + mul);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				int outSize = minOutputBufCapacity.get(out);
+				int inSize = minInputBufCapacity.get(out);
+				int newInSize = Math.max(outSize * mul, inSize);
+				finalInputBufCapacity.put(out, newInSize);
+			}
+		}
+
+		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
+				.build();
+
+		System.out.println("finalInputBufCapacity");
+		for (Map.Entry<Token, Integer> en : finalInputBuf.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+
+		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
+				finalInputBuf);
+		controller.sendToAll(me);
+	}
+
+	/**
+	 * Calculates the input buffer sizes to avoid deadlocks. Added on
+	 * [2014-03-07]. Finds out the buffer sizes through ILP solving.
+	 * {@link #sendNewbufSizes()} doesn't guarantee deadlock freeness.
+	 */
+	private void sendNewbufSizes2() {
+		class bufInfo {
+			int input;
+			int output;
+			Variable outVar;
+			Variable inVar;
+
+			void addconstrain(ILPSolver solver) {
+				LinearExpr exp = outVar.asLinearExpr(output)
+						.minus(input, inVar);
+				solver.constrainAtLeast(exp, 0);
+			}
+		}
+
+		Map<Token, Integer> minInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minOutputBufCapacity = new HashMap<>();
+		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
+
+		for (BufferSizes b : ciP.bufSizes.values()) {
+			minInputBufCapacity.putAll(b.minInputBufCapacity);
+			minOutputBufCapacity.putAll(b.minOutputBufCapacity);
+		}
+
+		System.out.println("minInputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minInputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+		System.out.println("minOutputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minOutputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+
+		ILPSolver solver = new ILPSolver();
+		Map<Token, bufInfo> bufInfos = new HashMap<>();
+		Map<Token, Variable> variables = new HashMap<>();
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Variable v = solver.newVariable(blob.toString());
+			variables.put(blob, v);
+			LinearExpr expr = v.asLinearExpr(1);
+			solver.constrainAtLeast(expr, 1);
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				bufInfo b = new bufInfo();
+				b.output = minOutputBufCapacity.get(out);
+				b.outVar = v;
+				bufInfos.put(out, b);
+			}
+		}
+
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Set<Token> inputs = app.blobGraph.getInputs(blob);
+			Variable v = variables.get(blob);
+			if (v == null)
+				throw new IllegalStateException("No variable");
+			for (Token in : inputs) {
+				if (in.isOverallInput())
+					continue;
+				bufInfo b = bufInfos.get(in);
+				if (b == null)
+					throw new IllegalStateException("No buffer info");
+				b.input = minInputBufCapacity.get(in);
+				b.inVar = v;
+				b.addconstrain(solver);
+			}
+		}
+
+		LinearExpr lf = null;
+		for (Variable v : variables.values()) {
+			if (lf == null)
+				lf = v.asLinearExpr(1);
+			else
+				lf = lf.plus(1, v);
+		}
+		solver.minimize(lf);
+		solver.solve();
+
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			int mul = variables.get(blob).value();
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			System.out.println("Multiplication factor of blob "
 					+ blob.toString() + " is " + mul);
 			for (Token out : outputs) {
