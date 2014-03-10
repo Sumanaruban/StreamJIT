@@ -150,17 +150,17 @@ public class BlobsManagerImpl implements BlobsManager {
 		for (Token t : localTokens) {
 			int bufSize = Math.max(minInputBufCapaciy.get(t),
 					minOutputBufCapaciy.get(t));
-			addBuffer(t, bufSize, bufferMapBuilder);
+			addBuffer(t, bufSize, bufferMapBuilder, true);
 		}
 
 		for (Token t : globalInputTokens) {
 			int bufSize = minInputBufCapaciy.get(t);
-			addBuffer(t, bufSize, bufferMapBuilder);
+			addBuffer(t, bufSize, bufferMapBuilder, false);
 		}
 
 		for (Token t : globalOutputTokens) {
 			int bufSize = minOutputBufCapaciy.get(t);
-			addBuffer(t, bufSize, bufferMapBuilder);
+			addBuffer(t, bufSize, bufferMapBuilder, true);
 		}
 		return bufferMapBuilder.build();
 	}
@@ -171,14 +171,20 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * @param t
 	 * @param minSize
 	 * @param bufferMapBuilder
+	 * @param dyn
 	 */
 	private void addBuffer(Token t, int minSize,
-			ImmutableMap.Builder<Token, Buffer> bufferMapBuilder) {
+			ImmutableMap.Builder<Token, Buffer> bufferMapBuilder, boolean dyn) {
 		// TODO: Just to increase the performance. Change it later
 		int bufSize = Math.max(1000, minSize);
 		// System.out.println("Buffer size of " + t.toString() + " is " +
 		// bufSize);
-		bufferMapBuilder.put(t, new ConcurrentArrayBuffer(bufSize));
+		if (dyn)
+			bufferMapBuilder.put(t, new DynamicBuffer(
+					ConcurrentArrayBuffer.class, ImmutableList.of(bufSize),
+					bufSize, 0));
+		else
+			bufferMapBuilder.put(t, new ConcurrentArrayBuffer(bufSize));
 	}
 
 	private long gcd(long a, long b) {
@@ -715,6 +721,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		private final int id;
 		private final AtomicBoolean stopFlag;
 		int sleepTime = 25000;
+
 		MonitorBuffers() {
 			super("MonitorBuffers");
 			stopFlag = new AtomicBoolean(false);
