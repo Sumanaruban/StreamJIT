@@ -122,13 +122,17 @@ public class BlobsManagerImpl implements BlobsManager {
 	// TODO: Buffer sizes, including head and tail buffers, must be optimized.
 	// consider adding some tuning factor
 	private ImmutableMap<Token, Buffer> createBufferMap(Set<Blob> blobSet) {
+
 		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
 				.<Token, Buffer> builder();
 
 		Map<Token, Integer> minInputBufCapaciy = new HashMap<>();
 		Map<Token, Integer> minOutputBufCapaciy = new HashMap<>();
 
+		Map<Token, DynamicBufferManager> dbmMap = new HashMap<>();
+
 		for (Blob b : blobSet) {
+			DynamicBufferManager dbm = new DynamicBufferManager();
 			Set<Blob.Token> inputs = b.getInputs();
 			for (Token t : inputs) {
 				minInputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
@@ -137,6 +141,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			Set<Blob.Token> outputs = b.getOutputs();
 			for (Token t : outputs) {
 				minOutputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
+				dbmMap.put(t, dbm);
 			}
 		}
 
@@ -148,23 +153,22 @@ public class BlobsManagerImpl implements BlobsManager {
 				minOutputBufCapaciy.keySet(), localTokens);
 
 		for (Token t : localTokens) {
-			int bufSize = Math.max(minInputBufCapaciy.get(t),
-					minOutputBufCapaciy.get(t));
-			addBuffer(t, bufSize, bufferMapBuilder, true);
+			int bufSize = minInputBufCapaciy.get(t)
+					+ minOutputBufCapaciy.get(t);
+			addBuffer(t, bufSize, bufferMapBuilder, dbmMap.get(t), true);
 		}
 
 		for (Token t : globalInputTokens) {
 			int bufSize = minInputBufCapaciy.get(t);
-			addBuffer(t, bufSize, bufferMapBuilder, false);
+			addBuffer(t, bufSize, bufferMapBuilder, null, false);
 		}
 
 		for (Token t : globalOutputTokens) {
 			int bufSize = minOutputBufCapaciy.get(t);
-			addBuffer(t, bufSize, bufferMapBuilder, true);
+			addBuffer(t, bufSize, bufferMapBuilder, dbmMap.get(t), true);
 		}
 		return bufferMapBuilder.build();
 	}
-
 	/**
 	 * Just introduced to avoid code duplication.
 	 * 
@@ -174,15 +178,16 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * @param dyn
 	 */
 	private void addBuffer(Token t, int minSize,
-			ImmutableMap.Builder<Token, Buffer> bufferMapBuilder, boolean dyn) {
-		// TODO: Just to increase the performance. Change it later
+			ImmutableMap.Builder<Token, Buffer> bufferMapBuilder,
+			DynamicBufferManager dbm, boolean dyn) {
 		int bufSize = Math.max(1000, minSize);
 		// System.out.println("Buffer size of " + t.toString() + " is " +
 		// bufSize);
 		if (dyn)
-			bufferMapBuilder.put(t, new DynamicBuffer(
-					ConcurrentArrayBuffer.class, ImmutableList.of(bufSize),
-					bufSize, 0));
+			bufferMapBuilder.put(
+					t,
+					dbm.getBuffer(ConcurrentArrayBuffer.class,
+							ImmutableList.of(bufSize), bufSize, 0));
 		else
 			bufferMapBuilder.put(t, new ConcurrentArrayBuffer(bufSize));
 	}
