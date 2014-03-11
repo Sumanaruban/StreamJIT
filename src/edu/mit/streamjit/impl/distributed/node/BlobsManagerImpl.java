@@ -184,10 +184,9 @@ public class BlobsManagerImpl implements BlobsManager {
 		// System.out.println("Buffer size of " + t.toString() + " is " +
 		// bufSize);
 		if (dyn)
-			bufferMapBuilder.put(
-					t,
-					dbm.getBuffer(ConcurrentArrayBuffer.class,
-							ImmutableList.of(bufSize), bufSize, 0));
+			bufferMapBuilder.put(t, dbm.getBuffer(t.toString(),
+					ConcurrentArrayBuffer.class, ImmutableList.of(bufSize),
+					bufSize, 0));
 		else
 			bufferMapBuilder.put(t, new ConcurrentArrayBuffer(bufSize));
 	}
