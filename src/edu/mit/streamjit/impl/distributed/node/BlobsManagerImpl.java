@@ -132,7 +132,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		Map<Token, DynamicBufferManager> dbmMap = new HashMap<>();
 
 		for (Blob b : blobSet) {
-			DynamicBufferManager dbm = new DynamicBufferManager();
+			DynamicBufferManager dbm = new DynamicBufferManager(b);
 			Set<Blob.Token> inputs = b.getInputs();
 			for (Token t : inputs) {
 				minInputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
@@ -184,9 +184,10 @@ public class BlobsManagerImpl implements BlobsManager {
 		// System.out.println("Buffer size of " + t.toString() + " is " +
 		// bufSize);
 		if (dyn)
-			bufferMapBuilder.put(t, dbm.getBuffer(t.toString(),
-					ConcurrentArrayBuffer.class, ImmutableList.of(bufSize),
-					bufSize, 0));
+			bufferMapBuilder.put(
+					t,
+					dbm.getBuffer(t, ConcurrentArrayBuffer.class,
+							ImmutableList.of(bufSize), bufSize, 0));
 		else
 			bufferMapBuilder.put(t, new ConcurrentArrayBuffer(bufSize));
 	}
