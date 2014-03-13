@@ -94,6 +94,7 @@ public class Compiler2BlobHost implements Blob {
 	/* provided by the host */
 	private final boolean collectTimings;
 	private final ImmutableMap<Token, Integer> minimumBufferCapacity;
+	private final ImmutableMap<Token, Integer> minimumSteadyBufferCapacity;
 	private ImmutableMap<Token, Buffer> buffers;
 	private final ImmutableList<Runnable> coreCode;
 	private final SwitchPoint sp1 = new SwitchPoint(), sp2 = new SwitchPoint();
@@ -132,18 +133,8 @@ public class Compiler2BlobHost implements Blob {
 
 		this.collectTimings = config.getExtraData("timings") != null ? (Boolean)config.getExtraData("timings") : false;
 
-		List<Map<Token, Integer>> capacityRequirements = new ArrayList<>();
-		for (ReadInstruction i : Iterables.concat(this.initReadInstructions, this.readInstructions))
-			capacityRequirements.add(i.getMinimumBufferCapacity());
-		for (WriteInstruction i : Iterables.concat(this.initWriteInstructions, this.writeInstructions))
-			capacityRequirements.add(i.getMinimumBufferCapacity());
-		this.minimumBufferCapacity = CollectionUtils.union(new Maps.EntryTransformer<Token, List<Integer>, Integer>() {
-			@Override
-			public Integer transformEntry(Token key, List<Integer> value) {
-				return Collections.max(value);
-			}
-		}, capacityRequirements);
-
+		this.minimumBufferCapacity = getMinCapacity(Iterables.concat(this.initReadInstructions, this.readInstructions), Iterables.concat(this.initWriteInstructions, this.writeInstructions));
+		this.minimumSteadyBufferCapacity = getMinCapacity(this.readInstructions, this.writeInstructions);
 		MethodHandle mainLoop = MAIN_LOOP.bindTo(this),
 				doInit = DO_INIT.bindTo(this),
 				doAdjust = DO_ADJUST.bindTo(this),
@@ -166,6 +157,23 @@ public class Compiler2BlobHost implements Blob {
 		};
 	}
 
+	private ImmutableMap<Token, Integer> getMinCapacity(
+			Iterable<ReadInstruction> ri,
+			Iterable<WriteInstruction> wi) {
+		List<Map<Token, Integer>> capacityRequirements = new ArrayList<>();
+		for (ReadInstruction i : ri)
+			capacityRequirements.add(i.getMinimumBufferCapacity());
+		for (WriteInstruction i : wi)
+			capacityRequirements.add(i.getMinimumBufferCapacity());
+		return CollectionUtils.union(
+				new Maps.EntryTransformer<Token, List<Integer>, Integer>() {
+					@Override
+					public Integer transformEntry(Token key, List<Integer> value) {
+						return Collections.max(value);
+					}
+				}, capacityRequirements);
+	}
+
 	@Override
 	public Set<Worker<?, ?>> getWorkers() {
 		return workers;
@@ -186,6 +194,13 @@ public class Compiler2BlobHost implements Blob {
 		if (!inputTokens.contains(token) && !outputTokens.contains(token))
 			throw new IllegalArgumentException(token.toString()+" not an input or output of this blob");
 		return minimumBufferCapacity.get(token);
+	}
+
+	@Override
+	public int getMinimumSteadyBufferCapacity(Token token) {
+		if (!inputTokens.contains(token) && !outputTokens.contains(token))
+			throw new IllegalArgumentException(token.toString()+" not an input or output of this blob");
+		return minimumSteadyBufferCapacity.get(token);
 	}
 
 	@Override
