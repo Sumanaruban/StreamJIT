@@ -120,6 +120,7 @@ public class Compiler2BlobHost implements Blob {
 	private final boolean collectTimings;
 	private final ImmutableMap<Token, Integer> minimumBufferCapacity;
 	private final ImmutableMap<Token, Integer> minimumSteadyBufferCapacity;
+	private final ImmutableMap<Token, Integer> minimumInitBufferCapacity;
 	private ImmutableMap<Token, Buffer> buffers;
 	private final ImmutableList<Runnable> coreCode;
 	private final SwitchPoint sp1 = new SwitchPoint(), sp2 = new SwitchPoint();
@@ -160,6 +161,7 @@ public class Compiler2BlobHost implements Blob {
 
 		this.minimumBufferCapacity = getMinCapacity(Iterables.concat(this.initReadInstructions, this.readInstructions), Iterables.concat(this.initWriteInstructions, this.writeInstructions));
 		this.minimumSteadyBufferCapacity = getMinCapacity(this.readInstructions, this.writeInstructions);
+		this.minimumInitBufferCapacity = getMinCapacity(this.initReadInstructions, this.initWriteInstructions);
 		MethodHandle mainLoop = MAIN_LOOP.bindTo(this),
 				doInit = DO_INIT.bindTo(this),
 				doAdjust = DO_ADJUST.bindTo(this),
@@ -222,6 +224,13 @@ public class Compiler2BlobHost implements Blob {
 		if (!inputTokens.contains(token) && !outputTokens.contains(token))
 			throw new IllegalArgumentException(token.toString()+" not an input or output of this blob");
 		return minimumSteadyBufferCapacity.get(token);
+	}
+
+	@Override
+	public int getMinimumInitBufferCapacity(Token token) {
+		if (!inputTokens.contains(token) && !outputTokens.contains(token))
+			throw new IllegalArgumentException(token.toString()+" not an input or output of this blob");
+		return minimumInitBufferCapacity.get(token);
 	}
 
 	@Override
