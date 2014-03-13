@@ -1,10 +1,12 @@
 package edu.mit.streamjit.impl.distributed.node;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -54,6 +56,8 @@ public class BlobsManagerImpl implements BlobsManager {
 	private final StreamNode streamNode;
 	private final TCPConnectionProvider conProvider;
 	private Map<Token, TCPConnectionInfo> conInfoMap;
+
+	private MonitorBuffers monBufs;
 
 	private final CTRLRDrainProcessor drainProcessor;
 
@@ -120,7 +124,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			be.start();
 
 		if (monBufs == null) {
-			System.out.println("Creating new MonitorBuffers");
+			// System.out.println("Creating new MonitorBuffers");
 			monBufs = new MonitorBuffers();
 			monBufs.start();
 		} else
@@ -135,6 +139,9 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void stop() {
 		for (BlobExecuter be : blobExecuters.values())
 			be.stop();
+
+		if (monBufs != null)
+			monBufs.stopMonitoring();
 	}
 
 	// TODO: Buffer sizes, including head and tail buffers, must be optimized.
@@ -363,6 +370,9 @@ public class BlobsManagerImpl implements BlobsManager {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+
+			if (monBufs != null)
+				monBufs.stopMonitoring();
 		}
 
 		private void doDrain(boolean reqDrainData) {
@@ -464,7 +474,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			if (isLastBlob && monBufs != null)
 				monBufs.stopMonitoring();
 
-			printDrainedStatus();
+			// printDrainedStatus();
 		}
 
 		private DrainedData getDrainData() {
@@ -792,6 +802,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		private final AtomicBoolean stopFlag;
 		int sleepTime = 25000;
 		MonitorBuffers() {
+			super("MonitorBuffers");
 			stopFlag = new AtomicBoolean(false);
 			id = count++;
 		}
@@ -840,7 +851,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			}
 		}
 		public void stopMonitoring() {
-			System.out.println("MonitorBuffers: Stop monitoring");
+			// System.out.println("MonitorBuffers: Stop monitoring");
 			stopFlag.set(true);
 			this.interrupt();
 		}
