@@ -55,6 +55,8 @@ public interface Blob {
 
 	public int getMinimumSteadyBufferCapacity(Token token);
 
+	public int getMinimumInitBufferCapacity(Token token);
+
 	/**
 	 * Installs buffers for this Blob's input and output edges.
 	 * @param buffers an immutable map of tokens to the buffer on the corresponding
