@@ -25,15 +25,21 @@ public abstract class CompilationInfo implements SNMessageElement {
 		private static final long serialVersionUID = 1L;
 
 		public final int machineID;
-		public final ImmutableMap<Token, Integer> minInputBufCapacity;
-		public final ImmutableMap<Token, Integer> minOutputBufCapacity;
+		public final ImmutableMap<Token, Integer> minInitInputBufCapacity;
+		public final ImmutableMap<Token, Integer> minInitOutputBufCapacity;
+		public final ImmutableMap<Token, Integer> minSteadyInputBufCapacity;
+		public final ImmutableMap<Token, Integer> minSteadyOutputBufCapacity;
 
 		public BufferSizes(final int machineID,
-				final ImmutableMap<Token, Integer> minInputBufCapacity,
-				final ImmutableMap<Token, Integer> minOutputBufCapacity) {
+				final ImmutableMap<Token, Integer> minInitInputBufCapacity,
+				final ImmutableMap<Token, Integer> minInitOutputBufCapacity,
+				final ImmutableMap<Token, Integer> minSteadyInputBufCapacity,
+				final ImmutableMap<Token, Integer> minSteadyOutputBufCapacity) {
 			this.machineID = machineID;
-			this.minInputBufCapacity = minInputBufCapacity;
-			this.minOutputBufCapacity = minOutputBufCapacity;
+			this.minInitInputBufCapacity = minInitInputBufCapacity;
+			this.minInitOutputBufCapacity = minInitOutputBufCapacity;
+			this.minSteadyInputBufCapacity = minSteadyInputBufCapacity;
+			this.minSteadyOutputBufCapacity = minSteadyOutputBufCapacity;
 		}
 
 		@Override
