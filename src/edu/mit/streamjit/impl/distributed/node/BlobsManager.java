@@ -20,4 +20,13 @@ public interface BlobsManager {
 	public CommandProcessor getCommandProcessor();
 
 	public CTRLCompilationInfoProcessor getCompilationInfoProcessor();
+
+	/**
+	 * For all final resource cleanup. Mainly all started threads must be
+	 * stopped safely.
+	 * <p>
+	 * TODO: [2014-03-05] I added this as a quick fix to clean up
+	 * {@link BlobsManagerImpl}#MonitorBuffers thread. Revise this.
+	 */
+	public void stop();
 }

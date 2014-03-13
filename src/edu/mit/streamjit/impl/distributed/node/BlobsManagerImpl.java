@@ -1,10 +1,12 @@
 package edu.mit.streamjit.impl.distributed.node;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -54,6 +56,8 @@ public class BlobsManagerImpl implements BlobsManager {
 	private final StreamNode streamNode;
 	private final TCPConnectionProvider conProvider;
 	private Map<Token, TCPConnectionInfo> conInfoMap;
+
+	private MonitorBuffers monBufs;
 
 	private final CTRLRDrainProcessor drainProcessor;
 
@@ -118,6 +122,14 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void start() {
 		for (BlobExecuter be : blobExecuters.values())
 			be.start();
+
+		if (monBufs == null) {
+			// System.out.println("Creating new MonitorBuffers");
+			monBufs = new MonitorBuffers();
+			monBufs.start();
+		} else
+			System.err
+					.println("Mon buffer is not null. Check the logic for bug");
 	}
 
 	/**
@@ -127,6 +139,9 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void stop() {
 		for (BlobExecuter be : blobExecuters.values())
 			be.stop();
+
+		if (monBufs != null)
+			monBufs.stopMonitoring();
 	}
 
 	// TODO: Buffer sizes, including head and tail buffers, must be optimized.
@@ -355,6 +370,9 @@ public class BlobsManagerImpl implements BlobsManager {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+
+			if (monBufs != null)
+				monBufs.stopMonitoring();
 		}
 
 		private void doDrain(boolean reqDrainData) {
@@ -444,6 +462,17 @@ public class BlobsManagerImpl implements BlobsManager {
 				}
 				// System.out.println("**********************************");
 			}
+
+			boolean isLastBlob = true;
+			for (BlobExecuter be : blobExecuters) {
+				if (be.drainState < 4) {
+					isLastBlob = false;
+					break;
+				}
+			}
+
+			if (isLastBlob && monBufs != null)
+				monBufs.stopMonitoring();
 
 			// printDrainedStatus();
 		}
@@ -763,6 +792,68 @@ public class BlobsManagerImpl implements BlobsManager {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+
+	private static int count = 0;
+
+	private class MonitorBuffers extends Thread {
+		private final int id;
+		private final AtomicBoolean stopFlag;
+		int sleepTime = 25000;
+		MonitorBuffers() {
+			super("MonitorBuffers");
+			stopFlag = new AtomicBoolean(false);
+			id = count++;
+		}
+
+		public void run() {
+			FileWriter writter = null;
+			try {
+				writter = new FileWriter(String.format("BufferStatus%d.txt",
+						streamNode.getNodeID()), false);
+
+				writter.write(String.format(
+						"********Started*************** - %d\n", id));
+				while (!stopFlag.get()) {
+					try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {
+					}
+					if (bufferMap == null) {
+						writter.write("Buffer map is null...\n");
+						continue;
+					}
+					if (stopFlag.get())
+						break;
+					writter.write("----------------------------------\n");
+					for (Map.Entry<Token, Buffer> en : bufferMap.entrySet()) {
+						writter.write(en.getKey() + " - "
+								+ en.getValue().size());
+						writter.write('\n');
+					}
+					writter.write("----------------------------------\n");
+					writter.flush();
+				}
+
+				writter.write(String.format(
+						"********Stopped*************** - %d\n", id));
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				return;
+			}
+
+			try {
+				if (writter != null)
+					writter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		public void stopMonitoring() {
+			// System.out.println("MonitorBuffers: Stop monitoring");
+			stopFlag.set(true);
+			this.interrupt();
 		}
 	}
 }
