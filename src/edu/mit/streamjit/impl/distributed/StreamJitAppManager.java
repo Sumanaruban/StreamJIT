@@ -523,8 +523,9 @@ public class StreamJitAppManager {
 		}
 		System.out.println("minOutputBufCapacity requirement");
 		for (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet()) {
-			System.out.println(en.getKey() + " - " + en.getValue() + " - "
-					+ minSteadyOutputBufCapacity.get(en.getKey()));
+			System.out.println(en.getKey() + "\t\t - " + en.getValue()
+					+ "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey())
+					+ "\t\t - " + finalInputBuf.get(en.getKey()));
 		}
 
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
