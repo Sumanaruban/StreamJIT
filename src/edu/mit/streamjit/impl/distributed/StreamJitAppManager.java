@@ -358,8 +358,8 @@ public class StreamJitAppManager {
 		Map<Token, Integer> IORatio = new HashMap<>();
 
 		for (BufferSizes b : ciP.bufSizes.values()) {
-			minInputBufCapacity.putAll(b.minInputBufCapacity);
-			minOutputBufCapacity.putAll(b.minOutputBufCapacity);
+			minInputBufCapacity.putAll(b.minInitInputBufCapacity);
+			minOutputBufCapacity.putAll(b.minInitOutputBufCapacity);
 		}
 		System.out.println("minInputBufCapacity requirement");
 		for (Map.Entry<Token, Integer> en : minInputBufCapacity.entrySet()) {
@@ -418,34 +418,31 @@ public class StreamJitAppManager {
 	 */
 	private void sendNewbufSizes2() {
 		class bufInfo {
-			int input;
-			int output;
+			int steadyInput;
+			int steadyOutput;
+			int initInput;
+			int initOutput;
 			Variable outVar;
 			Variable inVar;
 
 			void addconstrain(ILPSolver solver) {
-				LinearExpr exp = outVar.asLinearExpr(output)
-						.minus(input, inVar);
-				solver.constrainAtLeast(exp, 0);
+				LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
+						steadyInput, inVar);
+				solver.constrainAtLeast(exp, (initInput - initOutput));
 			}
 		}
 
-		Map<Token, Integer> minInputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minOutputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
 
 		for (BufferSizes b : ciP.bufSizes.values()) {
-			minInputBufCapacity.putAll(b.minInputBufCapacity);
-			minOutputBufCapacity.putAll(b.minOutputBufCapacity);
-		}
-
-		System.out.println("minInputBufCapacity requirement");
-		for (Map.Entry<Token, Integer> en : minInputBufCapacity.entrySet()) {
-			System.out.println(en.getKey() + " - " + en.getValue());
-		}
-		System.out.println("minOutputBufCapacity requirement");
-		for (Map.Entry<Token, Integer> en : minOutputBufCapacity.entrySet()) {
-			System.out.println(en.getKey() + " - " + en.getValue());
+			minInitInputBufCapacity.putAll(b.minInitInputBufCapacity);
+			minInitOutputBufCapacity.putAll(b.minInitOutputBufCapacity);
+			minSteadyInputBufCapacity.putAll(b.minSteadyInputBufCapacity);
+			minSteadyOutputBufCapacity.putAll(b.minSteadyOutputBufCapacity);
 		}
 
 		ILPSolver solver = new ILPSolver();
@@ -461,7 +458,8 @@ public class StreamJitAppManager {
 				if (out.isOverallOutput())
 					continue;
 				bufInfo b = new bufInfo();
-				b.output = minOutputBufCapacity.get(out);
+				b.initOutput = minInitOutputBufCapacity.get(out);
+				b.steadyOutput = minSteadyOutputBufCapacity.get(out);
 				b.outVar = v;
 				bufInfos.put(out, b);
 			}
@@ -478,7 +476,8 @@ public class StreamJitAppManager {
 				bufInfo b = bufInfos.get(in);
 				if (b == null)
 					throw new IllegalStateException("No buffer info");
-				b.input = minInputBufCapacity.get(in);
+				b.initInput = minInitInputBufCapacity.get(in);
+				b.steadyInput = minSteadyInputBufCapacity.get(in);
 				b.inVar = v;
 				b.addconstrain(solver);
 			}
@@ -502,9 +501,12 @@ public class StreamJitAppManager {
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
-				int outSize = minOutputBufCapacity.get(out);
-				int inSize = minInputBufCapacity.get(out);
-				int newInSize = Math.max(outSize * mul, inSize);
+				int initOut = minInitOutputBufCapacity.get(out);
+				int steadyOut = minSteadyOutputBufCapacity.get(out);
+				int initIn = minInitInputBufCapacity.get(out);
+				int steadyIn = minSteadyInputBufCapacity.get(out);
+				int inMax = Math.max(initIn, steadyIn);
+				int newInSize = Math.max(initOut + steadyOut * mul, inMax);
 				finalInputBufCapacity.put(out, newInSize);
 			}
 		}
@@ -512,9 +514,17 @@ public class StreamJitAppManager {
 		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
 				.build();
 
-		System.out.println("finalInputBufCapacity");
-		for (Map.Entry<Token, Integer> en : finalInputBuf.entrySet()) {
-			System.out.println(en.getKey() + " - " + en.getValue());
+		System.out
+				.println("InputBufCapacity \t\t - Init \t\t - Steady \t\t - final");
+		for (Map.Entry<Token, Integer> en : minInitInputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + "\t\t - " + en.getValue()
+					+ "\t\t - " + minSteadyInputBufCapacity.get(en.getKey())
+					+ "\t\t - " + finalInputBuf.get(en.getKey()));
+		}
+		System.out.println("minOutputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue() + " - "
+					+ minSteadyOutputBufCapacity.get(en.getKey()));
 		}
 
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
