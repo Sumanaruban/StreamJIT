@@ -91,22 +91,31 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * blobs.
 	 */
 	private void sendBuffersizes() {
-		ImmutableMap.Builder<Token, Integer> minInputBufCapaciyBuilder = new ImmutableMap.Builder<>();
-		ImmutableMap.Builder<Token, Integer> minOutputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minInitInputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minInitOutputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minSteadyInputBufCapacityBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minSteadyOutputBufCapacityBuilder = new ImmutableMap.Builder<>();
 		for (Blob b : blobSet) {
 			for (Token t : b.getInputs()) {
-				minInputBufCapaciyBuilder.put(t, b.getMinimumBufferCapacity(t));
+				minInitInputBufCapaciyBuilder.put(t,
+						b.getMinimumInitBufferCapacity(t));
+				minSteadyInputBufCapacityBuilder.put(t,
+						b.getMinimumSteadyBufferCapacity(t));
 			}
 
 			for (Token t : b.getOutputs()) {
-				minOutputBufCapaciyBuilder
-						.put(t, b.getMinimumBufferCapacity(t));
+				minInitOutputBufCapaciyBuilder.put(t,
+						b.getMinimumInitBufferCapacity(t));
+				minSteadyOutputBufCapacityBuilder.put(t,
+						b.getMinimumSteadyBufferCapacity(t));
 			}
 		}
 
 		SNMessageElement bufSizes = new CompilationInfo.BufferSizes(
-				streamNode.getNodeID(), minInputBufCapaciyBuilder.build(),
-				minOutputBufCapaciyBuilder.build());
+				streamNode.getNodeID(), minInitInputBufCapaciyBuilder.build(),
+				minInitOutputBufCapaciyBuilder.build(),
+				minSteadyInputBufCapacityBuilder.build(),
+				minSteadyOutputBufCapacityBuilder.build());
 
 		try {
 			streamNode.controllerConnection.writeObject(bufSizes);
@@ -152,7 +161,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		/**
 		 * bufScale must be at least 2. Otherwise deadlock may occur.
 		 */
-		final int bufScale = 2;
+		final int bufScale = 1;
 		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
 				.<Token, Buffer> builder();
 
