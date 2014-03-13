@@ -217,6 +217,12 @@ public class Interpreter implements Blob {
 	}
 
 	@Override
+	public int getMinimumSteadyBufferCapacity(Token token) {
+		Integer i = minimumBufferSizes.get(token);
+		return (i != null) ? i : 1;
+	}
+
+	@Override
 	public void installBuffers(Map<Token, Buffer> buffers) {
 		ImmutableMap.Builder<Channel<?>, Buffer> inputBufferBuilder = ImmutableMap.builder(), outputBufferBuilder = ImmutableMap.builder();
 		for (IOInfo info : ioinfo) {
