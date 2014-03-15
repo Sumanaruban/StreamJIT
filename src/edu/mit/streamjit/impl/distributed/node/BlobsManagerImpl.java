@@ -902,7 +902,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		public void run() {
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(60000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
