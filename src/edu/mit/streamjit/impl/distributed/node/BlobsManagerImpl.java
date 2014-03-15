@@ -71,6 +71,13 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	private final ImmutableSet<Blob> blobSet;
 
+	/**
+	 * if true {@link DrainDeadLockHandler} will be used to unlock the draining
+	 * time dead lock. Otherwise dynamic buffer will be used for local buffers
+	 * to handled drain time data growth.
+	 */
+	private final boolean useDrainDeadLockHandler;
+
 	public BlobsManagerImpl(ImmutableSet<Blob> blobSet,
 			Map<Token, TCPConnectionInfo> conInfoMap, StreamNode streamNode,
 			TCPConnectionProvider conProvider) {
@@ -83,7 +90,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl();
 		this.blobSet = blobSet;
 		this.drainDeadLockHandler = null;
-
+		this.useDrainDeadLockHandler = false;
 		sendBuffersizes();
 	}
 
@@ -200,25 +207,25 @@ public class BlobsManagerImpl implements BlobsManager {
 			// TODO: doubling the local buffer sizes. Without this deadlock
 			// occurred when draining. Need to find out exact reason. See
 			// StreamJit/Deadlock/deadlock folder.
-			addBuffer(t, bufScale * (2 * outbufSize + finalbufSize),
-					bufferMapBuilder);
+			addBuffer(t, bufScale * (4 * outbufSize + finalbufSize),
+					bufferMapBuilder, true);
 		}
 
 		for (Token t : globalInputTokens) {
 			int localbufSize = minInputBufCapaciy.get(t);
 			if (t.isOverallInput()) {
-				addBuffer(t, bufScale * localbufSize, bufferMapBuilder);
+				addBuffer(t, bufScale * localbufSize, bufferMapBuilder, false);
 				continue;
 			}
 
 			int finalbufSize = finalMinInputCapacity.get(t);
 			assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-			addBuffer(t, bufScale * finalbufSize, bufferMapBuilder);
+			addBuffer(t, bufScale * finalbufSize, bufferMapBuilder, false);
 		}
 
 		for (Token t : globalOutputTokens) {
 			int bufSize = minOutputBufCapaciy.get(t);
-			addBuffer(t, bufScale * bufSize, bufferMapBuilder);
+			addBuffer(t, bufScale * bufSize, bufferMapBuilder, false);
 		}
 		return bufferMapBuilder.build();
 	}
@@ -230,12 +237,25 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * @param bufferMapBuilder
 	 */
 	private void addBuffer(Token t, int minSize,
-			ImmutableMap.Builder<Token, Buffer> bufferMapBuilder) {
-		// TODO: Just to increase the performance. Change it later
+			ImmutableMap.Builder<Token, Buffer> bufferMapBuilder, boolean dyn) {
 		int bufSize = Math.max(1000, minSize);
-		// System.out.println("Buffer size of " + t.toString() + " is " +
-		// bufSize);
-		bufferMapBuilder.put(t, new ConcurrentArrayBuffer(bufSize));
+
+		if (useDrainDeadLockHandler)
+			dyn = false;
+
+		Buffer buf;
+		if (dyn) {
+			// System.out.println("Dynaimc Buffer size of " + t.toString()
+			//		+ " is " + bufSize);
+			buf = new DynamicBuffer(t.toString(), ConcurrentArrayBuffer.class,
+					ImmutableList.of(bufSize), bufSize, 0);
+		} else {
+			// System.out.println("Static Buffer size of " + t.toString() + " is "
+			//		+ bufSize);
+			buf = new ConcurrentArrayBuffer(bufSize);
+		}
+
+		bufferMapBuilder.put(t, buf);
 	}
 
 	private long gcd(long a, long b) {
@@ -441,18 +461,20 @@ public class BlobsManagerImpl implements BlobsManager {
 			// System.out.println("Blob " + blobID +
 			// "this.blob.drain(dcb); passed");
 
-			boolean isLastBlob = true;
-			for (BlobExecuter be : blobExecuters) {
-				if (be.drainState == 0) {
-					isLastBlob = false;
-					break;
+			if (useDrainDeadLockHandler) {
+				boolean isLastBlob = true;
+				for (BlobExecuter be : blobExecuters) {
+					if (be.drainState == 0) {
+						isLastBlob = false;
+						break;
+					}
 				}
-			}
 
-			if (isLastBlob && drainDeadLockHandler == null) {
-				System.out.println("****Starting DrainDeadLockHandler***");
-				drainDeadLockHandler = new DrainDeadLockHandler();
-				drainDeadLockHandler.start();
+				if (isLastBlob && drainDeadLockHandler == null) {
+					System.out.println("****Starting DrainDeadLockHandler***");
+					drainDeadLockHandler = new DrainDeadLockHandler();
+					drainDeadLockHandler.start();
+				}
 			}
 		}
 
