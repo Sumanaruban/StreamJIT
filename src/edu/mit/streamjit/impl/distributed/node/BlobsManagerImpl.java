@@ -206,8 +206,8 @@ public class BlobsManagerImpl implements BlobsManager {
 			int outbufSize = minOutputBufCapaciy.get(t);
 			// TODO: doubling the local buffer sizes. Without this deadlock
 			// occurred when draining. Need to find out exact reason. See
-			// StreamJit/Deadlock/deadlock folder.
-			addBuffer(t, bufScale * (4 * outbufSize + finalbufSize),
+			// StreamJit/Deadlock/deadloc2 folder.
+			addBuffer(t, bufScale * (2 * (outbufSize + finalbufSize)),
 					bufferMapBuilder, true);
 		}
 
