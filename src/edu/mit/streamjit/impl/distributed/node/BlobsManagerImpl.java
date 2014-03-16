@@ -246,12 +246,12 @@ public class BlobsManagerImpl implements BlobsManager {
 		Buffer buf;
 		if (dyn) {
 			// System.out.println("Dynaimc Buffer size of " + t.toString()
-			//		+ " is " + bufSize);
+			// + " is " + bufSize);
 			buf = new DynamicBuffer(t.toString(), ConcurrentArrayBuffer.class,
 					ImmutableList.of(bufSize), bufSize, 0);
 		} else {
-			// System.out.println("Static Buffer size of " + t.toString() + " is "
-			//		+ bufSize);
+			// System.out.println("Static Buffer size of " + t.toString() +
+			// " is " + bufSize);
 			buf = new ConcurrentArrayBuffer(bufSize);
 		}
 
@@ -385,7 +385,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			for (Thread t : blobThreads)
 				t.start();
 
-			System.out.println(blobID + " started");
+			// System.out.println(blobID + " started");
 		}
 
 		private void stop() {
@@ -471,7 +471,7 @@ public class BlobsManagerImpl implements BlobsManager {
 				}
 
 				if (isLastBlob && drainDeadLockHandler == null) {
-					System.out.println("****Starting DrainDeadLockHandler***");
+					// System.out.println("****Starting DrainDeadLockHandler***");
 					drainDeadLockHandler = new DrainDeadLockHandler();
 					drainDeadLockHandler.start();
 				}
@@ -841,7 +841,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		@Override
 		public void process(FinalBufferSizes finalBufferSizes) {
-			System.out.println("Processing FinalBufferSizes");
+			// System.out.println("Processing FinalBufferSizes");
 			bufferMap = createBufferMap(blobSet,
 					finalBufferSizes.minInputBufCapacity);
 

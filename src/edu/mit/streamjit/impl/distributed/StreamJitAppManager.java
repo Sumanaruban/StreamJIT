@@ -497,8 +497,8 @@ public class StreamJitAppManager {
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
-			System.out.println("Multiplication factor of blob "
-					+ blob.toString() + " is " + mul);
+			// System.out.println("Multiplication factor of blob "
+			// + blob.toString() + " is " + mul);
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
@@ -515,19 +515,20 @@ public class StreamJitAppManager {
 		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
 				.build();
 
-		System.out
-				.println("InputBufCapacity \t\t - Init \t\t - Steady \t\t - final");
-		for (Map.Entry<Token, Integer> en : minInitInputBufCapacity.entrySet()) {
-			System.out.println(en.getKey() + "\t\t - " + en.getValue()
-					+ "\t\t - " + minSteadyInputBufCapacity.get(en.getKey())
-					+ "\t\t - " + finalInputBuf.get(en.getKey()));
-		}
-		System.out.println("minOutputBufCapacity requirement");
-		for (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet()) {
-			System.out.println(en.getKey() + "\t\t - " + en.getValue()
-					+ "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey())
-					+ "\t\t - " + finalInputBuf.get(en.getKey()));
-		}
+		/*
+		 * System.out
+		 * .println("InputBufCapacity \t\t - Init \t\t - Steady \t\t - final");
+		 * for (Map.Entry<Token, Integer> en :
+		 * minInitInputBufCapacity.entrySet()) { System.out.println(en.getKey()
+		 * + "\t\t - " + en.getValue() + "\t\t - " +
+		 * minSteadyInputBufCapacity.get(en.getKey()) + "\t\t - " +
+		 * finalInputBuf.get(en.getKey())); }
+		 * System.out.println("minOutputBufCapacity requirement"); for
+		 * (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet())
+		 * { System.out.println(en.getKey() + "\t\t - " + en.getValue() +
+		 * "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey()) + "\t\t - " +
+		 * finalInputBuf.get(en.getKey())); }
+		 */
 
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 				finalInputBuf);
