@@ -547,7 +547,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		@Override
 		public void process(FinalBufferSizes finalBufferSizes) {
-			System.out.println("Processing FinalBufferSizes");
+			// System.out.println("Processing FinalBufferSizes");
 			bufferManager.initialise2(finalBufferSizes.minInputBufCapacity);
 			assert bufferManager.isbufferSizesReady() == true : "bufferSizes are not ready";
 			createBEs(blobSet);
