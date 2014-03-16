@@ -203,7 +203,7 @@ class BlobExecuter {
 			}
 
 			if (isLastBlob && this.blobsManagerImpl.bufferCleaner == null) {
-				System.out.println("****Starting BufferCleaner***");
+				// System.out.println("****Starting BufferCleaner***");
 				this.blobsManagerImpl.bufferCleaner = this.blobsManagerImpl.new BufferCleaner(
 						drainType == DrainType.INTERMEDIATE);
 				this.blobsManagerImpl.bufferCleaner.start();
@@ -401,7 +401,7 @@ class BlobExecuter {
 		for (Thread t : blobThreads)
 			t.start();
 
-		System.out.println(blobID + " started");
+		// System.out.println(blobID + " started");
 	}
 
 	void startChannels() {
