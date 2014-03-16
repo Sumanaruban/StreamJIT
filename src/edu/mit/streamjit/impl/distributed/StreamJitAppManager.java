@@ -499,7 +499,8 @@ public class StreamJitAppManager {
 			void addconstrain(ILPSolver solver) {
 				LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
 						steadyInput, inVar);
-				solver.constrainAtLeast(exp, (initInput - initOutput));
+				solver.constrainAtLeast(exp,
+						(initInput + steadyInput - initOutput));
 			}
 		}
 
