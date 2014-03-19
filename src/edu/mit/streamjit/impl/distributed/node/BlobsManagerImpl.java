@@ -463,7 +463,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 			if (useDrainDeadLockHandler) {
 				boolean isLastBlob = true;
-				for (BlobExecuter be : blobExecuters) {
+				for (BlobExecuter be : blobExecuters.values()) {
 					if (be.drainState == 0) {
 						isLastBlob = false;
 						break;
@@ -532,7 +532,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			}
 
 			boolean isLastBlob = true;
-			for (BlobExecuter be : blobExecuters) {
+			for (BlobExecuter be : blobExecuters.values()) {
 				if (be.drainState < 4) {
 					isLastBlob = false;
 					break;
@@ -850,13 +850,14 @@ public class BlobsManagerImpl implements BlobsManager {
 			}
 
 			Set<Token> locaTokens = getLocalTokens(blobSet);
-			blobExecuters = new HashSet<>();
+			blobExecuters = new HashMap<>();
 			for (Blob b : blobSet) {
+				Token t = Utils.getBlobID(b);
 				ImmutableMap<Token, BoundaryInputChannel> inputChannels = createInputChannels(
 						Sets.difference(b.getInputs(), locaTokens), bufferMap);
 				ImmutableMap<Token, BoundaryOutputChannel> outputChannels = createOutputChannels(
 						Sets.difference(b.getOutputs(), locaTokens), bufferMap);
-				blobExecuters.add(new BlobExecuter(b, inputChannels,
+				blobExecuters.put(t, new BlobExecuter(t, b, inputChannels,
 						outputChannels));
 			}
 
@@ -951,7 +952,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 			while (run.get()) {
 				areAllDrained = true;
-				for (BlobExecuter be : blobExecuters) {
+				for (BlobExecuter be : blobExecuters.values()) {
 					if (be.drainState == 1 || be.drainState == 2) {
 						// System.out.println(be.blobID + " is not drained");
 						areAllDrained = false;
