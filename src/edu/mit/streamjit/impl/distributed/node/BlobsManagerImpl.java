@@ -72,6 +72,12 @@ public class BlobsManagerImpl implements BlobsManager {
 	private final ImmutableSet<Blob> blobSet;
 
 	/**
+	 * Following two are added for monitoring purpose.
+	 */
+	private ImmutableMap<Token, Integer> minSteadyInputBufCapacity;
+	private ImmutableMap<Token, Integer> minSteadyOutputBufCapacity;
+
+	/**
 	 * if true {@link DrainDeadLockHandler} will be used to unlock the draining
 	 * time dead lock. Otherwise dynamic buffer will be used for local buffers
 	 * to handled drain time data growth.
@@ -121,11 +127,12 @@ public class BlobsManagerImpl implements BlobsManager {
 			}
 		}
 
+		minSteadyOutputBufCapacity = minSteadyOutputBufCapacityBuilder.build();
+		minSteadyInputBufCapacity = minSteadyInputBufCapacityBuilder.build();
 		SNMessageElement bufSizes = new CompilationInfo.BufferSizes(
 				streamNode.getNodeID(), minInitInputBufCapaciyBuilder.build(),
 				minInitOutputBufCapaciyBuilder.build(),
-				minSteadyInputBufCapacityBuilder.build(),
-				minSteadyOutputBufCapacityBuilder.build());
+				minSteadyInputBufCapacity, minSteadyOutputBufCapacity);
 
 		try {
 			streamNode.controllerConnection.writeObject(bufSizes);
@@ -629,18 +636,18 @@ public class BlobsManagerImpl implements BlobsManager {
 		private final BlobExecuter blobExec;
 		// TODO: [2014-03-17] Just to added for checking the drain time. Remove
 		// it later.
-		private final Stopwatch sw;
+		// private final Stopwatch sw;
 
 		DrainCallback(BlobExecuter be) {
 			this.blobExec = be;
-			sw = Stopwatch.createStarted();
+			// sw = Stopwatch.createStarted();
 		}
 
 		@Override
 		public void run() {
-			sw.stop();
-			System.out.println("Time taken to drain " + blobExec.blobID
-					+ " is " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
+			// sw.stop();
+			// System.out.println("Time taken to drain " + blobExec.blobID
+			// + " is " + sw.elapsed(TimeUnit.MILLISECONDS) + " ms");
 			blobExec.drained();
 		}
 	}
@@ -874,7 +881,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	private class MonitorBuffers extends Thread {
 		private final int id;
 		private final AtomicBoolean stopFlag;
-		int sleepTime = 25000;
+		int sleepTime = 2000;
 		MonitorBuffers() {
 			super("MonitorBuffers");
 			stopFlag = new AtomicBoolean(false);
@@ -885,7 +892,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			FileWriter writter = null;
 			try {
 				writter = new FileWriter(String.format("BufferStatus%d.txt",
-						streamNode.getNodeID()), false);
+						streamNode.getNodeID()), true);
 
 				writter.write(String.format(
 						"********Started*************** - %d\n", id));
@@ -901,10 +908,35 @@ public class BlobsManagerImpl implements BlobsManager {
 					if (stopFlag.get())
 						break;
 					writter.write("----------------------------------\n");
-					for (Map.Entry<Token, Buffer> en : bufferMap.entrySet()) {
-						writter.write(en.getKey() + " - "
-								+ en.getValue().size());
-						writter.write('\n');
+					for (BlobExecuter be : blobExecuters.values()) {
+						writter.write("Status of blob " + be.blobID.toString()
+								+ "\n");
+						writter.write("Input channel details\n");
+						for (Token t : be.inputChannels.keySet()) {
+							Buffer b = bufferMap.get(t);
+							if (b == null)
+								continue;
+							int min = minSteadyInputBufCapacity.get(t);
+							int size = b.size();
+							String status = size > min
+									? "Firable"
+									: "NOT firable";
+							writter.write(t.toString() + "\tMin - " + min
+									+ ",\tSize - " + size + "\t" + status
+									+ "\n");
+						}
+						writter.write("Outpuy channel details\n");
+						for (Token t : be.outputChannels.keySet()) {
+							Buffer b = bufferMap.get(t);
+							if (b == null)
+								continue;
+							int min = minSteadyOutputBufCapacity.get(t);
+							int size = b.size();
+							String status = size == 0 ? "Empty" : "NOT Empty";
+							writter.write(t.toString() + "\tMin - " + min
+									+ ",\tSize - " + size + "\t" + status
+									+ "\n");
+						}
 					}
 					writter.write("----------------------------------\n");
 					writter.flush();
