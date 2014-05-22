@@ -87,15 +87,9 @@ public class TCPInputChannel implements BoundaryInputChannel {
 		writer = w;
 	}
 
-	@Override
-	public void closeConnection() throws IOException {
+	private void closeConnection() throws IOException {
 		// tcpConnection.closeConnection();
 		this.isClosed = true;
-	}
-
-	@Override
-	public boolean isStillConnected() {
-		return tcpConnection.isStillConnected();
 	}
 
 	@Override
@@ -145,7 +139,7 @@ public class TCPInputChannel implements BoundaryInputChannel {
 		int bufFullCount = 0;
 		try {
 			Object obj = tcpConnection.readObject();
-			if(obj == null)	// [2014-03-15] Sometimes null is received.
+			if (obj == null) // [2014-03-15] Sometimes null is received.
 				return;
 			count++;
 
@@ -337,11 +331,6 @@ public class TCPInputChannel implements BoundaryInputChannel {
 				}
 			}
 		}
-	}
-
-	@Override
-	public int getOtherNodeID() {
-		return 0;
 	}
 
 	@Override
