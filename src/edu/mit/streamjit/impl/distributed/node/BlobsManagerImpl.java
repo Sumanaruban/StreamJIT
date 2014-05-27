@@ -73,8 +73,6 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	Map<Token, BlobExecuter> blobExecuters;
 
-	private final ImmutableSet<Blob> blobSet;
-
 	final BufferManager bufferManager;
 
 	private final CommandProcessor cmdProcessor;
@@ -121,8 +119,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		this.cmdProcessor = new CommandProcessorImpl();
 		this.drainProcessor = new CTRLRDrainProcessorImpl();
-		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl();
-		this.blobSet = blobSet;
+		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl(blobSet);
 		this.bufferManager = new GlobalBufferManager(blobSet, streamNode);
 		this.affinityManager = new AffinityManagers.EmptyAffinityManager();
 
@@ -541,9 +538,14 @@ public class BlobsManagerImpl implements BlobsManager {
 		}
 	}
 
-	private class CTRLCompilationInfoProcessorImpl
-			implements
-				CTRLCompilationInfoProcessor {
+	private class CTRLCompilationInfoProcessorImpl implements
+			CTRLCompilationInfoProcessor {
+
+		private final ImmutableSet<Blob> blobSet;
+
+		private CTRLCompilationInfoProcessorImpl(ImmutableSet<Blob> blobSet) {
+			this.blobSet = blobSet;
+		}
 
 		@Override
 		public void process(FinalBufferSizes finalBufferSizes) {
