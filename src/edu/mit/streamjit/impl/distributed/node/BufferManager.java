@@ -293,7 +293,8 @@ public interface BufferManager {
 			}
 
 			SNMessageElement bufSizes = new CompilationInfo.BufferSizes(
-					streamNode.getNodeID(), minInitInputBufCapaciyBuilder.build(),
+					streamNode.getNodeID(),
+					minInitInputBufCapaciyBuilder.build(),
 					minInitOutputBufCapaciyBuilder.build(),
 					minSteadyInputBufCapacityBuilder.build(),
 					minSteadyOutputBufCapacityBuilder.build());
@@ -347,7 +348,8 @@ public interface BufferManager {
 				// TODO: doubling the local buffer sizes. Without this deadlock
 				// occurred when draining. Need to find out exact reason. See
 				// StreamJit/Deadlock/deadlock folder.
-				addBuffer(t, bufScale * (outbufSize + finalbufSize), bufferSizeMapBuilder);
+				addBuffer(t, bufScale * (4 * outbufSize + finalbufSize),
+						bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalInputTokens) {
