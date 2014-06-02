@@ -42,6 +42,8 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.FinalBufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
@@ -49,6 +51,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BufferManager.SNLocalBufferManager;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
@@ -56,6 +59,7 @@ import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStat
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData.BlobBufferStatus;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData.BufferStatus;
 import edu.mit.streamjit.impl.distributed.profiler.StreamNodeProfiler;
+import edu.mit.streamjit.impl.distributed.node.BufferManager.GlobalBufferManager;
 
 /**
  * {@link BlobsManagerImpl} responsible to run all {@link Blob}s those are
@@ -68,9 +72,13 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	Map<Token, BlobExecuter> blobExecuters;
 
+	private final ImmutableSet<Blob> blobSet;
+
 	final BufferManager bufferManager;
 
 	private final CommandProcessor cmdProcessor;
+
+	private final CTRLCompilationInfoProcessor compInfoProcessor;
 
 	private final Map<Token, ConnectionInfo> conInfoMap;
 
@@ -112,7 +120,9 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		this.cmdProcessor = new CommandProcessorImpl();
 		this.drainProcessor = new CTRLRDrainProcessorImpl();
-		this.bufferManager = new SNLocalBufferManager(blobSet);
+		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl();
+		this.blobSet = blobSet;
+		this.bufferManager = new GlobalBufferManager(blobSet, streamNode);
 		this.affinityManager = new AffinityManagers.EmptyAffinityManager();
 
 		this.appName = appName;
@@ -141,6 +151,10 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	public CTRLRDrainProcessor getDrainProcessor() {
 		return drainProcessor;
+	}
+
+	public CTRLCompilationInfoProcessor getCompilationInfoProcessor() {
+		return compInfoProcessor;
 	}
 
 	public void reqDrainedData(Set<Token> blobSet) {
@@ -491,6 +505,25 @@ public class BlobsManagerImpl implements BlobsManager {
 				destPos += array.length;
 			}
 			return mergedArray;
+		}
+	}
+
+	private class CTRLCompilationInfoProcessorImpl
+			implements
+				CTRLCompilationInfoProcessor {
+
+		@Override
+		public void process(FinalBufferSizes finalBufferSizes) {
+			System.out.println("Processing FinalBufferSizes");
+			bufferManager.initialise2(finalBufferSizes.minInputBufCapacity);
+			assert bufferManager.isbufferSizesReady() == true : "bufferSizes are not ready";
+			createBEs(blobSet);
+
+			try {
+				streamNode.controllerConnection.writeObject(AppStatus.COMPILED);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

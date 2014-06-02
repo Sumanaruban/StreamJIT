@@ -1,5 +1,6 @@
 package edu.mit.streamjit.impl.distributed.node;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import com.google.common.collect.Sets;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.ConcurrentArrayLocalBuffer;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.LocalBuffer1;
 
@@ -239,6 +241,134 @@ public interface BufferManager {
 				addBufferSize(t, bufSize, bufferSizeMapBuilder);
 			}
 			return bufferSizeMapBuilder.build();
+		}
+	}
+
+	public static class GlobalBufferManager extends AbstractBufferManager {
+
+		private final StreamNode streamNode;
+
+		public GlobalBufferManager(Set<Blob> blobSet, StreamNode streamNode) {
+			super(blobSet);
+			this.streamNode = streamNode;
+		}
+
+		@Override
+		public void initialise() {
+			sendBuffersizes();
+		}
+
+		@Override
+		public void initialise2(Map<Token, Integer> minInputBufSizes) {
+			bufferSizes = calculateBufferSizes(blobSet, minInputBufSizes);
+			createLocalBuffers();
+			isbufferSizesReady = true;
+		}
+
+		/**
+		 * Sends all blob's minimum buffer capacity requirement to the
+		 * {@link Controller}. Controller decides suitable buffer capacity of
+		 * each buffer in order to avoid deadlock and sends the final values
+		 * back to the blobs.
+		 */
+		private void sendBuffersizes() {
+			ImmutableMap.Builder<Token, Integer> minInputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+			ImmutableMap.Builder<Token, Integer> minOutputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+			for (Blob b : blobSet) {
+				for (Token t : b.getInputs()) {
+					minInputBufCapaciyBuilder.put(t,
+							b.getMinimumBufferCapacity(t));
+				}
+
+				for (Token t : b.getOutputs()) {
+					minOutputBufCapaciyBuilder.put(t,
+							b.getMinimumBufferCapacity(t));
+				}
+			}
+
+			SNMessageElement bufSizes = new CompilationInfo.BufferSizes(
+					streamNode.getNodeID(), minInputBufCapaciyBuilder.build(),
+					minOutputBufCapaciyBuilder.build());
+
+			try {
+				streamNode.controllerConnection.writeObject(bufSizes);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		// TODO: Buffer sizes, including head and tail buffers, must be
+		// optimized.
+		// consider adding some tuning factor
+		private ImmutableMap<Token, Integer> calculateBufferSizes(
+				Set<Blob> blobSet, Map<Token, Integer> finalMinInputCapacity) {
+			ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder = ImmutableMap
+					.builder();
+
+			Map<Token, Integer> minInputBufCapaciy = new HashMap<>();
+			Map<Token, Integer> minOutputBufCapaciy = new HashMap<>();
+
+			for (Blob b : blobSet) {
+				Set<Blob.Token> inputs = b.getInputs();
+				for (Token t : inputs) {
+					minInputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
+				}
+
+				Set<Blob.Token> outputs = b.getOutputs();
+				for (Token t : outputs) {
+					minOutputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
+				}
+			}
+
+			Set<Token> localTokens = Sets.intersection(
+					minInputBufCapaciy.keySet(), minOutputBufCapaciy.keySet());
+			Set<Token> globalInputTokens = Sets.difference(
+					minInputBufCapaciy.keySet(), localTokens);
+			Set<Token> globalOutputTokens = Sets.difference(
+					minOutputBufCapaciy.keySet(), localTokens);
+
+			for (Token t : localTokens) {
+				int localbufSize = minInputBufCapaciy.get(t);
+				int finalbufSize = finalMinInputCapacity.get(t);
+				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
+				int bufSize = Math
+						.max(finalbufSize, minOutputBufCapaciy.get(t));
+				addBuffer(t, bufSize, bufferSizeMapBuilder);
+			}
+
+			for (Token t : globalInputTokens) {
+				int localbufSize = minInputBufCapaciy.get(t);
+				if (t.isOverallInput()) {
+					addBuffer(t, localbufSize, bufferSizeMapBuilder);
+					continue;
+				}
+
+				int finalbufSize = finalMinInputCapacity.get(t);
+				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
+				addBuffer(t, finalbufSize, bufferSizeMapBuilder);
+			}
+
+			for (Token t : globalOutputTokens) {
+				int bufSize = minOutputBufCapaciy.get(t);
+				addBuffer(t, bufSize, bufferSizeMapBuilder);
+			}
+			return bufferSizeMapBuilder.build();
+		}
+
+		/**
+		 * Just introduced to avoid code duplication.
+		 * 
+		 * @param t
+		 * @param minSize
+		 * @param bufferMapBuilder
+		 */
+		private void addBuffer(Token t, int minSize,
+				ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder) {
+			// TODO: Just to increase the performance. Change it later
+			int bufSize = Math.max(1000, minSize);
+			// System.out.println("Buffer size of " + t.toString() + " is " +
+			// bufSize);
+			bufferSizeMapBuilder.put(t, bufSize);
 		}
 	}
 }

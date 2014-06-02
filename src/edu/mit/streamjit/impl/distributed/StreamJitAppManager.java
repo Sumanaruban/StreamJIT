@@ -24,6 +24,7 @@ package edu.mit.streamjit.impl.distributed;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,6 +41,7 @@ import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
@@ -48,6 +50,8 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Command;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
@@ -71,6 +75,10 @@ import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
+/**
+ * @author Sumanan sumanan@mit.edu
+ * @since Oct 30, 2013
+ */
 public class StreamJitAppManager {
 
 	private final StreamJitApp<?, ?> app;
@@ -82,6 +90,8 @@ public class StreamJitAppManager {
 	private final ConnectionManager conManager;
 
 	private final Controller controller;
+
+	private CompilationInfoProcessorImpl ciP = null;
 
 	private SNDrainProcessorImpl dp = null;
 
@@ -130,6 +140,7 @@ public class StreamJitAppManager {
 
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
 			ConnectionManager conManager, TimeLogger logger) {
+		int noOfnodes = controller.getAllNodeIDs().size();
 		this.controller = controller;
 		this.app = app;
 		this.conManager = conManager;
@@ -138,8 +149,8 @@ public class StreamJitAppManager {
 		this.status = AppStatus.NOT_STARTED;
 		this.exP = new SNExceptionProcessorImpl();
 		this.ep = new ErrorProcessorImpl();
-		this.apStsPro = new AppStatusProcessorImpl(controller.getAllNodeIDs()
-				.size());
+		this.apStsPro = new AppStatusProcessorImpl(noOfnodes);
+		this.ciP = new CompilationInfoProcessorImpl(noOfnodes);
 		controller.registerManager(this);
 		controller.newApp(app.getStaticConfiguration()); // TODO: Find a
 															// good calling
@@ -235,6 +246,10 @@ public class StreamJitAppManager {
 		return timeInfoProcessor;
 	}
 
+	public CompilationInfoProcessor compilationInfoProcessor() {
+		return ciP;
+	}
+
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
 		long time = tailChannel.getFixedOutputTime(timeout);
 		if (apStsPro.error) {
@@ -275,6 +290,9 @@ public class StreamJitAppManager {
 
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier);
 
+		ciP.waitforBufSizes();
+		sendNewbufSizes();
+
 		boolean isCompiled = apStsPro.waitForCompilation();
 		logger.compilationFinished(isCompiled, "");
 
@@ -311,6 +329,7 @@ public class StreamJitAppManager {
 	private void reset() {
 		exP.exConInfos = new HashSet<>();
 		apStsPro.reset();
+		ciP.reset();
 	}
 
 	private MasterProfiler setupProfiler() {
@@ -390,6 +409,70 @@ public class StreamJitAppManager {
 						conProvider, conInfo, bufferTokenName, debugLevel,
 						skipCount, steadyCount, appName, cfgPrefix);
 		}
+	}
+
+	/**
+	 * Calculates the input buffer sizes to avoid deadlocks. Added on
+	 * [2014-03-01]
+	 */
+	private void sendNewbufSizes() {
+		Map<Token, Integer> minInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minOutputBufCapacity = new HashMap<>();
+		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
+		Map<Token, Integer> IORatio = new HashMap<>();
+
+		for (BufferSizes b : ciP.bufSizes.values()) {
+			minInputBufCapacity.putAll(b.minInputBufCapacity);
+			minOutputBufCapacity.putAll(b.minOutputBufCapacity);
+		}
+		System.out.println("minInputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minInputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+		System.out.println("minOutputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minOutputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+
+		for (Token t : minInputBufCapacity.keySet()) {
+			if (t.isOverallInput())
+				continue;
+			int outSize = minOutputBufCapacity.get(t);
+			int inSize = minInputBufCapacity.get(t);
+			IORatio.put(t, (int) Math.ceil(((double) inSize) / outSize));
+		}
+
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			int mul = 1;
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				mul = Math.max(mul, IORatio.get(out));
+			}
+			System.out.println("Multiplication factor of blob "
+					+ blob.toString() + " is " + mul);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				int outSize = minOutputBufCapacity.get(out);
+				int inSize = minInputBufCapacity.get(out);
+				int newInSize = Math.max(outSize * mul, inSize);
+				finalInputBufCapacity.put(out, newInSize);
+			}
+		}
+
+		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
+				.build();
+
+		System.out.println("finalInputBufCapacity");
+		for (Map.Entry<Token, Integer> en : finalInputBuf.entrySet()) {
+			System.out.println(en.getKey() + " - " + en.getValue());
+		}
+
+		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
+				finalInputBuf);
+		controller.sendToAll(me);
 	}
 
 	/**
@@ -585,6 +668,52 @@ public class StreamJitAppManager {
 
 		@Override
 		public void process(SNException ex) {
+		}
+	}
+
+	/**
+	 * Added on [2014-03-01]
+	 * 
+	 * @author sumanan
+	 * 
+	 */
+	private class CompilationInfoProcessorImpl
+			implements
+				CompilationInfoProcessor {
+
+		private Map<Integer, BufferSizes> bufSizes;
+
+		private final int noOfnodes;
+		private CountDownLatch bufSizeLatch;
+
+		@Override
+		public void process(BufferSizes bufferSizes) {
+			bufSizes.put(bufferSizes.machineID, bufferSizes);
+			bufSizeLatch.countDown();
+		}
+
+		private CompilationInfoProcessorImpl(int noOfnodes) {
+			this.noOfnodes = noOfnodes;
+		}
+
+		private void reset() {
+			bufSizes = new ConcurrentHashMap<>();
+			bufSizeLatch = new CountDownLatch(noOfnodes);
+		}
+
+		private void waitforBufSizes() {
+			try {
+				bufSizeLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			for (Integer nodeID : controller.getAllNodeIDs()) {
+				if (!bufSizes.containsKey(nodeID)) {
+					throw new AssertionError(
+							"Not all Stream nodes have sent the buffer size info");
+				}
+			}
 		}
 	}
 }
