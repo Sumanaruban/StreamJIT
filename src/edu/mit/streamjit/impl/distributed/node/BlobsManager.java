@@ -23,7 +23,7 @@ package edu.mit.streamjit.impl.distributed.node;
 
 import java.util.Set;
 
-import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.profiler.StreamNodeProfiler;
@@ -42,6 +42,8 @@ public interface BlobsManager {
 	public CTRLRDrainProcessor getDrainProcessor();
 
 	public CommandProcessor getCommandProcessor();
+
+	public CTRLCompilationInfoProcessor getCompilationInfoProcessor();
 
 	/**
 	 * For all final resource cleanup. Mainly all started threads must be
