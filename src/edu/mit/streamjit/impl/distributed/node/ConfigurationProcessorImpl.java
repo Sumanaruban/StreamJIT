@@ -100,12 +100,6 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
 		ImmutableSet<Blob> blobSet = getBlobs(cfg, drainData);
 		if (blobSet != null) {
-			try {
-				streamNode.controllerConnection.writeObject(AppStatus.COMPILED);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
 

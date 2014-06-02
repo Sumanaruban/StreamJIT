@@ -39,5 +39,7 @@ public interface SNMessageVisitor {
 
 	void visit(SNTimeInfo timeInfo);
 
+	void visit(CompilationInfo compilationInfo);
+
 	void visit(SNProfileElement snProfileElement);
 }

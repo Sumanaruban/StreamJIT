@@ -24,6 +24,7 @@ package edu.mit.streamjit.impl.distributed.node;
 import java.io.IOException;
 import java.util.HashSet;
 
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
@@ -36,6 +37,7 @@ import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.MiscCtrlElemen
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Request;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Request.RequestProcessor;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
@@ -98,6 +100,18 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	@Override
 	public void visit(MiscCtrlElements miscCtrlElements) {
 		miscCtrlElements.process(miscProcessor);
+	}
+
+	@Override
+	public void visit(CTRLCompilationInfo ctrlCompilationInfo) {
+		BlobsManager manager = streamNode.getBlobsManager();
+		if (manager == null) {
+			System.err.println("No AppStatusProcessor processor.");
+			return;
+		}
+		CTRLCompilationInfoProcessor cip = manager
+				.getCompilationInfoProcessor();
+		ctrlCompilationInfo.process(cip);
 	}
 
 	@Override
