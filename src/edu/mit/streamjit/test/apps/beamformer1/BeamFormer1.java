@@ -40,6 +40,7 @@ public final class BeamFormer1 {
 
 	public static void main(String[] args) throws InterruptedException,
 			IOException {
+		GlobalConstants.outputCount = 50000;
 		int noOfNodes;
 
 		try {

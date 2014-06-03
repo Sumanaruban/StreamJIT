@@ -40,7 +40,7 @@ public final class FMRadio {
 
 	public static void main(String[] args) throws InterruptedException,
 			IOException {
-
+		GlobalConstants.outputCount = 3000;
 		int noOfNodes;
 		try {
 			noOfNodes = Integer.parseInt(args[0]);
@@ -55,7 +55,7 @@ public final class FMRadio {
 		}
 
 		Benchmark benchmark = new FMRadioBenchmarkProvider().iterator().next();
-		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes); //
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes);
 
 		Dataset input = benchmark.inputs().get(0);
 		CompiledStream stream = compiler.compile(benchmark.instantiate(),

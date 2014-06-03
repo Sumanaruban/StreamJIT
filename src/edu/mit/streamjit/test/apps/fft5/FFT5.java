@@ -35,6 +35,7 @@ public final class FFT5 {
 
 	public static void main(String[] args) throws InterruptedException,
 			IOException {
+		GlobalConstants.outputCount = 100000;
 		int noOfNodes;
 		try {
 			noOfNodes = Integer.parseInt(args[0]);
@@ -80,6 +81,7 @@ public final class FFT5 {
 		public FFT5Kernel() {
 			this(128);
 		}
+
 		public FFT5Kernel(int ways) {
 			add(new FFTReorder(ways));
 			for (int j = 2; j <= ways; j *= 2) {
@@ -91,12 +93,14 @@ public final class FFT5 {
 	private static final class CombineDFT extends Filter<Float, Float> {
 		private final float wn_r, wn_i;
 		private final int n;
+
 		private CombineDFT(int n) {
 			super(2 * n, 2 * n, 2 * n);
 			this.n = n;
 			this.wn_r = (float) Math.cos(2 * 3.141592654 / n);
 			this.wn_i = (float) Math.sin(2 * 3.141592654 / n);
 		}
+
 		public void work() {
 			float w_r = 1;
 			float w_i = 0;
@@ -144,11 +148,13 @@ public final class FFT5 {
 	private static final class FFTReorderSimple extends Filter<Float, Float> {
 		private final int totalData;
 		private final int n;
+
 		private FFTReorderSimple(int n) {
 			super(2 * n, 2 * n, 2 * n);
 			this.n = n;
 			this.totalData = 2 * n;
 		}
+
 		public void work() {
 			for (int i = 0; i < totalData; i += 4) {
 				push(peek(i));

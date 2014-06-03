@@ -41,6 +41,7 @@ import java.util.Iterator;
 public final class ChannelVocoder7 implements BenchmarkProvider {
 	public static void main(String[] args) throws InterruptedException,
 			IOException {
+		GlobalConstants.outputCount = 5000;
 		int noOfNodes;
 		try {
 			noOfNodes = Integer.parseInt(args[0]);

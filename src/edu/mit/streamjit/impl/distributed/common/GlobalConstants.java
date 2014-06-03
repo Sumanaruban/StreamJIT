@@ -111,7 +111,7 @@ public final class GlobalConstants {
 	 * Output count for tuning. Tuner measures the running time for this number
 	 * of outputs.
 	 */
-	public static final int outputCount = 10000;
+	public static int outputCount = 10000;
 
 	/**
 	 * if true uses Compiler2, interpreter otherwise.

@@ -39,6 +39,7 @@ public final class FilterBank6 {
 
 	public static void main(String[] args) throws InterruptedException,
 			IOException {
+		GlobalConstants.outputCount = 50000;
 		int noOfNodes;
 		try {
 			noOfNodes = Integer.parseInt(args[0]);
