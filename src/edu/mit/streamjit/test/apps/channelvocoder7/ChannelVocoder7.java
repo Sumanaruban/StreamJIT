@@ -14,11 +14,14 @@ import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.api.WeightedRoundrobinJoiner;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.BenchmarkProvider;
 import edu.mit.streamjit.test.Datasets;
 import edu.mit.streamjit.test.SuppliedBenchmark;
+
+import java.io.IOException;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,12 +39,19 @@ import java.util.Iterator;
  */
 @ServiceProvider(BenchmarkProvider.class)
 public final class ChannelVocoder7 implements BenchmarkProvider {
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException,
+			IOException {
 		int noOfNodes;
 		try {
 			noOfNodes = Integer.parseInt(args[0]);
 		} catch (Exception ex) {
 			noOfNodes = 3;
+		}
+
+		if (GlobalConstants.autoStartStreamNodes) {
+			for (int i = 0; i < noOfNodes; i++)
+				new ProcessBuilder("xterm", "-e", "java", "-jar",
+						"StreamNode.jar").start();
 		}
 
 		Benchmark benchmark = new ChannelVocoder7().iterator().next();

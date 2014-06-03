@@ -17,6 +17,7 @@ import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Datasets;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.BenchmarkProvider;
 
@@ -45,6 +46,12 @@ public final class FMRadio {
 			noOfNodes = Integer.parseInt(args[0]);
 		} catch (Exception ex) {
 			noOfNodes = 3;
+		}
+
+		if (GlobalConstants.autoStartStreamNodes) {
+			for (int i = 0; i < noOfNodes; i++)
+				new ProcessBuilder("xterm", "-e", "java", "-jar",
+						"StreamNode.jar").start();
 		}
 
 		Benchmark benchmark = new FMRadioBenchmarkProvider().iterator().next();

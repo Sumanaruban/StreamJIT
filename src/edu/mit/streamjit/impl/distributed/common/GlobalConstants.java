@@ -139,6 +139,12 @@ public final class GlobalConstants {
 	 */
 	public static final int maxNumCores = 2;
 
+	/**
+	 * StreamJit apps start the StreamNodes locally in a xterm iff this flag is
+	 * <code>true</code>, user has to manually start the StreamNodes otherwise.
+	 */
+	public static final boolean autoStartStreamNodes = true;
+
 	static {
 
 	}

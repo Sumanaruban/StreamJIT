@@ -9,10 +9,13 @@ import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Datasets;
+
+import java.io.IOException;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,13 +33,21 @@ public final class FFT5 {
 	private FFT5() {
 	}
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException,
+			IOException {
 		int noOfNodes;
 		try {
 			noOfNodes = Integer.parseInt(args[0]);
 		} catch (Exception ex) {
 			noOfNodes = 3;
 		}
+
+		if (GlobalConstants.autoStartStreamNodes) {
+			for (int i = 0; i < noOfNodes; i++)
+				new ProcessBuilder("xterm", "-e", "java", "-jar",
+						"StreamNode.jar").start();
+		}
+
 		Benchmark benchmark = new FFT5Benchmark();
 		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes);
 		Dataset input = benchmark.inputs().get(0);

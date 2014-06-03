@@ -42,6 +42,9 @@ import edu.mit.streamjit.test.SuppliedBenchmark;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Datasets;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
+
+import java.io.IOException;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 
@@ -58,13 +61,20 @@ public final class DCT2 {
 	private DCT2() {
 	}
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException,
+			IOException {
 		int noOfNodes;
 
 		try {
 			noOfNodes = Integer.parseInt(args[0]);
 		} catch (Exception ex) {
 			noOfNodes = 3;
+		}
+
+		if (GlobalConstants.autoStartStreamNodes) {
+			for (int i = 0; i < noOfNodes; i++)
+				new ProcessBuilder("xterm", "-e", "java", "-jar",
+						"StreamNode.jar").start();
 		}
 
 		Benchmark benchmark = new DCT2Benchmark();
