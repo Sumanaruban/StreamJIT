@@ -1,24 +1,26 @@
 package edu.mit.streamjit.test.apps.fmradio;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.RoundrobinJoiner;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.OneToOneElement;
+import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Datasets;
-import edu.mit.streamjit.impl.interp.DebugStreamCompiler;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
-import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
+import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.BenchmarkProvider;
-import edu.mit.streamjit.test.Benchmarker;
+
+import java.io.IOException;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,42 +29,51 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * 
  * @author Jeffrey Bosboom <jeffreybosboom@gmail.com>
  * @since 11/8/2012
  */
 public final class FMRadio {
-	private FMRadio() {}
+	private FMRadio() {
+	}
 
-	public static void main(String[] args) throws InterruptedException {
-		Benchmarker.runBenchmarks(new FMRadioBenchmarkProvider(), new DebugStreamCompiler()).get(0).print(System.out);
+	public static void main(String[] args) throws InterruptedException,
+			IOException {
+
+		int noOfNodes;
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+
+		Benchmark benchmark = new FMRadioBenchmarkProvider().iterator().next();
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes); //
+
+		Dataset input = benchmark.inputs().get(0);
+		CompiledStream stream = compiler.compile(benchmark.instantiate(),
+				input.input(), Output.blackHole());
+		stream.awaitDrained();
 	}
 
 	@ServiceProvider(BenchmarkProvider.class)
-	public static final class FMRadioBenchmarkProvider implements BenchmarkProvider {
+	public static final class FMRadioBenchmarkProvider implements
+			BenchmarkProvider {
 		@Override
 		public Iterator<Benchmark> iterator() {
 			Path path = Paths.get("data/fmradio.in");
-			Input<Float> input = Input.fromBinaryFile(path, Float.class, ByteOrder.LITTLE_ENDIAN);
-			input = Datasets.nCopies(1, input);
-			Dataset dataset = new Dataset(path.getFileName().toString(), (Input)input
-					//use (7, 128) for verification
-//					, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/fm/streamit/FMRadio5.out"), Float.class, ByteOrder.LITTLE_ENDIAN))
-			);
-			int[][] bandsTaps = {
-				{7, 128},
-				{11, 64},
-				{5, 64},
-				{7, 64},
-				{9, 64},
-				{5, 128},
-				{9, 128},
-			};
+			Input<Float> input = Input.fromBinaryFile(path, Float.class,
+					ByteOrder.LITTLE_ENDIAN);
+			input = Datasets.nCopies(999999999, input);
+			Dataset dataset = new Dataset(path.getFileName().toString(),
+					(Input) input);
+			int[][] bandsTaps = { { 21, 4096 }, { 5, 64 }, { 7, 64 },
+					{ 9, 64 }, { 5, 128 }, { 7, 128 }, { 9, 128 }, };
 			ImmutableList.Builder<Benchmark> builder = ImmutableList.builder();
 			for (int[] p : bandsTaps)
-				builder.add(new SuppliedBenchmark(String.format("FMRadio %d, %d", p[0], p[1]),
-						FMRadioCore.class, ImmutableList.of(p[0], p[1]),
-						dataset));
+				builder.add(new SuppliedBenchmark(String.format(
+						"FMRadio %d, %d", p[0], p[1]), FMRadioCore.class,
+						ImmutableList.of(p[0], p[1]), dataset));
 			return builder.build().iterator();
 		}
 	}
@@ -155,8 +166,8 @@ public final class FMRadio {
 		private final float[] cutoffs, gains;
 		private final int taps;
 
-		private Equalizer(float rate, final int bands, float[] cutoffs, float[] gains,
-				int taps) {
+		private Equalizer(float rate, final int bands, float[] cutoffs,
+				float[] gains, int taps) {
 			this.rate = rate;
 			this.bands = bands;
 			this.cutoffs = cutoffs;
@@ -225,14 +236,15 @@ public final class FMRadio {
 		private static final float high = 1760;
 
 		public FMRadioCore() {
-			this(11, 64);
+			this(21, 4096);
 		}
 
 		public FMRadioCore(int bands, int taps) {
 			super(makeElements(bands, taps));
 		}
 
-		private static List<OneToOneElement<Float, Float>> makeElements(int bands, int taps) {
+		private static List<OneToOneElement<Float, Float>> makeElements(
+				int bands, int taps) {
 			float[] eqCutoff = new float[bands];
 			float[] eqGain = new float[bands];
 			for (int i = 0; i < bands; i++)
@@ -249,10 +261,10 @@ public final class FMRadio {
 				eqGain[i] = val > 0 ? 2.0f - val : 2.0f + val;
 			}
 
-			return Arrays.asList(
-					new LowPassFilter(samplingRate, cutoffFrequency, taps, 4),
-					new FMDemodulator(samplingRate,	maxAmplitude, bandwidth),
-					new Equalizer(samplingRate, bands, eqCutoff, eqGain, taps));
+			return Arrays.asList(new LowPassFilter(samplingRate,
+					cutoffFrequency, taps, 4), new FMDemodulator(samplingRate,
+					maxAmplitude, bandwidth), new Equalizer(samplingRate,
+					bands, eqCutoff, eqGain, taps));
 		}
 	}
 }

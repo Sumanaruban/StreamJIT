@@ -1,57 +1,82 @@
 package edu.mit.streamjit.test.apps.beamformer1;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
+
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.RoundrobinJoiner;
 import edu.mit.streamjit.api.RoundrobinSplitter;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StatefulFilter;
 import edu.mit.streamjit.api.StreamCompiler;
-import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
-import edu.mit.streamjit.impl.interp.DebugStreamCompiler;
+import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Benchmark.Dataset;
-import edu.mit.streamjit.test.Benchmarker;
+import edu.mit.streamjit.test.Datasets;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 
 /**
  * Rewritten StreamIt's asplos06 benchmarks. Refer
  * STREAMIT_HOME/apps/benchmarks/asplos06/beamformer/streamit/BeamFormer1.str
  * for original implementations. Each StreamIt's language constructs (i.e.,
  * pipeline, filter and splitjoin) are rewritten as classes in StreamJit.
+ * 
  * @author Sumanan sumanan@mit.edu
  * @since Mar 8, 2013
  */
 public final class BeamFormer1 {
-	private BeamFormer1() {}
+	private BeamFormer1() {
+	}
 
 	public static void main(String[] args) throws InterruptedException {
-		StreamCompiler sc = new Compiler2StreamCompiler();
-		Benchmarker.runBenchmark(new BeamFormerBenchmark(), sc).get(0).print(System.out);
+		int noOfNodes;
+
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+
+		Benchmark benchmark = new BeamFormerBenchmark();
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes);
+
+		Dataset input = benchmark.inputs().get(0);
+		CompiledStream stream = compiler.compile(benchmark.instantiate(),
+				input.input(), Output.blackHole());
+		stream.awaitDrained();
 	}
 
 	@ServiceProvider(Benchmark.class)
 	public static final class BeamFormerBenchmark extends SuppliedBenchmark {
-		//how many dummy timing elements to provide
+		// how many dummy timing elements to provide
 		private static final int ITEMS = 10_000_000;
+
 		public BeamFormerBenchmark() {
-			super("Beamformer", BeamFormer1Kernel.class, new Dataset(""+ITEMS, (Input)Input.fromIterable(Collections.nCopies(ITEMS, (byte)0))
-//					, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/beamformer/streamit/BeamFormer1.out"), Float.class, ByteOrder.LITTLE_ENDIAN))
-			));
+			super("Beamformer", BeamFormer1Kernel.class, dataset());
+		}
+
+		private static Dataset dataset() {
+			Path path = Paths.get("data/minimal100m.in");
+			Input<Byte> input = Input.fromBinaryFile(path, Byte.class,
+					ByteOrder.LITTLE_ENDIAN);
+			Input<Byte> repeated = Datasets.nCopies(999999999, input);
+			Dataset dataset = new Dataset(path.getFileName().toString(),
+					repeated);
+			return dataset;
 		}
 	}
 
 	/**
-	 * Takes dummy timing input (would run forever otherwise).  The type is
+	 * Takes dummy timing input (would run forever otherwise). The type is
 	 * irrelevant, so we use Byte to permit unboxing.
+	 * 
 	 * @author sumanan
 	 */
 	public static final class BeamFormer1Kernel extends Pipeline<Byte, Float> {
@@ -63,25 +88,33 @@ public final class BeamFormer1 {
 		private static final int coarseDecimationRatio = 1;
 		private static final int fineDecimationRatio = 2;
 		private static final int numSegments = 1;
-		private static final int numPostDec1 = numSamples / coarseDecimationRatio;
-		private static final int numPostDec2 = numPostDec1 / fineDecimationRatio;
+		private static final int numPostDec1 = numSamples
+				/ coarseDecimationRatio;
+		private static final int numPostDec2 = numPostDec1
+				/ fineDecimationRatio;
 		private static final int mfSize = numSegments * numPostDec2;
 		private static final int pulseSize = numPostDec2 / 2;
-		private static final int predecPulseSize = pulseSize * coarseDecimationRatio * fineDecimationRatio;
+		private static final int predecPulseSize = pulseSize
+				* coarseDecimationRatio * fineDecimationRatio;
 		private static final int targetBeam = numBeams / 4;
 		private static final int targetSample = numSamples / 4;
-		private static final int targetSamplePostDec = targetSample / coarseDecimationRatio / fineDecimationRatio;
+		private static final int targetSamplePostDec = targetSample
+				/ coarseDecimationRatio / fineDecimationRatio;
 		private static final float dOverLambda = 0.5f;
-		private static final float cfarThreshold = (float) (0.95 * dOverLambda * numChannels * (0.5 * pulseSize));
+		private static final float cfarThreshold = (float) (0.95 * dOverLambda
+				* numChannels * (0.5 * pulseSize));
+
 		public BeamFormer1Kernel() {
 			Splitjoin<Byte, Float> splitJoin1 = new Splitjoin<>(
 					new RoundrobinSplitter<Byte>(),
 					new RoundrobinJoiner<Float>(2));
 			for (int i = 0; i < numChannels; i++) {
-				splitJoin1.add(new Pipeline<Float, Float>(
-						new InputGenerate(i, numSamples, targetBeam, targetSample, cfarThreshold),
-						new BeamFirFilter(numCoarseFilterTaps, numSamples, coarseDecimationRatio),
-						new BeamFirFilter(numFineFilterTaps, numPostDec1, fineDecimationRatio)));
+				splitJoin1.add(new Pipeline<Float, Float>(new InputGenerate(i,
+						numSamples, targetBeam, targetSample, cfarThreshold),
+						new BeamFirFilter(numCoarseFilterTaps, numSamples,
+								coarseDecimationRatio), new BeamFirFilter(
+								numFineFilterTaps, numPostDec1,
+								fineDecimationRatio)));
 			}
 			add(splitJoin1);
 
@@ -89,8 +122,8 @@ public final class BeamFormer1 {
 					new DuplicateSplitter<Float>(),
 					new RoundrobinJoiner<Float>());
 			for (int i = 0; i < numBeams; i++) {
-				splitJoin2.add(new Pipeline<Float, Float>(
-						new BeamForm(i, numChannels),
+				splitJoin2.add(new Pipeline<Float, Float>(new BeamForm(i,
+						numChannels),
 						new BeamFirFilter(mfSize, numPostDec2, 1),
 						new Magnitude()));
 			}
@@ -98,7 +131,8 @@ public final class BeamFormer1 {
 		}
 	}
 
-	private static final class InputGenerate extends StatefulFilter<Byte, Float> {
+	private static final class InputGenerate extends
+			StatefulFilter<Byte, Float> {
 		private final int myChannel;
 		private final int numberOfSamples;
 		private final int tarBeam;
@@ -121,7 +155,7 @@ public final class BeamFormer1 {
 
 		@Override
 		public void work() {
-			//dummy timing element
+			// dummy timing element
 			pop();
 			if (holdsTarget && (curSample == targetSample)) {
 				push((float) Math.sqrt(curSample * myChannel));
@@ -136,7 +170,8 @@ public final class BeamFormer1 {
 		}
 	}
 
-	private static final class BeamFirFilter extends StatefulFilter<Float, Float> {
+	private static final class BeamFirFilter extends
+			StatefulFilter<Float, Float> {
 		private final int numTaps;
 		private final int inputLength;
 		private final int decimationRatio;
@@ -147,6 +182,7 @@ public final class BeamFormer1 {
 		private final float[] imagBuffer;
 		private int count;
 		private int pos;
+
 		private BeamFirFilter(int numTaps, int inputLength, int decimationRatio) {
 			super(2 * decimationRatio, 2, 0);
 			this.numTaps = numTaps;
@@ -276,6 +312,7 @@ public final class BeamFormer1 {
 		private final int numChannels;
 		private final float[] real_weight;
 		private final float[] imag_weight;
+
 		private BeamForm(int myBeamId, int numChannels) {
 			super(2 * numChannels, 2);
 			this.myBeamId = myBeamId;
@@ -311,11 +348,12 @@ public final class BeamFormer1 {
 		private Magnitude() {
 			super(2, 1);
 		}
+
 		@Override
 		public void work() {
 			float f1 = pop();
 			float f2 = pop();
-			push((float)Math.sqrt(f1 * f1 + f2 * f2));
+			push((float) Math.sqrt(f1 * f1 + f2 * f2));
 		}
 	}
 

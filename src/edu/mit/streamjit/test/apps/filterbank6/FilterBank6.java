@@ -1,21 +1,23 @@
 package edu.mit.streamjit.test.apps.filterbank6;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
+
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
 import edu.mit.streamjit.api.OneToOneElement;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.RoundrobinJoiner;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
-import edu.mit.streamjit.impl.interp.DebugStreamCompiler;
+import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.test.AbstractBenchmark;
 import edu.mit.streamjit.test.Benchmark;
-import edu.mit.streamjit.test.Benchmarker;
 import edu.mit.streamjit.test.Datasets;
+import edu.mit.streamjit.test.Benchmark.Dataset;
+
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,16 +27,29 @@ import java.nio.file.Paths;
  * STREAMIT_HOME/apps/benchmarks/asplos06/filterbank/streamit/FilterBank6.str
  * for original implementations. Each StreamIt's language constructs (i.e.,
  * pipeline, filter and splitjoin) are rewritten as classes in StreamJit.
- *
+ * 
  * @author Sumanan sumanan@mit.edu
  * @since Mar 14, 2013
  */
 public final class FilterBank6 {
-	private FilterBank6() {}
+	private FilterBank6() {
+	}
 
-	public static void main(String[] args) {
-		StreamCompiler sc = new DebugStreamCompiler();
-		Benchmarker.runBenchmark(new FilterBankBenchmark(), sc).get(0).print(System.out);
+	public static void main(String[] args) throws InterruptedException {
+		int noOfNodes;
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+
+		Benchmark benchmark = new FilterBankBenchmark();
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes);
+
+		Dataset input = benchmark.inputs().get(0);
+		CompiledStream stream = compiler.compile(benchmark.instantiate(),
+				input.input(), Output.blackHole());
+		stream.awaitDrained();
 	}
 
 	@ServiceProvider(Benchmark.class)
@@ -42,19 +57,21 @@ public final class FilterBank6 {
 		public FilterBankBenchmark() {
 			super(dataset());
 		}
+
 		private static Dataset dataset() {
-			Path path = Paths.get("data/filterbank.in");
-			Input<Float> input = Input.fromBinaryFile(path, Float.class, ByteOrder.LITTLE_ENDIAN);
-			Input<Float> repeated = Datasets.nCopies(1, input);
-			Dataset dataset = new Dataset(path.getFileName().toString(), (Input)repeated
-//					, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/filterbank/streamit/FilterBank6.out"), Float.class, ByteOrder.LITTLE_ENDIAN))
-			);
+			Path path = Paths.get("data/fmradio.in");
+			Input<Float> input = Input.fromBinaryFile(path, Float.class,
+					ByteOrder.LITTLE_ENDIAN);
+			Input<Float> repeated = Datasets.nCopies(999999999, input);
+			Dataset dataset = new Dataset(path.getFileName().toString(),
+					(Input) repeated);
 			return dataset;
 		}
+
 		@Override
 		@SuppressWarnings("unchecked")
 		public OneToOneElement<Object, Object> instantiate() {
-			return (OneToOneElement)new FilterBankPipeline(8);
+			return (OneToOneElement) new FilterBankPipeline(8);
 		}
 	}
 
@@ -68,14 +85,15 @@ public final class FilterBank6 {
 		}
 
 		public FilterBankPipeline() {
-			this(32);
+			this(8);
 		}
 	}
 
 	/**
 	 * Filterbank splitjoin (everything before the final adder. )
 	 **/
-	private static final class FilterBankSplitJoin extends Splitjoin<Float, Float> {
+	private static final class FilterBankSplitJoin extends
+			Splitjoin<Float, Float> {
 		private FilterBankSplitJoin(int M) {
 			super(new DuplicateSplitter<Float>(), new RoundrobinJoiner<Float>());
 			for (int i = 0; i < M; i++) {
@@ -88,7 +106,8 @@ public final class FilterBank6 {
 	 * The main processing pipeline: analysis, downsample, process, upsample,
 	 * synthesis. I use simple bandpass filters for the Hi(z) and Fi(z).
 	 **/
-	private static final class ProcessingPipeline extends Pipeline<Float, Float> {
+	private static final class ProcessingPipeline extends
+			Pipeline<Float, Float> {
 		private ProcessingPipeline(int M, int i) {
 			/* take the subband from i*pi/M to (i+1)*pi/M */
 			add(new BandPassFilter(1, (float) (i * Math.PI / M),
@@ -112,8 +131,9 @@ public final class FilterBank6 {
 		private ProcessFilter(int order) {
 			super(1, 1);
 		}
+
 		public void work() {
-			//TODO: shouldn't there be some compute here?
+			// TODO: shouldn't there be some compute here?
 			push(pop());
 		}
 	}
@@ -123,10 +143,12 @@ public final class FilterBank6 {
 	 **/
 	private static final class Adder extends Filter<Float, Float> {
 		private final int N;
+
 		private Adder(int N) {
 			super(N, 1);
 			this.N = N;
 		}
+
 		public void work() {
 			float sum = 0;
 			for (int i = 0; i < N; i++) {
@@ -156,16 +178,16 @@ public final class FilterBank6 {
 	 * are: end of passband=wp and end of stopband=ws, such that 0<=wp<=ws<=pi
 	 * gain of passband and size of window for both filters. Note that the high
 	 * pass and low pass filters currently use a rectangular window.
-	 *
+	 * 
 	 * We take the signal, run both the low and high pass filter separately and
 	 * then add the results back together.
 	 */
 	private static final class BandStopFilter extends Pipeline<Float, Float> {
 		private BandStopFilter(float gain, float wp, float ws, int numSamples) {
-			super(new Splitjoin<>(new DuplicateSplitter<Float>(), new RoundrobinJoiner<Float>(),
-						new LowPassFilter(gain, wp, numSamples),
-						new HighPassFilter(gain, ws, numSamples)),
-					new Adder(2));
+			super(new Splitjoin<>(new DuplicateSplitter<Float>(),
+					new RoundrobinJoiner<Float>(), new LowPassFilter(gain, wp,
+							numSamples), new HighPassFilter(gain, ws,
+							numSamples)), new Adder(2));
 		}
 	}
 
@@ -175,10 +197,12 @@ public final class FilterBank6 {
 	 **/
 	private static final class Compressor extends Filter<Float, Float> {
 		private final int M;
+
 		private Compressor(int M) {
 			super(M, 1);
 			this.M = M;
 		}
+
 		public void work() {
 			push(pop());
 			for (int i = 0; i < (M - 1); i++) {
@@ -194,10 +218,12 @@ public final class FilterBank6 {
 	 **/
 	private static final class Expander extends Filter<Float, Float> {
 		private final int L;
+
 		Expander(int L) {
 			super(1, L);
 			this.L = L;
 		}
+
 		public void work() {
 			push(pop());
 			for (int i = 0; i < (L - 1); i++) {
@@ -209,14 +235,14 @@ public final class FilterBank6 {
 	/**
 	 * Simple FIR high pass filter with gain=g, stopband ws(in radians) and N
 	 * samples.
-	 *
+	 * 
 	 * Eg ^ H(e^jw) | -------- | ------- | | | | | | | | | |
 	 * <-------------------------> w pi-wc pi pi+wc
-	 *
+	 * 
 	 * This implementation is a FIR filter is a rectangularly windowed sinc
 	 * function (eg sin(x)/x) multiplied by e^(j*pi*n)=(-1)^n, which is the
 	 * optimal FIR high pass filter in mean square error terms.
-	 *
+	 * 
 	 * Specifically, h[n] has N samples from n=0 to (N-1) such that h[n] =
 	 * (-1)^(n-N/2) * sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)). where cutoffFreq
 	 * is pi-ws and the field h holds h[-n].
@@ -226,6 +252,7 @@ public final class FilterBank6 {
 		private final float g;
 		private final float ws;
 		private final int N;
+
 		private HighPassFilter(float g, float ws, int N) {
 			super(1, 1, N);
 			h = new float[N];
@@ -234,6 +261,7 @@ public final class FilterBank6 {
 			this.N = N;
 			init();
 		}
+
 		/*
 		 * since the impulse response is symmetric, I don't worry about
 		 * reversing h[n].
@@ -276,11 +304,11 @@ public final class FilterBank6 {
 	 * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N
 	 * samples. Eg: ^ H(e^jw) | --------------- | | | | | |
 	 * <-------------------------> w -wc wc
-	 *
+	 * 
 	 * This implementation is a FIR filter is a rectangularly windowed sinc
 	 * function (eg sin(x)/x), which is the optimal FIR low pass filter in mean
 	 * square error terms.
-	 *
+	 * 
 	 * Specifically, h[n] has N samples from n=0 to (N-1) such that h[n] =
 	 * sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)). and the field h holds h[-n].
 	 */
@@ -289,6 +317,7 @@ public final class FilterBank6 {
 		private final float g;
 		private final float cutoffFreq;
 		private final int N;
+
 		private LowPassFilter(float g, float cutoffFreq, int N) {
 			super(1, 1, N);
 			h = new float[N];
@@ -297,6 +326,7 @@ public final class FilterBank6 {
 			this.N = N;
 			init();
 		}
+
 		/*
 		 * since the impulse response is symmetric, I don't worry about
 		 * reversing h[n].
@@ -316,6 +346,7 @@ public final class FilterBank6 {
 					h[i] = (float) (g * Math.sin(cutoffFreq * (idx - OFFSET)) / (Math.PI * (idx - OFFSET)));
 			}
 		}
+
 		/* Implement the FIR filtering operation as the convolution sum. */
 		public void work() {
 			float sum = 0;

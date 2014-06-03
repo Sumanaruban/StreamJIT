@@ -1,19 +1,20 @@
 package edu.mit.streamjit.test.apps.fft5;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
+
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.StreamCompiler;
-import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
-import edu.mit.streamjit.impl.interp.DebugStreamCompiler;
+import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Datasets;
-import edu.mit.streamjit.test.Benchmarker;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -21,25 +22,43 @@ import java.nio.file.Paths;
  * STREAMIT_HOME/apps/benchmarks/asplos06/fft/streamit/FFT5.str for original
  * implementations. Each StreamIt's language constructs (i.e., pipeline, filter
  * and splitjoin) are rewritten as classes in StreamJit.
- *
+ * 
  * @author Sumanan sumanan@mit.edu
  * @since Mar 14, 2013
  */
 public final class FFT5 {
-	private FFT5() {}
+	private FFT5() {
+	}
 
 	public static void main(String[] args) throws InterruptedException {
-		StreamCompiler sc = new DebugStreamCompiler();
-		Benchmarker.runBenchmark(new FFT5Benchmark(), sc).get(0).print(System.out);
+		int noOfNodes;
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+		Benchmark benchmark = new FFT5Benchmark();
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes);
+		Dataset input = benchmark.inputs().get(0);
+		CompiledStream stream = compiler.compile(benchmark.instantiate(),
+				input.input(), Output.blackHole());
+		stream.awaitDrained();
 	}
 
 	@ServiceProvider(Benchmark.class)
 	public static final class FFT5Benchmark extends SuppliedBenchmark {
 		public FFT5Benchmark() {
-			super("FFT5", FFT5Kernel.class, new Dataset("FFT5.in",
-					(Input)Input.fromBinaryFile(Paths.get("data/FFT5.in"), Float.class, ByteOrder.LITTLE_ENDIAN)
-//					, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/fft/streamit/FFT5.out"), Float.class, ByteOrder.LITTLE_ENDIAN))
-			));
+			super("FFT5", FFT5Kernel.class, dataset());
+		}
+
+		private static Dataset dataset() {
+			Path path = Paths.get("data/minimal100m.in");
+			Input<Float> input = Input.fromBinaryFile(path, Float.class,
+					ByteOrder.LITTLE_ENDIAN);
+			Input<Float> repeated = Datasets.nCopies(999999999, input);
+			Dataset dataset = new Dataset(path.getFileName().toString(),
+					repeated);
+			return dataset;
 		}
 	}
 
@@ -48,7 +67,7 @@ public final class FFT5 {
 	 */
 	public static final class FFT5Kernel extends Pipeline<Float, Float> {
 		public FFT5Kernel() {
-			this(256);
+			this(128);
 		}
 		public FFT5Kernel(int ways) {
 			add(new FFTReorder(ways));
@@ -117,7 +136,7 @@ public final class FFT5 {
 		private FFTReorderSimple(int n) {
 			super(2 * n, 2 * n, 2 * n);
 			this.n = n;
-			this.totalData = 2*n;
+			this.totalData = 2 * n;
 		}
 		public void work() {
 			for (int i = 0; i < totalData; i += 4) {

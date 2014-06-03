@@ -26,22 +26,22 @@
 
 package edu.mit.streamjit.test.apps.dct;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
+
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.RoundrobinJoiner;
 import edu.mit.streamjit.api.RoundrobinSplitter;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
+import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Datasets;
-import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
-import edu.mit.streamjit.impl.interp.DebugStreamCompiler;
-import edu.mit.streamjit.test.Benchmarker;
+import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 
@@ -50,25 +50,42 @@ import java.nio.file.Paths;
  * STREAMIT_HOME/apps/benchmarks/asplos06/dct/streamit/DCT2.str for original
  * implementations. Each StreamIt's language constructs (i.e., pipeline, filter
  * and splitjoin) are rewritten as classes in StreamJit.
- *
+ * 
  * @author Sumanan sumanan@mit.edu
  * @since Mar 13, 2013
  */
 public final class DCT2 {
-	private DCT2() {}
+	private DCT2() {
+	}
 
 	public static void main(String[] args) throws InterruptedException {
-		StreamCompiler sc = new DebugStreamCompiler();
-		Benchmarker.runBenchmark(new DCT2Benchmark(), sc).get(0).print(System.out);
+		int noOfNodes;
+
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+
+		Benchmark benchmark = new DCT2Benchmark();
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes); //
+
+		Dataset input = benchmark.inputs().get(0);
+		CompiledStream stream = compiler.compile(benchmark.instantiate(),
+				input.input(), Output.blackHole());
+		stream.awaitDrained();
 	}
 
 	@ServiceProvider(Benchmark.class)
 	public static final class DCT2Benchmark extends SuppliedBenchmark {
-		private static final int COPIES = 1;
+		private static final int COPIES = 999999999;
+
 		public DCT2Benchmark() {
-			super("DCT2", DCT2Kernel.class, new Dataset("idct-input-small.bin", (Input)Datasets.nCopies(COPIES, (Input)Input.fromBinaryFile(Paths.get("data/idct-input-small.bin"), Integer.class, ByteOrder.LITTLE_ENDIAN))
-//					, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/dct/streamit/idct-output2.bin"), Integer.class, ByteOrder.LITTLE_ENDIAN))
-			));
+			super("DCT2", DCT2Kernel.class, new Dataset("idct-input-small.bin",
+					(Input) Datasets.nCopies(COPIES, (Input) Input
+							.fromBinaryFile(
+									Paths.get("data/idct-input-small.bin"),
+									Integer.class, ByteOrder.LITTLE_ENDIAN))));
 		}
 	}
 
@@ -82,7 +99,7 @@ public final class DCT2 {
 	 * Transforms an 8x8 signal from the frequency domain to the signal domain
 	 * using an inverse Discrete Cosine Transform in accordance with the IEEE
 	 * specification for a 2-dimensional 8x8 iDCT.
-	 *
+	 * 
 	 * @input 64 values representing an 8x8 array of values in the frequency
 	 *        domain, ordered by row and then column. Vertical frequency
 	 *        increases along each row and horizontal frequency along each
@@ -105,7 +122,7 @@ public final class DCT2 {
 	 * Transforms an 8x8 signal from the signal domain to the frequency domain
 	 * using a Discrete Cosine Transform in accordance with the IEEE
 	 * specification for a 2-dimensional 8x8 DCT.
-	 *
+	 * 
 	 * @input 64 values representing an 8x8 array of values in the signal
 	 *        domain, ordered by row and then column.
 	 * @output 64 values representing an 8x8 array of values in the frequency
@@ -132,7 +149,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 2D signal from the frequency domain to the signal domain
 	 * using an inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @param size
 	 *            The number of elements in each dimension of the signal.
 	 * @input size x size values, representing an array of values in the
@@ -180,14 +197,14 @@ public final class DCT2 {
 
 		@Override
 		public void work() {
-			push((int)Math.floor(pop() + 0.5));
+			push((int) Math.floor(pop() + 0.5));
 		}
 	}
 
 	/**
 	 * Transforms a 2D signal from the frequency domain to the signal domain
 	 * using a FAST inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @input size x size values, representing an array of values in the
 	 *        frequency domain, ordered by row and then column. Vertical
 	 *        frequency increases along each row and horizontal frequency along
@@ -206,7 +223,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 2D signal from the frequency domain to the signal domain
 	 * using a FAST inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @input size x size values, representing an array of values in the
 	 *        frequency domain, ordered by row and then column. Vertical
 	 *        frequency increases along each row and horizontal frequency along
@@ -225,7 +242,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 2D signal from the signal domain to the frequency domain
 	 * using a Discrete Cosine Transform.
-	 *
+	 * 
 	 * @param size
 	 *            The number of elements in each dimension of the signal.
 	 * @input size x size values, representing an array of values in the signal
@@ -387,7 +404,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 2D signal from the signal domain to the frequency domain
 	 * using a Discrete Cosine Transform.
-	 *
+	 * 
 	 * @param size
 	 *            The number of elements in each dimension of the signal.
 	 * @input size values, representing an array of values in the signal domain,
@@ -445,7 +462,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 1D signal from the frequency domain to the signal domain
 	 * using an inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @param size
 	 *            The number of elements in each dimension of the signal.
 	 * @input size values, representing an array of values in the frequency
@@ -455,7 +472,8 @@ public final class DCT2 {
 	 * @output size values representing an array of values in the signal domain,
 	 *         ordered by row and then column.
 	 */
-	private static final class iDCT_1D_reference_fine extends Filter<Float, Float> {
+	private static final class iDCT_1D_reference_fine extends
+			Filter<Float, Float> {
 		private final float[][] coeff;
 		private final int size;
 
@@ -491,7 +509,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 1D horizontal signal from the frequency domain to the signal
 	 * domain using a FAST inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @input size values, representing an array of values in the frequency
 	 *        domain, ordered by row and then column. Vertical frequency
 	 *        increases along each row and horizontal frequency along each
@@ -499,7 +517,8 @@ public final class DCT2 {
 	 * @output size values representing an array of values in the signal domain,
 	 *         ordered by row and then column.
 	 */
-	private static final class iDCT8x8_1D_row_fast extends Filter<Integer, Integer> {
+	private static final class iDCT8x8_1D_row_fast extends
+			Filter<Integer, Integer> {
 		private static final int size = 8;
 		private final int W1 = 2841; /* 2048*sqrt(2)*cos(1*pi/16) */
 		private final int W2 = 2676; /* 2048*sqrt(2)*cos(2*pi/16) */
@@ -579,7 +598,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 1D vertical signal from the frequency domain to the signal
 	 * domain using a FAST inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @input size*size values, representing an array of values in the frequency
 	 *        domain, ordered by row and then column. Vertical frequency
 	 *        increases along each row and horizontal frequency along each
@@ -587,7 +606,8 @@ public final class DCT2 {
 	 * @output size values representing an array of values in the signal domain,
 	 *         ordered by row and then column.
 	 */
-	private static final class iDCT8x8_1D_col_fast extends Filter<Integer, Integer> {
+	private static final class iDCT8x8_1D_col_fast extends
+			Filter<Integer, Integer> {
 		private static final int size = 8;
 		private final int W1 = 2841; /* 2048*sqrt(2)*cos(1*pi/16) */
 		private final int W2 = 2676; /* 2048*sqrt(2)*cos(2*pi/16) */
@@ -672,7 +692,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 1D vertical signal from the frequency domain to the signal
 	 * domain using a FAST inverse Discrete Cosine Transform.
-	 *
+	 * 
 	 * @param size
 	 *            The number of elements in each dimension of the signal.
 	 * @input size values, representing an array of values in the frequency
@@ -763,7 +783,7 @@ public final class DCT2 {
 	/**
 	 * Transforms a 1D signal from the signal domain to the frequency domain
 	 * using a Discrete Cosine Transform.
-	 *
+	 * 
 	 * @param size
 	 *            The number of elements in each dimension of the signal.
 	 * @input size values, representing an array of values in the signal domain,
@@ -773,7 +793,8 @@ public final class DCT2 {
 	 *         increases along each row and horizontal frequency along each
 	 *         column.
 	 */
-	private static final class DCT_1D_reference_fine extends Filter<Float, Float> {
+	private static final class DCT_1D_reference_fine extends
+			Filter<Float, Float> {
 		private final float[][] coeff;
 		private final int size;
 

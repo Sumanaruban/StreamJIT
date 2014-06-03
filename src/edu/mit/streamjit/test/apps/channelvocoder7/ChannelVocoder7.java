@@ -1,25 +1,26 @@
 package edu.mit.streamjit.test.apps.channelvocoder7;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
+
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.RoundrobinJoiner;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.api.WeightedRoundrobinJoiner;
-import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
+import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.BenchmarkProvider;
-import edu.mit.streamjit.test.Benchmarker;
+import edu.mit.streamjit.test.Datasets;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 
@@ -29,39 +30,44 @@ import java.util.Iterator;
  * asplos06/channelvocoder/streamit/ChannelVocoder7.str for original
  * implementations. Each StreamIt's language consturcts (i.e., pipeline, filter
  * and splitjoin) are rewritten as classes in StreamJit.
- *
+ * 
  * @author Sumanan sumanan@mit.edu
  * @since Mar 12, 2013
  */
 @ServiceProvider(BenchmarkProvider.class)
 public final class ChannelVocoder7 implements BenchmarkProvider {
 	public static void main(String[] args) throws InterruptedException {
-		StreamCompiler sc = new Compiler2StreamCompiler().maxNumCores(8).multiplier(32);
-		Benchmarker.runBenchmark(Iterables.getLast(new ChannelVocoder7()), sc).get(0).print(System.out);
+		int noOfNodes;
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+
+		Benchmark benchmark = new ChannelVocoder7().iterator().next();
+		StreamCompiler compiler = new DistributedStreamCompiler(noOfNodes);
+
+		Dataset input = benchmark.inputs().get(0);
+		CompiledStream stream = compiler.compile(benchmark.instantiate(),
+				input.input(), Output.blackHole());
+		stream.awaitDrained();
 	}
 
 	@Override
 	public Iterator<Benchmark> iterator() {
-		Dataset dataset = new Dataset("vocoder.in", (Input)Input.fromBinaryFile(Paths.get("data/vocoder.in"), Float.class, ByteOrder.LITTLE_ENDIAN)
-//				, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/channelvocoder/streamit/ChannelVocoder7.out"), Float.class, ByteOrder.LITTLE_ENDIAN))
-				);
-		int[][] filtersTaps = {
-			{16, 64},
-			{4, 64},
-			{8, 64},
-			{12, 64},
-			{4, 128},
-			{8, 128},
-			{12, 128},
-			{16, 128},
-			{20, 64},
-			{20, 128},
-			{24, 64},
-			{24, 128},
-		};
+		Path path = Paths.get("data/vocoder.in");
+		Input<Float> input = Input.fromBinaryFile(path, Float.class,
+				ByteOrder.LITTLE_ENDIAN);
+		input = Datasets.nCopies(999999999, input);
+		Dataset dataset = new Dataset(path.getFileName().toString(),
+				(Input) input);
+		int[][] filtersTaps = { { 24, 4096 }, { 4, 64 }, { 8, 64 }, { 12, 64 },
+				{ 4, 128 }, { 8, 128 }, { 12, 128 }, { 16, 64 }, { 16, 128 },
+				{ 20, 64 }, { 20, 128 }, { 24, 64 }, { 24, 128 }, };
 		ImmutableList.Builder<Benchmark> builder = ImmutableList.builder();
 		for (int[] p : filtersTaps)
-			builder.add(new SuppliedBenchmark(String.format("ChannelVocoder %d, %d", p[0], p[1]),
+			builder.add(new SuppliedBenchmark(String.format(
+					"ChannelVocoder %d, %d", p[0], p[1]),
 					ChannelVocoder7Kernel.class, ImmutableList.of(p[0], p[1]),
 					dataset));
 		return builder.build().iterator();
@@ -71,23 +77,28 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	 * This is a channel vocoder as described in 6.555 Lab 2. It's salient
 	 * features are a filterbank each of which contains a decimator after a
 	 * bandpass filter.
-	 *
+	 * 
 	 * Sampling Rate is 8000 Hz. First the signal is conditioned using a lowpass
 	 * filter with cutoff at 5000 Hz. Then the signal is "center clipped" which
 	 * basically means that very high and very low values are removed.
-	 *
+	 * 
 	 * Then, the signal is sent both to a pitch detector and to a filter bank
 	 * with 200 Hz wide windows (18 overall)
-	 *
+	 * 
 	 * Thus, each output is the combination of 18 band envelope values from the
 	 * filter bank and a single pitch detector value. This value is either the
 	 * pitch if the sound was voiced or 0 if the sound was unvoiced.
 	 **/
-	public static final class ChannelVocoder7Kernel extends Pipeline<Float, Float> {
+	public static final class ChannelVocoder7Kernel extends
+			Pipeline<Float, Float> {
 		public ChannelVocoder7Kernel(int numFilters, int numTaps) {
 			// low pass filter to filter out high freq noise
 			add(new LowPassFilter(1, (float) ((2 * Math.PI * 5000) / 8000), 64));
 			add(new MainSplitjoin(numFilters, numTaps));
+		}
+
+		public ChannelVocoder7Kernel() {
+			this(24, 4096);
 		}
 	}
 
@@ -96,8 +107,9 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	 * classes.
 	 **/
 	private static final class MainSplitjoin extends Splitjoin<Float, Float> {
-		private static final int PITCH_WINDOW = 100; // the number of samples to base the pitch
-								// detection on
+		private static final int PITCH_WINDOW = 100; // the number of samples to
+														// base the pitch
+		// detection on
 		private static final int DECIMATION = 50; // decimation factor
 
 		private MainSplitjoin(int numFilters, int numTaps) {
@@ -120,7 +132,8 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	}
 
 	/** The channel vocoder filterbank. **/
-	private static final class VocoderFilterBank extends Splitjoin<Float, Float> {
+	private static final class VocoderFilterBank extends
+			Splitjoin<Float, Float> {
 		private VocoderFilterBank(int N, int decimation, int numTaps) {
 			super(new DuplicateSplitter<Float>(), new RoundrobinJoiner<Float>());
 			for (int i = 0; i < N; i++) {
@@ -258,7 +271,7 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	 * are: end of passband=wp and end of stopband=ws, such that 0<=wp<=ws<=pi
 	 * gain of passband and size of window for both filters. Note that the high
 	 * pass and low pass filters currently use a rectangular window.
-	 *
+	 * 
 	 * We take the signal, run both the low and high pass filter separately and
 	 * then add the results back together.
 	 */
@@ -281,10 +294,12 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	 **/
 	private static final class Compressor extends Filter<Float, Float> {
 		private final int M;
+
 		private Compressor(int M) {
 			super(M, 1);
 			this.M = M;
 		}
+
 		public void work() {
 			push(pop());
 			for (int i = 0; i < (M - 1); i++) {
@@ -300,10 +315,12 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	 **/
 	private static final class Expander extends Filter<Float, Float> {
 		private final int L;
+
 		Expander(int L) {
 			super(1, L);
 			this.L = L;
 		}
+
 		public void work() {
 			push(pop());
 			for (int i = 0; i < (L - 1); i++) {
@@ -315,20 +332,14 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 	/**
 	 * Simple FIR high pass filter with gain=g, stopband ws(in radians) and N
 	 * samples.
-	 *
-	 * Eg
--	 *                 ^ H(e^jw)
--	 *                 |
--	 *     --------    |    -------
--	 *     |      |    |    |     |
--	 *     |      |    |    |     |
--	 *    <-------------------------> w
--	 *                   pi-wc pi pi+wc
-	 *
+	 * 
+	 * Eg - * ^ H(e^jw) - * | - * -------- | ------- - * | | | | | - * | | | | |
+	 * - * <-------------------------> w - * pi-wc pi pi+wc
+	 * 
 	 * This implementation is a FIR filter is a rectangularly windowed sinc
 	 * function (eg sin(x)/x) multiplied by e^(j*pi*n)=(-1)^n, which is the
 	 * optimal FIR high pass filter in mean square error terms.
-	 *
+	 * 
 	 * Specifically, h[n] has N samples from n=0 to (N-1) such that h[n] =
 	 * (-1)^(n-N/2) * sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)). where cutoffFreq
 	 * is pi-ws and the field h holds h[-n].
@@ -389,20 +400,13 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 
 	/**
 	 * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N
-	 * samples.
--	 * Eg:
--	 *                 ^ H(e^jw)
--	 *                 |
--	 *          ---------------
--	 *          |      |      |
--	 *          |      |      |
--	 *    <-------------------------> w
--	 *         -wc            wc
-	 *
+	 * samples. - * Eg: - * ^ H(e^jw) - * | - * --------------- - * | | | - * |
+	 * | | - * <-------------------------> w - * -wc wc
+	 * 
 	 * This implementation is a FIR filter is a rectangularly windowed sinc
 	 * function (eg sin(x)/x), which is the optimal FIR low pass filter in mean
 	 * square error terms.
-	 *
+	 * 
 	 * Specifically, h[n] has N samples from n=0 to (N-1) such that h[n] =
 	 * sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)). and the field h holds h[-n].
 	 */
