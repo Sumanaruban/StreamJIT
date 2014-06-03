@@ -111,7 +111,7 @@ public final class GlobalConstants {
 	 * Output count for tuning. Tuner measures the running time for this number
 	 * of outputs.
 	 */
-	public static final int outputCount = 100000;
+	public static final int outputCount = 10000;
 
 	/**
 	 * if true uses Compiler2, interpreter otherwise.
@@ -121,13 +121,13 @@ public final class GlobalConstants {
 	/**
 	 * Prints number of outputs generated.
 	 */
-	public static final boolean printOutputCount = false;
+	public static final boolean printOutputCount = true;
 
 	/**
 	 * Enables {@link DistributedStreamCompiler} to run on a single node. When
 	 * this is enabled, noOfNodes passed as compiler argument has no effect.
 	 */
-	public static final boolean singleNodeOnline = true;
+	public static final boolean singleNodeOnline = false;
 
 	/**
 	 * We can set this value at class loading time also as follows.
@@ -137,7 +137,7 @@ public final class GlobalConstants {
 	 * 
 	 * Lets hard code this for the moment.
 	 */
-	public static final int maxNumCores = 24;
+	public static final int maxNumCores = 2;
 
 	static {
 

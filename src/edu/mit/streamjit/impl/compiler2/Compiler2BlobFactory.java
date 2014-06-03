@@ -58,7 +58,7 @@ public final class Compiler2BlobFactory implements BlobFactory {
 		//add it here or we won't pick it up in the default configuration.
 		Configuration.PermutationParameter<Integer> affinity = new Configuration.PermutationParameter<>("$affinity", Integer.class, Affinity.getMaximalAffinity());
 		builder.addParameter(affinity);
-		return builder.addParameter(new Configuration.IntParameter("multiplier", 1, Short.MAX_VALUE, 1))
+		return builder.addParameter(new Configuration.IntParameter("multiplier", 1, 100, 1))
 				.build();
 	}
 
