@@ -49,7 +49,7 @@ public final class FMRadio {
 		}
 
 		if (GlobalConstants.autoStartStreamNodes) {
-			for (int i = 0; i < noOfNodes; i++)
+			for (int i = 1; i < noOfNodes; i++)
 				new ProcessBuilder("xterm", "-e", "java", "-jar",
 						"StreamNode.jar").start();
 		}
@@ -71,7 +71,7 @@ public final class FMRadio {
 			Path path = Paths.get("data/fmradio.in");
 			Input<Float> input = Input.fromBinaryFile(path, Float.class,
 					ByteOrder.LITTLE_ENDIAN);
-			input = Datasets.nCopies(999999999, input);
+			input = Datasets.cycle(input);
 			Dataset dataset = new Dataset(path.getFileName().toString(),
 					(Input) input);
 			int[][] bandsTaps = { { 21, 4096 }, { 5, 64 }, { 7, 64 },

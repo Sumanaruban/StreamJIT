@@ -50,7 +50,7 @@ public final class BeamFormer1 {
 		}
 
 		if (GlobalConstants.autoStartStreamNodes) {
-			for (int i = 0; i < noOfNodes; i++)
+			for (int i = 1; i < noOfNodes; i++)
 				new ProcessBuilder("xterm", "-e", "java", "-jar",
 						"StreamNode.jar").start();
 		}
@@ -74,10 +74,10 @@ public final class BeamFormer1 {
 		}
 
 		private static Dataset dataset() {
-			Path path = Paths.get("data/minimal100m.in");
+			Path path = Paths.get("data/minimal10k.in");
 			Input<Byte> input = Input.fromBinaryFile(path, Byte.class,
 					ByteOrder.LITTLE_ENDIAN);
-			Input<Byte> repeated = Datasets.nCopies(999999999, input);
+			Input<Byte> repeated = Datasets.cycle(input);
 			Dataset dataset = new Dataset(path.getFileName().toString(),
 					repeated);
 			return dataset;

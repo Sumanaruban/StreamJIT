@@ -48,7 +48,7 @@ public final class FilterBank6 {
 		}
 
 		if (GlobalConstants.autoStartStreamNodes) {
-			for (int i = 0; i < noOfNodes; i++)
+			for (int i = 1; i < noOfNodes; i++)
 				new ProcessBuilder("xterm", "-e", "java", "-jar",
 						"StreamNode.jar").start();
 		}
@@ -72,7 +72,7 @@ public final class FilterBank6 {
 			Path path = Paths.get("data/fmradio.in");
 			Input<Float> input = Input.fromBinaryFile(path, Float.class,
 					ByteOrder.LITTLE_ENDIAN);
-			Input<Float> repeated = Datasets.nCopies(999999999, input);
+			Input<Float> repeated = Datasets.cycle(input);
 			Dataset dataset = new Dataset(path.getFileName().toString(),
 					(Input) repeated);
 			return dataset;

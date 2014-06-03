@@ -73,7 +73,7 @@ public final class DCT2 {
 		}
 
 		if (GlobalConstants.autoStartStreamNodes) {
-			for (int i = 0; i < noOfNodes; i++)
+			for (int i = 1; i < noOfNodes; i++)
 				new ProcessBuilder("xterm", "-e", "java", "-jar",
 						"StreamNode.jar").start();
 		}
@@ -89,14 +89,11 @@ public final class DCT2 {
 
 	@ServiceProvider(Benchmark.class)
 	public static final class DCT2Benchmark extends SuppliedBenchmark {
-		private static final int COPIES = 999999999;
-
 		public DCT2Benchmark() {
 			super("DCT2", DCT2Kernel.class, new Dataset("idct-input-small.bin",
-					(Input) Datasets.nCopies(COPIES, (Input) Input
-							.fromBinaryFile(
-									Paths.get("data/idct-input-small.bin"),
-									Integer.class, ByteOrder.LITTLE_ENDIAN))));
+					(Input) Datasets.cycle((Input) Input.fromBinaryFile(
+							Paths.get("data/idct-input-small.bin"),
+							Integer.class, ByteOrder.LITTLE_ENDIAN))));
 		}
 	}
 

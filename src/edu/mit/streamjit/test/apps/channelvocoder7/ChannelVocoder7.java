@@ -50,7 +50,7 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 		}
 
 		if (GlobalConstants.autoStartStreamNodes) {
-			for (int i = 0; i < noOfNodes; i++)
+			for (int i = 1; i < noOfNodes; i++)
 				new ProcessBuilder("xterm", "-e", "java", "-jar",
 						"StreamNode.jar").start();
 		}
@@ -69,7 +69,7 @@ public final class ChannelVocoder7 implements BenchmarkProvider {
 		Path path = Paths.get("data/vocoder.in");
 		Input<Float> input = Input.fromBinaryFile(path, Float.class,
 				ByteOrder.LITTLE_ENDIAN);
-		input = Datasets.nCopies(999999999, input);
+		input = Datasets.cycle(input);
 		Dataset dataset = new Dataset(path.getFileName().toString(),
 				(Input) input);
 		int[][] filtersTaps = { { 24, 4096 }, { 4, 64 }, { 8, 64 }, { 12, 64 },

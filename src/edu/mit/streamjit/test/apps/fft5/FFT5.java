@@ -44,7 +44,7 @@ public final class FFT5 {
 		}
 
 		if (GlobalConstants.autoStartStreamNodes) {
-			for (int i = 0; i < noOfNodes; i++)
+			for (int i = 1; i < noOfNodes; i++)
 				new ProcessBuilder("xterm", "-e", "java", "-jar",
 						"StreamNode.jar").start();
 		}
@@ -64,10 +64,10 @@ public final class FFT5 {
 		}
 
 		private static Dataset dataset() {
-			Path path = Paths.get("data/minimal100m.in");
+			Path path = Paths.get("data/minimal10k.in");
 			Input<Float> input = Input.fromBinaryFile(path, Float.class,
 					ByteOrder.LITTLE_ENDIAN);
-			Input<Float> repeated = Datasets.nCopies(999999999, input);
+			Input<Float> repeated = Datasets.cycle(input);
 			Dataset dataset = new Dataset(path.getFileName().toString(),
 					repeated);
 			return dataset;
