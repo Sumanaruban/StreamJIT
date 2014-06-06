@@ -19,6 +19,7 @@ import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.ConcurrentArrayLocalBuffer;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.LocalBuffer1;
+import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 
 /**
  * {@link BlobsManager} will use the services from {@link BufferManager}.
@@ -37,7 +38,7 @@ public interface BufferManager {
 	void initialise();
 
 	/**
-	 * Second initialisation. If the buffer sizes are computed by controller and
+	 * Second initialization. If the buffer sizes are computed by controller and
 	 * send back to the {@link StreamNode}s, this method can be called with the
 	 * minimum input buffer size requirement.
 	 * 
@@ -245,6 +246,11 @@ public interface BufferManager {
 		}
 	}
 
+	/**
+	 * {@link Controller} gathers the minimum buffer information from all
+	 * {@link StreamNode}s, calculates the appropriate buffer sizes, and send
+	 * the buffer sizes back to {@link StreamNode}s.
+	 */
 	public static class GlobalBufferManager extends AbstractBufferManager {
 
 		private final StreamNode streamNode;
@@ -308,8 +314,7 @@ public interface BufferManager {
 		}
 
 		// TODO: Buffer sizes, including head and tail buffers, must be
-		// optimized.
-		// consider adding some tuning factor
+		// optimized. Consider adding some tuning factor.
 		private ImmutableMap<Token, Integer> calculateBufferSizes(
 				Set<Blob> blobSet, Map<Token, Integer> finalMinInputCapacity) {
 			/**
