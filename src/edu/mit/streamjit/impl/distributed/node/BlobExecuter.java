@@ -34,7 +34,6 @@ import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
-import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.affinity.Affinity;
 
 /**
