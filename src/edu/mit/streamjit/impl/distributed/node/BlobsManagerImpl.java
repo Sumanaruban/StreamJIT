@@ -620,7 +620,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			int min = Integer.MAX_VALUE;
 			// BE sets blob to null after the drained().
 			if (be.blob != null)
-				min = be.blob.getMinimumBufferCapacity(bufferID);
+				min = be.blob.getMinimumSteadyBufferCapacity(bufferID);
 
 			int availableResource = min;
 			Buffer b = be.bufferMap.get(bufferID);
