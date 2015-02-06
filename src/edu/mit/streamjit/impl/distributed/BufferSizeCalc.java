@@ -26,6 +26,8 @@ import edu.mit.streamjit.util.ilpsolve.ILPSolver.Variable;
  */
 public class BufferSizeCalc {
 
+	private static final boolean printFinalBufSizes = false;
+
 	private static class bufInfo {
 		int steadyInput;
 		int steadyOutput;
@@ -131,22 +133,33 @@ public class BufferSizeCalc {
 		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
 				.build();
 
-		/*
-		 * System.out
-		 * .println("InputBufCapacity \t\t - Init \t\t - Steady \t\t - final");
-		 * for (Map.Entry<Token, Integer> en :
-		 * minInitInputBufCapacity.entrySet()) { System.out.println(en.getKey()
-		 * + "\t\t - " + en.getValue() + "\t\t - " +
-		 * minSteadyInputBufCapacity.get(en.getKey()) + "\t\t - " +
-		 * finalInputBuf.get(en.getKey())); }
-		 * System.out.println("minOutputBufCapacity requirement"); for
-		 * (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet())
-		 * { System.out.println(en.getKey() + "\t\t - " + en.getValue() +
-		 * "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey()) + "\t\t - " +
-		 * finalInputBuf.get(en.getKey())); }
-		 */
+		if (printFinalBufSizes)
+			printFinalSizes(minInitInputBufCapacity, minInitOutputBufCapacity,
+					minSteadyInputBufCapacity, minSteadyOutputBufCapacity,
+					finalInputBuf);
 
 		return finalInputBuf;
+	}
+
+	private static void printFinalSizes(
+			Map<Token, Integer> minInitInputBufCapacity,
+			Map<Token, Integer> minInitOutputBufCapacity,
+			Map<Token, Integer> minSteadyInputBufCapacity,
+			Map<Token, Integer> minSteadyOutputBufCapacity,
+			Map<Token, Integer> finalInputBuf) {
+		System.out
+				.println("InputBufCapacity \t\t - Init \t\t - Steady \t\t - final");
+		for (Map.Entry<Token, Integer> en : minInitInputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + "\t\t - " + en.getValue()
+					+ "\t\t - " + minSteadyInputBufCapacity.get(en.getKey())
+					+ "\t\t - " + finalInputBuf.get(en.getKey()));
+		}
+		System.out.println("minOutputBufCapacity requirement");
+		for (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet()) {
+			System.out.println(en.getKey() + "\t\t - " + en.getValue()
+					+ "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey())
+					+ "\t\t - " + finalInputBuf.get(en.getKey()));
+		}
 	}
 
 	/**
