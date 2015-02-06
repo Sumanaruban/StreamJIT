@@ -26,7 +26,14 @@ import edu.mit.streamjit.util.ilpsolve.ILPSolver.Variable;
  */
 public class BufferSizeCalc {
 
-	private static final boolean printFinalBufSizes = false;
+	private static final boolean printFinalBufSizes = true;
+
+	/**
+	 * Sometimes buffer sizes cause performance problems. Ensures that the input
+	 * buffer size is at least infactor*steadyInput. By changing this parameter,
+	 * we can change scale up or down the buffer sizes.
+	 */
+	private static final int infactor = 3;
 
 	private static class bufInfo {
 		int steadyInput;
@@ -39,7 +46,8 @@ public class BufferSizeCalc {
 		void addconstrain(ILPSolver solver) {
 			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
 					steadyInput, inVar);
-			solver.constrainAtLeast(exp, (initInput + steadyInput - initOutput));
+			solver.constrainAtLeast(exp,
+					(initInput + infactor * steadyInput - initOutput));
 		}
 	}
 
