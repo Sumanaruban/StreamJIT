@@ -46,8 +46,7 @@ public class BufferSizeCalc {
 		void addconstrain(ILPSolver solver) {
 			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
 					steadyInput, inVar);
-			solver.constrainAtLeast(exp,
-					(initInput + infactor * steadyInput - initOutput));
+			solver.constrainAtLeast(exp, (initInput + steadyInput - initOutput));
 		}
 	}
 
@@ -122,6 +121,7 @@ public class BufferSizeCalc {
 
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
+			mul = mul > infactor ? mul : infactor;
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			// System.out.println("Multiplication factor of blob "
 			// + blob.toString() + " is " + mul);
