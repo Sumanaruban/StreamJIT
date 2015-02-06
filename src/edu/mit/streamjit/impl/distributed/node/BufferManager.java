@@ -354,43 +354,28 @@ public interface BufferManager {
 				// TODO: doubling the local buffer sizes. Without this deadlock
 				// occurred when draining. Need to find out exact reason. See
 				// StreamJit/Deadlock/deadlock2 folder.
-				addBuffer(t, bufScale * (2 * (outbufSize + finalbufSize)),
+				addBufferSize(t, bufScale * (2 * (outbufSize + finalbufSize)),
 						bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalInputTokens) {
 				int localbufSize = minInputBufCapaciy.get(t);
 				if (t.isOverallInput()) {
-					addBuffer(t, bufScale * localbufSize, bufferSizeMapBuilder);
+					addBufferSize(t, bufScale * localbufSize,
+							bufferSizeMapBuilder);
 					continue;
 				}
 
 				int finalbufSize = finalMinInputCapacity.get(t);
 				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-				addBuffer(t, bufScale * finalbufSize, bufferSizeMapBuilder);
+				addBufferSize(t, bufScale * finalbufSize, bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalOutputTokens) {
 				int bufSize = minOutputBufCapaciy.get(t);
-				addBuffer(t, bufScale * bufSize, bufferSizeMapBuilder);
+				addBufferSize(t, bufScale * bufSize, bufferSizeMapBuilder);
 			}
 			return bufferSizeMapBuilder.build();
-		}
-
-		/**
-		 * Just introduced to avoid code duplication.
-		 * 
-		 * @param t
-		 * @param minSize
-		 * @param bufferMapBuilder
-		 */
-		private void addBuffer(Token t, int minSize,
-				ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder) {
-			// TODO: Just to increase the performance. Change it later
-			int bufSize = Math.max(1000, minSize);
-			// System.out.println("Buffer size of " + t.toString() + " is " +
-			// bufSize);
-			bufferSizeMapBuilder.put(t, bufSize);
 		}
 	}
 }
