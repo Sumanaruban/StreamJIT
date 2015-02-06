@@ -30,10 +30,10 @@ public class BufferSizeCalc {
 
 	/**
 	 * Sometimes buffer sizes cause performance problems. Ensures that the input
-	 * buffer size is at least infactor*steadyInput. By changing this parameter,
+	 * buffer size is at least factor*steadyInput. By changing this parameter,
 	 * we can change scale up or down the buffer sizes.
 	 */
-	private static final int infactor = 3;
+	public static final int factor = 3;
 
 	private static class bufInfo {
 		int steadyInput;
@@ -121,7 +121,7 @@ public class BufferSizeCalc {
 
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
-			mul = mul > infactor ? mul : infactor;
+			mul = mul > factor ? mul : factor;
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			// System.out.println("Multiplication factor of blob "
 			// + blob.toString() + " is " + mul);
