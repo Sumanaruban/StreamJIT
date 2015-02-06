@@ -291,12 +291,7 @@ public class StreamJitAppManager {
 
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier);
 
-		ciP.waitforBufSizes();
-		ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-				.finalInputBufSizes(ciP.bufSizes, app);
-		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
-				finalInputBuf);
-		controller.sendToAll(me);
+		sendDeadlockfreeBufSizes();
 
 		boolean isCompiled = apStsPro.waitForCompilation();
 		app.eLogger.eEvent("compilation");
@@ -320,6 +315,16 @@ public class StreamJitAppManager {
 		Utils.printMemoryStatus();
 		return isRunning;
 	}
+
+	private void sendDeadlockfreeBufSizes() {
+		ciP.waitforBufSizes();
+		ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
+				.finalInputBufSizes(ciP.bufSizes, app);
+		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
+				finalInputBuf);
+		controller.sendToAll(me);
+	}
+
 	public void setDrainer(AbstractDrainer drainer) {
 		assert dp == null : "SNDrainProcessor has already been set";
 		this.dp = new SNDrainProcessorImpl(drainer);
