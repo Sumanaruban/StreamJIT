@@ -146,10 +146,6 @@ public class BufferSizeCalc {
 		 * finalInputBuf.get(en.getKey())); }
 		 */
 
-		/*
-		 * CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
-		 * finalInputBuf); controller.sendToAll(me);
-		 */
 		return finalInputBuf;
 	}
 
