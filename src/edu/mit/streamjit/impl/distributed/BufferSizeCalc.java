@@ -26,6 +26,21 @@ import edu.mit.streamjit.util.ilpsolve.ILPSolver.Variable;
  */
 public class BufferSizeCalc {
 
+	private static class bufInfo {
+		int steadyInput;
+		int steadyOutput;
+		int initInput;
+		int initOutput;
+		Variable outVar;
+		Variable inVar;
+
+		void addconstrain(ILPSolver solver) {
+			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
+					steadyInput, inVar);
+			solver.constrainAtLeast(exp, (initInput + steadyInput - initOutput));
+		}
+	}
+
 	/**
 	 * Calculates the input buffer sizes to avoid deadlocks. Added on
 	 * [2014-03-07]. Finds out the buffer sizes through ILP solving.
@@ -33,21 +48,6 @@ public class BufferSizeCalc {
 	 */
 	public static ImmutableMap<Token, Integer> finalInputBufSizes(
 			Map<Integer, BufferSizes> bufSizes, StreamJitApp<?, ?> app) {
-		class bufInfo {
-			int steadyInput;
-			int steadyOutput;
-			int initInput;
-			int initOutput;
-			Variable outVar;
-			Variable inVar;
-
-			void addconstrain(ILPSolver solver) {
-				LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
-						steadyInput, inVar);
-				solver.constrainAtLeast(exp,
-						(initInput + steadyInput - initOutput));
-			}
-		}
 
 		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
