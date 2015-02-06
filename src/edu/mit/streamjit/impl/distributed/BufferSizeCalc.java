@@ -28,7 +28,7 @@ public class BufferSizeCalc {
 	 * [2014-03-07]. Finds out the buffer sizes through ILP solving.
 	 * {@link #sendNewbufSizes()} doesn't guarantee deadlock freeness.
 	 */
-	public static ImmutableMap<Token, Integer> sendNewbufSizes2(
+	public static ImmutableMap<Token, Integer> finalInputBufSizes(
 			Map<Integer, BufferSizes> bufSizes, StreamJitApp<?, ?> app) {
 		class bufInfo {
 			int steadyInput;
