@@ -296,7 +296,7 @@ public class StreamJitAppManager {
 
 		ciP.waitforBufSizes();
 		ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-				.sendNewbufSizes2(ciP.bufSizes, app);
+				.finalInputBufSizes(ciP.bufSizes, app);
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 				finalInputBuf);
 		controller.sendToAll(me);
