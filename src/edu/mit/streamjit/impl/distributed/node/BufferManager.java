@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
+import edu.mit.streamjit.impl.distributed.BufferSizeCalc;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.ConcurrentArrayLocalBuffer;
@@ -321,21 +322,42 @@ public interface BufferManager {
 			 * bufScale must be at least 2. Otherwise deadlock may occur.
 			 */
 			final int bufScale = 1;
+
+			/**
+			 * [6 Feb, 2015] Sometimes buffer sizes cause performance problems.
+			 * This method ensures the output buffer size is at least
+			 * outfactor*steadyOutput. By changing this parameter, we can change
+			 * scale up or down the buffer sizes.
+			 */
+			final int outfactor = BufferSizeCalc.factor;
+
 			ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder = ImmutableMap
 					.builder();
 
 			Map<Token, Integer> minInputBufCapaciy = new HashMap<>();
 			Map<Token, Integer> minOutputBufCapaciy = new HashMap<>();
+			Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
+			Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
+			Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
+			Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
 
 			for (Blob b : blobSet) {
 				Set<Blob.Token> inputs = b.getInputs();
 				for (Token t : inputs) {
 					minInputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
+					minInitInputBufCapacity.put(t,
+							b.getMinimumInitBufferCapacity(t));
+					minSteadyInputBufCapacity.put(t,
+							b.getMinimumSteadyBufferCapacity(t));
 				}
 
 				Set<Blob.Token> outputs = b.getOutputs();
 				for (Token t : outputs) {
 					minOutputBufCapaciy.put(t, b.getMinimumBufferCapacity(t));
+					minInitOutputBufCapacity.put(t,
+							b.getMinimumInitBufferCapacity(t));
+					minSteadyOutputBufCapacity.put(t,
+							b.getMinimumSteadyBufferCapacity(t));
 				}
 			}
 
@@ -350,7 +372,10 @@ public interface BufferManager {
 				int localbufSize = minInputBufCapaciy.get(t);
 				int finalbufSize = finalMinInputCapacity.get(t);
 				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-				int outbufSize = minOutputBufCapaciy.get(t);
+				int outbufSize = Math.max(outfactor
+						* minSteadyOutputBufCapacity.get(t),
+						minInitOutputBufCapacity.get(t));
+
 				// TODO: doubling the local buffer sizes. Without this deadlock
 				// occurred when draining. Need to find out exact reason. See
 				// StreamJit/Deadlock/deadlock2 folder.
@@ -359,21 +384,25 @@ public interface BufferManager {
 			}
 
 			for (Token t : globalInputTokens) {
-				int localbufSize = minInputBufCapaciy.get(t);
+				// int localbufSize = minInputBufCapaciy.get(t);
+				int inbufSize = Math.max(
+						outfactor * minSteadyInputBufCapacity.get(t),
+						minInitInputBufCapacity.get(t));
 				if (t.isOverallInput()) {
-					addBufferSize(t, bufScale * localbufSize,
-							bufferSizeMapBuilder);
+					addBufferSize(t, bufScale * inbufSize, bufferSizeMapBuilder);
 					continue;
 				}
 
 				int finalbufSize = finalMinInputCapacity.get(t);
-				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
+				assert finalbufSize >= inbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
 				addBufferSize(t, bufScale * finalbufSize, bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalOutputTokens) {
-				int bufSize = minOutputBufCapaciy.get(t);
-				addBufferSize(t, bufScale * bufSize, bufferSizeMapBuilder);
+				int outbufSize = Math.max(outfactor
+						* minSteadyOutputBufCapacity.get(t),
+						minInitOutputBufCapacity.get(t));
+				addBufferSize(t, bufScale * outbufSize, bufferSizeMapBuilder);
 			}
 			return bufferSizeMapBuilder.build();
 		}
