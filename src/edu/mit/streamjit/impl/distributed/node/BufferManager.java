@@ -318,10 +318,6 @@ public interface BufferManager {
 		// optimized. Consider adding some tuning factor.
 		private ImmutableMap<Token, Integer> calculateBufferSizes(
 				Set<Blob> blobSet, Map<Token, Integer> finalMinInputCapacity) {
-			/**
-			 * bufScale must be at least 2. Otherwise deadlock may occur.
-			 */
-			final int bufScale = 1;
 
 			/**
 			 * [6 Feb, 2015] Sometimes buffer sizes cause performance problems.
@@ -379,7 +375,7 @@ public interface BufferManager {
 				// TODO: doubling the local buffer sizes. Without this deadlock
 				// occurred when draining. Need to find out exact reason. See
 				// StreamJit/Deadlock/deadlock2 folder.
-				addBufferSize(t, bufScale * (2 * (outbufSize + finalbufSize)),
+				addBufferSize(t, 2 * (outbufSize + finalbufSize),
 						bufferSizeMapBuilder);
 			}
 
@@ -389,20 +385,20 @@ public interface BufferManager {
 						outfactor * minSteadyInputBufCapacity.get(t),
 						minInitInputBufCapacity.get(t));
 				if (t.isOverallInput()) {
-					addBufferSize(t, bufScale * inbufSize, bufferSizeMapBuilder);
+					addBufferSize(t, inbufSize, bufferSizeMapBuilder);
 					continue;
 				}
 
 				int finalbufSize = finalMinInputCapacity.get(t);
 				assert finalbufSize >= inbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-				addBufferSize(t, bufScale * finalbufSize, bufferSizeMapBuilder);
+				addBufferSize(t, finalbufSize, bufferSizeMapBuilder);
 			}
 
 			for (Token t : globalOutputTokens) {
 				int outbufSize = Math.max(outfactor
 						* minSteadyOutputBufCapacity.get(t),
 						minInitOutputBufCapacity.get(t));
-				addBufferSize(t, bufScale * outbufSize, bufferSizeMapBuilder);
+				addBufferSize(t, outbufSize, bufferSizeMapBuilder);
 			}
 			return bufferSizeMapBuilder.build();
 		}
