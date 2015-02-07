@@ -316,16 +316,12 @@ public interface BufferManager {
 
 		// TODO: Buffer sizes, including head and tail buffers, must be
 		// optimized. Consider adding some tuning factor.
+		//
+		// [6 Feb, 2015] Sometimes buffer sizes cause performance problems. This
+		// method uses BufferSizeCalc#scaledSize() to ensures the output buffer
+		// size is at least factor*steadyOutput.
 		private ImmutableMap<Token, Integer> calculateBufferSizes(
 				Set<Blob> blobSet, Map<Token, Integer> finalMinInputCapacity) {
-
-			/**
-			 * [6 Feb, 2015] Sometimes buffer sizes cause performance problems.
-			 * This method ensures the output buffer size is at least
-			 * outfactor*steadyOutput. By changing this parameter, we can change
-			 * scale up or down the buffer sizes.
-			 */
-			final int outfactor = BufferSizeCalc.factor;
 
 			ImmutableMap.Builder<Token, Integer> bufferSizeMapBuilder = ImmutableMap
 					.builder();
@@ -368,9 +364,8 @@ public interface BufferManager {
 				int localbufSize = minInputBufCapaciy.get(t);
 				int finalbufSize = finalMinInputCapacity.get(t);
 				assert finalbufSize >= localbufSize : "The final buffer capacity send by the controller must always be >= to the blob's minimum requirement.";
-				int outbufSize = Math.max(outfactor
-						* minSteadyOutputBufCapacity.get(t),
-						minInitOutputBufCapacity.get(t));
+				int outbufSize = BufferSizeCalc.scaledSize(t,
+						minInitOutputBufCapacity, minSteadyOutputBufCapacity);
 
 				// TODO: doubling the local buffer sizes. Without this deadlock
 				// occurred when draining. Need to find out exact reason. See
@@ -380,10 +375,8 @@ public interface BufferManager {
 			}
 
 			for (Token t : globalInputTokens) {
-				// int localbufSize = minInputBufCapaciy.get(t);
-				int inbufSize = Math.max(
-						outfactor * minSteadyInputBufCapacity.get(t),
-						minInitInputBufCapacity.get(t));
+				int inbufSize = BufferSizeCalc.scaledSize(t,
+						minInitInputBufCapacity, minSteadyInputBufCapacity);
 				if (t.isOverallInput()) {
 					addBufferSize(t, inbufSize, bufferSizeMapBuilder);
 					continue;
@@ -395,9 +388,8 @@ public interface BufferManager {
 			}
 
 			for (Token t : globalOutputTokens) {
-				int outbufSize = Math.max(outfactor
-						* minSteadyOutputBufCapacity.get(t),
-						minInitOutputBufCapacity.get(t));
+				int outbufSize = BufferSizeCalc.scaledSize(t,
+						minInitOutputBufCapacity, minSteadyOutputBufCapacity);
 				addBufferSize(t, outbufSize, bufferSizeMapBuilder);
 			}
 			return bufferSizeMapBuilder.build();
