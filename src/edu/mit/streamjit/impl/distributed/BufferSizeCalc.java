@@ -29,9 +29,10 @@ public class BufferSizeCalc {
 	private static final boolean printFinalBufSizes = true;
 
 	/**
-	 * Sometimes buffer sizes cause performance problems. Ensures that the input
-	 * buffer size is at least factor*steadyInput. By changing this parameter,
-	 * we can change scale up or down the buffer sizes.
+	 * Sometimes buffer sizes cause performance problems. Method
+	 * finalInputBufSizes() ensures the input buffer size is at least
+	 * factor*steadyInput. By changing this parameter, we can scale up or down
+	 * the buffer sizes.
 	 */
 	public static final int factor = 3;
 
@@ -121,7 +122,6 @@ public class BufferSizeCalc {
 
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
-			mul = mul > factor ? mul : factor;
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			// System.out.println("Multiplication factor of blob "
 			// + blob.toString() + " is " + mul);
@@ -130,10 +130,10 @@ public class BufferSizeCalc {
 					continue;
 				int initOut = minInitOutputBufCapacity.get(out);
 				int steadyOut = minSteadyOutputBufCapacity.get(out);
-				int initIn = minInitInputBufCapacity.get(out);
-				int steadyIn = minSteadyInputBufCapacity.get(out);
-				int inMax = Math.max(initIn, steadyIn);
-				int newInSize = Math.max(initOut + steadyOut * mul, inMax);
+				int scaledInSize = scaledSize(out, minInitInputBufCapacity,
+						minSteadyInputBufCapacity);
+				int newInSize = Math.max(initOut + steadyOut * mul,
+						scaledInSize);
 				finalInputBufCapacity.put(out, newInSize);
 			}
 		}
@@ -168,6 +168,13 @@ public class BufferSizeCalc {
 					+ "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey())
 					+ "\t\t - " + finalInputBuf.get(en.getKey()));
 		}
+	}
+
+	public static int scaledSize(Token t,
+			Map<Token, Integer> minInitBufCapacity,
+			Map<Token, Integer> minSteadyBufCapacity) {
+		return Math.max(factor * minSteadyBufCapacity.get(t),
+				minInitBufCapacity.get(t));
 	}
 
 	/**
