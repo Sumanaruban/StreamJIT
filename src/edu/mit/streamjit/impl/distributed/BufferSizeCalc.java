@@ -26,7 +26,7 @@ import edu.mit.streamjit.util.ilpsolve.ILPSolver.Variable;
  */
 public class BufferSizeCalc {
 
-	private static final boolean printFinalBufSizes = true;
+	private static final boolean printFinalBufSizes = false;
 
 	/**
 	 * Sometimes buffer sizes cause performance problems. Method
