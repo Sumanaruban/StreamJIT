@@ -333,7 +333,7 @@ public class BlobGraph {
 
 			// TODO: Verify the waiting time is reasonable.
 			if (Options.needDrainDeadlockHandler)
-				drainer.schExecutorService.schedule(deadLockHandler(), 6000,
+				drainer.schExecutorService.schedule(deadLockHandler(), 0,
 						TimeUnit.MILLISECONDS);
 		}
 
