@@ -306,7 +306,8 @@ public class Compiler2BlobHost implements Blob {
 			ReadInstruction inst = initReadInstructions.get(i);
 			while (!inst.load())
 				if (isDraining()) {
-					doDrain(initReadInstructions.subList(0, i), ImmutableList.<DrainInstruction>of());
+					// doDrain(initReadInstructions.subList(0, i), ImmutableList.<DrainInstruction>of());
+					skipDrain();
 					return;
 				}
 		}
@@ -357,10 +358,12 @@ public class Compiler2BlobHost implements Blob {
 	 * freeing up buffer space).
 	 * @param writes the write instructions to execute
 	 */
-	private static void doWrites(List<? extends NothrowCallable<Boolean>> writeInstructions) {
+	private void doWrites(List<? extends NothrowCallable<Boolean>> writeInstructions) {
 		ArrayList<NothrowCallable<Boolean>> writes = new ArrayList<>(writeInstructions);
 		while (!writes.isEmpty())
 			for (Iterator<NothrowCallable<Boolean>> it = writes.iterator(); it.hasNext();) {
+				if(isDraining())
+					return;
 				NothrowCallable<Boolean> write = it.next();
 				if (write.call())
 					it.remove();
@@ -372,10 +375,16 @@ public class Compiler2BlobHost implements Blob {
 			ReadInstruction inst = readInstructions.get(i);
 			while (!inst.load())
 				if (isDraining()) {
-					doDrain(readInstructions.subList(0, i), drainInstructions);
+					// doDrain(readInstructions.subList(0, i), drainInstructions);
+					skipDrain();
 					return;
 				}
 		}
+	}
+
+	private void skipDrain() {
+		SwitchPoint.invalidateAll(new SwitchPoint[]{sp1, sp2});
+		drainCallback.run();
 	}
 
 	/**
