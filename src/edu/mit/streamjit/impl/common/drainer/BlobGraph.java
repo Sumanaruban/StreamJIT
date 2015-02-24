@@ -399,10 +399,10 @@ public class BlobGraph {
 						for (BlobNode suc : successors) {
 							suc.predecessorDrained(BlobNode.this);
 						}
-						System.out
-								.println("deadLockHandler: "
-										+ blobID
-										+ " - Deadlock during draining has been handled");
+						// System.out
+						// .println("deadLockHandler: "
+						// + blobID
+						// + " - Deadlock during draining has been handled");
 					}
 				}
 			};
