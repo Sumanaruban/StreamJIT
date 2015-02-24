@@ -362,6 +362,10 @@ public class Compiler2BlobHost implements Blob {
 
 	private void readOrDrain() {
 		for (int i = 0; i < readInstructions.size(); ++i) {
+			if (isDraining()) {
+				skipDrain();
+				return;
+			}
 			ReadInstruction inst = readInstructions.get(i);
 			while (!inst.load())
 				if (isDraining()) {
