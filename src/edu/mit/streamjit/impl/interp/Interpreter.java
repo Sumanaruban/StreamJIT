@@ -266,7 +266,7 @@ public class Interpreter implements Blob {
 					interpret();
 				else {
 					//Do any remaining work.
-					interpret();
+					// interpret();
 					//Run the callback (which may be empty).
 					callback.run();
 					//Set the callback to empty so we only run it once.
@@ -375,7 +375,7 @@ public class Interpreter implements Blob {
 			for (Worker<?, ?> sink : firableSinks) {
 				everFired |= fired |= pull(sink);
 			}
-		} while (fired);
+		} while (fired && callback.get()==null);
 
 		return everFired;
 	}
