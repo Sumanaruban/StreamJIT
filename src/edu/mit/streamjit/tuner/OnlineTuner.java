@@ -270,8 +270,18 @@ public class OnlineTuner implements Runnable {
 
 	private void simulateDynamism() {
 		System.err.println("simulateDynamism");
-		cfgManager.nodeDown(1);
+		blockNode();
 		dynCount++;
+	}
+
+	private void blockNode() {
+		System.err.println("blockNode...");
+		cfgManager.nodeDown(1);
+	}
+
+	private void blockCores() {
+		System.err.println("blockCores...");
+		manager.blockCores(1);
 	}
 
 	private void summarize(int round) {
