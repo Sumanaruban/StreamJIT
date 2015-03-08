@@ -193,6 +193,9 @@ public final class Options {
 	public static final int steadyMills;
 	public static final int noOutputTimeLimit;
 
+	public static final int initialTuningCount;
+	public static final int dynTuningCount;
+
 	static {
 		Properties prop = loadProperties();
 		printOutputCountPeriod = Integer.parseInt(prop
@@ -234,6 +237,9 @@ public final class Options {
 		steadyMills = Integer.parseInt(prop.getProperty("steadyMills"));
 		noOutputTimeLimit = Integer.parseInt(prop
 				.getProperty("noOutputTimeLimit"));
+		initialTuningCount = Integer.parseInt(prop
+				.getProperty("initialTuningCount"));
+		dynTuningCount = Integer.parseInt(prop.getProperty("dynTuningCount"));
 	}
 
 	public static Properties getProperties() {
@@ -266,6 +272,8 @@ public final class Options {
 		setProperty(prop, "skipMills", skipMills);
 		setProperty(prop, "steadyMills", steadyMills);
 		setProperty(prop, "noOutputTimeLimit", noOutputTimeLimit);
+		setProperty(prop, "initialTuningCount", initialTuningCount);
+		setProperty(prop, "dynTuningCount", dynTuningCount);
 		return prop;
 	}
 
