@@ -35,6 +35,7 @@ public class OnlineTuner implements Runnable {
 	private final MethodTimeLogger mLogger;
 	private final Reconfigurer configurer;
 	private long currentBestTime;
+	private Configuration bestCfg;
 
 	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
 		this.configurer = configurer;
@@ -98,8 +99,10 @@ public class OnlineTuner implements Runnable {
 					time = configurer.getFixedOutputTime(timeout);
 				else
 					time = ret.second;
-				currentBestTime = (time > 0 && currentBestTime > time) ? time
-						: currentBestTime;
+				if (time > 1 && currentBestTime > time) {
+						currentBestTime = time;
+						bestCfg = config;
+				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
 				tuner.writeLine(new Double(time).toString());
