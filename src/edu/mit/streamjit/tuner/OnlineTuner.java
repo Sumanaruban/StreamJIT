@@ -253,13 +253,18 @@ public class OnlineTuner implements Runnable {
 
 	private void endOfTuningRound(int round) {
 		if (pauseTuning(round)) {
-			reconfigure(bestCfg, 0);
+			System.err.println("Configuring with the best cfg..");
+			logger.newConfiguration("bestCfgs-" + dynCount);
+			Pair<Boolean, Long> ret = reconfigure(bestCfgs.get(dynCount), 0);
 			try {
 				Thread.sleep(bestcfgMinutes * 60 * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			System.err.println(String.format("bestCfgs-%d, Runtime=%d",
+					dynCount, ret.second));
 			simulateDynamism();
+			System.out.println("Going for dynamism tuning...");
 		}
 	}
 
