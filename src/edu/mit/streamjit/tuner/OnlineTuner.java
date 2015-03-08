@@ -14,6 +14,7 @@ import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.TimeLogProcessor;
@@ -126,6 +127,7 @@ public class OnlineTuner implements Runnable {
 		mLogger.bEvent("tuningFinished");
 		tuningFinished();
 		mLogger.eEvent("tuningFinished");
+		summarize(round);
 	}
 	private void startTuner() throws IOException {
 		String relativeTunerPath = String.format(
@@ -259,5 +261,22 @@ public class OnlineTuner implements Runnable {
 
 	private void simulateDynamism() {
 		cfgManager.nodeDown(1);
+	}
+
+	private void summarize(int round) {
+		FileWriter writer = Utils.fileWriter(app.name, "dynamism.txt");
+		try {
+			writer.write(String.format("round=%d\n", round));
+			writer.write(String.format("dynCount=%d\n", dynCount));
+			writer.write(String.format("Rejected=%d\n", cfgManager.rejectCount));
+			writer.close();
+			for (Map.Entry<Integer, Configuration> bestcfg : bestCfgs
+					.entrySet()) {
+				ConfigurationUtils.saveConfg(bestcfg.getValue(), "best"
+						+ bestcfg.getKey(), app.name);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
