@@ -265,6 +265,10 @@ public class OnlineTuner implements Runnable {
 
 	private void endOfTuningRound(int round) {
 		if (pauseTuning(round)) {
+			if (dynCount > 0) {
+				dynCount++;
+				return;
+			}
 			Configuration bestCfg = bestCfgs.get(dynCount);
 			runBestCfg(bestCfg);
 			simulateDynamism();
