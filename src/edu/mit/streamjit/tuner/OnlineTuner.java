@@ -253,17 +253,10 @@ public class OnlineTuner implements Runnable {
 
 	private void endOfTuningRound(int round) {
 		if (pauseTuning(round)) {
-			System.err.println("Configuring with the best cfg..");
-			logger.newConfiguration("bestCfgs-" + dynCount);
-			Pair<Boolean, Long> ret = reconfigure(bestCfgs.get(dynCount), 0);
-			try {
-				Thread.sleep(bestcfgMinutes * 60 * 1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			System.err.println(String.format("bestCfgs-%d, Runtime=%d",
-					dynCount, ret.second));
+			Configuration bestCfg = bestCfgs.get(dynCount);
+			runBestCfg(bestCfg);
 			simulateDynamism();
+			runBestCfg(bestCfg);
 			System.out.println("Going for dynamism tuning...");
 		}
 	}
@@ -275,6 +268,20 @@ public class OnlineTuner implements Runnable {
 		else
 			blockNode();
 		dynCount++;
+	}
+
+	private void runBestCfg(Configuration config) {
+		System.err.println("Configuring with the best cfg..");
+		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
+		logger.newConfiguration("bestCfgs-" + cfgPrefix);
+		Pair<Boolean, Long> ret = reconfigure(config, 0);
+		try {
+			Thread.sleep(bestcfgMinutes * 60 * 1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		System.err.println(String.format("bestCfgs-%s, Runtime=%d", cfgPrefix,
+				ret.second));
 	}
 
 	private void blockNode() {
