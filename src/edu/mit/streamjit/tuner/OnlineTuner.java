@@ -265,12 +265,12 @@ public class OnlineTuner implements Runnable {
 
 	private void endOfTuningRound(int round) {
 		if (pauseTuning(round)) {
+			Configuration bestCfg = bestCfgs.get(dynCount);
+			runBestCfg(bestCfg);
 			if (dynCount > 0) {
 				dynCount++;
 				return;
 			}
-			Configuration bestCfg = bestCfgs.get(dynCount);
-			runBestCfg(bestCfg);
 			simulateDynamism();
 			runBestCfg(bestCfg);
 			System.out.println("Going for dynamism tuning...");
