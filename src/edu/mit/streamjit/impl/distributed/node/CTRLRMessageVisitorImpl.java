@@ -28,6 +28,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
+import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
@@ -117,6 +118,11 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	@Override
 	public void visit(ProfilerCommand command) {
 		command.process(pm);
+	}
+
+	@Override
+	public void visit(CTRLRSimulateDynamism simulateDynamism) {
+
 	}
 
 	public class MiscCtrlElementProcessorImpl implements

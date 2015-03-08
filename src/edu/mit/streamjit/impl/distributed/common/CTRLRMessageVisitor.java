@@ -45,4 +45,6 @@ public interface CTRLRMessageVisitor {
 	public void visit(CTRLCompilationInfo ctrlCompilationInfo);
 
 	public void visit(ProfilerCommand command);
+
+	public void visit(CTRLRSimulateDynamism simulateDynamism);
 }
