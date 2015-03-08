@@ -34,6 +34,8 @@ import edu.mit.streamjit.tuner.OnlineTuner;
 
 public class ConfigurationManager {
 
+	public int rejectCount = 0;
+
 	private final StreamJitApp<?, ?> app;
 
 	private final PartitionManager partitionManager;
@@ -110,6 +112,7 @@ public class ConfigurationManager {
 							downNode, size));
 			if (size > 0) {
 				System.err.println("Rejecting");
+				rejectCount++;
 				return true;
 			}
 		}
