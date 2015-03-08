@@ -21,6 +21,7 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +37,8 @@ public class ConfigurationManager {
 	private final StreamJitApp<?, ?> app;
 
 	private final PartitionManager partitionManager;
+
+	private Set<Integer> downNodes = new HashSet<>();
 
 	public ConfigurationManager(StreamJitApp<?, ?> app,
 			PartitionManager partitionManager) {
@@ -74,6 +77,9 @@ public class ConfigurationManager {
 
 		Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap = partitionManager
 				.partitionMap(config);
+		if (downNodeCheck(partitionsMachineMap))
+			return false;
+
 		try {
 			app.verifyConfiguration(partitionsMachineMap);
 		} catch (StreamCompilationFailedException ex) {
@@ -81,5 +87,32 @@ public class ConfigurationManager {
 		}
 		app.setConfiguration(config);
 		return true;
+	}
+
+	public void nodeDown(int nodeID) {
+		downNodes.add(nodeID);
+	}
+
+	public void nodeUp(int nodeID) {
+		downNodes.remove(nodeID);
+	}
+
+	/**
+	 * @param partitionsMachineMap
+	 * @return reject or not.
+	 */
+	private boolean downNodeCheck(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
+		for (Integer downNode : downNodes) {
+			int size = partitionsMachineMap.get(downNode).size();
+			System.out.println(String
+					.format("No of blobs assigned to DownNode-%d is %d",
+							downNode, size));
+			if (size > 0) {
+				System.err.println("Rejecting");
+				return true;
+			}
+		}
+		return false;
 	}
 }
