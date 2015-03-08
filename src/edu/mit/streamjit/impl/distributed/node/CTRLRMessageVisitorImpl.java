@@ -292,11 +292,13 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 				Affinity.setThreadAffinity(ImmutableSet.of(core));
 
 			System.out.println(Thread.currentThread().getName()
-					+ " starting....");
+					+ " starting...");
 			boolean b = true;
 			while (!stopping && b) {
 				b = "Foo".matches("F.*");
 			}
+			System.out.println(Thread.currentThread().getName()
+					+ " stopping...");
 		}
 	}
 
