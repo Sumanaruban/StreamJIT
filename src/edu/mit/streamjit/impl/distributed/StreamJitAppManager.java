@@ -455,7 +455,7 @@ public class StreamJitAppManager {
 
 	public void blockCores(int nodeID) {
 		Set<Integer> cores = new HashSet<>();
-		for (int i = 0; i < Options.maxNumCores / 2; i++)
+		for (int i = 0; i < Options.maxNumCores; i++)
 			cores.add(i);
 		System.out.println(String.format("Blocking cores %s of node %d",
 				cores.toString(), nodeID));
