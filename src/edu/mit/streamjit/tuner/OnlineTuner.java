@@ -113,6 +113,7 @@ public class OnlineTuner implements Runnable {
 					break;
 				}
 				mLogger.eTuningRound();
+				endOfTuningRound(round);
 			}
 
 		} catch (IOException e) {
@@ -225,5 +226,37 @@ public class OnlineTuner implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private int dynCount = 0;
+
+	private final int initialTuningCount = 20;
+	private final int dynTuningCount = 10;
+
+	/**
+	 * Pausing condition of the online tuning.
+	 */
+	private boolean pauseTuning(int round) {
+		if (round > initialTuningCount + (dynCount * dynTuningCount)) {
+			dynCount++;
+			return true;
+		}
+		return false;
+	}
+
+	private void endOfTuningRound(int round) {
+		if (pauseTuning(round)) {
+			reconfigure(bestCfg, 0);
+			try {
+				Thread.sleep(10 * 60 * 1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			simulateDynamism();
+		}
+	}
+
+	private void simulateDynamism() {
+		cfgManager.nodeDown(1);
 	}
 }
