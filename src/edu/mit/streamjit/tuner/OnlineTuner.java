@@ -115,11 +115,11 @@ public class OnlineTuner implements Runnable {
 					break;
 				}
 				mLogger.eTuningRound();
-				endOfTuningRound(round);
 				if (dynCount > 1) {
 					System.err.println("DynTest over");
 					break;
 				}
+				endOfTuningRound(round);
 			}
 
 		} catch (IOException e) {
