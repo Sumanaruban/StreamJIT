@@ -236,9 +236,9 @@ public class OnlineTuner implements Runnable {
 	}
 
 	private int dynCount = 0;
-
-	private final int initialTuningCount = 20;
-	private final int dynTuningCount = 10;
+	private final int initialTuningCount = Options.initialTuningCount;
+	private final int dynTuningCount = Options.dynTuningCount;
+	private final int bestcfgMinutes = 3;
 
 	/**
 	 * Pausing condition of the online tuning.
@@ -255,7 +255,7 @@ public class OnlineTuner implements Runnable {
 		if (pauseTuning(round)) {
 			reconfigure(bestCfg, 0);
 			try {
-				Thread.sleep(10 * 60 * 1000);
+				Thread.sleep(bestcfgMinutes * 60 * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
