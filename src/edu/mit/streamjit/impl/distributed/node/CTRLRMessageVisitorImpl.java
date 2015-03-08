@@ -22,13 +22,20 @@
 package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism;
+import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.BlockCores;
+import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.CTRLRDynamismProcessor;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
@@ -38,12 +45,12 @@ import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.MiscCtrlElemen
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Request;
-import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Request.RequestProcessor;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand.ProfilerCommandProcessor;
 import edu.mit.streamjit.impl.distributed.profiler.StreamNodeProfiler;
+import edu.mit.streamjit.util.affinity.Affinity;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -56,6 +63,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	private final ConfigurationProcessor jp;
 	private final MiscCtrlElementProcessor miscProcessor;
 	private final ProfilerCommandProcessorImpl pm;
+	private final CTRLRDynamismProcessorImpl dynP;
 
 	public CTRLRMessageVisitorImpl(StreamNode streamNode) {
 		this.streamNode = streamNode;
@@ -63,6 +71,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 		this.jp = new ConfigurationProcessorImpl(streamNode);
 		this.miscProcessor = new MiscCtrlElementProcessorImpl();
 		this.pm = new ProfilerCommandProcessorImpl();
+		this.dynP = new CTRLRDynamismProcessorImpl();
 	}
 
 	@Override
@@ -122,7 +131,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 
 	@Override
 	public void visit(CTRLRSimulateDynamism simulateDynamism) {
-
+		simulateDynamism.process(dynP);
 	}
 
 	public class MiscCtrlElementProcessorImpl implements
@@ -178,6 +187,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 		@Override
 		public void processEXIT() {
 			System.out.println("StreamNode is Exiting...");
+			dynP.StopAll();
 			streamNode.exit();
 		}
 	}
@@ -233,5 +243,69 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 		public void processRESUME() {
 			streamNode.profiler.resumeProfiling();
 		}
+	}
+
+	public static class CTRLRDynamismProcessorImpl implements
+			CTRLRDynamismProcessor {
+		Map<Integer, BlockCore> blockThreads = new HashMap<>();
+
+		@Override
+		public void process(BlockCores blockCores) {
+
+			for (Integer core : blockCores.coreSet) {
+				if (blockThreads.containsKey(core))
+					throw new IllegalArgumentException(name(core) + " exists");
+				BlockCore bt = new BlockCore(name(core), core);
+				bt.start();
+				blockThreads.put(core, bt);
+			}
+		}
+
+		String name(Integer core) {
+			return String.format("BlockThread-%d", core);
+		}
+
+		void StopAll() {
+			for (BlockCore bt : blockThreads.values())
+				bt.requestStop();
+		}
+	}
+
+	static final class BlockCore extends Thread {
+
+		private final Integer core;
+
+		private volatile boolean stopping = false;
+
+		BlockCore(String name, Integer core) {
+			super(name);
+			this.core = core;
+		}
+
+		public void requestStop() {
+			stopping = true;
+		}
+
+		@Override
+		public void run() {
+			if (core != null)
+				Affinity.setThreadAffinity(ImmutableSet.of(core));
+
+			System.out.println(Thread.currentThread().getName()
+					+ " starting....");
+			boolean b = true;
+			while (!stopping && b) {
+				b = "Foo".matches("F.*");
+			}
+		}
+	}
+
+	public static void main(String[] args) throws InterruptedException {
+		BlockCores bc = new BlockCores(ImmutableSet.of(0, 2));
+		CTRLRDynamismProcessorImpl dp = new CTRLRDynamismProcessorImpl();
+		dp.process(bc);
+
+		Thread.sleep(60000);
+		dp.StopAll();
 	}
 }
