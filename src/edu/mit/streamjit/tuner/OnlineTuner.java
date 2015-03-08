@@ -244,8 +244,8 @@ public class OnlineTuner implements Runnable {
 	 * Pausing condition of the online tuning.
 	 */
 	private boolean pauseTuning(int round) {
-		if (round > initialTuningCount + (dynCount * dynTuningCount)) {
-			dynCount++;
+		if (round - cfgManager.rejectCount > initialTuningCount
+				+ (dynCount * dynTuningCount)) {
 			return true;
 		}
 		return false;
