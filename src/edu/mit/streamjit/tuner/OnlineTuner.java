@@ -35,7 +35,7 @@ public class OnlineTuner implements Runnable {
 	private final EventTimeLogger mLogger;
 	private final Reconfigurer configurer;
 	private long currentBestTime;
-	private Configuration bestCfg;
+	private Map<Integer, Configuration> bestCfgs;
 
 	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
 		this.configurer = configurer;
@@ -47,6 +47,7 @@ public class OnlineTuner implements Runnable {
 		this.prognosticator = configurer.prognosticator;
 		this.mLogger = configurer.mLogger;
 		this.currentBestTime = Integer.MAX_VALUE;
+		this.bestCfgs = new HashMap<>();
 	}
 
 	@Override
@@ -100,7 +101,7 @@ public class OnlineTuner implements Runnable {
 					time = ret.second;
 				if (time > 1 && currentBestTime > time) {
 					currentBestTime = time;
-					bestCfg = config;
+					bestCfgs.put(dynCount, config);
 				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
