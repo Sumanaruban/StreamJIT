@@ -270,7 +270,10 @@ public class OnlineTuner implements Runnable {
 
 	private void simulateDynamism() {
 		System.err.println("simulateDynamism");
-		blockNode();
+		if (Options.blockCore)
+			blockCores();
+		else
+			blockNode();
 		dynCount++;
 	}
 
