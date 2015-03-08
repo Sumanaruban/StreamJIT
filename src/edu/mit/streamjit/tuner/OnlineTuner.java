@@ -292,10 +292,14 @@ public class OnlineTuner implements Runnable {
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
 		logger.newConfiguration("bestCfgs-" + cfgPrefix);
 		Pair<Boolean, Long> ret = reconfigure(config, 0);
-		try {
-			Thread.sleep(bestcfgMinutes * 60 * 1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		if (ret.second >= -1) {
+			System.out.println(String.format(
+					"Going to sleep for %d minutes...", bestcfgMinutes));
+			try {
+				Thread.sleep(bestcfgMinutes * 60 * 1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		System.err.println(String.format("bestCfgs-%s, Runtime=%d", cfgPrefix,
 				ret.second));
