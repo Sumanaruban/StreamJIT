@@ -116,6 +116,10 @@ public class OnlineTuner implements Runnable {
 				}
 				mLogger.eTuningRound();
 				endOfTuningRound(round);
+				if (dynCount > 1) {
+					System.err.println("DynTest over");
+					break;
+				}
 			}
 
 		} catch (IOException e) {
@@ -260,7 +264,9 @@ public class OnlineTuner implements Runnable {
 	}
 
 	private void simulateDynamism() {
+		System.err.println("simulateDynamism");
 		cfgManager.nodeDown(1);
+		dynCount++;
 	}
 
 	private void summarize(int round) {
