@@ -258,7 +258,7 @@ public class Utils {
 		partitionManager.getDefaultConfiguration(
 				Workers.getAllWorkersInGraph(app.source), 2);
 		ConfigurationManager cfgManager = new ConfigurationManager(app,
-				partitionManager);
+				partitionManager, 2);
 		Stopwatch sw = Stopwatch.createStarted();
 		for (Integer i = 1; i < 5010; i++) {
 			String prefix = i.toString();

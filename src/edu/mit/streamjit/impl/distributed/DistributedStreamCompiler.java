@@ -140,7 +140,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 
 		PartitionManager partitionManager = new HotSpotTuning(app);
 		ConfigurationManager cfgManager = new ConfigurationManager(app,
-				partitionManager);
+				partitionManager, noOfnodes);
 		ConnectionManager conManager = connectionManager(controller.controllerNodeID);
 
 		setConfiguration(controller, app, partitionManager, conManager,

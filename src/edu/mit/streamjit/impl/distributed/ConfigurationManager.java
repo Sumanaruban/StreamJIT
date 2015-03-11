@@ -29,6 +29,8 @@ import java.util.Set;
 import edu.mit.streamjit.api.StreamCompilationFailedException;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
+import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph;
 import edu.mit.streamjit.tuner.OnlineTuner;
 
@@ -42,10 +44,16 @@ public class ConfigurationManager {
 
 	private Set<Integer> downNodes = new HashSet<>();
 
+	private final Set<Worker<?, ?>> allWorkers;
+
+	private final int noOfMachines;
+
 	public ConfigurationManager(StreamJitApp<?, ?> app,
-			PartitionManager partitionManager) {
+			PartitionManager partitionManager, int noOfMachines) {
 		this.app = app;
 		this.partitionManager = partitionManager;
+		allWorkers = Workers.getAllWorkersInGraph(app.source);
+		this.noOfMachines = noOfMachines;
 	}
 
 	/**
@@ -77,6 +85,7 @@ public class ConfigurationManager {
 		// System.out.println(p.getName() + " - Unknown type");
 		// }
 
+		config = reMapDownNodeWorkers(config);
 		Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap = partitionManager
 				.partitionMap(config);
 		if (downNodeCheck(partitionsMachineMap))
@@ -121,5 +130,46 @@ public class ConfigurationManager {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * FIXME: This is a temporary fix to simulate the dynamism. This breaks the
+	 * OOP abstraction and any changes in {@link #partitionManager} will break
+	 * this code. TODO: Move this re mapping task to partition manager.
+	 * 
+	 * @param config
+	 * @return
+	 */
+	private Configuration reMapDownNodeWorkers(Configuration config) {
+		if (downNodes.size() == 0)
+			return config;
+
+		Configuration.Builder b = Configuration.builder(config);
+		for (Worker<?, ?> w : allWorkers) {
+			int id = Workers.getIdentifier(w);
+			String paramName = String.format("worker%dtomachine", id);
+			SwitchParameter<Integer> sp = (SwitchParameter<Integer>) config
+					.getParameter(paramName);
+			if (sp == null)
+				continue;
+			int machine = sp.getValue();
+			if (downNodes.contains(machine)) {
+				int newVal = nextUpNode(machine);
+				SwitchParameter<Integer> spNew = new SwitchParameter<Integer>(
+						paramName, Integer.class, newVal, sp.getUniverse());
+				b.removeParameter(paramName);
+				b.addParameter(spNew);
+			}
+		}
+		return b.build();
+	}
+
+	private int nextUpNode(int currentVal) {
+		for (int i = 0; i < noOfMachines; i++) {
+			int newVal = (currentVal + i) % noOfMachines + 1;
+			if (!downNodes.contains(newVal))
+				return newVal;
+		}
+		throw new IllegalArgumentException("No valid up nodes...");
 	}
 }
