@@ -267,12 +267,18 @@ public class OnlineTuner implements Runnable {
 	private void endOfTuningRound(int round) {
 		if (pauseTuning(round)) {
 			Configuration bestCfg = bestCfgs.get(dynCount);
+			String cfgPrefix = ConfigurationUtils.getConfigPrefix(bestCfg);
+			String newcfgPrefix = String.format("EndDyn%d:%s", dynCount,
+					cfgPrefix);
+			ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
 			runBestCfg(bestCfg);
 			if (dynCount > 0) {
 				dynCount++;
 				return;
 			}
 			simulateDynamism();
+			newcfgPrefix = String.format("BeginDyn%d:%s", dynCount, cfgPrefix);
+			ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
 			runBestCfg(bestCfg);
 			System.out.println("Going for dynamism tuning...");
 		}
@@ -291,7 +297,7 @@ public class OnlineTuner implements Runnable {
 	private void runBestCfg(Configuration config) {
 		System.err.println("Configuring with the best cfg..");
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
-		logger.newConfiguration("bestCfgs-" + cfgPrefix);
+		logger.newConfiguration(cfgPrefix);
 		Pair<Boolean, Long> ret = configurer.reconfigure(config, 0);
 		if (ret.second >= -1) {
 			System.out.println(String.format(
