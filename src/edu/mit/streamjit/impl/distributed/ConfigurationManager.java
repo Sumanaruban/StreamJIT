@@ -106,7 +106,11 @@ public class ConfigurationManager {
 	private boolean downNodeCheck(
 			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 		for (Integer downNode : downNodes) {
-			int size = partitionsMachineMap.get(downNode).size();
+			List<Set<Worker<?, ?>>> partitons = partitionsMachineMap
+					.get(downNode);
+			if (partitons == null)
+				continue;
+			int size = partitons.size();
 			System.out.println(String
 					.format("No of blobs assigned to DownNode-%d is %d",
 							downNode, size));
