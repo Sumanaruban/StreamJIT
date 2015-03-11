@@ -68,9 +68,11 @@ public class TimeLogProcessor {
 		Map<String, Integer> ret = new HashMap<>(5000);
 		int min = Integer.MAX_VALUE / 4;
 		while ((line = reader.readLine()) != null) {
-			if (line.startsWith("----------------------------"))
+			if (line.startsWith("----------------------------")) {
 				cfgPrefix = cfgString(line);
-			else if (line.startsWith("Execution")) {
+				if (cfgPrefix.startsWith("BeginDyn"))
+					min = Integer.MAX_VALUE;
+			} else if (line.startsWith("Execution")) {
 				String[] arr = line.split(" ");
 				String time = arr[3].trim();
 				time = time.substring(0, time.length() - 2);
