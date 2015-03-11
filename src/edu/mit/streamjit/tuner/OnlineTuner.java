@@ -1,6 +1,7 @@
 package edu.mit.streamjit.tuner;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -291,7 +292,7 @@ public class OnlineTuner implements Runnable {
 		System.err.println("Configuring with the best cfg..");
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
 		logger.newConfiguration("bestCfgs-" + cfgPrefix);
-		Pair<Boolean, Long> ret = reconfigure(config, 0);
+		Pair<Boolean, Long> ret = configurer.reconfigure(config, 0);
 		if (ret.second >= -1) {
 			System.out.println(String.format(
 					"Going to sleep for %d minutes...", bestcfgMinutes));
@@ -312,7 +313,7 @@ public class OnlineTuner implements Runnable {
 
 	private void blockCores() {
 		System.err.println("blockCores...");
-		manager.blockCores(1);
+		configurer.manager.blockCores(1);
 	}
 
 	private void summarize(int round) {
