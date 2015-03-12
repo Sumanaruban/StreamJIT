@@ -252,7 +252,7 @@ public class OnlineTuner implements Runnable {
 	private final int initialTuningCount = Options.initialTuningCount;
 	private final int dynTuningCount = Options.dynTuningCount;
 	private final int bestcfgMinutes = 3;
-	private final boolean penalize = true;
+	private final boolean penalize = Options.penalize;
 
 	/**
 	 * Pausing condition of the online tuning.
