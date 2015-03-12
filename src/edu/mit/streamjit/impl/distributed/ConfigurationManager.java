@@ -48,12 +48,15 @@ public class ConfigurationManager {
 
 	private final int noOfMachines;
 
+	public int wrongParamCount;
+
 	public ConfigurationManager(StreamJitApp<?, ?> app,
 			PartitionManager partitionManager, int noOfMachines) {
 		this.app = app;
 		this.partitionManager = partitionManager;
 		allWorkers = Workers.getAllWorkersInGraph(app.source);
 		this.noOfMachines = noOfMachines;
+		wrongParamCount = 0;
 	}
 
 	/**
@@ -143,7 +146,7 @@ public class ConfigurationManager {
 	private Configuration reMapDownNodeWorkers(Configuration config) {
 		if (downNodes.size() == 0)
 			return config;
-
+		wrongParamCount = 0;
 		Configuration.Builder b = Configuration.builder(config);
 		for (Worker<?, ?> w : allWorkers) {
 			int id = Workers.getIdentifier(w);
@@ -159,6 +162,7 @@ public class ConfigurationManager {
 						paramName, Integer.class, newVal, sp.getUniverse());
 				b.removeParameter(paramName);
 				b.addParameter(spNew);
+				wrongParamCount++;
 			}
 		}
 		return b.build();

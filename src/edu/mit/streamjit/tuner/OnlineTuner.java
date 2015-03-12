@@ -119,7 +119,7 @@ public class OnlineTuner implements Runnable {
 				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
-				tuner.writeLine(new Double(time).toString());
+				tuner.writeLine(new Double(penalized(time)).toString());
 				searchTimeSW.reset();
 				searchTimeSW.start();
 
@@ -252,6 +252,7 @@ public class OnlineTuner implements Runnable {
 	private final int initialTuningCount = Options.initialTuningCount;
 	private final int dynTuningCount = Options.dynTuningCount;
 	private final int bestcfgMinutes = 3;
+	private final boolean penalize = true;
 
 	/**
 	 * Pausing condition of the online tuning.
@@ -337,5 +338,15 @@ public class OnlineTuner implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private long penalized(long time) {
+		if (penalize) {
+			long newtime = (long) ((1 + cfgManager.wrongParamCount * 0.1) * time);
+			System.err.println(String.format(
+					"Actual time=%d, Penalized time=%d\n", time, newtime));
+			return newtime;
+		}
+		return time;
 	}
 }
