@@ -327,15 +327,19 @@ public class Utils {
 	}
 
 	public static File[] listOfFilesMove(final String appName) {
+		final String[] dontMove = { ConfigurationUtils.configDir, "verify.txt",
+				appName };
 		File dir = new File(appName);
 		File[] files = dir.listFiles(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return !name.equals(ConfigurationUtils.configDir);
+				for (String s : dontMove)
+					if (name.startsWith(s))
+						return false;
+				return true;
 			}
 		});
 		return files;
 	}
-
 	public static void newApp(String appName) {
 		createAppDir(appName);
 		backup1(appName);
