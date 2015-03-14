@@ -23,14 +23,14 @@
 				<attribute name="Class-Path" value="." />
 			</manifest>
 			<fileset dir="bin" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/CopyLibs/org-netbeans-modules-java-j2seproject-copylibstask.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/jsonp/javax.json-1.0-fab.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/ASM/asm-debug-all-4.1.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/ServiceProviderProcessor/ServiceProviderProcessor.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/JOptSimple/jopt-simple-4.5.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/sqlite/sqlite-jdbc-3.7.2.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/Guava/guava-15.0.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/BridJ/bridj-0.7-20140122.002307-56-c-only.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/javax.json.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/asm.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/ServiceProviderProcessor.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/joptsimple.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/sqlitejdbc.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/guava.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/bridj.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/bytecodelib.jar" />
 		</jar>
 	</target>
 
@@ -41,14 +41,14 @@
 				<attribute name="Class-Path" value="." />
 			</manifest>
 			<fileset dir="bin" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/CopyLibs/org-netbeans-modules-java-j2seproject-copylibstask.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/jsonp/javax.json-1.0-fab.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/ASM/asm-debug-all-4.1.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/ServiceProviderProcessor/ServiceProviderProcessor.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/JOptSimple/jopt-simple-4.5.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/sqlite/sqlite-jdbc-3.7.2.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/Guava/guava-15.0.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="lib/BridJ/bridj-0.7-20140122.002307-56-c-only.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/javax.json.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/asm.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/ServiceProviderProcessor.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/joptsimple.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/sqlitejdbc.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/guava.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/bridj.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="lib/bytecodelib.jar" />
 		</jar>
 	</target>
 
