@@ -155,7 +155,12 @@ public class ConfigurationAnalyzer {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return Double.parseDouble(runtime);
+		double val = Double.POSITIVE_INFINITY;
+		try {
+			val = Double.parseDouble(runtime);
+		} catch (NumberFormatException e) {
+		}
+		return val;
 	}
 
 	private int getTotalResults() {
@@ -282,6 +287,8 @@ public class ConfigurationAnalyzer {
 			min = t2;
 			max = t1;
 		}
+		if (max == Double.POSITIVE_INFINITY)
+			return false;
 		if (max / min > diff)
 			return true;
 		return false;
