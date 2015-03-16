@@ -200,7 +200,9 @@ public class ConfigurationAnalyzer {
 				comparitionSummaryList.add(sum);
 			}
 		}
-		print(comparitionSummaryList, new OutputStreamWriter(System.out));
+		print(comparitionSummaryList,
+				edu.mit.streamjit.impl.distributed.common.Utils.fileWriter(
+						appName, "cfgAnalize.txt"));
 	}
 
 	private void print(List<ComparisionSummary> comparitionSummaryList,
