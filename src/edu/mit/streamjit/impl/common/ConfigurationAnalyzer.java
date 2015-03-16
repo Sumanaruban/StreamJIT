@@ -228,7 +228,7 @@ public class ConfigurationAnalyzer {
 			}
 			Collections.sort(paramSummaryList);
 			for (ParamSummary ps : paramSummaryList)
-				osWriter.write(ps.toString() + "\n");
+				osWriter.write(ps + "\n");
 		}
 		osWriter.flush();
 	}
