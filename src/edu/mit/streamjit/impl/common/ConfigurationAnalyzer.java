@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.google.common.collect.ImmutableSet;
+
 import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
@@ -173,5 +175,58 @@ public class ConfigurationAnalyzer {
 			throw new IllegalStateException("No directory found in " + dirPath);
 
 		return true;
+	}
+
+	public enum ParamType {
+
+		PARTITION {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("worker");
+			}
+		},
+		REMOVAL_STRATEGY {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("remove");
+			}
+		},
+		FUSION_STRATEGY {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("fuse");
+			}
+		},
+		UNBOXING_STRATEGY {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("unbox");
+			}
+		},
+		ALLOCATION_STRATEGY {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("Group");
+			}
+		},
+		INTERNAL_STORAGE_STRATEGY {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("InternalArrayish");
+			}
+		},
+		EXTERNAL_STORAGE_STRATEGY {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("ExternalArrayish", "UseDoubleBuffers");
+			}
+		},
+		MULTIPLIER {
+			@Override
+			public ImmutableSet<String> variablePrefixList() {
+				return ImmutableSet.of("multiplier");
+			}
+		};
+		public abstract ImmutableSet<String> variablePrefixList();
 	}
 }
