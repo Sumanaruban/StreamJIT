@@ -146,21 +146,7 @@ public class ConfigurationAnalyzer {
 
 	private static double getRunningTime(String appName, int round) {
 		SqliteAdapter sqlite = connectDB(appName);
-		ResultSet result = sqlite.executeQuery(String.format(
-				"SELECT * FROM result WHERE id=%d", round));
-
-		String runtime = "1000000000";
-		try {
-			runtime = result.getString("time");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		double val = Double.POSITIVE_INFINITY;
-		try {
-			val = Double.parseDouble(runtime);
-		} catch (NumberFormatException e) {
-		}
-		return val;
+		return getRunningTime(sqlite, appName, round);
 	}
 
 	private int getTotalResults() {
@@ -219,6 +205,25 @@ public class ConfigurationAnalyzer {
 		print(comparitionSummaryList,
 				edu.mit.streamjit.impl.distributed.common.Utils.fileWriter(
 						appName, "cfgAnalize.txt"));
+	}
+
+	private static double getRunningTime(SqliteAdapter sqlite, String appName,
+			int round) {
+		ResultSet result = sqlite.executeQuery(String.format(
+				"SELECT * FROM result WHERE id=%d", round));
+
+		String runtime = "1000000000";
+		try {
+			runtime = result.getString("time");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		double val = Double.POSITIVE_INFINITY;
+		try {
+			val = Double.parseDouble(runtime);
+		} catch (NumberFormatException e) {
+		}
+		return val;
 	}
 
 	private void print(List<ComparisionSummary> comparitionSummaryList,
