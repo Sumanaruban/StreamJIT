@@ -162,6 +162,21 @@ public class ConfigurationAnalyzer {
 		return Double.parseDouble(runtime);
 	}
 
+	private int getTotalResults() {
+		String dbPath = String.format("%s%s%s", appName, File.separator,
+				appName);
+		SqliteAdapter sqlite = connectDB(dbPath);
+		ResultSet result = sqlite.executeQuery("SELECT COUNT(*) FROM result");
+
+		String runtime = "0";
+		try {
+			runtime = result.getString("COUNT(*)");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return Integer.parseInt(runtime);
+	}
+
 	private Configuration readcoConfiguration(Integer cfgNo) {
 		String cfg = String.format("%s%s%d_%s.cfg", cfgDir, File.separator,
 				cfgNo, appName);
