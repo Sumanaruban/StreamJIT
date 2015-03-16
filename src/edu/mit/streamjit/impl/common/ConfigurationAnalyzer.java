@@ -137,15 +137,15 @@ public class ConfigurationAnalyzer {
 	}
 
 	private static SqliteAdapter connectDB(String appName) {
+		String dbPath = String.format("%s%s%s", appName, File.separator,
+				appName);
 		SqliteAdapter sqlite = new SqliteAdapter();
-		sqlite.connectDB(appName);
+		sqlite.connectDB(dbPath);
 		return sqlite;
 	}
 
 	private static double getRunningTime(String appName, int round) {
-		String dbPath = String.format("%s%s%s", appName, File.separator,
-				appName);
-		SqliteAdapter sqlite = connectDB(dbPath);
+		SqliteAdapter sqlite = connectDB(appName);
 		ResultSet result = sqlite.executeQuery(String.format(
 				"SELECT * FROM result WHERE id=%d", round));
 
@@ -164,9 +164,7 @@ public class ConfigurationAnalyzer {
 	}
 
 	private int getTotalResults() {
-		String dbPath = String.format("%s%s%s", appName, File.separator,
-				appName);
-		SqliteAdapter sqlite = connectDB(dbPath);
+		SqliteAdapter sqlite = connectDB(appName);
 		ResultSet result = sqlite.executeQuery("SELECT COUNT(*) FROM result");
 
 		String runtime = "0";
