@@ -213,6 +213,7 @@ public class ConfigurationAnalyzer {
 				paramMapSum.totalCount));
 		for (ComparisionSummary s : comparitionSummaryList) {
 			List<ParamSummary> paramSummaryList = new ArrayList<>();
+			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
 			int totalDiffs = s.toatalDiffCount;
 			double per1 = ((double) totalDiffs * 100) / paramMapSum.totalCount;
