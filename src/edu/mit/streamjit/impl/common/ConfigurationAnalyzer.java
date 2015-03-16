@@ -202,8 +202,10 @@ public class ConfigurationAnalyzer {
 
 	private void Analyze() throws IOException {
 		int maxTuneCount = getTotalResults();
+		int start = 1;
+		int end = maxTuneCount;
 		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
-		for (int i = 1; i < maxTuneCount - 1; i++) {
+		for (int i = start; i < end - 1; i++) {
 			double t1 = getRunningTime(appName, i);
 			double t2 = getRunningTime(appName, i + 1);
 			if (needTocompare(t1, t2)) {
