@@ -25,12 +25,8 @@ import edu.mit.streamjit.util.ConfigurationUtils;
 public class ConfigurationAnalyzer {
 
 	public static void main(String[] args) throws IOException {
-		ConfigurationAnalyzer ca = new ConfigurationAnalyzer(
-				"NestedSplitJoinCore");
-		ca.Analyze(100);
-		// ca.compare(3, 4);
-
-		// System.out.println(ca.getRunningTime("NestedSplitJoinCore", 3));
+		ConfigurationAnalyzer ca = new ConfigurationAnalyzer("FMRadioCore");
+		ca.Analyze();
 	}
 
 	private final String cfgDir;
