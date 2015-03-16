@@ -55,7 +55,7 @@ public class ConfigurationAnalyzer {
 				ConfigurationUtils.configDir);
 	}
 
-	private void compare(FloatParameter p1, FloatParameter p2) {
+	private static void compare(FloatParameter p1, FloatParameter p2) {
 		float val1 = p1.getValue();
 		float val2 = p2.getValue();
 		if (val1 == val2)
@@ -101,7 +101,7 @@ public class ConfigurationAnalyzer {
 	 * @param p1
 	 * @param p2
 	 */
-	private void compare(IntParameter p1, IntParameter p2) {
+	private static void compare(IntParameter p1, IntParameter p2) {
 		int val1 = p1.getValue();
 		int val2 = p2.getValue();
 		if (val1 == val2)
@@ -115,7 +115,8 @@ public class ConfigurationAnalyzer {
 					p1.getName(), val1, val2));
 	}
 
-	private <T1, T2> void compare(SwitchParameter<T1> p1, SwitchParameter<T2> p2) {
+	private static <T1, T2> void compare(SwitchParameter<T1> p1,
+			SwitchParameter<T2> p2) {
 		Class<T1> type1 = p1.getGenericParameter();
 		Class<T2> type2 = p2.getGenericParameter();
 		assert type1 == type2;
@@ -132,13 +133,13 @@ public class ConfigurationAnalyzer {
 					p1.getName(), val1, val2, p1.getUniverse()));
 	}
 
-	private SqliteAdapter connectDB(String appName) {
+	private static SqliteAdapter connectDB(String appName) {
 		SqliteAdapter sqlite = new SqliteAdapter();
 		sqlite.connectDB(appName);
 		return sqlite;
 	}
 
-	private double getRunningTime(String appName, int round) {
+	private static double getRunningTime(String appName, int round) {
 		String dbPath = String.format("%s%s%s", appName, File.separator,
 				appName);
 		SqliteAdapter sqlite = connectDB(dbPath);
@@ -160,7 +161,7 @@ public class ConfigurationAnalyzer {
 		return ConfigurationUtils.readConfiguration(cfg);
 	}
 
-	private boolean verifyPath(String cfgDir, String appName) {
+	private static boolean verifyPath(String cfgDir, String appName) {
 		String dbPath = String.format("%s%s%s", appName, File.separator,
 				appName);
 		File db = new File(dbPath);
