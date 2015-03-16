@@ -178,6 +178,33 @@ public class ConfigurationAnalyzer {
 		return true;
 	}
 
+	private void Analyze(int maxTuneCount) {
+		for (int i = 1; i < maxTuneCount - 1; i++) {
+			double t1 = getRunningTime(appName, i);
+			double t2 = getRunningTime(appName, i + 1);
+			if (needTocompare(t1, t2)) {
+				System.out.println("Comparing...");
+				compare(i, i + 1);
+			}
+		}
+	}
+
+	private boolean needTocompare(double t1, double t2) {
+		final double diff = 1.2;
+		double min;
+		double max;
+		if (t2 > t1) {
+			min = t1;
+			max = t2;
+		} else {
+			min = t2;
+			max = t1;
+		}
+		if (max / min > diff)
+			return true;
+		return false;
+	}
+
 	public enum ParamType {
 
 		PARTITION {
