@@ -1,6 +1,8 @@
 package edu.mit.streamjit.impl.common;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -22,9 +24,10 @@ import edu.mit.streamjit.util.ConfigurationUtils;
 
 public class ConfigurationAnalyzer {
 
-	public static void main(String[] args) {
-		ConfigurationAnalyzer ca = new ConfigurationAnalyzer("FMRadioCore");
-		ca.Analyze(50);
+	public static void main(String[] args) throws IOException {
+		ConfigurationAnalyzer ca = new ConfigurationAnalyzer(
+				"NestedSplitJoinCore");
+		ca.Analyze(100);
 		// ca.compare(3, 4);
 
 		// System.out.println(ca.getRunningTime("NestedSplitJoinCore", 3));
@@ -182,7 +185,7 @@ public class ConfigurationAnalyzer {
 		return true;
 	}
 
-	private void Analyze(int maxTuneCount) {
+	private void Analyze(int maxTuneCount) throws IOException {
 		// maxTuneCount = 10;
 		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
 		for (int i = 1; i < maxTuneCount - 1; i++) {
@@ -197,20 +200,22 @@ public class ConfigurationAnalyzer {
 				comparitionSummaryList.add(sum);
 			}
 		}
-		print(comparitionSummaryList);
+		print(comparitionSummaryList, new OutputStreamWriter(System.out));
 	}
 
-	private void print(List<ComparisionSummary> comparitionSummaryList) {
+	private void print(List<ComparisionSummary> comparitionSummaryList,
+			OutputStreamWriter osWriter) throws IOException {
 		ParamMapSummary paramMapSum = new ParamMapSummary();
-		System.out.println("Total parameters in the configuration = "
-				+ paramMapSum.totalCount);
+		osWriter.write(String.format(
+				"Total parameters in the configuration = %d\n",
+				paramMapSum.totalCount));
 		for (ComparisionSummary s : comparitionSummaryList) {
 			List<ParamSummary> paramSummaryList = new ArrayList<>();
-			System.out.println(s);
+			osWriter.write(s + "\n");
 			int totalDiffs = s.toatalDiffCount;
 			double per1 = ((double) totalDiffs * 100) / paramMapSum.totalCount;
-			System.out.println(String.format(
-					"TotalParams=%d,TotalDiffs=%d,Per=%f",
+			osWriter.write(String.format(
+					"TotalParams=%d,TotalDiffs=%d,Per=%f\n",
 					paramMapSum.totalCount, totalDiffs, per1));
 			for (ParamType p : ParamType.values()) {
 				int totalCount = paramMapSum.parmTypeCount.get(p);
@@ -221,8 +226,9 @@ public class ConfigurationAnalyzer {
 			}
 			Collections.sort(paramSummaryList);
 			for (ParamSummary ps : paramSummaryList)
-				System.out.println(ps);
+				osWriter.write(ps.toString() + "\n");
 		}
+		osWriter.flush();
 	}
 
 	private class ParamSummary implements Comparable<ParamSummary> {
@@ -260,8 +266,6 @@ public class ConfigurationAnalyzer {
 			min = t2;
 			max = t1;
 		}
-		max = t1;
-		min = t2;
 		if (max / min > diff)
 			return true;
 		return false;
@@ -391,7 +395,6 @@ public class ConfigurationAnalyzer {
 		final double t1;
 		final double t2;
 		int toatalDiffCount = 0;
-		// List<Parameter> diffParamList;
 		Map<ParamType, Integer> diffCount;
 		public ComparisionSummary(final int firstCfg, final int secondCfg,
 				final double t1, final double t2) {
@@ -407,14 +410,6 @@ public class ConfigurationAnalyzer {
 			for (ParamType p : ParamType.values()) {
 				diffCount.put(p, 0);
 			}
-			// diffCount.put(ParamType.ALLOCATION_STRATEGY, 0);
-			// diffCount.put(ParamType.EXTERNAL_STORAGE_STRATEGY, 0);
-			// diffCount.put(ParamType.FUSION_STRATEGY, 0);
-			// diffCount.put(ParamType.INTERNAL_STORAGE_STRATEGY, 0);
-			// diffCount.put(ParamType.MULTIPLIER, 0);
-			// diffCount.put(ParamType.PARTITION, 0);
-			// diffCount.put(ParamType.REMOVAL_STRATEGY, 0);
-			// diffCount.put(ParamType.UNBOXING_STRATEGY, 0);
 		}
 
 		void diff(Parameter param) {
