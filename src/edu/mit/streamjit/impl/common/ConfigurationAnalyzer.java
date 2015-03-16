@@ -189,10 +189,11 @@ public class ConfigurationAnalyzer {
 		int maxTuneCount = getTotalResults();
 		int start = 1;
 		int end = maxTuneCount;
+		SqliteAdapter sqlite = connectDB(appName);
 		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
 		for (int i = start; i < end - 1; i++) {
-			double t1 = getRunningTime(appName, i);
-			double t2 = getRunningTime(appName, i + 1);
+			double t1 = getRunningTime(sqlite, appName, i);
+			double t2 = getRunningTime(sqlite, appName, i + 1);
 			if (needTocompare(t1, t2)) {
 				// System.out.println("Comparing...");
 				ComparisionSummary sum = new ComparisionSummary(i, i + 1, t1,
