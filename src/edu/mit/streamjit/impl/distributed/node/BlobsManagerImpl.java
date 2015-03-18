@@ -171,8 +171,9 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * stopped.
 	 */
 	public void stop() {
-		for (BlobExecuter be : blobExecuters.values())
-			be.stop();
+		if (blobExecuters != null)
+			for (BlobExecuter be : blobExecuters.values())
+				be.stop();
 
 		if (monBufs != null)
 			monBufs.stopMonitoring();
