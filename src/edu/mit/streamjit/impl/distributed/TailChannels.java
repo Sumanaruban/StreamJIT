@@ -574,12 +574,12 @@ public class TailChannels {
 
 		@Override
 		public void reset() {
-			System.err.println("reset called.........");
+			stopWatch.stop();
 		}
 
 		@Override
 		protected void releaseAndInitilize() {
-			System.err.println("releaseAndInitilize....");
+			stopWatch.stop();
 		}
 	}
 }
