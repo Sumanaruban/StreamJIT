@@ -22,9 +22,11 @@
 package edu.mit.streamjit.impl.common.drainer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -413,6 +415,21 @@ public abstract class AbstractDrainer {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private DrainData readDrainData() {
+		DrainData dd = null;
+		try {
+			String fileName = String.format("%s%sDrainData", app.name,
+					File.separator);
+			FileInputStream fin = new FileInputStream(fileName);
+			ObjectInputStream ois = new ObjectInputStream(fin);
+			dd = (DrainData) ois.readObject();
+			ois.close();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return dd;
 	}
 
 	/**
