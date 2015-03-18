@@ -255,8 +255,10 @@ public class TailChannels {
 			return count;
 		}
 
-		protected long normalizedTime(long time) {
-			return (Options.outputCount * time) / (totalCount - skipCount);
+		protected long normalizedTime(int count, long time) {
+			if (count < skipCount)
+				return -1;
+			return (Options.outputCount * time) / (count - skipCount);
 		}
 
 		/**
@@ -357,8 +359,9 @@ public class TailChannels {
 			steadyLatch.await();
 			stopwatch.stop();
 			long time = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+			int cnt = count;
 			reportingTime(time);
-			return normalizedTime(time);
+			return normalizedTime(cnt, time);
 		}
 
 		@Override
@@ -378,10 +381,9 @@ public class TailChannels {
 
 			stopwatch.stop();
 			long time = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+			int cnt = count;
 			reportingTime(time);
-			if (time > timeout)
-				return -1;
-			return normalizedTime(time);
+			return normalizedTime(cnt, time);
 		}
 
 		/**
@@ -474,8 +476,9 @@ public class TailChannels {
 			while (stopWatch.isRunning())
 				Thread.sleep(250);
 			long time = stopWatch.elapsed(TimeUnit.MILLISECONDS);
+			int cnt = count;
 			reportingTime(time);
-			return normalizedTime(time);
+			return normalizedTime(cnt, time);
 		}
 
 		@Override
@@ -494,11 +497,9 @@ public class TailChannels {
 			}
 
 			long time = stopWatch.elapsed(TimeUnit.MILLISECONDS);
+			int cnt = count;
 			reportingTime(time);
-			if (time > timeout)
-				return -1;
-			else
-				return normalizedTime(time);
+			return normalizedTime(cnt, time);
 		}
 
 		/**
