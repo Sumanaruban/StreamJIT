@@ -158,6 +158,11 @@ public final class Options {
 	public static final int verificationCount;
 
 	/**
+	 * Maximum numbers of rounds to tune.
+	 */
+	public static final int tuningRounds;
+
+	/**
 	 * Large multiplier -> Large compilation time and Large waiting time.
 	 */
 	public static final int multiplierMaxValue;
@@ -208,6 +213,7 @@ public final class Options {
 		boundaryChannelRatio = Integer.parseInt(prop
 				.getProperty("boundaryChannelRatio"));
 		timeOut = Boolean.parseBoolean(prop.getProperty("timeOut"));
+		tuningRounds = Integer.parseInt(prop.getProperty("tuningRounds"));
 	}
 
 	public static Properties getProperties() {
@@ -234,6 +240,7 @@ public final class Options {
 		setProperty(prop, "blobToNodeRatio", blobToNodeRatio);
 		setProperty(prop, "boundaryChannelRatio", boundaryChannelRatio);
 		setProperty(prop, "timeOut", timeOut);
+		setProperty(prop, "tuningRounds", tuningRounds);
 		return prop;
 	}
 
