@@ -518,4 +518,68 @@ public class TailChannels {
 			count = 0;
 		}
 	}
+
+	public static final class BlockingTailChannel3
+			extends
+				AbstractBlockingTailChannel {
+
+		private final Stopwatch stopWatch;
+
+		private final long skipMills = 3000;
+
+		private final long steadyMills = 8000;
+
+		public BlockingTailChannel3(Buffer buffer,
+				ConnectionProvider conProvider, ConnectionInfo conInfo,
+				String bufferTokenName, int debugLevel, int skipCount,
+				int steadyCount, String appName, String cfgPrefix) {
+			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
+					skipCount, steadyCount, appName, cfgPrefix);
+			stopWatch = Stopwatch.createUnstarted();
+		}
+
+		@Override
+		public void receiveData() {
+			super.receiveData();
+			count++;
+		}
+
+		@Override
+		public long getFixedOutputTime() throws InterruptedException {
+			while (count < 1)
+				Thread.sleep(1);
+			stopWatch.start();
+			while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < skipMills)
+				Thread.sleep(1);
+			int startCount = count;
+			while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < (skipMills + steadyMills))
+				Thread.sleep(1);
+			int endCount = count;
+			System.err.println(String.format("startCount=%d, endCount=%d",
+					startCount, endCount));
+			return fixedtime(endCount - startCount);
+		}
+
+		public long fixedtime(int cnt) {
+			int steadyCount = totalCount - skipCount;
+			long time = (steadyMills * steadyCount) / cnt;
+			return time;
+		}
+
+		@Override
+		public long getFixedOutputTime(long timeout)
+				throws InterruptedException {
+			return getFixedOutputTime();
+		}
+
+		@Override
+		public void reset() {
+			System.err.println("reset called.........");
+		}
+
+		@Override
+		protected void releaseAndInitilize() {
+			System.err.println("releaseAndInitilize....");
+		}
+	}
 }

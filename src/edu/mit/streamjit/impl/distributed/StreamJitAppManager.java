@@ -380,6 +380,10 @@ public class StreamJitAppManager {
 				return new TailChannels.BlockingTailChannel1(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
 						skipCount, steadyCount, appName, cfgPrefix);
+			case 3 :
+				return new TailChannels.BlockingTailChannel3(buffer,
+						conProvider, conInfo, bufferTokenName, debugLevel,
+						skipCount, steadyCount, appName, cfgPrefix);
 			default :
 				return new TailChannels.BlockingTailChannel2(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
