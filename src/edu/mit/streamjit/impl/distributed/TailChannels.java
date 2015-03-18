@@ -561,6 +561,8 @@ public class TailChannels {
 		}
 
 		public long fixedtime(int cnt) {
+			if (cnt < 1)
+				return -1;
 			int steadyCount = totalCount - skipCount;
 			long time = (steadyMills * steadyCount) / cnt;
 			return time;
