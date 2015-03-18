@@ -547,6 +547,7 @@ public class TailChannels {
 
 		@Override
 		public long getFixedOutputTime() throws InterruptedException {
+			releaseAndInitilize();
 			while (count < 1)
 				Thread.sleep(1);
 			stopWatch.start();
@@ -577,12 +578,14 @@ public class TailChannels {
 
 		@Override
 		public void reset() {
-			stopWatch.stop();
+			stopWatch.reset();
+			count = 0;
 		}
 
 		@Override
 		protected void releaseAndInitilize() {
-			stopWatch.stop();
+			count = 0;
+			stopWatch.reset();
 		}
 	}
 }
