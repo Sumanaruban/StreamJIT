@@ -136,6 +136,9 @@ public class OnlineTuner implements Runnable {
 		tuner.writeLine("program");
 		tuner.writeLine(app.name);
 
+		tuner.writeLine("tunerounds");
+		tuner.writeLine(new Integer(Options.tuningRounds).toString());
+
 		tuner.writeLine("confg");
 		tuner.writeLine(Jsonifiers.toJson(app.getConfiguration()).toString());
 	}

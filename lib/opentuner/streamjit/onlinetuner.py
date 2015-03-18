@@ -93,6 +93,8 @@ def start(argv, cfg, connection):
 	
 	args = parser.parse_args(argv)
 
+	print 'test_limit=%d'%args.test_limit
+
 	if not args.database:
     		args.database = 'sqlite:///' + args.program + '.db'
 
