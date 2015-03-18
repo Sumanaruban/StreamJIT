@@ -11,6 +11,7 @@ class streamJit:
 	def __init__(self, port):
 		self.port = port
 		self.program = "streamApp"
+		self.tunerounds = '5000'
 
 	def listen(self):
 		try:
@@ -36,13 +37,16 @@ class streamJit:
 				break;
 			elif ( data == 'program\n'):
 				self.program = self.file.readline()
+
+			elif ( data == 'tunerounds\n'):
+				self.tunerounds = self.file.readline()
 				
 			elif ( data == 'confg\n' ):
 				print "Config received."
 				cfgString = self.file.readline()
 				try:
 					cfg = configuration.getConfiguration(cfgString)
-					argv = ['--program', self.program,  '--test-limit', '5000']
+					argv = ['--program', self.program,  '--test-limit', self.tunerounds]
 					onlinetuner.start(argv, cfg, self)
 				except Exception, e:
 					print "Exception occured : %s"%e
