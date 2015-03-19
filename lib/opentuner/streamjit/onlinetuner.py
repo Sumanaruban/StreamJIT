@@ -6,6 +6,8 @@ import sjparameters
 import configuration
 import streamjit
 import sys
+import signal
+import os
 
 import deps #fix sys.path
 import opentuner
@@ -22,6 +24,8 @@ class StreamJitMI(MeasurementInterface):
 		self.connection = connection
 		self.trycount = 0
 		self.config = configuration
+		signal.signal(signal.SIGUSR1, self.receive_signal)
+		print 'My PID is:', os.getpid()
 
 	def run(self, desired_result, input, limit):
 		self.trycount = self.trycount + 1
@@ -70,6 +74,20 @@ class StreamJitMI(MeasurementInterface):
 		self.connection.close()
 		sys.exit(0)
 
+	def receive_signal(self, signum, stack):
+		print 'Received Signal:', signum
+		self.exit()
+
+	#[19-03-2015] Commits the current status to the database and exists safely.
+	def exit(self):
+		#data = raw_input ( "exit cmd received. Press Keyboard to exit..." )
+		self.tuningrunmain.search_driver.args.test_limit=self.tuningrunmain.search_driver.test_count - 1
+		#self.connection.close()
+		#sys.exit(1)
+
+	def tuning_run_main(self, trm):
+		self.tuningrunmain=trm
+
 
 def main(args, cfg, connection):
 	logging.basicConfig(level=logging.INFO)
@@ -83,6 +101,7 @@ def main(args, cfg, connection):
                     MinimizeTime())
 
 	m = TuningRunMain(mi, args)
+	mi.tuning_run_main(m)
 	m.main()
 
 def start(argv, cfg, connection):
