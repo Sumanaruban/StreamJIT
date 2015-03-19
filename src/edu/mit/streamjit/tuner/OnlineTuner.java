@@ -38,7 +38,6 @@ public class OnlineTuner implements Runnable {
 	private final Reconfigurer configurer;
 	private long currentBestTime;
 	private Map<Integer, Configuration> bestCfgs;
-	private long currentBestTime = Long.MAX_VALUE;
 
 	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
 		this.configurer = configurer;
@@ -51,17 +50,6 @@ public class OnlineTuner implements Runnable {
 		this.mLogger = configurer.mLogger;
 		this.currentBestTime = Integer.MAX_VALUE;
 		this.bestCfgs = new HashMap<>();
-	}
-
-	private long currentBestTime() {
-		// Keeps track of the current best time. Uses this to discard bad cfgs
-		// early.
-		long currentBestTime;
-		if (Options.timeOut)
-			currentBestTime = Long.MAX_VALUE;
-		else
-			currentBestTime = 0;
-		return currentBestTime;
 	}
 
 	@Override
@@ -291,7 +279,7 @@ public class OnlineTuner implements Runnable {
 			blockCores();
 		else
 			blockNode();
-		currentBestTime = Long.MAX_VALUE;
+		currentBestTime = Long.MAX_VALUE / 2;
 		dynCount++;
 	}
 
