@@ -139,6 +139,25 @@ args=("$@")
 all=${args[0]}
 app=${app}
 mainClass=${streamGraphName}
+
+function cfgList(){
+	while read line
+	do
+	#echo $line
+	IFS='=' read -a array &lt;&lt;&lt; "$line"
+	list=("${list[@]}" "${array[0]}")
+	done &lt; $mainClass/verify.txt
+	#echo ${list[@]}
+	kk=final_${mainClass}.cfg,final_blobgraph.svg
+	for i in "${list[@]}"
+	do
+		cfg=${i}_${mainClass}.cfg
+		svg=${i}_blobgraph.svg
+		kk="$kk,$cfg,$svg"
+	done
+	#echo $kk
+	}
+
 if [ -d $app ]; then
 	echo "$app exists. No downloads..."
  	exit
@@ -149,6 +168,11 @@ mkdir -p $mainClass
 if [ "$all" = "all" ];then
 	echo "Going to download all files except configuration directory..."
 	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot,$mainClass,*.jar\} $mainClass/
+	cfgList
+	cd $mainClass
+	mkdir -p configurations
+	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/configurations/\{$kk\} configurations/
+	cd ..
 else
 	echo "Going to download essential files only..."
 	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot\} $mainClass/
