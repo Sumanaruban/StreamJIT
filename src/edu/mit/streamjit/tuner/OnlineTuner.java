@@ -34,6 +34,7 @@ public class OnlineTuner implements Runnable {
 	private final ConfigurationPrognosticator prognosticator;
 	private final MethodTimeLogger mLogger;
 	private final Reconfigurer configurer;
+	private long currentBestTime;
 
 	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
 		this.configurer = configurer;
@@ -44,6 +45,7 @@ public class OnlineTuner implements Runnable {
 		this.logger = configurer.logger;
 		this.prognosticator = configurer.prognosticator;
 		this.mLogger = configurer.mLogger;
+		this.currentBestTime = Long.MAX_VALUE / 2;
 	}
 
 	@Override
@@ -56,14 +58,8 @@ public class OnlineTuner implements Runnable {
 
 	private void tune() {
 		int round = 0;
-		// Keeps track of the current best time. Uses this to discard bad cfgs
-		// early.
-		long currentBestTime;
-		if (Options.timeOut)
-			currentBestTime = Long.MAX_VALUE;
-		else
-			currentBestTime = 0;
 		Stopwatch searchTimeSW = Stopwatch.createStarted();
+		long timeout = 0;
 		try {
 			mLogger.bStartTuner();
 			startTuner();
@@ -93,8 +89,9 @@ public class OnlineTuner implements Runnable {
 				mLogger.bNewCfg();
 				Configuration config = newCfg(++round, cfgJson);
 				mLogger.eNewCfg(round);
+				timeout = Options.timeOut ? 2 * currentBestTime : 0;
 				mLogger.bReconfigure();
-				ret = configurer.reconfigure(config, 2 * currentBestTime);
+				ret = configurer.reconfigure(config, timeout);
 				mLogger.eReconfigure();
 				if (ret.first) {
 					long time = ret.second;
