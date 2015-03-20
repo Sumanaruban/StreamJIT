@@ -140,6 +140,7 @@ all=${args[0]}
 app=${app}
 mainClass=${streamGraphName}
 
+#Reads cfgs from verify.txt. Verify.txt contains best cfgs.
 function cfgList(){
 	while read line
 	do
@@ -166,7 +167,7 @@ mkdir -p $app
 cd $app
 mkdir -p $mainClass
 if [ "$all" = "all" ];then
-	echo "Going to download all files except configuration directory..."
+	echo "Going to download all files, best configurations and tuning DB..."
 	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot,$mainClass,*.jar\} $mainClass/
 	cfgList
 	cd $mainClass
