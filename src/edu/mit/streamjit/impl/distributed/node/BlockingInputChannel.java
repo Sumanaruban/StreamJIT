@@ -214,7 +214,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				}
 			}
 
-			if (count % 1000 == 0 && debugLevel == 2) {
+			if (debugLevel == 2 && count % 1000 == 0) {
 				System.out.println(Thread.currentThread().getName() + " - "
 						+ count + " no of items have been received");
 			}
@@ -302,7 +302,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					}
 				}
 
-				if (count % 1000 == 0 && debugLevel == 2) {
+				if (debugLevel == 2 && count % 1000 == 0) {
 					System.out.println(Thread.currentThread().getName() + " - "
 							+ count + " no of items have been received");
 				}
