@@ -559,7 +559,9 @@ public class TailChannels {
 			int endCount = count;
 			System.err.println(String.format("startCount=%d, endCount=%d",
 					startCount, endCount));
-			return fixedtime(endCount - startCount);
+			long time = fixedtime(endCount - startCount);
+			reportingTime(time);
+			return time;
 		}
 
 		public long fixedtime(int cnt) {
