@@ -173,7 +173,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 			Object obj = connection.readObject();
 			if (obj == null) // [2014-03-15] Sometimes null is received.
 				return;
-			count++;
+			if (debugLevel > 0)
+				count++;
 
 			if (debugLevel == 3) {
 				System.out.println(Thread.currentThread().getName() + " - "
@@ -255,7 +256,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 			bufFullCount = 0;
 			try {
 				Object obj = connection.readObject();
-				count++;
+				if (debugLevel > 0)
+					count++;
 
 				if (debugLevel == 2) {
 					System.out.println(Thread.currentThread().getName()
