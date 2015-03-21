@@ -82,12 +82,6 @@ public class ConfigurationAnalyzer {
 		return Integer.parseInt(runtime);
 	}
 
-	private Configuration readcoConfiguration(Integer cfgNo) {
-		String cfg = String.format("%s%s%d_%s.cfg", cfgDir, File.separator,
-				cfgNo, appName);
-		return ConfigurationUtils.readConfiguration(cfg);
-	}
-
 	private static boolean verifyPath(String cfgDir, String appName) {
 		String dbPath = String.format("%s%s%s", appName, File.separator,
 				appName);
@@ -218,8 +212,10 @@ public class ConfigurationAnalyzer {
 	}
 
 	private int compare2(Integer first, Integer second, ComparisionSummary sum) {
-		Configuration cfg1 = readcoConfiguration(first);
-		Configuration cfg2 = readcoConfiguration(second);
+		Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
+				first);
+		Configuration cfg2 = ConfigurationUtils.readConfiguration(appName,
+				second);
 		int diffCount = 0;
 		Map<String, Parameter> paramMap = cfg1.getParametersMap();
 		// System.out.println("ParamMap size = " + paramMap.size());
@@ -314,7 +310,8 @@ public class ConfigurationAnalyzer {
 		}
 
 		private void count() {
-			Configuration cfg1 = readcoConfiguration(1);
+			Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
+					1);
 			Map<String, Parameter> paramMap = cfg1.getParametersMap();
 			totalCount = paramMap.size();
 			for (Parameter p : paramMap.values())
