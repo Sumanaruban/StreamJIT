@@ -266,7 +266,7 @@ public class TailChannels {
 		 * <code>time=unnormalizedTime(normalizedTime(time))</code>
 		 */
 		protected long unnormalizedTime(long time) {
-			return (time * (totalCount - skipCount)) / Options.outputCount;
+			return (long) (time * (((double) (totalCount - skipCount)) / Options.outputCount));
 		}
 
 		/**
