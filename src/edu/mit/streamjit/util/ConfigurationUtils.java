@@ -81,9 +81,9 @@ public class ConfigurationUtils {
 	 * @return {@link Configuration} object if valid file exists. Otherwise
 	 *         returns null.
 	 */
-	public static Configuration readConfiguration(String appName,
-			Integer namePrefix) {
-		return readConfiguration(appName, namePrefix.toString());
+	public static Configuration readConfiguration(String appName, int namePrefix) {
+		Integer i = namePrefix;
+		return readConfiguration(appName, i.toString());
 	}
 
 	/**
