@@ -20,6 +20,7 @@ import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
+import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
 public class ConfigurationAnalyzer {
@@ -204,8 +205,7 @@ public class ConfigurationAnalyzer {
 			}
 		}
 		print(comparitionSummaryList,
-				edu.mit.streamjit.impl.distributed.common.Utils.fileWriter(
-						appName, "cfgAnalize.txt"));
+				Utils.fileWriter(appName, "cfgAnalize.txt"));
 	}
 
 	private static double getRunningTime(SqliteAdapter sqlite, String appName,
