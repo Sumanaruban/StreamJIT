@@ -145,7 +145,7 @@ public class ConfigurationAnalyzer {
 				int totalCount = paramMapSum.parmTypeCount.get(p);
 				int diffCount = s.diffCount.get(p);
 				ParamSummary ps = new ParamSummary(p, totalCount, diffCount,
-						s.getDistance(p));
+						s.normalizedDistant(p));
 				paramSummaryList.add(ps);
 				// System.out.println(ps);
 			}
@@ -192,7 +192,6 @@ public class ConfigurationAnalyzer {
 				diffCount++;
 				sum.diff(p1, p2);
 			}
-
 		}
 		sum.toatalDiffCount = diffCount;
 		return diffCount;
@@ -374,6 +373,11 @@ public class ConfigurationAnalyzer {
 			ParameterClass pc = ParameterClassMap.get(p);
 			return pc.distant();
 		}
+
+		double normalizedDistant(ParamType p) {
+			ParameterClass pc = ParameterClassMap.get(p);
+			return pc.normalizedDistant();
+		}
 	}
 
 	private class ParameterClass {
@@ -389,6 +393,10 @@ public class ConfigurationAnalyzer {
 
 		void addParameterPair(Parameter p1, Parameter p2) {
 			parameters.add(new Pair<>(p1, p2));
+		}
+
+		double normalizedDistant() {
+			return distant() / paramMapSum.parmTypeCount.get(type);
 		}
 
 		double distant() {
