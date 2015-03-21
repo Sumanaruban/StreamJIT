@@ -142,7 +142,8 @@ public class ConfigurationAnalyzer {
 			for (ParamType p : ParamType.values()) {
 				int totalCount = paramMapSum.parmTypeCount.get(p);
 				int diffCount = s.diffCount.get(p);
-				ParamSummary ps = new ParamSummary(p, totalCount, diffCount);
+				ParamSummary ps = new ParamSummary(p, totalCount, diffCount,
+						s.getDistance(p));
 				paramSummaryList.add(ps);
 				// System.out.println(ps);
 			}
@@ -259,17 +260,19 @@ public class ConfigurationAnalyzer {
 		final int totalCount;
 		final int diffCount;
 		final Double per;
+		final double distance;
 
-		ParamSummary(ParamType p, int totalCount, int diffCount) {
+		ParamSummary(ParamType p, int totalCount, int diffCount, double distance) {
 			this.p = p;
 			this.totalCount = totalCount;
 			this.diffCount = diffCount;
 			this.per = ((double) diffCount * 100) / totalCount;
+			this.distance = distance;
 		}
 
 		public String toString() {
-			return String.format("\t%s:tot=%d,diff=%d,per=%f", p, totalCount,
-					diffCount, per);
+			return String.format("\t%s:tot=%d,diff=%d,per=%f,dist=%f", p,
+					totalCount, diffCount, per, distance);
 		}
 
 		@Override
