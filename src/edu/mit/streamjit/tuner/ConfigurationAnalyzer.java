@@ -69,7 +69,7 @@ public class ConfigurationAnalyzer {
 		return getRunningTime(sqlite, appName, round);
 	}
 
-	private int getTotalResults() {
+	private static int getTotalResults(String appName) {
 		SqliteAdapter sqlite = connectDB(appName);
 		ResultSet result = sqlite.executeQuery("SELECT COUNT(*) FROM result");
 
@@ -100,7 +100,7 @@ public class ConfigurationAnalyzer {
 	}
 
 	private void Analyze() throws IOException {
-		int maxTuneCount = getTotalResults();
+		int maxTuneCount = getTotalResults(appName);
 		int start = 1;
 		int end = maxTuneCount;
 		SqliteAdapter sqlite = connectDB(appName);
