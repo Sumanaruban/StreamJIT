@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,6 +44,25 @@ public class ConfigurationAnalyzer {
 	private static double getRunningTime(String appName, int round) {
 		SqliteAdapter sqlite = connectDB(appName);
 		return getRunningTime(sqlite, appName, round);
+	}
+
+	private static double getRunningTime(SqliteAdapter sqlite, String appName,
+			int round) {
+		ResultSet result = sqlite.executeQuery(String.format(
+				"SELECT * FROM result WHERE id=%d", round));
+
+		String runtime = "1000000000";
+		try {
+			runtime = result.getString("time");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		double val = Double.POSITIVE_INFINITY;
+		try {
+			val = Double.parseDouble(runtime);
+		} catch (NumberFormatException e) {
+		}
+		return val;
 	}
 
 	private static int getTotalResults(String appName) {
@@ -97,25 +115,6 @@ public class ConfigurationAnalyzer {
 		}
 		print(comparitionSummaryList,
 				Utils.fileWriter(appName, "cfgAnalize.txt"));
-	}
-
-	private static double getRunningTime(SqliteAdapter sqlite, String appName,
-			int round) {
-		ResultSet result = sqlite.executeQuery(String.format(
-				"SELECT * FROM result WHERE id=%d", round));
-
-		String runtime = "1000000000";
-		try {
-			runtime = result.getString("time");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		double val = Double.POSITIVE_INFINITY;
-		try {
-			val = Double.parseDouble(runtime);
-		} catch (NumberFormatException e) {
-		}
-		return val;
 	}
 
 	private void print(List<ComparisionSummary> comparitionSummaryList,
