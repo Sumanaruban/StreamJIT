@@ -279,7 +279,7 @@ public class OnlineTuner implements Runnable {
 			blockCores();
 		else
 			blockNode();
-		currentBestTime = Long.MAX_VALUE / 2;
+		currentBestTime = Integer.MAX_VALUE;
 		dynCount++;
 	}
 
