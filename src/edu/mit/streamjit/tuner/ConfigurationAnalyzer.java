@@ -302,10 +302,10 @@ public class ConfigurationAnalyzer {
 			Map<String, Parameter> paramMap = cfg1.getParametersMap();
 			totalCount = paramMap.size();
 			for (Parameter p : paramMap.values())
-				diff(p);
+				classify(p);
 		}
 
-		void diff(Parameter param) {
+		void classify(Parameter param) {
 			for (ParamType p : ParamType.values()) {
 				for (String prefix : p.variablePrefixList()) {
 					if (param.getName().startsWith(prefix)) {
