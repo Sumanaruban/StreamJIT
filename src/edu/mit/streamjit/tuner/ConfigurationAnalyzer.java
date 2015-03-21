@@ -187,7 +187,7 @@ public class ConfigurationAnalyzer {
 						"No parameter %s in configuration2", en.getKey()));
 			if (!p1.equals(p2)) {
 				diffCount++;
-				sum.diff(p1);
+				sum.diff(p1, p2);
 			}
 
 		}
@@ -323,6 +323,7 @@ public class ConfigurationAnalyzer {
 		final double t2;
 		int toatalDiffCount = 0;
 		Map<ParamType, Integer> diffCount;
+		Map<ParamType, ParameterClass> ParameterClassMap;
 		public ComparisionSummary(final int firstCfg, final int secondCfg,
 				final double t1, final double t2) {
 			this.firstCfg = firstCfg;
@@ -334,17 +335,23 @@ public class ConfigurationAnalyzer {
 
 		private void initilizeDiffCount() {
 			diffCount = new HashMap<>();
+			ParameterClassMap = new HashMap<>();
 			for (ParamType p : ParamType.values()) {
 				diffCount.put(p, 0);
+				ParameterClassMap.put(p, new ParameterClass(p));
 			}
 		}
 
-		void diff(Parameter param) {
+		void diff(Parameter pram1, Parameter pram2) {
+			checkState(pram1.getName().equals(pram1.getName()),
+					"Different parameters");
 			for (ParamType p : ParamType.values()) {
 				for (String prefix : p.variablePrefixList()) {
-					if (param.getName().startsWith(prefix)) {
+					if (pram1.getName().startsWith(prefix)) {
 						int count = diffCount.get(p);
 						diffCount.put(p, ++count);
+						ParameterClass pc = ParameterClassMap.get(p);
+						pc.addParameterPair(pram1, pram2);
 						return;
 					}
 				}
