@@ -29,11 +29,8 @@ public class ConfigurationAnalyzer {
 
 	private final String appName;
 
-	List<Integer> bestConfigurations;
-
 	public ConfigurationAnalyzer(String appName) {
 		verifyPath(ConfigurationUtils.configDir, appName);
-		bestConfigurations = new LinkedList<>();
 		this.appName = appName;
 	}
 
