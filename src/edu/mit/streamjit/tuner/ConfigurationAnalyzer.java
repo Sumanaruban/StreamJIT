@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.common;
+package edu.mit.streamjit.tuner;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,11 +15,11 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.ImmutableSet;
 
+import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
-import edu.mit.streamjit.tuner.SqliteAdapter;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
 public class ConfigurationAnalyzer {
