@@ -8,16 +8,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
+import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
+import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.Pair;
 
 public class ConfigurationAnalyzer {
 
@@ -348,6 +354,62 @@ public class ConfigurationAnalyzer {
 		public String toString() {
 			return String.format("Cfg1=%d, Cfg2=%d, t1=%f, t2=%f", firstCfg,
 					secondCfg, t1, t2);
+		}
+	}
+
+	private class ParameterClass {
+
+		private final ParamType type;
+
+		private final Set<Pair<Parameter, Parameter>> parameters;
+
+		ParameterClass(ParamType type) {
+			this.type = type;
+			parameters = new HashSet<>();
+		}
+
+		void addParameterPair(Parameter p1, Parameter p2) {
+			parameters.add(new Pair<>(p1, p2));
+		}
+
+		double distant() {
+			double dist = 0;
+			for (Pair<Parameter, Parameter> pair : parameters) {
+				if (pair.first.getClass() == IntParameter.class)
+					dist += distant((IntParameter) pair.first,
+							(IntParameter) pair.second);
+				else if (pair.first.getClass() == FloatParameter.class)
+					dist += distant((FloatParameter) pair.first,
+							(FloatParameter) pair.second);
+				else if (pair.first.getClass() == SwitchParameter.class)
+					dist += distant((SwitchParameter) pair.first,
+							(SwitchParameter) pair.second);
+				else
+					System.out.println("Not supported for the momoent...");
+			}
+			return dist;
+		}
+
+		private double distant(IntParameter first, IntParameter second) {
+			double diff = Math.abs(first.getValue() - second.getValue());
+			int range = first.getMax() - first.getMin();
+			return diff / range;
+		}
+
+		private double distant(FloatParameter first, FloatParameter second) {
+			double diff = Math.abs(first.getValue() - second.getValue());
+			double range = first.getMax() - first.getMin();
+			return diff / range;
+		}
+
+		private <T> double distant(SwitchParameter<T> first,
+				SwitchParameter<T> second) {
+			T val1 = first.getValue();
+			T val2 = second.getValue();
+			if (val1.equals(val2))
+				return 0;
+			else
+				return 1;
 		}
 	}
 }
