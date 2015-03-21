@@ -342,16 +342,16 @@ public class ConfigurationAnalyzer {
 			}
 		}
 
-		void diff(Parameter pram1, Parameter pram2) {
-			checkState(pram1.getName().equals(pram1.getName()),
+		void diff(Parameter param1, Parameter param2) {
+			checkState(param1.getName().equals(param1.getName()),
 					"Different parameters");
 			for (ParamType p : ParamType.values()) {
 				for (String prefix : p.variablePrefixList()) {
-					if (pram1.getName().startsWith(prefix)) {
+					if (param1.getName().startsWith(prefix)) {
 						int count = diffCount.get(p);
 						diffCount.put(p, ++count);
 						ParameterClass pc = ParameterClassMap.get(p);
-						pc.addParameterPair(pram1, pram2);
+						pc.addParameterPair(param1, param2);
 						return;
 					}
 				}
