@@ -1,5 +1,7 @@
 package edu.mit.streamjit.tuner;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -369,6 +371,8 @@ public class ConfigurationAnalyzer {
 		}
 
 		void addParameterPair(Parameter p1, Parameter p2) {
+			checkState(p1.getName().equals(p2.getName()),
+					"Different parameters");
 			parameters.add(new Pair<>(p1, p2));
 		}
 
