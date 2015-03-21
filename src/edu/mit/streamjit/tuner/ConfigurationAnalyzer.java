@@ -389,7 +389,8 @@ public class ConfigurationAnalyzer {
 					dist += distant((SwitchParameter) pair.first,
 							(SwitchParameter) pair.second);
 				else
-					System.out.println("Not supported for the momoent...");
+					System.out.println("Not supported for the momoent..."
+							+ pair.first.getClass());
 			}
 			return dist;
 		}
