@@ -106,9 +106,9 @@ public class ConfigurationAnalyzer {
 		SqliteAdapter sqlite = connectDB(appName);
 		int maxTuneCount = getTotalResults(sqlite);
 		int start = 1;
-		int end = maxTuneCount;
+		int end = maxTuneCount; // inclusive
 		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
-		for (int i = start; i < end - 1; i++) {
+		for (int i = start; i < end; i++) {
 			double t1 = getRunningTime(sqlite, appName, i);
 			double t2 = getRunningTime(sqlite, appName, i + 1);
 			if (needTocompare(t1, t2)) {
