@@ -378,8 +378,6 @@ public class ConfigurationAnalyzer {
 		}
 
 		void addParameterPair(Parameter p1, Parameter p2) {
-			checkState(p1.getName().equals(p2.getName()),
-					"Different parameters");
 			parameters.add(new Pair<>(p1, p2));
 		}
 
