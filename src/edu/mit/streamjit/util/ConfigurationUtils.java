@@ -69,6 +69,24 @@ public class ConfigurationUtils {
 	}
 
 	/**
+	 * Reads configuration from ./appName/configurations/namePrefix_appName.cfg
+	 * and returns it.
+	 * 
+	 * @param appName
+	 *            name of the streamJit app.
+	 * 
+	 * @param namePrefix
+	 *            prefix to add to the cfg file name.
+	 * 
+	 * @return {@link Configuration} object if valid file exists. Otherwise
+	 *         returns null.
+	 */
+	public static Configuration readConfiguration(String appName,
+			Integer namePrefix) {
+		return readConfiguration(appName, namePrefix.toString());
+	}
+
+	/**
 	 * Saves the configuration into
 	 * ./appName/configurations/namePrefix_appName.cfg. output _.cfg file will
 	 * be named as namePrefix_appName.cfg.
