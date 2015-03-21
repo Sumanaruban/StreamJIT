@@ -364,6 +364,11 @@ public class ConfigurationAnalyzer {
 			return String.format("Cfg1=%d, Cfg2=%d, t1=%f, t2=%f", firstCfg,
 					secondCfg, t1, t2);
 		}
+
+		double getDistance(ParamType p) {
+			ParameterClass pc = ParameterClassMap.get(p);
+			return pc.distant();
+		}
 	}
 
 	private class ParameterClass {
