@@ -399,7 +399,7 @@ public class ConfigurationAnalyzer {
 					dist += distant((SwitchParameter) pair.first,
 							(SwitchParameter) pair.second);
 				else
-					System.out.println("Not supported for the momoent..."
+					System.out.println("Not supported for the moment:"
 							+ pair.first.getClass());
 			}
 			return dist;
