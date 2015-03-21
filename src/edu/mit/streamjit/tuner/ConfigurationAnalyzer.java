@@ -27,33 +27,14 @@ public class ConfigurationAnalyzer {
 		ca.Analyze();
 	}
 
-	private final String cfgDir;
-
 	private final String appName;
 
 	List<Integer> bestConfigurations;
-
-	/**
-	 * Path of the directory which contains app's configuration in sub
-	 * directory.
-	 * 
-	 * <pre>
-	 * confgDirectory
-	 * 			|
-	 * 			------>appName1
-	 * 			|
-	 * 			------>appName2
-	 * 			|
-	 * 			------>
-	 * </pre>
-	 */
 
 	public ConfigurationAnalyzer(String appName) {
 		verifyPath(ConfigurationUtils.configDir, appName);
 		bestConfigurations = new LinkedList<>();
 		this.appName = appName;
-		this.cfgDir = String.format("%s%s%s", appName, File.separator,
-				ConfigurationUtils.configDir);
 	}
 
 	private static SqliteAdapter connectDB(String appName) {
