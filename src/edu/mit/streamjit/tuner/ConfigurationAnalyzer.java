@@ -145,30 +145,6 @@ public class ConfigurationAnalyzer {
 		osWriter.flush();
 	}
 
-	private class ParamSummary implements Comparable<ParamSummary> {
-		final ParamType p;
-		final int totalCount;
-		final int diffCount;
-		final Double per;
-
-		ParamSummary(ParamType p, int totalCount, int diffCount) {
-			this.p = p;
-			this.totalCount = totalCount;
-			this.diffCount = diffCount;
-			this.per = ((double) diffCount * 100) / totalCount;
-		}
-
-		public String toString() {
-			return String.format("\t%s:tot=%d,diff=%d,per=%f", p, totalCount,
-					diffCount, per);
-		}
-
-		@Override
-		public int compareTo(ParamSummary o) {
-			return o.per.compareTo(per);
-		}
-	}
-
 	private boolean needTocompare(double t1, double t2) {
 		final double diff = 1.2;
 		double min;
@@ -268,6 +244,30 @@ public class ConfigurationAnalyzer {
 			}
 		};
 		public abstract ImmutableSet<String> variablePrefixList();
+	}
+
+	private class ParamSummary implements Comparable<ParamSummary> {
+		final ParamType p;
+		final int totalCount;
+		final int diffCount;
+		final Double per;
+
+		ParamSummary(ParamType p, int totalCount, int diffCount) {
+			this.p = p;
+			this.totalCount = totalCount;
+			this.diffCount = diffCount;
+			this.per = ((double) diffCount * 100) / totalCount;
+		}
+
+		public String toString() {
+			return String.format("\t%s:tot=%d,diff=%d,per=%f", p, totalCount,
+					diffCount, per);
+		}
+
+		@Override
+		public int compareTo(ParamSummary o) {
+			return o.per.compareTo(per);
+		}
 	}
 
 	public class ParamMapSummary {
