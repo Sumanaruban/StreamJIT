@@ -36,9 +36,12 @@ public class ConfigurationAnalyzer {
 
 	private final String appName;
 
+	private final ParamMapSummary paramMapSum;
+
 	public ConfigurationAnalyzer(String appName) {
 		verifyPath(ConfigurationUtils.configDir, appName);
 		this.appName = appName;
+		paramMapSum = new ParamMapSummary();
 	}
 
 	private static SqliteAdapter connectDB(String appName) {
@@ -126,7 +129,6 @@ public class ConfigurationAnalyzer {
 
 	private void print(List<ComparisionSummary> comparitionSummaryList,
 			OutputStreamWriter osWriter) throws IOException {
-		ParamMapSummary paramMapSum = new ParamMapSummary();
 		osWriter.write(String.format(
 				"Total parameters in the configuration = %d\n",
 				paramMapSum.totalCount));
