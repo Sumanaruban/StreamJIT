@@ -113,6 +113,10 @@ public class ConfigurationAnalyzer {
 						appName, i);
 				Configuration cfg2 = ConfigurationUtils.readConfiguration(
 						appName, i + 1);
+				cfg1 = ConfigurationUtils.addConfigPrefix(cfg1,
+						new Integer(i).toString());
+				cfg2 = ConfigurationUtils.addConfigPrefix(cfg2, new Integer(
+						i + 1).toString());
 				ComparisionSummary sum = ComparisionSummary.compare(cfg1, cfg2,
 						t1, t2, fullParameterSummary);
 				comparitionSummaryList.add(sum);
