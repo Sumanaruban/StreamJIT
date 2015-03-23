@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +124,6 @@ public class ConfigurationAnalyzer {
 				"Total parameters in the configuration = %d\n",
 				fullParameterSummary.totalCount));
 		for (ComparisionSummary s : comparitionSummaryList) {
-			List<ParamClassSummary> paramSummaryList = new ArrayList<>();
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
 			int totalDiffs = s.diffCount();
@@ -134,11 +132,7 @@ public class ConfigurationAnalyzer {
 			osWriter.write(String.format(
 					"TotalParams=%d,TotalDiffs=%d,Per=%f\n",
 					fullParameterSummary.totalCount, totalDiffs, per1));
-			for (ParamType p : ParamType.values()) {
-				paramSummaryList.add(s.paramClassSummary(p));
-			}
-			Collections.sort(paramSummaryList);
-			for (ParamClassSummary ps : paramSummaryList)
+			for (ParamClassSummary ps : s.ParamClassSummaryList())
 				osWriter.write(ps + "\n");
 		}
 		osWriter.flush();
