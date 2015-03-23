@@ -2,11 +2,16 @@ package edu.mit.streamjit.tuner;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableList;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
@@ -122,6 +127,15 @@ public class ComparisionSummary {
 		ParamClassSummary ps = new ParamClassSummary(p, totalCount, diffCount,
 				normalizedDistant(p));
 		return ps;
+	}
+
+	public ImmutableList<ParamClassSummary> ParamClassSummaryList() {
+		List<ParamClassSummary> paramSummaryList = new ArrayList<>();
+		for (ParamType p : ParamType.values()) {
+			paramSummaryList.add(paramClassSummary(p));
+		}
+		Collections.sort(paramSummaryList);
+		return ImmutableList.copyOf(paramSummaryList);
 	}
 
 	private class ParameterClass {
