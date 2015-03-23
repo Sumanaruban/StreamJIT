@@ -128,7 +128,7 @@ public class ConfigurationAnalyzer {
 			List<ParamClassSummary> paramSummaryList = new ArrayList<>();
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
-			int totalDiffs = s.toatalDiffCount;
+			int totalDiffs = s.diffCount();
 			double per1 = ((double) totalDiffs * 100)
 					/ fullParameterSummary.totalCount;
 			osWriter.write(String.format(
@@ -136,7 +136,7 @@ public class ConfigurationAnalyzer {
 					fullParameterSummary.totalCount, totalDiffs, per1));
 			for (ParamType p : ParamType.values()) {
 				int totalCount = fullParameterSummary.parmTypeCount.get(p);
-				int diffCount = s.diffCount.get(p);
+				int diffCount = s.diffCount(p);
 				ParamClassSummary ps = new ParamClassSummary(p, totalCount,
 						diffCount, s.normalizedDistant(p));
 				paramSummaryList.add(ps);
