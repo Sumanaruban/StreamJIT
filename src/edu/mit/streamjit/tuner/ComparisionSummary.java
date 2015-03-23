@@ -61,6 +61,7 @@ public class ComparisionSummary {
 	final double t1;
 	final double t2;
 	private int toatalDiffCount = 0;
+	private double toatalDiffCountPer = 0;
 	private Map<ParamType, Integer> diffCount;
 	private Map<ParamType, ParameterClass> ParameterClassMap;
 
@@ -105,6 +106,8 @@ public class ComparisionSummary {
 		for (ParameterClass pc : ParameterClassMap.values()) {
 			pc.calculate();
 		}
+		toatalDiffCountPer = ((double) toatalDiffCount * 100)
+				/ fullParameterSummary.totalCount;
 	}
 
 	@Override
