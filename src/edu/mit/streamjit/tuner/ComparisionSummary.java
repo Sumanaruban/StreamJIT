@@ -144,6 +144,10 @@ public class ComparisionSummary {
 
 		private final Set<Pair<Parameter, Parameter>> parameters;
 
+		private double normalizedDistant;
+
+		private double distance;
+
 		ParameterClass(ParamType type) {
 			this.type = type;
 			parameters = new HashSet<>();
@@ -153,8 +157,14 @@ public class ComparisionSummary {
 			parameters.add(new Pair<>(p1, p2));
 		}
 
+		private void calculate() {
+			distance = distant();
+			normalizedDistant = distant()
+					/ fullParameterSummary.parmTypeCount.get(type);
+		}
+
 		double normalizedDistant() {
-			return distant() / fullParameterSummary.parmTypeCount.get(type);
+			return normalizedDistant;
 		}
 
 		double distant() {
