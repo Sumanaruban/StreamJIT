@@ -36,12 +36,12 @@ public class ConfigurationAnalyzer {
 
 	private final String appName;
 
-	private final ParamMapSummary paramMapSum;
+	private final FullParameterSummary fullParameterSummary;
 
 	public ConfigurationAnalyzer(String appName) {
 		verifyPath(ConfigurationUtils.configDir, appName);
 		this.appName = appName;
-		paramMapSum = new ParamMapSummary();
+		fullParameterSummary = new FullParameterSummary();
 	}
 
 	private static SqliteAdapter connectDB(String appName) {
@@ -129,18 +129,19 @@ public class ConfigurationAnalyzer {
 			OutputStreamWriter osWriter) throws IOException {
 		osWriter.write(String.format(
 				"Total parameters in the configuration = %d\n",
-				paramMapSum.totalCount));
+				fullParameterSummary.totalCount));
 		for (ComparisionSummary s : comparitionSummaryList) {
 			List<ParamSummary> paramSummaryList = new ArrayList<>();
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
 			int totalDiffs = s.toatalDiffCount;
-			double per1 = ((double) totalDiffs * 100) / paramMapSum.totalCount;
+			double per1 = ((double) totalDiffs * 100)
+					/ fullParameterSummary.totalCount;
 			osWriter.write(String.format(
 					"TotalParams=%d,TotalDiffs=%d,Per=%f\n",
-					paramMapSum.totalCount, totalDiffs, per1));
+					fullParameterSummary.totalCount, totalDiffs, per1));
 			for (ParamType p : ParamType.values()) {
-				int totalCount = paramMapSum.parmTypeCount.get(p);
+				int totalCount = fullParameterSummary.parmTypeCount.get(p);
 				int diffCount = s.diffCount.get(p);
 				ParamSummary ps = new ParamSummary(p, totalCount, diffCount,
 						s.normalizedDistant(p));
@@ -280,10 +281,14 @@ public class ConfigurationAnalyzer {
 		}
 	}
 
-	public class ParamMapSummary {
+	/**
+	 * Contains summary of a StreamJit application's full tuning parameters.
+	 * Classifies the parameters into {@link ParamType}s and keep the counts.
+	 */
+	public class FullParameterSummary {
 		int totalCount;
 		final Map<ParamType, Integer> parmTypeCount;
-		ParamMapSummary() {
+		FullParameterSummary() {
 			parmTypeCount = new HashMap<>();
 			initilizeparmTypeCount();
 			count();
@@ -394,7 +399,7 @@ public class ConfigurationAnalyzer {
 		}
 
 		double normalizedDistant() {
-			return distant() / paramMapSum.parmTypeCount.get(type);
+			return distant() / fullParameterSummary.parmTypeCount.get(type);
 		}
 
 		double distant() {
