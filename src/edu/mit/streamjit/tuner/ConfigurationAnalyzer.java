@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.impl.common.Configuration;
@@ -41,7 +42,7 @@ public class ConfigurationAnalyzer {
 	public ConfigurationAnalyzer(String appName) {
 		verifyPath(ConfigurationUtils.configDir, appName);
 		this.appName = appName;
-		fullParameterSummary = new FullParameterSummary();
+		fullParameterSummary = new FullParameterSummary(appName);
 	}
 
 	private static SqliteAdapter connectDB(String appName) {
@@ -285,36 +286,41 @@ public class ConfigurationAnalyzer {
 	 * Contains summary of a StreamJit application's full tuning parameters.
 	 * Classifies the parameters into {@link ParamType}s and keep the counts.
 	 */
-	public class FullParameterSummary {
-		int totalCount;
-		final Map<ParamType, Integer> parmTypeCount;
-		FullParameterSummary() {
-			parmTypeCount = new HashMap<>();
-			initilizeparmTypeCount();
-			count();
+	public static class FullParameterSummary {
+		final int totalCount;
+		final ImmutableMap<ParamType, Integer> parmTypeCount;
+
+		public FullParameterSummary(String appName) {
+			this(ConfigurationUtils.readConfiguration(appName, 1));
 		}
 
-		private void initilizeparmTypeCount() {
-			for (ParamType p : ParamType.values()) {
-				parmTypeCount.put(p, 0);
-			}
-		}
-
-		private void count() {
-			Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
-					1);
-			Map<String, Parameter> paramMap = cfg1.getParametersMap();
+		FullParameterSummary(Configuration config) {
+			checkState(config != null, "Null configuration passed");
+			Map<String, Parameter> paramMap = config.getParametersMap();
 			totalCount = paramMap.size();
-			for (Parameter p : paramMap.values())
-				classify(p);
+			parmTypeCount = count(paramMap);
 		}
 
-		void classify(Parameter param) {
+		private ImmutableMap<ParamType, Integer> count(
+				Map<String, Parameter> paramMap) {
+			Map<ParamType, Integer> localParmTypeCount = new HashMap<ParamType, Integer>();
+			for (ParamType p : ParamType.values()) {
+				localParmTypeCount.put(p, 0);
+			}
+
+			for (Parameter p : paramMap.values())
+				classify(p, localParmTypeCount);
+
+			return ImmutableMap.copyOf(localParmTypeCount);
+		}
+
+		void classify(Parameter param,
+				Map<ParamType, Integer> localParmTypeCount) {
 			for (ParamType p : ParamType.values()) {
 				for (String prefix : p.variablePrefixList()) {
 					if (param.getName().startsWith(prefix)) {
-						int count = parmTypeCount.get(p);
-						parmTypeCount.put(p, ++count);
+						int count = localParmTypeCount.get(p);
+						localParmTypeCount.put(p, ++count);
 						return;
 					}
 				}
