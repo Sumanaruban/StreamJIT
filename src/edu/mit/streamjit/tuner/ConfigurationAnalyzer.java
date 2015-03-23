@@ -169,7 +169,7 @@ public class ConfigurationAnalyzer {
 	private ComparisionSummary compare2(Integer first, Integer second,
 			double tfirst, double tsecond) {
 		ComparisionSummary sum = new ComparisionSummary(first, second, tfirst,
-				tsecond);
+				tsecond, fullParameterSummary);
 		Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
 				first);
 		Configuration cfg2 = ConfigurationUtils.readConfiguration(appName,
