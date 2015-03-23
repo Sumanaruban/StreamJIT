@@ -134,7 +134,7 @@ public class ConfigurationAnalyzer {
 		for (ComparisionSummary s : comparitionSummaryList) {
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
-			osWriter.write(String.format("t1=%f, t2=%f\n", s.t1, s.t2));
+			osWriter.write(String.format("t1=%.0fms, t2=%.0fms\n", s.t1, s.t2));
 			osWriter.write(s.distanceSummary() + "\n");
 			for (ParamClassSummary ps : s.ParamClassSummaryList())
 				osWriter.write(ps + "\n");
