@@ -31,7 +31,6 @@ public class ComparisionSummary {
 				second);
 		int diffCount = 0;
 		Map<String, Parameter> paramMap = cfg1.getParametersMap();
-		// System.out.println("ParamMap size = " + paramMap.size());
 		for (Entry<String, Parameter> en : paramMap.entrySet()) {
 			Parameter p1 = en.getValue();
 			Parameter p2 = cfg2.getParameter(en.getKey());
@@ -52,9 +51,9 @@ public class ComparisionSummary {
 	final int secondCfg;
 	final double t1;
 	final double t2;
-	int toatalDiffCount = 0;
-	Map<ParamType, Integer> diffCount;
-	Map<ParamType, ParameterClass> ParameterClassMap;
+	private int toatalDiffCount = 0;
+	private Map<ParamType, Integer> diffCount;
+	private Map<ParamType, ParameterClass> ParameterClassMap;
 
 	private ComparisionSummary(final int firstCfg, final int secondCfg,
 			final double t1, final double t2,
@@ -76,7 +75,7 @@ public class ComparisionSummary {
 		}
 	}
 
-	void diff(Parameter param1, Parameter param2) {
+	private void diff(Parameter param1, Parameter param2) {
 		checkState(param1.getName().equals(param1.getName()),
 				"Different parameters");
 		for (ParamType p : ParamType.values()) {
@@ -107,6 +106,14 @@ public class ComparisionSummary {
 	double normalizedDistant(ParamType p) {
 		ParameterClass pc = ParameterClassMap.get(p);
 		return pc.normalizedDistant();
+	}
+
+	public int diffCount(ParamType type) {
+		return diffCount.get(type);
+	}
+
+	public int diffCount() {
+		return toatalDiffCount;
 	}
 
 	private class ParameterClass {
