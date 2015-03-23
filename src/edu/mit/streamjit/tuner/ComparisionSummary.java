@@ -50,6 +50,11 @@ public class ComparisionSummary {
 		return sum;
 	}
 
+	public static ComparisionSummary compare(Configuration cfg1,
+			Configuration cfg2, FullParameterSummary fullParameterSummary) {
+		return compare(cfg1, cfg2, 0, 0, fullParameterSummary);
+	}
+
 	final FullParameterSummary fullParameterSummary;
 	final String firstCfg;
 	final String secondCfg;
