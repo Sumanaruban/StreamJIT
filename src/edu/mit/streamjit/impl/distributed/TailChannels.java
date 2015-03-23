@@ -530,6 +530,11 @@ public class TailChannels {
 
 		private final long steadyMills = 8000;
 
+		/**
+		 * If no output for 30s, reject the configuration.
+		 */
+		private final int noOutputTime = 30000;
+
 		public BlockingTailChannel3(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
@@ -548,7 +553,8 @@ public class TailChannels {
 		@Override
 		public long getFixedOutputTime() throws InterruptedException {
 			releaseAndInitilize();
-			waitForFirstOutput();
+			if (!waitForFirstOutput())
+				return -1;
 			stopWatch.start();
 			while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < skipMills)
 				Thread.sleep(1);
@@ -564,9 +570,11 @@ public class TailChannels {
 		}
 
 		private boolean waitForFirstOutput() throws InterruptedException {
-			while (count < 1)
+			Stopwatch sw = Stopwatch.createStarted();
+			while (count < 1
+					&& sw.elapsed(TimeUnit.MILLISECONDS) < noOutputTime)
 				Thread.sleep(1);
-			return true;
+			return count > 0;
 		}
 
 		public long fixedtime(int cnt) {
