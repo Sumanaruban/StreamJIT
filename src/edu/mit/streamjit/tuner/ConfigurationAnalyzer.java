@@ -132,7 +132,7 @@ public class ConfigurationAnalyzer {
 				"Total parameters in the configuration = %d\n",
 				fullParameterSummary.totalCount));
 		for (ComparisionSummary s : comparitionSummaryList) {
-			List<ParamSummary> paramSummaryList = new ArrayList<>();
+			List<ParamClassSummary> paramSummaryList = new ArrayList<>();
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
 			int totalDiffs = s.toatalDiffCount;
@@ -144,13 +144,13 @@ public class ConfigurationAnalyzer {
 			for (ParamType p : ParamType.values()) {
 				int totalCount = fullParameterSummary.parmTypeCount.get(p);
 				int diffCount = s.diffCount.get(p);
-				ParamSummary ps = new ParamSummary(p, totalCount, diffCount,
-						s.normalizedDistant(p));
+				ParamClassSummary ps = new ParamClassSummary(p, totalCount,
+						diffCount, s.normalizedDistant(p));
 				paramSummaryList.add(ps);
 				// System.out.println(ps);
 			}
 			Collections.sort(paramSummaryList);
-			for (ParamSummary ps : paramSummaryList)
+			for (ParamClassSummary ps : paramSummaryList)
 				osWriter.write(ps + "\n");
 		}
 		osWriter.flush();
@@ -256,14 +256,15 @@ public class ConfigurationAnalyzer {
 		public abstract ImmutableSet<String> variablePrefixList();
 	}
 
-	private class ParamSummary implements Comparable<ParamSummary> {
+	private class ParamClassSummary implements Comparable<ParamClassSummary> {
 		final ParamType p;
 		final int totalCount;
 		final int diffCount;
 		final Double per;
 		final double distance;
 
-		ParamSummary(ParamType p, int totalCount, int diffCount, double distance) {
+		ParamClassSummary(ParamType p, int totalCount, int diffCount,
+				double distance) {
 			this.p = p;
 			this.totalCount = totalCount;
 			this.diffCount = diffCount;
@@ -277,7 +278,7 @@ public class ConfigurationAnalyzer {
 		}
 
 		@Override
-		public int compareTo(ParamSummary o) {
+		public int compareTo(ParamClassSummary o) {
 			return o.per.compareTo(per);
 		}
 	}
