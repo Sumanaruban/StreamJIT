@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -111,7 +110,9 @@ public class ConfigurationAnalyzer {
 			double t1 = getRunningTime(sqlite, appName, i);
 			double t2 = getRunningTime(sqlite, appName, i + 1);
 			if (needTocompare(t1, t2)) {
-				comparitionSummaryList.add(compare2(i, i + 1, t1, t2));
+				ComparisionSummary sum = ComparisionSummary.compare2(i, i + 1,
+						t1, t2, fullParameterSummary, appName);
+				comparitionSummaryList.add(sum);
 			}
 		}
 		print(comparitionSummaryList,
@@ -164,32 +165,6 @@ public class ConfigurationAnalyzer {
 		if (max / min > diff)
 			return true;
 		return false;
-	}
-
-	private ComparisionSummary compare2(Integer first, Integer second,
-			double tfirst, double tsecond) {
-		ComparisionSummary sum = new ComparisionSummary(first, second, tfirst,
-				tsecond, fullParameterSummary);
-		Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
-				first);
-		Configuration cfg2 = ConfigurationUtils.readConfiguration(appName,
-				second);
-		int diffCount = 0;
-		Map<String, Parameter> paramMap = cfg1.getParametersMap();
-		// System.out.println("ParamMap size = " + paramMap.size());
-		for (Entry<String, Parameter> en : paramMap.entrySet()) {
-			Parameter p1 = en.getValue();
-			Parameter p2 = cfg2.getParameter(en.getKey());
-			if (p2 == null)
-				throw new IllegalStateException(String.format(
-						"No parameter %s in configuration2", en.getKey()));
-			if (!p1.equals(p2)) {
-				diffCount++;
-				sum.diff(p1, p2);
-			}
-		}
-		sum.toatalDiffCount = diffCount;
-		return sum;
 	}
 
 	public enum ParamType {
