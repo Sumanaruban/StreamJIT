@@ -134,12 +134,7 @@ public class ConfigurationAnalyzer {
 		for (ComparisionSummary s : comparitionSummaryList) {
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(s + "\n");
-			int totalDiffs = s.diffCount();
-			double per1 = ((double) totalDiffs * 100)
-					/ fullParameterSummary.totalCount;
-			osWriter.write(String.format(
-					"TotalParams=%d,TotalDiffs=%d,Per=%f\n",
-					fullParameterSummary.totalCount, totalDiffs, per1));
+			osWriter.write(String.format("t1=%f, t2=%f\n", s.t1, s.t2));
 			for (ParamClassSummary ps : s.ParamClassSummaryList())
 				osWriter.write(ps + "\n");
 		}
