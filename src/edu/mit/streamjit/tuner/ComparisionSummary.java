@@ -135,4 +135,32 @@ public class ComparisionSummary {
 				return 1;
 		}
 	}
+
+	public static class ParamClassSummary implements
+			Comparable<ParamClassSummary> {
+		final ParamType p;
+		final int totalCount;
+		final int diffCount;
+		final Double per;
+		final double distance;
+
+		ParamClassSummary(ParamType p, int totalCount, int diffCount,
+				double distance) {
+			this.p = p;
+			this.totalCount = totalCount;
+			this.diffCount = diffCount;
+			this.per = ((double) diffCount * 100) / totalCount;
+			this.distance = distance;
+		}
+
+		public String toString() {
+			return String.format("\t%s:tot=%d,diff=%d,per=%f,dist=%f", p,
+					totalCount, diffCount, per, distance);
+		}
+
+		@Override
+		public int compareTo(ParamClassSummary o) {
+			return o.per.compareTo(per);
+		}
+	}
 }
