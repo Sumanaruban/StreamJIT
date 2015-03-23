@@ -112,7 +112,7 @@ public class ComparisionSummary {
 
 	double getDistance(ParamType p) {
 		ParameterClass pc = ParameterClassMap.get(p);
-		return pc.distant();
+		return pc.calculateDistant();
 	}
 
 	double normalizedDistant(ParamType p) {
@@ -165,8 +165,8 @@ public class ComparisionSummary {
 		}
 
 		private void calculate() {
-			distance = distant();
-			normalizedDistant = distant()
+			distance = calculateDistant();
+			normalizedDistant = calculateDistant()
 					/ fullParameterSummary.parmTypeCount.get(type);
 		}
 
@@ -174,7 +174,7 @@ public class ComparisionSummary {
 			return normalizedDistant;
 		}
 
-		double distant() {
+		double calculateDistant() {
 			double dist = 0;
 			for (Pair<Parameter, Parameter> pair : parameters) {
 				if (pair.first.getClass() == IntParameter.class)
