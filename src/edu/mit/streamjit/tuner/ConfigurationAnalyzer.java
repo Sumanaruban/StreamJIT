@@ -116,10 +116,7 @@ public class ConfigurationAnalyzer {
 			double t1 = getRunningTime(sqlite, appName, i);
 			double t2 = getRunningTime(sqlite, appName, i + 1);
 			if (needTocompare(t1, t2)) {
-				ComparisionSummary sum = new ComparisionSummary(i, i + 1, t1,
-						t2);
-				int diffCount = compare2(i, i + 1, sum);
-				comparitionSummaryList.add(sum);
+				comparitionSummaryList.add(compare2(i, i + 1, t1, t2));
 			}
 		}
 		print(comparitionSummaryList,
@@ -174,7 +171,10 @@ public class ConfigurationAnalyzer {
 		return false;
 	}
 
-	private int compare2(Integer first, Integer second, ComparisionSummary sum) {
+	private ComparisionSummary compare2(Integer first, Integer second,
+			double tfirst, double tsecond) {
+		ComparisionSummary sum = new ComparisionSummary(first, second, tfirst,
+				tsecond);
 		Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
 				first);
 		Configuration cfg2 = ConfigurationUtils.readConfiguration(appName,
@@ -194,7 +194,7 @@ public class ConfigurationAnalyzer {
 			}
 		}
 		sum.toatalDiffCount = diffCount;
-		return diffCount;
+		return sum;
 	}
 
 	public enum ParamType {
