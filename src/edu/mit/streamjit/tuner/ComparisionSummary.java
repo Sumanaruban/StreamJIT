@@ -167,6 +167,22 @@ public class ComparisionSummary {
 		return ImmutableList.copyOf(paramSummaryList);
 	}
 
+	public double distance() {
+		return distance;
+	}
+
+	public double normalizedDistance() {
+		return normalizedDistance;
+	}
+
+	public double weightedDistance() {
+		return weightedDistance;
+	}
+
+	public double weightedNormalizedDistance() {
+		return weightedNormalizedDistance;
+	}
+
 	private class ParameterClass {
 
 		private final ParamType type;
