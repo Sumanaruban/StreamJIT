@@ -20,7 +20,7 @@ import edu.mit.streamjit.util.Pair;
 
 public class ComparisionSummary {
 
-	public static ComparisionSummary compare2(Integer first, Integer second,
+	public static ComparisionSummary compare(Integer first, Integer second,
 			double tfirst, double tsecond,
 			FullParameterSummary fullParameterSummary, String appName) {
 		ComparisionSummary sum = new ComparisionSummary(first, second, tfirst,
