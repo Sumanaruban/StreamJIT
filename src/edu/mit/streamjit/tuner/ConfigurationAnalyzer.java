@@ -135,12 +135,7 @@ public class ConfigurationAnalyzer {
 					"TotalParams=%d,TotalDiffs=%d,Per=%f\n",
 					fullParameterSummary.totalCount, totalDiffs, per1));
 			for (ParamType p : ParamType.values()) {
-				int totalCount = fullParameterSummary.parmTypeCount.get(p);
-				int diffCount = s.diffCount(p);
-				ParamClassSummary ps = new ParamClassSummary(p, totalCount,
-						diffCount, s.normalizedDistant(p));
-				paramSummaryList.add(ps);
-				// System.out.println(ps);
+				paramSummaryList.add(s.paramClassSummary(p));
 			}
 			Collections.sort(paramSummaryList);
 			for (ParamClassSummary ps : paramSummaryList)

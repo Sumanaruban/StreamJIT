@@ -116,6 +116,14 @@ public class ComparisionSummary {
 		return toatalDiffCount;
 	}
 
+	public ParamClassSummary paramClassSummary(ParamType p) {
+		int totalCount = fullParameterSummary.parmTypeCount.get(p);
+		int diffCount = diffCount(p);
+		ParamClassSummary ps = new ParamClassSummary(p, totalCount, diffCount,
+				normalizedDistant(p));
+		return ps;
+	}
+
 	private class ParameterClass {
 
 		private final ParamType type;
