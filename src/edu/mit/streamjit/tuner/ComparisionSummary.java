@@ -55,7 +55,8 @@ public class ComparisionSummary {
 	int toatalDiffCount = 0;
 	Map<ParamType, Integer> diffCount;
 	Map<ParamType, ParameterClass> ParameterClassMap;
-	public ComparisionSummary(final int firstCfg, final int secondCfg,
+
+	private ComparisionSummary(final int firstCfg, final int secondCfg,
 			final double t1, final double t2,
 			FullParameterSummary fullParameterSummary) {
 		this.firstCfg = firstCfg;
