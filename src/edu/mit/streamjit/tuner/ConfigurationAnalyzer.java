@@ -256,7 +256,8 @@ public class ConfigurationAnalyzer {
 		public abstract ImmutableSet<String> variablePrefixList();
 	}
 
-	private class ParamClassSummary implements Comparable<ParamClassSummary> {
+	public static class ParamClassSummary implements
+			Comparable<ParamClassSummary> {
 		final ParamType p;
 		final int totalCount;
 		final int diffCount;
