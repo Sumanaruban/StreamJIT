@@ -25,15 +25,13 @@ import edu.mit.streamjit.util.Pair;
 
 public class ComparisionSummary {
 
-	public static ComparisionSummary compare(Integer first, Integer second,
-			double tfirst, double tsecond,
-			FullParameterSummary fullParameterSummary, String appName) {
-		ComparisionSummary sum = new ComparisionSummary(first, second, tfirst,
-				tsecond, fullParameterSummary);
-		Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
-				first);
-		Configuration cfg2 = ConfigurationUtils.readConfiguration(appName,
-				second);
+	public static ComparisionSummary compare(Configuration cfg1,
+			Configuration cfg2, double tfirst, double tsecond,
+			FullParameterSummary fullParameterSummary) {
+		ComparisionSummary sum = new ComparisionSummary(
+				ConfigurationUtils.getConfigPrefix(cfg1),
+				ConfigurationUtils.getConfigPrefix(cfg2), tfirst, tsecond,
+				fullParameterSummary);
 		int diffCount = 0;
 		Map<String, Parameter> paramMap = cfg1.getParametersMap();
 		for (Entry<String, Parameter> en : paramMap.entrySet()) {
@@ -53,15 +51,15 @@ public class ComparisionSummary {
 	}
 
 	final FullParameterSummary fullParameterSummary;
-	final int firstCfg;
-	final int secondCfg;
+	final String firstCfg;
+	final String secondCfg;
 	final double t1;
 	final double t2;
 	private int toatalDiffCount = 0;
 	private Map<ParamType, Integer> diffCount;
 	private Map<ParamType, ParameterClass> ParameterClassMap;
 
-	private ComparisionSummary(final int firstCfg, final int secondCfg,
+	private ComparisionSummary(final String firstCfg, final String secondCfg,
 			final double t1, final double t2,
 			FullParameterSummary fullParameterSummary) {
 		this.firstCfg = firstCfg;
@@ -106,7 +104,7 @@ public class ComparisionSummary {
 
 	@Override
 	public String toString() {
-		return String.format("Cfg1=%d, Cfg2=%d, t1=%f, t2=%f", firstCfg,
+		return String.format("Cfg1=%s, Cfg2=%s, t1=%f, t2=%f", firstCfg,
 				secondCfg, t1, t2);
 	}
 
