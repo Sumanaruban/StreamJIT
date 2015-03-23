@@ -164,17 +164,17 @@ public class ComparisionSummary {
 			parameters.add(new Pair<>(p1, p2));
 		}
 
+		double normalizedDistant() {
+			return normalizedDistant;
+		}
+
 		private void calculate() {
 			distance = calculateDistant();
 			normalizedDistant = calculateDistant()
 					/ fullParameterSummary.parmTypeCount.get(type);
 		}
 
-		double normalizedDistant() {
-			return normalizedDistant;
-		}
-
-		double calculateDistant() {
+		private double calculateDistant() {
 			double dist = 0;
 			for (Pair<Parameter, Parameter> pair : parameters) {
 				if (pair.first.getClass() == IntParameter.class)
