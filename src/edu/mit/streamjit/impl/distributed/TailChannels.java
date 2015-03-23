@@ -548,8 +548,7 @@ public class TailChannels {
 		@Override
 		public long getFixedOutputTime() throws InterruptedException {
 			releaseAndInitilize();
-			while (count < 1)
-				Thread.sleep(1);
+			waitForFirstOutput();
 			stopWatch.start();
 			while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < skipMills)
 				Thread.sleep(1);
@@ -562,6 +561,12 @@ public class TailChannels {
 			long time = fixedtime(endCount - startCount);
 			reportingTime(time);
 			return time;
+		}
+
+		private boolean waitForFirstOutput() throws InterruptedException {
+			while (count < 1)
+				Thread.sleep(1);
+			return true;
 		}
 
 		public long fixedtime(int cnt) {
