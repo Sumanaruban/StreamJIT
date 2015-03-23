@@ -48,6 +48,7 @@ public class ComparisionSummary {
 			}
 		}
 		sum.toatalDiffCount = diffCount;
+		sum.summarize();
 		return sum;
 	}
 
@@ -95,6 +96,12 @@ public class ComparisionSummary {
 			}
 		}
 		// System.err.println("No matches to " + param.toString());
+	}
+
+	private void summarize() {
+		for (ParameterClass pc : ParameterClassMap.values()) {
+			pc.calculate();
+		}
 	}
 
 	@Override
