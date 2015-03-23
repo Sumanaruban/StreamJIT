@@ -65,6 +65,11 @@ public class ComparisionSummary {
 	private Map<ParamType, Integer> diffCount;
 	private Map<ParamType, ParameterClass> ParameterClassMap;
 
+	private double distance;
+	private double normalizedDistance;
+	private double weightedDistance;
+	private double weightedNormalizedDistance;
+
 	private ComparisionSummary(final String firstCfg, final String secondCfg,
 			final double t1, final double t2,
 			FullParameterSummary fullParameterSummary) {
@@ -103,8 +108,17 @@ public class ComparisionSummary {
 	}
 
 	private void summarize() {
+		distance = 0;
+		normalizedDistance = 0;
+		weightedDistance = 0;
+		weightedNormalizedDistance = 0;
 		for (ParameterClass pc : ParameterClassMap.values()) {
 			pc.calculate();
+			distance += pc.distance;
+			normalizedDistance += pc.normalizedDistant;
+			weightedDistance += pc.distance * pc.type.weight();
+			weightedNormalizedDistance += pc.normalizedDistant
+					* pc.type.weight();
 		}
 		toatalDiffCountPer = ((double) toatalDiffCount * 100)
 				/ fullParameterSummary.totalCount;
