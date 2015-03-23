@@ -115,11 +115,9 @@ public class ConfigurationAnalyzer {
 			double t1 = getRunningTime(sqlite, appName, i);
 			double t2 = getRunningTime(sqlite, appName, i + 1);
 			if (needTocompare(t1, t2)) {
-				// System.out.println("Comparing...");
 				ComparisionSummary sum = new ComparisionSummary(i, i + 1, t1,
 						t2);
 				int diffCount = compare2(i, i + 1, sum);
-				// System.out.println(diffCount);
 				comparitionSummaryList.add(sum);
 			}
 		}
