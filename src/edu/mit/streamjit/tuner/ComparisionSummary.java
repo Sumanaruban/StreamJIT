@@ -167,6 +167,14 @@ public class ComparisionSummary {
 		return ImmutableList.copyOf(paramSummaryList);
 	}
 
+	public String distanceSummary() {
+		return String.format(
+				"distance=%f,normalizedDistance=%f,weightedDistance=%f,"
+						+ "weightedNormalizedDistance=%f", distance,
+				normalizedDistance, weightedDistance,
+				weightedNormalizedDistance);
+	}
+
 	public double distance() {
 		return distance;
 	}
