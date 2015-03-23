@@ -166,11 +166,21 @@ public class ConfigurationAnalyzer {
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("worker");
 			}
+
+			@Override
+			public int weight() {
+				return 1;
+			}
 		},
 		REMOVAL_STRATEGY {
 			@Override
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("remove");
+			}
+
+			@Override
+			public int weight() {
+				return 1;
 			}
 		},
 		FUSION_STRATEGY {
@@ -178,11 +188,21 @@ public class ConfigurationAnalyzer {
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("fuse");
 			}
+
+			@Override
+			public int weight() {
+				return 1;
+			}
 		},
 		UNBOXING_STRATEGY {
 			@Override
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("unbox");
+			}
+
+			@Override
+			public int weight() {
+				return 1;
 			}
 		},
 		ALLOCATION_STRATEGY {
@@ -190,11 +210,21 @@ public class ConfigurationAnalyzer {
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("Group");
 			}
+
+			@Override
+			public int weight() {
+				return 1;
+			}
 		},
 		INTERNAL_STORAGE_STRATEGY {
 			@Override
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("InternalArrayish");
+			}
+
+			@Override
+			public int weight() {
+				return 1;
 			}
 		},
 		// EXTERNAL_STORAGE_STRATEGY {
@@ -208,14 +238,26 @@ public class ConfigurationAnalyzer {
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("multiplier");
 			}
+
+			@Override
+			public int weight() {
+				return 1;
+			}
 		},
 		UNROLL_CORE {
 			@Override
 			public ImmutableSet<String> variablePrefixList() {
 				return ImmutableSet.of("UnrollCore");
 			}
+
+			@Override
+			public int weight() {
+				return 1;
+			}
 		};
+
 		public abstract ImmutableSet<String> variablePrefixList();
+		public abstract int weight();
 	}
 
 	/**
