@@ -112,8 +112,10 @@ public class ComparisionSummary {
 
 	@Override
 	public String toString() {
-		return String.format("Cfg1=%s, Cfg2=%s, t1=%f, t2=%f", firstCfg,
-				secondCfg, t1, t2);
+		return String.format(
+				"Cfg1=%s, Cfg2=%s, TotalParams=%d, TotalDiffs=%d, Per=%f",
+				firstCfg, secondCfg, fullParameterSummary.totalCount,
+				toatalDiffCount, toatalDiffCountPer);
 	}
 
 	double getDistance(ParamType p) {
