@@ -187,13 +187,13 @@ public class ComparisionSummary {
 
 	public static class ParamClassSummary implements
 			Comparable<ParamClassSummary> {
-		final ParamType p;
-		final int totalCount;
-		final int diffCount;
-		final Double per;
-		final double distance;
+		private final ParamType p;
+		private final int totalCount;
+		private final int diffCount;
+		private final Double per;
+		private final double distance;
 
-		ParamClassSummary(ParamType p, int totalCount, int diffCount,
+		private ParamClassSummary(ParamType p, int totalCount, int diffCount,
 				double distance) {
 			this.p = p;
 			this.totalCount = totalCount;
@@ -210,6 +210,26 @@ public class ComparisionSummary {
 		@Override
 		public int compareTo(ParamClassSummary o) {
 			return o.per.compareTo(per);
+		}
+
+		public ParamType paramType() {
+			return p;
+		}
+
+		public int totalCount() {
+			return totalCount;
+		}
+
+		public int diffCount() {
+			return diffCount;
+		}
+
+		public Double percentage() {
+			return per;
+		}
+
+		public double distance() {
+			return distance;
 		}
 	}
 }
