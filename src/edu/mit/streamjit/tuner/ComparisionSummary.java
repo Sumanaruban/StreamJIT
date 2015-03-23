@@ -5,17 +5,48 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.ParamType;
+import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
 
 public class ComparisionSummary {
+
+	public static ComparisionSummary compare2(Integer first, Integer second,
+			double tfirst, double tsecond,
+			FullParameterSummary fullParameterSummary, String appName) {
+		ComparisionSummary sum = new ComparisionSummary(first, second, tfirst,
+				tsecond, fullParameterSummary);
+		Configuration cfg1 = ConfigurationUtils.readConfiguration(appName,
+				first);
+		Configuration cfg2 = ConfigurationUtils.readConfiguration(appName,
+				second);
+		int diffCount = 0;
+		Map<String, Parameter> paramMap = cfg1.getParametersMap();
+		// System.out.println("ParamMap size = " + paramMap.size());
+		for (Entry<String, Parameter> en : paramMap.entrySet()) {
+			Parameter p1 = en.getValue();
+			Parameter p2 = cfg2.getParameter(en.getKey());
+			if (p2 == null)
+				throw new IllegalStateException(String.format(
+						"No parameter %s in configuration2", en.getKey()));
+			if (!p1.equals(p2)) {
+				diffCount++;
+				sum.diff(p1, p2);
+			}
+		}
+		sum.toatalDiffCount = diffCount;
+		return sum;
+	}
+
 	final FullParameterSummary fullParameterSummary;
 	final int firstCfg;
 	final int secondCfg;
