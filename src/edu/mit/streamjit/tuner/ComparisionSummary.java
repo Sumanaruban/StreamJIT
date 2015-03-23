@@ -16,7 +16,7 @@ import edu.mit.streamjit.tuner.ConfigurationAnalyzer.ParamType;
 import edu.mit.streamjit.util.Pair;
 
 public class ComparisionSummary {
-	FullParameterSummary fullParameterSummary;
+	final FullParameterSummary fullParameterSummary;
 	final int firstCfg;
 	final int secondCfg;
 	final double t1;
@@ -25,11 +25,13 @@ public class ComparisionSummary {
 	Map<ParamType, Integer> diffCount;
 	Map<ParamType, ParameterClass> ParameterClassMap;
 	public ComparisionSummary(final int firstCfg, final int secondCfg,
-			final double t1, final double t2) {
+			final double t1, final double t2,
+			FullParameterSummary fullParameterSummary) {
 		this.firstCfg = firstCfg;
 		this.secondCfg = secondCfg;
 		this.t1 = t1;
 		this.t2 = t2;
+		this.fullParameterSummary = fullParameterSummary;
 		initilizeDiffCount();
 	}
 
