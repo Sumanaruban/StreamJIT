@@ -174,7 +174,7 @@ public class ComparisionSummary {
 
 		private void calculate() {
 			distance = calculateDistant();
-			normalizedDistant = calculateDistant()
+			normalizedDistant = distance
 					/ fullParameterSummary.parmTypeCount.get(type);
 		}
 
