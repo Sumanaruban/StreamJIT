@@ -169,8 +169,8 @@ public class ComparisionSummary {
 
 	public String distanceSummary() {
 		return String.format(
-				"distance=%f,normalizedDistance=%f,weightedDistance=%f,"
-						+ "weightedNormalizedDistance=%f", distance,
+				"distance=%.3f,normalizedDistance=%.3f,weightedDistance=%.3f,"
+						+ "weightedNormalizedDistance=%.3f", distance,
 				normalizedDistance, weightedDistance,
 				weightedNormalizedDistance);
 	}
