@@ -19,11 +19,19 @@ import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
 public class DistanceMatrixPrognosticator implements
 		ConfigurationPrognosticator {
 
-	Configuration prevConfig = null;
-	double prevConfigTime = -1;
 	FullParameterSummary fullParameterSummary;
-
 	private final OutputStreamWriter writer;
+
+	Configuration prevConfig = null;
+	Configuration curConfig = null;
+	Configuration bestConfig = null;
+
+	double prevConfigTime = -1;
+	double curConfigTime = -1;
+	double bestConfigTime = -1;
+
+	ComparisionSummary prevCurSummary = null;
+	ComparisionSummary bestCurSummary = null;
 
 	public DistanceMatrixPrognosticator(String appName) {
 		this(Utils.fileWriter(appName, "DistanceMatrix.txt"));
@@ -35,17 +43,25 @@ public class DistanceMatrixPrognosticator implements
 
 	@Override
 	public boolean prognosticate(Configuration config) {
+		if (config == null)
+			throw new IllegalArgumentException("Null Configuration");
 		if (fullParameterSummary == null) {
 			fullParameterSummary = new FullParameterSummary(config);
+			curConfig = config;
 			prevConfig = config;
+			bestConfig = config;
 			writeHeader(writer, fullParameterSummary);
 			return true;
 		}
+		prevConfig = curConfig;
+		prevConfigTime = curConfigTime;
+		curConfig = config;
 
-		ComparisionSummary summary = ComparisionSummary.compare(config,
-				prevConfig, fullParameterSummary);
-		writeSummary(writer, summary);
-		return false;
+		prevCurSummary = ComparisionSummary.compare(prevConfig, curConfig,
+				fullParameterSummary);
+		bestCurSummary = ComparisionSummary.compare(bestConfig, curConfig,
+				fullParameterSummary);
+		return true;
 	}
 
 	private static void writeHeader(OutputStreamWriter osWriter,
@@ -61,12 +77,11 @@ public class DistanceMatrixPrognosticator implements
 	}
 
 	private static void writeSummary(OutputStreamWriter osWriter,
-			ComparisionSummary summary) {
+			ComparisionSummary summary, double t1, double t2) {
 		try {
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(summary + "\n");
-			osWriter.write(String.format("t1=%.0fms, t2=%.0fms\n", summary.t1,
-					summary.t2));
+			osWriter.write(String.format("t1=%.0fms, t2=%.0fms\n", t1, t2));
 			osWriter.write(summary.distanceSummary() + "\n");
 			for (ParamClassSummary ps : summary.ParamClassSummaryList())
 				osWriter.write(ps + "\n");
@@ -78,6 +93,12 @@ public class DistanceMatrixPrognosticator implements
 
 	@Override
 	public void time(double time) {
-		prevConfigTime = time;
+		curConfigTime = time;
+		writeSummary(writer, prevCurSummary, prevConfigTime, curConfigTime);
+		writeSummary(writer, bestCurSummary, bestConfigTime, curConfigTime);
+		if (time > 0 && bestConfigTime > time) {
+			bestConfig = curConfig;
+			bestConfigTime = time;
+		}
 	}
 }
