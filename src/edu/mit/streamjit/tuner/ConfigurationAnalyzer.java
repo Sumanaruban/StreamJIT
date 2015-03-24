@@ -3,6 +3,7 @@ package edu.mit.streamjit.tuner;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
@@ -20,6 +21,7 @@ import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.ComparisionSummary.ParamClassSummary;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.TimeLogProcessor;
 
 public class ConfigurationAnalyzer {
 
@@ -122,8 +124,13 @@ public class ConfigurationAnalyzer {
 				comparitionSummaryList.add(sum);
 			}
 		}
-		print(comparitionSummaryList,
-				Utils.fileWriter(appName, "cfgAnalize.txt"));
+		File summaryDir = new File(String.format("%s%ssummary", appName,
+				File.separator));
+		Utils.createDir(summaryDir.getPath());
+		printTable(comparitionSummaryList,
+				Utils.fileWriter(summaryDir.getPath(), "cfgAnalize.txt"));
+		File plotFile = createPlotFile(summaryDir, appName);
+		TimeLogProcessor.plot(summaryDir, plotFile);
 	}
 
 	private void print(List<ComparisionSummary> comparitionSummaryList,
@@ -140,6 +147,150 @@ public class ConfigurationAnalyzer {
 				osWriter.write(ps + "\n");
 		}
 		osWriter.flush();
+	}
+
+	private void printTable(List<ComparisionSummary> comparitionSummaryList,
+			OutputStreamWriter osWriter) throws IOException {
+		writeHeader(osWriter);
+		for (ComparisionSummary sum : comparitionSummaryList) {
+			osWriter.write(String.format("\n%6s\t\t", sum.firstCfg));
+			osWriter.write(String.format("%.2f\t\t", sum.distance()));
+			osWriter.write(String.format("%.2f\t\t", sum.weightedDistance()));
+			osWriter.write(String.format("%.2f\t\t", sum.normalizedDistance()));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.weightedNormalizedDistance()));
+			osWriter.write(String.format("%.5f\t\t",
+					sum.distance(ParamType.MULTIPLIER)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.UNROLL_CORE)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.ALLOCATION_STRATEGY)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.INTERNAL_STORAGE_STRATEGY)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.PARTITION)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.UNBOXING_STRATEGY)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.REMOVAL_STRATEGY)));
+			osWriter.write(String.format("%.2f\t\t",
+					sum.distance(ParamType.FUSION_STRATEGY)));
+			osWriter.write(String.format("%.2f\t\t", sum.t1));
+			osWriter.write(String.format("%.2f\t\t", sum.t2));
+			osWriter.write(String.format("%.2f", sum.t1 - sum.t2));
+		}
+		osWriter.close();
+	}
+
+	private static File createPlotFile(File dir, String appName)
+			throws IOException {
+		String title = TimeLogProcessor.getTitle(appName);
+		boolean pdf = true;
+		String dataFile = "cfgAnalize.txt";
+		File plotfile = new File(dir, "cfgAnalize.plt");
+		FileWriter writer = new FileWriter(plotfile, false);
+		if (pdf) {
+			writer.write("set terminal pdf enhanced color\n");
+			writer.write(String.format("set output \"%scfgAnalize.pdf\"\n",
+					title));
+		} else {
+			writer.write("set terminal postscript eps enhanced color\n");
+			writer.write(String.format("set output \"%s.eps\"\n", title));
+		}
+		writer.write(String.format("set title \"%s\"\n", title));
+		writer.write("set grid\n");
+		writer.write("#set yrange [0:*]\n");
+		writer.write("set xlabel \"Time Improvements(ms)\"\n");
+		writer.write("set ylabel \"Distance\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:2 with points title \"Distance\"\n",
+				dataFile));
+		writer.write("set ylabel \"weightedDist\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:3 with points title \"weightedDist\"\n",
+				dataFile));
+		writer.write("set ylabel \"NormalizedDistance\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 16:4 with points title \"NormalizedDistance\"\n",
+						dataFile));
+		writer.write("set ylabel \"weightedNormalizedDistance\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 16:5 with points title \"weightedNormalizedDistance\"\n",
+						dataFile));
+		writer.write("set ylabel \"Multiplier\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:6 with points title \"Multiplier\"\n",
+				dataFile));
+		writer.write("set ylabel \"Unroll\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:7 with points title \"Unroll\"\n",
+				dataFile));
+		writer.write("set ylabel \"AllocationStrategy\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 16:8 with points title \"AllocationStrategy\"\n",
+						dataFile));
+		writer.write("set ylabel \"InternalStorage\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 16:9 with points title \"InternalStorage\"\n",
+						dataFile));
+		writer.write("set ylabel \"Partitioning\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:10 with points title \"Partitioning\"\n",
+				dataFile));
+		writer.write("set ylabel \"Unboxing\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:11 with points title \"Unboxing\"\n",
+				dataFile));
+		writer.write("set ylabel \"Removal\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:12 with points title \"Removal\"\n",
+				dataFile));
+		writer.write("set ylabel \"Fusion\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 16:13 with points title \"Fusion\"\n",
+				dataFile));
+		writer.close();
+		return plotfile;
+	}
+
+	private static void writeHeader(OutputStreamWriter writer) {
+		try {
+			writer.write(String.format("%.7s", "cfgID"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "distance"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "weiDist"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "normDist"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "WeiNormDist"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Mul"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Unroll"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Alocation"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "InternStorege"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Partition"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Unbox"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Removal"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "Fusion"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "t1"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "t2"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "t1-t2"));
+			// writer.write("\t\t");
+			writer.flush();
+		} catch (IOException e) {
+
+		}
 	}
 
 	private boolean needTocompare(double t1, double t2) {
