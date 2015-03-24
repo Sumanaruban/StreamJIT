@@ -132,7 +132,7 @@ public class ComparisionSummary {
 				toatalDiffCount, toatalDiffCountPer);
 	}
 
-	double getDistance(ParamType p) {
+	double distance(ParamType p) {
 		ParameterClass pc = ParameterClassMap.get(p);
 		return pc.distance();
 	}
