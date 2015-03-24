@@ -66,7 +66,7 @@ public class TimeLogProcessor {
 		String cfgPrefix = "Init";
 		int i = 0;
 		Map<String, Integer> ret = new HashMap<>(5000);
-		int min = Integer.MAX_VALUE;
+		int min = Integer.MAX_VALUE / 4;
 		while ((line = reader.readLine()) != null) {
 			if (line.startsWith("----------------------------"))
 				cfgPrefix = cfgString(line);
@@ -75,8 +75,11 @@ public class TimeLogProcessor {
 				String time = arr[3].trim();
 				time = time.substring(0, time.length() - 2);
 				int val = Integer.parseInt(time);
-				if (val < 1)
+				if (val < 1) {
+					if (min == Integer.MAX_VALUE / 4)
+						continue;
 					val = 2 * min;
+				}
 				min = Math.min(min, val);
 				ret.put(cfgPrefix, val);
 				String data = String.format("%-6d\t%-6s\t%-6d\t%-6d\n", ++i,
