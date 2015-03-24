@@ -28,7 +28,7 @@ public class DistanceMatrixPrognosticator implements
 
 	double prevConfigTime = -1;
 	double curConfigTime = -1;
-	double bestConfigTime = -1;
+	double bestConfigTime = Integer.MAX_VALUE;
 
 	ComparisionSummary prevCurSummary = null;
 	ComparisionSummary bestCurSummary = null;
@@ -78,6 +78,8 @@ public class DistanceMatrixPrognosticator implements
 
 	private static void writeSummary(OutputStreamWriter osWriter,
 			ComparisionSummary summary, double t1, double t2) {
+		if (summary == null)
+			return;
 		try {
 			osWriter.write("\n-------------------------------------------------------\n");
 			osWriter.write(summary + "\n");
