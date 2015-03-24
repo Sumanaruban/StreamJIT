@@ -32,10 +32,12 @@ public class ConfigurationAnalyzer {
 
 	private final String appName;
 
+	private boolean dbExists;
+
 	private final FullParameterSummary fullParameterSummary;
 
 	public ConfigurationAnalyzer(String appName) {
-		verifyPath(ConfigurationUtils.configDir, appName);
+		dbExists = verifyPath2(ConfigurationUtils.configDir, appName);
 		this.appName = appName;
 		fullParameterSummary = new FullParameterSummary(appName);
 	}
@@ -101,15 +103,41 @@ public class ConfigurationAnalyzer {
 		return true;
 	}
 
+	private static boolean verifyPath2(String cfgDir, String appName) {
+		boolean ret = true;
+		String dbPath = String.format("%s%s%s", appName, File.separator,
+				appName);
+		File db = new File(dbPath);
+		if (!db.exists()) {
+			ret = false;
+			System.err.println("No database file found in " + dbPath);
+		}
+
+		String dirPath = String.format("%s%s%s", appName, File.separator,
+				cfgDir);
+		File dir = new File(dirPath);
+		if (!dir.exists())
+			throw new IllegalStateException("No directory found in " + dirPath);
+
+		return ret;
+	}
+
 	private void Analyze() throws IOException {
 		SqliteAdapter sqlite = connectDB(appName);
-		int maxTuneCount = getTotalResults(sqlite);
+		int maxTuneCount = 5000;
+		if (dbExists)
+			maxTuneCount = getTotalResults(sqlite);
 		int start = 1;
 		int end = maxTuneCount; // inclusive
 		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
 		for (int i = start; i < end; i++) {
-			double t1 = getRunningTime(sqlite, appName, i);
-			double t2 = getRunningTime(sqlite, appName, i + 1);
+			double t1 = 0;
+			double t2 = 0;
+			if (dbExists) {
+				t1 = getRunningTime(sqlite, appName, i);
+				t2 = getRunningTime(sqlite, appName, i + 1);
+			}
+
 			if (needTocompare(t1, t2)) {
 				Configuration cfg1 = ConfigurationUtils.readConfiguration(
 						appName, i);
