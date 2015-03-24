@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.tuner.ComparisionSummary.ParamClassSummary;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
 
 /**
@@ -43,6 +44,7 @@ public class DistanceMatrixPrognosticator implements
 
 		ComparisionSummary summary = ComparisionSummary.compare(config,
 				prevConfig, fullParameterSummary);
+		writeSummary(writer, summary);
 		return false;
 	}
 
@@ -52,6 +54,22 @@ public class DistanceMatrixPrognosticator implements
 			osWriter.write(String.format(
 					"Total parameters in the configuration = %d\n",
 					fullParameterSummary.totalCount));
+			osWriter.flush();
+		} catch (IOException e) {
+
+		}
+	}
+
+	private static void writeSummary(OutputStreamWriter osWriter,
+			ComparisionSummary summary) {
+		try {
+			osWriter.write("\n-------------------------------------------------------\n");
+			osWriter.write(summary + "\n");
+			osWriter.write(String.format("t1=%.0fms, t2=%.0fms\n", summary.t1,
+					summary.t2));
+			osWriter.write(summary.distanceSummary() + "\n");
+			for (ParamClassSummary ps : summary.ParamClassSummaryList())
+				osWriter.write(ps + "\n");
 			osWriter.flush();
 		} catch (IOException e) {
 
