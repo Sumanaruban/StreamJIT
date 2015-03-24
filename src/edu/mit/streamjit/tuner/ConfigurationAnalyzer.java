@@ -169,7 +169,7 @@ public class ConfigurationAnalyzer {
 		Utils.createDir(summaryDir.getPath());
 		printTable(comparitionSummaryList,
 				Utils.fileWriter(summaryDir.getPath(), "cfgAnalize.txt"));
-		File plotFile = createPlotFile(summaryDir, appName);
+		File plotFile = createPlotFile2(summaryDir, appName);
 		TimeLogProcessor.plot(summaryDir, plotFile);
 	}
 
@@ -288,6 +288,77 @@ public class ConfigurationAnalyzer {
 		writer.write("set ylabel \"Fusion\"\n");
 		writer.write(String.format(
 				"plot \"%s\" using 16:13 with points title \"Fusion\"\n",
+				dataFile));
+		writer.close();
+		return plotfile;
+	}
+
+	private static File createPlotFile2(File dir, String appName)
+			throws IOException {
+		String title = TimeLogProcessor.getTitle(appName);
+		boolean pdf = true;
+		String dataFile = "cfgAnalize.txt";
+		File plotfile = new File(dir, "cfgAnalize.plt");
+		FileWriter writer = new FileWriter(plotfile, false);
+		if (pdf) {
+			writer.write("set terminal pdf enhanced color\n");
+			writer.write(String.format("set output \"%scfgAnalize.pdf\"\n",
+					title));
+		} else {
+			writer.write("set terminal postscript eps enhanced color\n");
+			writer.write(String.format("set output \"%s.eps\"\n", title));
+		}
+		writer.write(String.format("set title \"%s\"\n", title));
+		writer.write("set grid\n");
+		writer.write("#set yrange [0:*]\n");
+		writer.write("set ylabel \"Time Improvements(ms)\"\n");
+		writer.write("set xlabel \"Distance\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 2:16 with points title \"Distance\"\n",
+				dataFile));
+		writer.write("set xlabel \"weightedDist\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 3:16 with points title \"weightedDist\"\n",
+				dataFile));
+		writer.write("set xlabel \"NormalizedDistance\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 4:16 with points title \"NormalizedDistance\"\n",
+						dataFile));
+		writer.write("set xlabel \"weightedNormalizedDistance\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 5:16 with points title \"weightedNormalizedDistance\"\n",
+						dataFile));
+		writer.write("set xlabel \"Multiplier\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 6:16 with points title \"Multiplier\"\n",
+				dataFile));
+		writer.write("set xlabel \"Unroll\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 7:16 with points title \"Unroll\"\n",
+				dataFile));
+		writer.write("set xlabel \"AllocationStrategy\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 8:16 with points title \"AllocationStrategy\"\n",
+						dataFile));
+		writer.write("set xlabel \"InternalStorage\"\n");
+		writer.write(String
+				.format("plot \"%s\" using 9:16 with points title \"InternalStorage\"\n",
+						dataFile));
+		writer.write("set xlabel \"Partitioning\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 10:16 with points title \"Partitioning\"\n",
+				dataFile));
+		writer.write("set xlabel \"Unboxing\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 11:16 with points title \"Unboxing\"\n",
+				dataFile));
+		writer.write("set xlabel \"Removal\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 12:16 with points title \"Removal\"\n",
+				dataFile));
+		writer.write("set xlabel \"Fusion\"\n");
+		writer.write(String.format(
+				"plot \"%s\" using 13:16 with points title \"Fusion\"\n",
 				dataFile));
 		writer.close();
 		return plotfile;
