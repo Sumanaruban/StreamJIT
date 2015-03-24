@@ -147,6 +147,8 @@ public class ConfigurationAnalyzer {
 						new Integer(i).toString());
 				cfg2 = ConfigurationUtils.addConfigPrefix(cfg2, new Integer(
 						i + 1).toString());
+				if (cfg1 == null || cfg2 == null)
+					continue;
 				ComparisionSummary sum = ComparisionSummary.compare(cfg1, cfg2,
 						t1, t2, fullParameterSummary);
 				comparitionSummaryList.add(sum);
