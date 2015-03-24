@@ -179,6 +179,9 @@ public final class Options {
 
 	public static final boolean timeOut;
 
+	public static final int appArg1;
+	public static final int appArg2;
+
 	static {
 		Properties prop = loadProperties();
 		printOutputCountPeriod = Integer.parseInt(prop
@@ -214,6 +217,8 @@ public final class Options {
 				.getProperty("boundaryChannelRatio"));
 		timeOut = Boolean.parseBoolean(prop.getProperty("timeOut"));
 		tuningRounds = Integer.parseInt(prop.getProperty("tuningRounds"));
+		appArg1 = Integer.parseInt(prop.getProperty("appArg1"));
+		appArg2 = Integer.parseInt(prop.getProperty("appArg2"));
 	}
 
 	public static Properties getProperties() {
@@ -241,6 +246,8 @@ public final class Options {
 		setProperty(prop, "boundaryChannelRatio", boundaryChannelRatio);
 		setProperty(prop, "timeOut", timeOut);
 		setProperty(prop, "tuningRounds", tuningRounds);
+		setProperty(prop, "appArg1", appArg1);
+		setProperty(prop, "appArg2", appArg2);
 		return prop;
 	}
 
