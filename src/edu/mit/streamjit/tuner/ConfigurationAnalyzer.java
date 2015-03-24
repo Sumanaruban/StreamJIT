@@ -123,10 +123,14 @@ public class ConfigurationAnalyzer {
 	}
 
 	private void Analyze() throws IOException {
-		SqliteAdapter sqlite = connectDB(appName);
+		SqliteAdapter sqlite = null;
+		if (dbExists)
+			sqlite = connectDB(appName);
+
 		int maxTuneCount = 5000;
 		if (dbExists)
 			maxTuneCount = getTotalResults(sqlite);
+
 		int start = 1;
 		int end = maxTuneCount; // inclusive
 		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
