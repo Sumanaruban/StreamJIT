@@ -1,8 +1,12 @@
 package edu.mit.streamjit.tuner;
 
+import java.io.FileWriter;
+
 import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.distributed.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.common.Utils;
 
 /**
  * Prognosticates the {@link Configuration}s given by the OpenTuner and tell
@@ -61,6 +65,19 @@ public interface ConfigurationPrognosticator {
 			ConfigurationPrognosticator {
 
 		private final ImmutableSet<ConfigurationPrognosticator> configProgs;
+
+		public ManyPrognosticators(StreamJitApp<?, ?> app) {
+			FileWriter writer = Utils.fileWriter(app.name, "manyProgs.txt");
+			ConfigurationPrognosticator cp1 = new GraphPropertyPrognosticator(
+					app, writer);
+			ConfigurationPrognosticator cp2 = new DistanceMatrixPrognosticator(
+					writer);
+			ImmutableSet.Builder<ConfigurationPrognosticator> builder = ImmutableSet
+					.builder();
+			builder.add(cp1);
+			builder.add(cp2);
+			configProgs = builder.build();
+		}
 
 		public ManyPrognosticators(ConfigurationPrognosticator cp1,
 				ConfigurationPrognosticator cp2,
