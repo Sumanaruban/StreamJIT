@@ -3,8 +3,10 @@ package edu.mit.streamjit.tuner;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -405,7 +408,10 @@ public class ConfigurationAnalyzer {
 	}
 
 	private boolean needTocompare(double t1, double t2) {
-		final double diff = 1.2;
+		if (needCompareAll)
+			return true;
+
+		final double diff = t1_t2;
 		double min;
 		double max;
 		if (t2 > t1) {
@@ -432,7 +438,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return PARTITIONW;
 			}
 		},
 		REMOVAL_STRATEGY {
@@ -443,7 +449,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return REMOVAL_STRATEGYW;
 			}
 		},
 		FUSION_STRATEGY {
@@ -454,7 +460,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return FUSION_STRATEGYW;
 			}
 		},
 		UNBOXING_STRATEGY {
@@ -465,7 +471,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return UNBOXING_STRATEGYW;
 			}
 		},
 		ALLOCATION_STRATEGY {
@@ -476,7 +482,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return ALLOCATION_STRATEGYW;
 			}
 		},
 		INTERNAL_STORAGE_STRATEGY {
@@ -487,7 +493,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return INTERNAL_STORAGE_STRATEGYW;
 			}
 		},
 		// EXTERNAL_STORAGE_STRATEGY {
@@ -504,7 +510,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return MULTIPLIERW;
 			}
 		},
 		UNROLL_CORE {
@@ -515,7 +521,7 @@ public class ConfigurationAnalyzer {
 
 			@Override
 			public int weight() {
-				return 1;
+				return UNROLL_COREW;
 			}
 		};
 
@@ -568,5 +574,48 @@ public class ConfigurationAnalyzer {
 			}
 			// System.err.println("No matches to " + param.toString());
 		}
+	}
+
+	final static int PARTITIONW;
+	final static int REMOVAL_STRATEGYW;
+	final static int FUSION_STRATEGYW;
+	final static int UNBOXING_STRATEGYW;
+	final static int ALLOCATION_STRATEGYW;
+	final static int INTERNAL_STORAGE_STRATEGYW;
+	final static int MULTIPLIERW;
+	final static int UNROLL_COREW;
+	final static boolean needCompareAll;
+	final static double t1_t2;
+
+	private static Properties loadProperties() {
+		Properties prop = new Properties();
+		InputStream input = null;
+		try {
+			input = new FileInputStream("cfgAnalyze.properties");
+			prop.load(input);
+		} catch (IOException ex) {
+			System.err.println("Failed to load options.properties");
+		}
+		return prop;
+	}
+
+	static {
+		Properties prop = loadProperties();
+		PARTITIONW = Integer.parseInt(prop.getProperty("PARTITIONW"));
+		REMOVAL_STRATEGYW = Integer.parseInt(prop
+				.getProperty("REMOVAL_STRATEGYW"));
+		FUSION_STRATEGYW = Integer.parseInt(prop
+				.getProperty("FUSION_STRATEGYW"));
+		UNBOXING_STRATEGYW = Integer.parseInt(prop
+				.getProperty("UNBOXING_STRATEGYW"));
+		ALLOCATION_STRATEGYW = Integer.parseInt(prop
+				.getProperty("ALLOCATION_STRATEGYW"));
+		INTERNAL_STORAGE_STRATEGYW = Integer.parseInt(prop
+				.getProperty("INTERNAL_STORAGE_STRATEGYW"));
+		MULTIPLIERW = Integer.parseInt(prop.getProperty("MULTIPLIERW"));
+		UNROLL_COREW = Integer.parseInt(prop.getProperty("UNROLL_COREW"));
+		needCompareAll = Boolean.parseBoolean(prop
+				.getProperty("needCompareAll"));
+		t1_t2 = Double.parseDouble(prop.getProperty("t1_t2"));
 	}
 }
