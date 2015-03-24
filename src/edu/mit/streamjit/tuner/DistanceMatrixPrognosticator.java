@@ -1,5 +1,6 @@
 package edu.mit.streamjit.tuner;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import edu.mit.streamjit.impl.common.Configuration;
@@ -36,12 +37,25 @@ public class DistanceMatrixPrognosticator implements
 		if (fullParameterSummary == null) {
 			fullParameterSummary = new FullParameterSummary(config);
 			prevConfig = config;
+			writeHeader(writer, fullParameterSummary);
 			return true;
 		}
 
 		ComparisionSummary summary = ComparisionSummary.compare(config,
 				prevConfig, fullParameterSummary);
 		return false;
+	}
+
+	private static void writeHeader(OutputStreamWriter osWriter,
+			FullParameterSummary fullParameterSummary) {
+		try {
+			osWriter.write(String.format(
+					"Total parameters in the configuration = %d\n",
+					fullParameterSummary.totalCount));
+			osWriter.flush();
+		} catch (IOException e) {
+
+		}
 	}
 
 	@Override
