@@ -116,9 +116,9 @@ public class ComparisionSummary {
 			pc.calculate();
 			distance += pc.distance;
 			normalizedDistance += pc.normalizedDistant;
-			weightedDistance += pc.distance * pc.type.weight();
-			weightedNormalizedDistance += pc.normalizedDistant
-					* pc.type.weight();
+			weightedDistance += (pc.distance * pc.type.weight());
+			weightedNormalizedDistance += (pc.normalizedDistant * pc.type
+					.weight());
 		}
 		toatalDiffCountPer = ((double) toatalDiffCount * 100)
 				/ fullParameterSummary.totalCount;
