@@ -1,7 +1,7 @@
 package edu.mit.streamjit.tuner;
 
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,13 +26,18 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 	private final StreamJitApp<?, ?> app;
 
-	private final FileWriter writer;
+	private final OutputStreamWriter writer;
 
 	private final Set<List<Integer>> paths;
 
 	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app) {
+		this(app, Utils.fileWriter(app.name, "GraphProperty.txt"));
+	}
+
+	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app,
+			OutputStreamWriter osWriter) {
 		this.app = app;
-		this.writer = Utils.fileWriter(app.name, "GraphProperty.txt");
+		this.writer = osWriter;
 		writeHeader(writer);
 		paths = app.paths();
 	}
@@ -181,7 +186,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		return boundaryChannelRatio;
 	}
 
-	private static void writeHeader(FileWriter writer) {
+	private static void writeHeader(OutputStreamWriter writer) {
 		try {
 			writer.write(String.format("%.7s", "cfgID"));
 			writer.write("\t\t");
