@@ -347,7 +347,7 @@ public class TimeLogProcessor {
 		return plotfile;
 	}
 
-	private static void plot(File dir, File plotFile) throws IOException {
+	public static void plot(File dir, File plotFile) throws IOException {
 		String[] s = { "/usr/bin/gnuplot", plotFile.getName() };
 		try {
 			ProcessBuilder pb = new ProcessBuilder(s);
@@ -492,7 +492,7 @@ public class TimeLogProcessor {
 		}
 	}
 
-	private static String getTitle(String appName) {
+	public static String getTitle(String appName) {
 		String benchmarkName = getBenchmarkName(appName);
 		return benchmarkName == null ? appName : benchmarkName;
 	}
