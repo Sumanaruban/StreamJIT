@@ -26,7 +26,13 @@ import edu.mit.streamjit.util.TimeLogProcessor;
 public class ConfigurationAnalyzer {
 
 	public static void main(String[] args) throws IOException {
-		ConfigurationAnalyzer ca = new ConfigurationAnalyzer("FMRadioCore");
+		String appName;
+		try {
+			appName = args[0];
+		} catch (Exception ex) {
+			appName = "FMRadioCore";
+		}
+		ConfigurationAnalyzer ca = new ConfigurationAnalyzer(appName);
 		ca.Analyze();
 	}
 
