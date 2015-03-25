@@ -167,17 +167,20 @@ public class Verifier implements Runnable {
 		System.out.println("Evaluating " + cfgPrefix);
 		int count = Options.evaluationCount;
 		List<Long> runningTime = new ArrayList<>(count);
-		Pair<Boolean, Long> ret;
+		Pair<Boolean, Integer> ret;
 		if (cfg != null) {
 			for (int i = 0; i < count; i++) {
+				long time;
 				configurer.logger.newConfiguration(cfgPrefix);
-				ret = configurer.reconfigure(cfg, 0);
-				if (ret.first) {
-					configurer.prognosticator.time(ret.second);
-					runningTime.add(ret.second);
-				} else {
+				ret = configurer.reconfigure(cfg);
+				if (ret.second > 0)
+					time = configurer.getFixedOutputTime(0);
+				else {
+					time = ret.second;
 					System.err.println("Evaluation failed...");
 				}
+				configurer.prognosticator.time(time);
+				runningTime.add(time);
 			}
 		} else {
 			System.err.println("Null configuration\n");
