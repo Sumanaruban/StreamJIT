@@ -60,7 +60,6 @@ public class OnlineTuner implements Runnable {
 	private void tune() {
 		int round = 0;
 		Stopwatch searchTimeSW = Stopwatch.createStarted();
-		long timeout = 0;
 		try {
 			mLogger.bStartTuner();
 			startTuner();
@@ -90,18 +89,17 @@ public class OnlineTuner implements Runnable {
 				mLogger.bNewCfg();
 				Configuration config = newCfg(++round, cfgJson);
 				mLogger.eNewCfg(round);
-				timeout = Options.timeOut ? 2 * currentBestTime : 0;
 				mLogger.bReconfigure();
 				ret = configurer.reconfigure(config);
 				mLogger.eReconfigure();
 				long time;
 				if (ret.second > 0)
-					time = configurer.getFixedOutputTime(timeout);
+					time = getTime();
 				else
 					time = ret.second;
 				if (time > 1 && currentBestTime > time) {
-						currentBestTime = time;
-						bestCfg = config;
+					currentBestTime = time;
+					bestCfg = config;
 				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
@@ -146,6 +144,13 @@ public class OnlineTuner implements Runnable {
 
 		tuner.writeLine("confg");
 		tuner.writeLine(Jsonifiers.toJson(app.getConfiguration()).toString());
+	}
+
+	private long getTime() {
+		long timeout = Options.timeOut ? 2 * currentBestTime : 0;
+		long time;
+		time = configurer.getFixedOutputTime(timeout);
+		return time;
 	}
 
 	/**
