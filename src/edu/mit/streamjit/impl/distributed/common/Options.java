@@ -179,8 +179,14 @@ public final class Options {
 
 	public static final boolean timeOut;
 
+	// StreamJit benchmark app's constructor arguments.
 	public static final int appArg1;
 	public static final int appArg2;
+
+	// BlockingTailChannel3's skip time and steady time in mills.
+	public static final int skipMills;
+	public static final int steadyMills;
+	public static final int noOutputTimeLimit;
 
 	static {
 		Properties prop = loadProperties();
@@ -219,6 +225,10 @@ public final class Options {
 		tuningRounds = Integer.parseInt(prop.getProperty("tuningRounds"));
 		appArg1 = Integer.parseInt(prop.getProperty("appArg1"));
 		appArg2 = Integer.parseInt(prop.getProperty("appArg2"));
+		skipMills = Integer.parseInt(prop.getProperty("skipMills"));
+		steadyMills = Integer.parseInt(prop.getProperty("steadyMills"));
+		noOutputTimeLimit = Integer.parseInt(prop
+				.getProperty("noOutputTimeLimit"));
 	}
 
 	public static Properties getProperties() {
@@ -248,6 +258,9 @@ public final class Options {
 		setProperty(prop, "tuningRounds", tuningRounds);
 		setProperty(prop, "appArg1", appArg1);
 		setProperty(prop, "appArg2", appArg2);
+		setProperty(prop, "skipMills", skipMills);
+		setProperty(prop, "steadyMills", steadyMills);
+		setProperty(prop, "noOutputTimeLimit", noOutputTimeLimit);
 		return prop;
 	}
 

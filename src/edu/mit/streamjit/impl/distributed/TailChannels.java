@@ -526,14 +526,14 @@ public class TailChannels {
 
 		private final Stopwatch stopWatch;
 
-		private final long skipMills = 3000;
+		private final long skipMills = Options.skipMills;
 
-		private final long steadyMills = 8000;
+		private final long steadyMills = Options.steadyMills;
 
 		/**
-		 * If no output for 30s, reject the configuration.
+		 * If no output for a given period, reject the configuration.
 		 */
-		private final int noOutputTimeLimit = 30000;
+		private final int noOutputTimeLimit = Options.noOutputTimeLimit;
 
 		public BlockingTailChannel3(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
