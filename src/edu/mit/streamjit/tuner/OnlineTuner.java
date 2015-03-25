@@ -124,7 +124,6 @@ public class OnlineTuner implements Runnable {
 		tuningFinished();
 		mLogger.eTuningFinished();
 	}
-
 	private void startTuner() throws IOException {
 		String relativeTunerPath = String.format(
 				"lib%sopentuner%sstreamjit%sstreamjit2.py", File.separator,
