@@ -287,8 +287,10 @@ public class OnlineTuner implements Runnable {
 		System.err.println("Configuring with the best cfg..");
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
 		logger.newConfiguration(cfgPrefix);
-		Pair<Boolean, Long> ret = configurer.reconfigure(config, 0);
-		if (ret.second >= -1) {
+		Pair<Boolean, Integer> ret = configurer.reconfigure(config);
+		long time = ret.second;
+		if (ret.second > 0) {
+			time = configurer.getFixedOutputTime(0);
 			System.out.println(String.format(
 					"Going to sleep for %d minutes...", bestcfgMinutes));
 			try {
@@ -298,7 +300,7 @@ public class OnlineTuner implements Runnable {
 			}
 		}
 		System.err.println(String.format("bestCfgs-%s, Runtime=%d", cfgPrefix,
-				ret.second));
+				time));
 	}
 
 	private void blockNode() {
