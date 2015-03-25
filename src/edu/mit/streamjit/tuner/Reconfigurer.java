@@ -135,12 +135,17 @@ public class Reconfigurer {
 		}
 	}
 
-	public long getFixedOutputTime(long timeout) throws InterruptedException {
+	public long getFixedOutputTime(long timeout) {
 		// TODO: need to check the manager's status before passing the
 		// time. Exceptions, final drain, etc may causes app to stop
 		// executing.
 		mLogger.bGetFixedOutputTime();
-		long time = manager.getFixedOutputTime(timeout);
+		long time = -1;
+		try {
+			time = manager.getFixedOutputTime(timeout);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		mLogger.eGetFixedOutputTime();
 		logger.logRunTime(time);
 		return time;
