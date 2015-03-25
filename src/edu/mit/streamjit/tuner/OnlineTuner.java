@@ -64,7 +64,7 @@ public class OnlineTuner implements Runnable {
 			mLogger.bStartTuner();
 			startTuner();
 			mLogger.eStartTuner();
-			Pair<Boolean, Long> ret;
+			Pair<Boolean, Integer> ret;
 
 			System.out.println("New tune run.............");
 			while (configurer.manager.getStatus() != AppStatus.STOPPED) {
@@ -91,17 +91,21 @@ public class OnlineTuner implements Runnable {
 				mLogger.eNewCfg(round);
 				timeout = Options.timeOut ? 2 * currentBestTime : 0;
 				mLogger.bReconfigure();
-				ret = configurer.reconfigure(config, timeout);
+				ret = configurer.reconfigure(config);
 				mLogger.eReconfigure();
-				if (ret.first) {
-					long time = ret.second;
-					currentBestTime = (time > 0 && currentBestTime > time)
-							? time : currentBestTime;
-					prognosticator.time(ret.second);
-					tuner.writeLine(new Double(ret.second).toString());
-					searchTimeSW.reset();
-					searchTimeSW.start();
-				} else {
+				long time;
+				if (ret.second > 0)
+					time = configurer.getFixedOutputTime(timeout);
+				else
+					time = ret.second;
+				currentBestTime = (time > 0 && currentBestTime > time) ? time
+						: currentBestTime;
+				prognosticator.time(ret.second);
+				tuner.writeLine(new Double(time).toString());
+				searchTimeSW.reset();
+				searchTimeSW.start();
+
+				if (!ret.first) {
 					tuner.writeLine("exit");
 					break;
 				}
@@ -155,7 +159,7 @@ public class OnlineTuner implements Runnable {
 		if (needTermination) {
 			configurer.terminate();
 		} else {
-			Pair<Boolean, Long> ret = configurer.reconfigure(finalcfg, 0);
+			Pair<Boolean, Integer> ret = configurer.reconfigure(finalcfg);
 			if (ret.first && ret.second > 0)
 				System.out
 						.println("Application is running forever with the final configuration.");
