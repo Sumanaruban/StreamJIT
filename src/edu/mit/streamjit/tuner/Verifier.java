@@ -177,7 +177,8 @@ public class Verifier implements Runnable {
 					time = configurer.getFixedOutputTime(0);
 				else {
 					time = ret.second;
-					System.err.println("Evaluation failed...");
+					System.err.println("Evaluation failed.ret.second="
+							+ ret.second);
 				}
 				configurer.prognosticator.time(time);
 				runningTime.add(time);
