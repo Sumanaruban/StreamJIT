@@ -163,8 +163,10 @@ public class OnlineTuner implements Runnable {
 			if (ret.first && ret.second > 0)
 				System.out
 						.println("Application is running forever with the final configuration.");
-			else
+			else {
 				System.err.println("Invalid final configuration.");
+				configurer.terminate();
+			}
 		}
 	}
 
