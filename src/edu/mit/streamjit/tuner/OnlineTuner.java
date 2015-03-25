@@ -38,6 +38,7 @@ public class OnlineTuner implements Runnable {
 	private final Reconfigurer configurer;
 	private long currentBestTime;
 	private Map<Integer, Configuration> bestCfgs;
+	final DynamismTester dynamism = new DynamismTester();
 
 	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
 		this.configurer = configurer;
@@ -103,11 +104,11 @@ public class OnlineTuner implements Runnable {
 					time = ret.second;
 				if (time > 1 && currentBestTime > time) {
 					currentBestTime = time;
-					bestCfgs.put(dynCount, config);
+					bestCfgs.put(dynamism.dynCount, config);
 				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
-				tuner.writeLine(new Double(penalized(time)).toString());
+				tuner.writeLine(new Double(dynamism.penalized(time)).toString());
 				searchTimeSW.reset();
 				searchTimeSW.start();
 
@@ -116,11 +117,11 @@ public class OnlineTuner implements Runnable {
 					break;
 				}
 				mLogger.eTuningRound();
-				if (dynCount > 1) {
+				if (dynamism.dynCount > 1) {
 					System.err.println("DynTest over");
 					break;
 				}
-				endOfTuningRound(round);
+				dynamism.endOfTuningRound(round);
 			}
 
 		} catch (IOException e) {
@@ -132,7 +133,7 @@ public class OnlineTuner implements Runnable {
 		mLogger.bEvent("tuningFinished");
 		tuningFinished();
 		mLogger.eEvent("tuningFinished");
-		summarize(round);
+		dynamism.summarize(round);
 	}
 	private void startTuner() throws IOException {
 		String relativeTunerPath = String.format(
@@ -236,107 +237,112 @@ public class OnlineTuner implements Runnable {
 		}
 	}
 
-	private int dynCount = 0;
-	private final int initialTuningCount = Options.initialTuningCount;
-	private final int dynTuningCount = Options.dynTuningCount;
-	private final int bestcfgMinutes = 3;
-	private final boolean penalize = Options.penalize;
+	private class DynamismTester {
+		private int dynCount = 0;
+		private final int initialTuningCount = Options.initialTuningCount;
+		private final int dynTuningCount = Options.dynTuningCount;
+		private final int bestcfgMinutes = 3;
+		private final boolean penalize = Options.penalize;
 
-	/**
-	 * Pausing condition of the online tuning.
-	 */
-	private boolean pauseTuning(int round) {
-		if (round - cfgManager.rejectCount > initialTuningCount
-				+ (dynCount * dynTuningCount)) {
-			return true;
-		}
-		return false;
-	}
-
-	private void endOfTuningRound(int round) {
-		if (pauseTuning(round)) {
-			Configuration bestCfg = bestCfgs.get(dynCount);
-			String cfgPrefix = ConfigurationUtils.getConfigPrefix(bestCfg);
-			String newcfgPrefix = String.format("EndDyn%d:%s", dynCount,
-					cfgPrefix);
-			bestCfg = ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
-			runBestCfg(bestCfg);
-			if (dynCount > 0) {
-				dynCount++;
-				return;
+		/**
+		 * Pausing condition of the online tuning.
+		 */
+		private boolean pauseTuning(int round) {
+			if (round - cfgManager.rejectCount > initialTuningCount
+					+ (dynCount * dynTuningCount)) {
+				return true;
 			}
-			simulateDynamism();
-			newcfgPrefix = String.format("BeginDyn%d:%s", dynCount, cfgPrefix);
-			ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
-			runBestCfg(bestCfg);
-			System.out.println("Going for dynamism tuning...");
+			return false;
 		}
-	}
 
-	private void simulateDynamism() {
-		System.err.println("simulateDynamism");
-		if (Options.blockCore)
-			blockCores();
-		else
-			blockNode();
-		currentBestTime = Integer.MAX_VALUE;
-		dynCount++;
-	}
+		private void endOfTuningRound(int round) {
+			if (pauseTuning(round)) {
+				Configuration bestCfg = bestCfgs.get(dynCount);
+				String cfgPrefix = ConfigurationUtils.getConfigPrefix(bestCfg);
+				String newcfgPrefix = String.format("EndDyn%d:%s", dynCount,
+						cfgPrefix);
+				bestCfg = ConfigurationUtils.addConfigPrefix(bestCfg,
+						newcfgPrefix);
+				runBestCfg(bestCfg);
+				if (dynCount > 0) {
+					dynCount++;
+					return;
+				}
+				simulateDynamism();
+				newcfgPrefix = String.format("BeginDyn%d:%s", dynCount,
+						cfgPrefix);
+				ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
+				runBestCfg(bestCfg);
+				System.out.println("Going for dynamism tuning...");
+			}
+		}
 
-	private void runBestCfg(Configuration config) {
-		System.err.println("Configuring with the best cfg..");
-		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
-		logger.newConfiguration(cfgPrefix);
-		Pair<Boolean, Integer> ret = configurer.reconfigure(config);
-		long time = ret.second;
-		if (ret.second > 0) {
-			time = configurer.getFixedOutputTime(0);
-			System.out.println(String.format(
-					"Going to sleep for %d minutes...", bestcfgMinutes));
+		private void simulateDynamism() {
+			System.err.println("simulateDynamism");
+			if (Options.blockCore)
+				blockCores();
+			else
+				blockNode();
+			currentBestTime = Integer.MAX_VALUE;
+			dynCount++;
+		}
+
+		private void runBestCfg(Configuration config) {
+			System.err.println("Configuring with the best cfg..");
+			String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
+			logger.newConfiguration(cfgPrefix);
+			Pair<Boolean, Integer> ret = configurer.reconfigure(config);
+			long time = ret.second;
+			if (ret.second > 0) {
+				time = configurer.getFixedOutputTime(0);
+				System.out.println(String.format(
+						"Going to sleep for %d minutes...", bestcfgMinutes));
+				try {
+					Thread.sleep(bestcfgMinutes * 60 * 1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			System.err.println(String.format("bestCfgs-%s, Runtime=%d",
+					cfgPrefix, time));
+		}
+
+		private void blockNode() {
+			System.err.println("blockNode...");
+			cfgManager.nodeDown(1);
+		}
+
+		private void blockCores() {
+			System.err.println("blockCores...");
+			configurer.manager.blockCores(1);
+		}
+
+		private void summarize(int round) {
+			FileWriter writer = Utils.fileWriter(app.name, "dynamism.txt");
 			try {
-				Thread.sleep(bestcfgMinutes * 60 * 1000);
-			} catch (InterruptedException e) {
+				writer.write(String.format("round=%d\n", round));
+				writer.write(String.format("dynCount=%d\n", dynCount));
+				writer.write(String.format("Rejected=%d\n",
+						cfgManager.rejectCount));
+				writer.close();
+				for (Map.Entry<Integer, Configuration> bestcfg : bestCfgs
+						.entrySet()) {
+					ConfigurationUtils.saveConfg(bestcfg.getValue(), "best"
+							+ bestcfg.getKey(), app.name);
+				}
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		System.err.println(String.format("bestCfgs-%s, Runtime=%d", cfgPrefix,
-				time));
-	}
 
-	private void blockNode() {
-		System.err.println("blockNode...");
-		cfgManager.nodeDown(1);
-	}
-
-	private void blockCores() {
-		System.err.println("blockCores...");
-		configurer.manager.blockCores(1);
-	}
-
-	private void summarize(int round) {
-		FileWriter writer = Utils.fileWriter(app.name, "dynamism.txt");
-		try {
-			writer.write(String.format("round=%d\n", round));
-			writer.write(String.format("dynCount=%d\n", dynCount));
-			writer.write(String.format("Rejected=%d\n", cfgManager.rejectCount));
-			writer.close();
-			for (Map.Entry<Integer, Configuration> bestcfg : bestCfgs
-					.entrySet()) {
-				ConfigurationUtils.saveConfg(bestcfg.getValue(), "best"
-						+ bestcfg.getKey(), app.name);
+		private long penalized(long time) {
+			if (penalize) {
+				long newtime = (long) ((1 + cfgManager.wrongParamCount * 0.1) * time);
+				System.err.println(String.format(
+						"Actual time=%d, Penalized time=%d\n", time, newtime));
+				return newtime;
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+			return time;
 		}
-	}
-
-	private long penalized(long time) {
-		if (penalize) {
-			long newtime = (long) ((1 + cfgManager.wrongParamCount * 0.1) * time);
-			System.err.println(String.format(
-					"Actual time=%d, Penalized time=%d\n", time, newtime));
-			return newtime;
-		}
-		return time;
 	}
 }
