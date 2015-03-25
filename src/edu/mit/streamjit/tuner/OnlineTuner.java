@@ -259,7 +259,7 @@ public class OnlineTuner implements Runnable {
 			String cfgPrefix = ConfigurationUtils.getConfigPrefix(bestCfg);
 			String newcfgPrefix = String.format("EndDyn%d:%s", dynCount,
 					cfgPrefix);
-			ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
+			bestCfg = ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
 			runBestCfg(bestCfg);
 			if (dynCount > 0) {
 				dynCount++;
