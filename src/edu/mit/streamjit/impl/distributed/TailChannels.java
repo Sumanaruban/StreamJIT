@@ -533,7 +533,7 @@ public class TailChannels {
 		/**
 		 * If no output for 30s, reject the configuration.
 		 */
-		private final int noOutputTime = 30000;
+		private final int noOutputTimeLimit = 30000;
 
 		public BlockingTailChannel3(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
@@ -572,7 +572,7 @@ public class TailChannels {
 		private boolean waitForFirstOutput() throws InterruptedException {
 			Stopwatch sw = Stopwatch.createStarted();
 			while (count < 1
-					&& sw.elapsed(TimeUnit.MILLISECONDS) < noOutputTime)
+					&& sw.elapsed(TimeUnit.MILLISECONDS) < noOutputTimeLimit)
 				Thread.sleep(1);
 			return count > 0;
 		}
