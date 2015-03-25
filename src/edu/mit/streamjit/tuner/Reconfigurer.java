@@ -42,73 +42,64 @@ public class Reconfigurer {
 	}
 
 	/**
-	 * TODO: Split this method into two methods, 1.reconfigure(),
-	 * 2.getFixedOutputTime().
+	 * Reconfigures and returns a {@link Pair}. If ret.first == false, then no
+	 * more tuning. If ret.second > 0, the reconfiguration is successful; caller
+	 * can call getFixedOutputTime() to measure the running time. If ret.second
+	 * < 0, the reconfiguration is unsuccessful. Meanings of the negative values
+	 * are follows
+	 * <ol>
+	 * <li>-1: is reserved for timeout.
+	 * <li>-2: App has stopped. No more tuning.
+	 * <li>-3: Invalid configuration.
+	 * <li>-4: {@link ConfigurationPrognosticator} has rejected the
+	 * configuration.
+	 * <li>-5: Draining failed. Another draining is in progress.
+	 * <li>-6: Reconfiguration has failed at {@link StreamNode} side. E.g.,
+	 * Compilation error.
+	 * <li>-7: Misc problems.
 	 * 
 	 * @param cfgJson
-	 * @param round
-	 * @return if ret.first == false, then no more tuning. ret.second = running
-	 *         time in milliseconds. ret.second may be a negative value if the
-	 *         reconfiguration is unsuccessful or a timeout is occurred.
-	 *         Meanings of the negative values are follows
-	 *         <ol>
-	 *         <li>-1: Timeout has occurred.
-	 *         <li>-2: Invalid configuration.
-	 *         <li>-3: {@link ConfigurationPrognosticator} has rejected the
-	 *         configuration.
-	 *         <li>-4: Draining failed. Another draining is in progress.
-	 *         <li>-5: Reconfiguration has failed at {@link StreamNode} side.
-	 *         E.g., Compilation error.
-	 *         <li>-6: Misc problems.
+	 * @return
 	 */
-	public Pair<Boolean, Long> reconfigure(Configuration config, long timeout) {
-		long time;
+	public Pair<Boolean, Integer> reconfigure(Configuration config) {
+		int reason = 1;
 
 		if (manager.getStatus() == AppStatus.STOPPED)
-			return new Pair<Boolean, Long>(false, 0l);
+			return new Pair<Boolean, Integer>(false, -2);
 
 		mLogger.bCfgManagerNewcfg();
 		boolean validCfg = cfgManager.newConfiguration(config);
 		mLogger.eCfgManagerNewcfg();
 		if (!validCfg)
-			return new Pair<Boolean, Long>(true, -2l);
+			return new Pair<Boolean, Integer>(true, -3);
 
 		mLogger.bPrognosticate();
 		boolean prog = prognosticator.prognosticate(config);
 		mLogger.ePrognosticate();
 		if (!prog)
-			return new Pair<Boolean, Long>(true, -3l);
+			return new Pair<Boolean, Integer>(true, -4);
 
 		try {
 			mLogger.bIntermediateDraining();
 			boolean intermediateDraining = intermediateDraining();
 			mLogger.eIntermediateDraining();
 			if (!intermediateDraining)
-				return new Pair<Boolean, Long>(false, -4l);
+				return new Pair<Boolean, Integer>(false, -5);
 
 			drainer.setBlobGraph(app.blobGraph);
 			int multiplier = getMultiplier(config);
 			mLogger.bManagerReconfigure();
 			boolean reconfigure = manager.reconfigure(multiplier);
 			mLogger.eManagerReconfigure();
-			if (reconfigure) {
-				// TODO: need to check the manager's status before passing the
-				// time. Exceptions, final drain, etc may causes app to stop
-				// executing.
-				mLogger.bGetFixedOutputTime();
-				time = manager.getFixedOutputTime(timeout);
-				mLogger.eGetFixedOutputTime();
-				logger.logRunTime(time);
-			} else {
-				time = -5l;
-			}
+			if (!reconfigure)
+				reason = -6;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			System.err
 					.println("Couldn't compile the stream graph with this configuration");
-			time = -6l;
+			reason = -7;
 		}
-		return new Pair<Boolean, Long>(true, time);
+		return new Pair<Boolean, Integer>(true, reason);
 	}
 
 	/**
@@ -142,5 +133,16 @@ public class Reconfigurer {
 		} else {
 			manager.stop();
 		}
+	}
+
+	public long getFixedOutputTime(long timeout) throws InterruptedException {
+		// TODO: need to check the manager's status before passing the
+		// time. Exceptions, final drain, etc may causes app to stop
+		// executing.
+		mLogger.bGetFixedOutputTime();
+		long time = manager.getFixedOutputTime(timeout);
+		mLogger.eGetFixedOutputTime();
+		logger.logRunTime(time);
+		return time;
 	}
 }
