@@ -100,7 +100,8 @@ public class OnlineTuner implements Runnable {
 					time = ret.second;
 				currentBestTime = (time > 0 && currentBestTime > time) ? time
 						: currentBestTime;
-				prognosticator.time(ret.second);
+				logger.logRunTime(time);
+				prognosticator.time(time);
 				tuner.writeLine(new Double(time).toString());
 				searchTimeSW.reset();
 				searchTimeSW.start();

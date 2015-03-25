@@ -147,7 +147,6 @@ public class Reconfigurer {
 			e.printStackTrace();
 		}
 		mLogger.eGetFixedOutputTime();
-		logger.logRunTime(time);
 		return time;
 	}
 }
