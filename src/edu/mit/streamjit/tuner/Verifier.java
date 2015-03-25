@@ -180,6 +180,7 @@ public class Verifier implements Runnable {
 					System.err.println("Evaluation failed.ret.second="
 							+ ret.second);
 				}
+				configurer.logger.logRunTime(time);
 				configurer.prognosticator.time(time);
 				runningTime.add(time);
 			}
