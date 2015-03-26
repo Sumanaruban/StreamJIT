@@ -37,6 +37,7 @@ public class ConfigurationAnalyzer {
 		}
 		ConfigurationAnalyzer ca = new ConfigurationAnalyzer(appName);
 		ca.Analyze();
+		ca.Analyze2();
 	}
 
 	private final String appName;
@@ -170,9 +171,61 @@ public class ConfigurationAnalyzer {
 		File summaryDir = new File(String.format("%s%ssummary", appName,
 				File.separator));
 		Utils.createDir(summaryDir.getPath());
+		String datafile = "cfgAnalizePrev.txt";
 		printTable(comparitionSummaryList,
-				Utils.fileWriter(summaryDir.getPath(), "cfgAnalize.txt"));
-		File plotFile = createPlotFile2(summaryDir, appName);
+				Utils.fileWriter(summaryDir.getPath(), datafile));
+		File plotFile = createPlotFile2(summaryDir, appName, datafile);
+		TimeLogProcessor.plot(summaryDir, plotFile);
+	}
+
+	private void Analyze2() throws IOException {
+		SqliteAdapter sqlite = null;
+		if (dbExists)
+			sqlite = connectDB(appName);
+
+		int maxTuneCount = 5000;
+		if (dbExists)
+			maxTuneCount = getTotalResults(sqlite);
+
+		int start = 1;
+		int end = maxTuneCount; // inclusive
+		List<ComparisionSummary> comparitionSummaryList = new ArrayList<>();
+		double curBestTime = Double.MAX_VALUE;
+		Configuration curBestConfig = null;
+		for (int i = start; i < end; i++) {
+			double t1 = 0;
+			if (dbExists)
+				t1 = getRunningTime(sqlite, appName, i);
+
+			if (needTocompare(t1, curBestTime)) {
+				System.out.println("Comparing..." + i);
+				Configuration cfg1 = ConfigurationUtils.readConfiguration(
+						appName, i);
+				cfg1 = ConfigurationUtils.addConfigPrefix(cfg1,
+						new Integer(i).toString());
+				if (cfg1 != null && curBestConfig != null) {
+					ComparisionSummary sum = ComparisionSummary.compare(
+							curBestConfig, cfg1, curBestTime, t1,
+							fullParameterSummary);
+					comparitionSummaryList.add(sum);
+				}
+
+				if (curBestTime > t1) {
+					curBestTime = t1;
+					curBestConfig = cfg1;
+					System.out.println(String.format("New best. %s, time-%.0f",
+							ConfigurationUtils.getConfigPrefix(curBestConfig),
+							curBestTime));
+				}
+			}
+		}
+		File summaryDir = new File(String.format("%s%ssummary", appName,
+				File.separator));
+		Utils.createDir(summaryDir.getPath());
+		String datafile = "cfgAnalizeBest.txt";
+		printTable(comparitionSummaryList,
+				Utils.fileWriter(summaryDir.getPath(), datafile));
+		File plotFile = createPlotFile2(summaryDir, appName, datafile);
 		TimeLogProcessor.plot(summaryDir, plotFile);
 	}
 
@@ -296,17 +349,17 @@ public class ConfigurationAnalyzer {
 		return plotfile;
 	}
 
-	private static File createPlotFile2(File dir, String appName)
-			throws IOException {
+	private static File createPlotFile2(File dir, String appName,
+			String dataFile) throws IOException {
 		String title = TimeLogProcessor.getTitle(appName);
 		boolean pdf = true;
-		String dataFile = "cfgAnalize.txt";
-		File plotfile = new File(dir, "cfgAnalize.plt");
+		String extensionRemoved = dataFile.split("\\.")[0];
+		File plotfile = new File(dir, String.format("%s.plt", extensionRemoved));
 		FileWriter writer = new FileWriter(plotfile, false);
 		if (pdf) {
 			writer.write("set terminal pdf enhanced color\n");
-			writer.write(String.format("set output \"%scfgAnalize.pdf\"\n",
-					title));
+			writer.write(String.format("set output \"%s%s.pdf\"\n", title,
+					extensionRemoved));
 		} else {
 			writer.write("set terminal postscript eps enhanced color\n");
 			writer.write(String.format("set output \"%s.eps\"\n", title));
