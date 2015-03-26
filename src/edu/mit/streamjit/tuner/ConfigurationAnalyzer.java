@@ -62,11 +62,10 @@ public class ConfigurationAnalyzer {
 
 	public static double getRunningTime(String appName, int round) {
 		SqliteAdapter sqlite = connectDB(appName);
-		return getRunningTime(sqlite, appName, round);
+		return getRunningTime(sqlite, round);
 	}
 
-	public static double getRunningTime(SqliteAdapter sqlite, String appName,
-			int round) {
+	public static double getRunningTime(SqliteAdapter sqlite, int round) {
 		ResultSet result = sqlite.executeQuery(String.format(
 				"SELECT * FROM result WHERE id=%d", round));
 
@@ -148,8 +147,8 @@ public class ConfigurationAnalyzer {
 			double t1 = 0;
 			double t2 = 0;
 			if (dbExists) {
-				t1 = getRunningTime(sqlite, appName, i);
-				t2 = getRunningTime(sqlite, appName, i + 1);
+				t1 = getRunningTime(sqlite, i);
+				t2 = getRunningTime(sqlite, i + 1);
 			}
 
 			if (needTocompare(t1, t2)) {
@@ -195,7 +194,7 @@ public class ConfigurationAnalyzer {
 		for (int i = start; i < end; i++) {
 			double t1 = 0;
 			if (dbExists)
-				t1 = getRunningTime(sqlite, appName, i);
+				t1 = getRunningTime(sqlite, i);
 
 			if (needTocompare(t1, curBestTime)) {
 				System.out.println("Comparing..." + i);
