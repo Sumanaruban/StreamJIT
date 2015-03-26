@@ -501,8 +501,17 @@ public class TimeLogProcessor {
 		Properties prop = new Properties();
 		InputStream input = null;
 		try {
-			input = new FileInputStream(String.format("%s%sREADME.txt",
-					appName, File.separator));
+			String readmePath;
+			String tuneDirPath = String.format("%s%stune", appName,
+					File.separator);
+			File tuneDir = new File(tuneDirPath);
+			if (tuneDir.exists())
+				readmePath = String.format("%s%sREADME.txt", tuneDirPath,
+						File.separator);
+			else
+				readmePath = String.format("%s%sREADME.txt", appName,
+						File.separator);
+			input = new FileInputStream(readmePath);
 			prop.load(input);
 		} catch (IOException ex) {
 			System.err.println("Failed to load README.txt");
