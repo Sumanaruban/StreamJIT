@@ -52,7 +52,7 @@ public class ConfigurationAnalyzer {
 		fullParameterSummary = new FullParameterSummary(appName);
 	}
 
-	private static SqliteAdapter connectDB(String appName) {
+	public static SqliteAdapter connectDB(String appName) {
 		String dbPath = String.format("%s%s%s", appName, File.separator,
 				appName);
 		SqliteAdapter sqlite = new SqliteAdapter();
@@ -60,12 +60,12 @@ public class ConfigurationAnalyzer {
 		return sqlite;
 	}
 
-	private static double getRunningTime(String appName, int round) {
+	public static double getRunningTime(String appName, int round) {
 		SqliteAdapter sqlite = connectDB(appName);
 		return getRunningTime(sqlite, appName, round);
 	}
 
-	private static double getRunningTime(SqliteAdapter sqlite, String appName,
+	public static double getRunningTime(SqliteAdapter sqlite, String appName,
 			int round) {
 		ResultSet result = sqlite.executeQuery(String.format(
 				"SELECT * FROM result WHERE id=%d", round));
@@ -84,7 +84,7 @@ public class ConfigurationAnalyzer {
 		return val;
 	}
 
-	private static int getTotalResults(SqliteAdapter sqlite) {
+	public static int getTotalResults(SqliteAdapter sqlite) {
 		ResultSet result = sqlite.executeQuery("SELECT COUNT(*) FROM result");
 
 		String runtime = "0";
@@ -96,7 +96,7 @@ public class ConfigurationAnalyzer {
 		return Integer.parseInt(runtime);
 	}
 
-	private static boolean verifyPath(String cfgDir, String appName) {
+	public static boolean verifyPath(String cfgDir, String appName) {
 		String dbPath = String.format("%s%s%s", appName, File.separator,
 				appName);
 		File db = new File(dbPath);
@@ -113,7 +113,7 @@ public class ConfigurationAnalyzer {
 		return true;
 	}
 
-	private static boolean verifyPath2(String cfgDir, String appName) {
+	public static boolean verifyPath2(String cfgDir, String appName) {
 		boolean ret = true;
 		String dbPath = String.format("%s%s%s", appName, File.separator,
 				appName);
