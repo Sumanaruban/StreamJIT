@@ -71,25 +71,25 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 		if (Options.bigToSmallBlobRatio > 0
 				&& bigToSmallBlobRatio > Options.bigToSmallBlobRatio) {
-			s.append("1,");
+			s.append("1");
 			accept = false;
 		}
 		if (Options.loadRatio > 0 && loadRatio > Options.loadRatio) {
-			s.append("2,");
+			s.append("2");
 			accept = false;
 		}
 		if (Options.blobToNodeRatio > 0
 				&& blobToNodeRatio > Options.blobToNodeRatio) {
-			s.append("3,");
+			s.append("3");
 			accept = false;
 		}
 		if (Options.boundaryChannelRatio > 0
 				&& boundaryChannelRatio < Options.boundaryChannelRatio) {
-			s.append("4,");
+			s.append("4");
 			accept = false;
 		}
 		if (hasCycle) {
-			s.append("5,");
+			s.append("5");
 			accept = false;
 		}
 
