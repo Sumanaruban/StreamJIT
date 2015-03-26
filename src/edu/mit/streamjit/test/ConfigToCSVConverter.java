@@ -10,13 +10,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.mit.streamjit.api.OneToOneElement;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
+import edu.mit.streamjit.impl.common.Workers;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.HotSpotTuning;
+import edu.mit.streamjit.impl.distributed.PartitionManager;
+import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.test.apps.fmradio.FMRadio.FMRadioBenchmarkProvider;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer;
+import edu.mit.streamjit.tuner.GraphPropertyPrognosticator;
 import edu.mit.streamjit.tuner.SqliteAdapter;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.TimeLogProcessor;
@@ -167,4 +175,25 @@ public class ConfigToCSVConverter {
 
 		return String.format("%s%srunTime.txt", appName, File.separator);
 	}
+
+	private class GraphPropertyPrognosticatorInfo {
+
+		private final StreamJitApp<?, ?> app;
+		private final ConfigurationManager cfgManager;
+
+		GraphPropertyPrognosticatorInfo(int nodes) {
+			Benchmark benchmark = new FMRadioBenchmarkProvider().iterator()
+					.next();
+			OneToOneElement<?, ?> streamGraph = benchmark.instantiate();
+			this.app = new StreamJitApp<>(streamGraph);
+			GraphPropertyPrognosticator prog = new GraphPropertyPrognosticator(
+					app);
+			PartitionManager partitionManager = new HotSpotTuning(app);
+			partitionManager.getDefaultConfiguration(
+					Workers.getAllWorkersInGraph(app.source), nodes);
+			this.cfgManager = new ConfigurationManager(app, partitionManager);
+		}
+
+	}
+
 }
