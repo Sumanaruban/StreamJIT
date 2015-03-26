@@ -19,6 +19,7 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer;
 import edu.mit.streamjit.tuner.SqliteAdapter;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.TimeLogProcessor;
 
 /**
  * Converts configuration data and running time to CSV format for R analysis.
@@ -32,7 +33,7 @@ public class ConfigToCSVConverter {
 		try {
 			appName = args[0];
 		} catch (Exception ex) {
-			appName = "NestedSplitJoinCore";
+			appName = "FMRadioCore";
 		}
 
 		ConfigToCSVConverter csv = new ConfigToCSVConverter(appName);
@@ -47,7 +48,9 @@ public class ConfigToCSVConverter {
 	}
 
 	public void startWrite() throws IOException {
-		FileWriter writer = Utils.fileWriter(appName, appName + ".csv");
+		String fileName = String.format("%s.csv",
+				TimeLogProcessor.getTitle(appName));
+		FileWriter writer = Utils.fileWriter(appName, fileName);
 		List<String> paramNameList = paramNameList(appName);
 		Map<String, Integer> runningTime = processRunTime(appName);
 		writeHeader(paramNameList, writer);
