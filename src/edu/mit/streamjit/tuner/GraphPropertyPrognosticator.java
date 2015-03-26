@@ -68,30 +68,29 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 			float blobToNodeRatio, float boundaryChannelRatio, boolean hasCycle) {
 		StringBuilder s = new StringBuilder();
 		boolean accept = true;
-		if (Options.prognosticate) {
-			if (Options.bigToSmallBlobRatio > 0
-					&& bigToSmallBlobRatio > Options.bigToSmallBlobRatio) {
-				s.append("1,");
-				accept = false;
-			}
-			if (Options.loadRatio > 0 && loadRatio > Options.loadRatio) {
-				s.append("2,");
-				accept = false;
-			}
-			if (Options.blobToNodeRatio > 0
-					&& blobToNodeRatio > Options.blobToNodeRatio) {
-				s.append("3,");
-				accept = false;
-			}
-			if (Options.boundaryChannelRatio > 0
-					&& boundaryChannelRatio < Options.boundaryChannelRatio) {
-				s.append("4,");
-				accept = false;
-			}
-			if (hasCycle) {
-				s.append("5,");
-				accept = false;
-			}
+
+		if (Options.bigToSmallBlobRatio > 0
+				&& bigToSmallBlobRatio > Options.bigToSmallBlobRatio) {
+			s.append("1,");
+			accept = false;
+		}
+		if (Options.loadRatio > 0 && loadRatio > Options.loadRatio) {
+			s.append("2,");
+			accept = false;
+		}
+		if (Options.blobToNodeRatio > 0
+				&& blobToNodeRatio > Options.blobToNodeRatio) {
+			s.append("3,");
+			accept = false;
+		}
+		if (Options.boundaryChannelRatio > 0
+				&& boundaryChannelRatio < Options.boundaryChannelRatio) {
+			s.append("4,");
+			accept = false;
+		}
+		if (hasCycle) {
+			s.append("5,");
+			accept = false;
 		}
 
 		try {
@@ -100,7 +99,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		} catch (IOException e) {
 
 		}
-		return accept;
+		return !Options.prognosticate || accept;
 	}
 
 	/**
