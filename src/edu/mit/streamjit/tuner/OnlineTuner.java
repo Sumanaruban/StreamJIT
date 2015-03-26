@@ -150,6 +150,8 @@ public class OnlineTuner implements Runnable {
 		long timeout = Options.timeOut ? 2 * currentBestTime : 0;
 		long time;
 		time = configurer.getFixedOutputTime(timeout);
+		if (time < 0)
+			return time;
 		if ((time - currentBestTime) < currentBestTime / 5) {
 			long time1 = time;
 			long time2 = configurer.getFixedOutputTime(timeout);
