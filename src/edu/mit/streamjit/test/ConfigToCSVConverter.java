@@ -82,7 +82,7 @@ public class ConfigToCSVConverter {
 			writer.write(stringval);
 			writer.write(delimiter);
 		}
-		writer.write(time.toString());
+		writer.write(time == null ? "-1" : time.toString());
 		writer.write("\n");
 	}
 
@@ -110,7 +110,7 @@ public class ConfigToCSVConverter {
 		return paramNameList;
 	}
 
-	private static void varityTime(String appName) throws IOException {
+	private static void verifyTime(String appName) throws IOException {
 		Map<String, Integer> runningTime = processRunTime(appName);
 		SqliteAdapter adapter = ConfigurationAnalyzer.connectDB(appName);
 		for (int i = 1; i < runningTime.size(); i++) {
