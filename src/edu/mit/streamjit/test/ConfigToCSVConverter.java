@@ -22,7 +22,10 @@ import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
+import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio.FMRadioBenchmarkProvider;
+import edu.mit.streamjit.test.sanity.nestedsplitjoinexample.NestedSplitJoin;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer;
 import edu.mit.streamjit.tuner.GraphPropertyPrognosticator;
 import edu.mit.streamjit.tuner.SqliteAdapter;
@@ -41,18 +44,27 @@ public class ConfigToCSVConverter {
 		try {
 			appName = args[0];
 		} catch (Exception ex) {
-			appName = "FMRadioCore";
+			appName = "NestedSplitJoinCore";
 		}
 
-		ConfigToCSVConverter csv = new ConfigToCSVConverter(appName);
+		int noOfNodes;
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 2;
+		}
+
+		ConfigToCSVConverter csv = new ConfigToCSVConverter(appName, noOfNodes);
 		csv.startWrite();
 	}
 
 	private final String appName;
 	private final Character delimiter = ',';
+	private final GraphPropertyPrognosticatorInfo progInfo;
 
-	public ConfigToCSVConverter(String appName) {
+	public ConfigToCSVConverter(String appName, int nodes) {
 		this.appName = appName;
+		progInfo = new GraphPropertyPrognosticatorInfo(nodes);
 	}
 
 	public void startWrite() throws IOException {
@@ -66,14 +78,17 @@ public class ConfigToCSVConverter {
 			Configuration cfg = ConfigurationUtils
 					.readConfiguration(appName, i);
 			Integer time = runningTime.get(new Integer(i).toString());
-			write(paramNameList, cfg, time, writer);
+			writeCfgValues(paramNameList, cfg, writer);
+			if (progInfo != null)
+				progInfo.writegraphProperty(writer, cfg);
+			writeTime(time, writer);
 		}
 		writer.flush();
 		writer.close();
 	}
 
-	private void write(List<String> paramNameList, Configuration cfg,
-			Integer time, FileWriter writer) throws IOException {
+	private void writeCfgValues(List<String> paramNameList, Configuration cfg,
+			FileWriter writer) throws IOException {
 		Map<String, Parameter> paramMap = cfg.getParametersMap();
 		for (String s : paramNameList) {
 			Parameter p = paramMap.get(s);
@@ -93,6 +108,9 @@ public class ConfigToCSVConverter {
 			writer.write(stringval);
 			writer.write(delimiter);
 		}
+	}
+
+	private void writeTime(Integer time, FileWriter writer) throws IOException {
 		writer.write(time == null ? "-1" : time.toString());
 		writer.write("\n");
 	}
@@ -103,6 +121,8 @@ public class ConfigToCSVConverter {
 			writer.write(String.format("\"%s\"", s));
 			writer.write(delimiter);
 		}
+		if (progInfo != null)
+			progInfo.writeHeader(writer);
 		writer.write("time\n");
 	}
 
@@ -180,20 +200,64 @@ public class ConfigToCSVConverter {
 
 		private final StreamJitApp<?, ?> app;
 		private final ConfigurationManager cfgManager;
+		private final GraphPropertyPrognosticator prog;
 
 		GraphPropertyPrognosticatorInfo(int nodes) {
-			Benchmark benchmark = new FMRadioBenchmarkProvider().iterator()
-					.next();
-			OneToOneElement<?, ?> streamGraph = benchmark.instantiate();
+			OneToOneElement<?, ?> streamGraph = streamGraph();
 			this.app = new StreamJitApp<>(streamGraph);
-			GraphPropertyPrognosticator prog = new GraphPropertyPrognosticator(
-					app);
+			prog = new GraphPropertyPrognosticator(app);
 			PartitionManager partitionManager = new HotSpotTuning(app);
 			partitionManager.getDefaultConfiguration(
 					Workers.getAllWorkersInGraph(app.source), nodes);
 			this.cfgManager = new ConfigurationManager(app, partitionManager);
 		}
 
-	}
+		private void writeHeader(FileWriter writer) throws IOException {
+			writer.write("bigToSmallBlobRatio");
+			writer.write(delimiter);
+			writer.write("loadRatio");
+			writer.write(delimiter);
+			writer.write("blobToNodeRatio");
+			writer.write(delimiter);
+			writer.write("totalToBoundaryChannelRatio");
+			writer.write(delimiter);
+			writer.write("hasCycle");
+			writer.write(delimiter);
+		}
 
+		private void writegraphProperty(FileWriter writer, Configuration cfg)
+				throws IOException {
+			cfgManager.newConfiguration(cfg);
+			// prog.prognosticate(cfg);
+			writer.write(String.format("%.2f%c", prog.bigToSmallBlobRatio(),
+					delimiter));
+			writer.write(String.format("%.2f%c", prog.loadRatio(), delimiter));
+			writer.write(String.format("%.2f%c", prog.blobToNodeRatio(),
+					delimiter));
+			writer.write(String.format("%.2f%c",
+					prog.totalToBoundaryChannelRatio(), delimiter));
+			writer.write(String.format("%s%c", prog.hasCycle() ? "True"
+					: "False", delimiter));
+		}
+
+		private OneToOneElement<?, ?> streamGraph() {
+			Benchmark benchmark;
+			if (appName.equals("FMRadioCore"))
+				benchmark = new FMRadioBenchmarkProvider().iterator().next();
+			else if (appName.equals("NestedSplitJoinCore"))
+				benchmark = new NestedSplitJoin.NestedSplitJoinBenchmarkProvider()
+						.iterator().next();
+			else if (appName.equals("ChannelVocoder7Kernel"))
+				benchmark = new ChannelVocoder7().iterator().next();
+			else if (appName.equals("FilterBankPipeline"))
+				benchmark = new FilterBank6.FilterBankBenchmark();
+			else if (appName.equals("FMRadioCore"))
+				benchmark = new FMRadioBenchmarkProvider().iterator().next();
+			else
+				throw new IllegalArgumentException(
+						"No benchmark to instantiate");
+			OneToOneElement<?, ?> streamGraph = benchmark.instantiate();
+			return streamGraph;
+		}
+	}
 }
