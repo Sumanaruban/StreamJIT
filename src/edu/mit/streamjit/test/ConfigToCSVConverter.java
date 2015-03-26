@@ -44,12 +44,12 @@ public class ConfigToCSVConverter {
 		try {
 			appName = args[0];
 		} catch (Exception ex) {
-			appName = "NestedSplitJoinCore";
+			appName = "FMRadioCore";
 		}
 
 		int noOfNodes;
 		try {
-			noOfNodes = Integer.parseInt(args[0]);
+			noOfNodes = Integer.parseInt(args[1]);
 		} catch (Exception ex) {
 			noOfNodes = 2;
 		}
@@ -77,6 +77,8 @@ public class ConfigToCSVConverter {
 		for (int i = 1; i <= runningTime.size(); i++) {
 			Configuration cfg = ConfigurationUtils
 					.readConfiguration(appName, i);
+			if (cfg == null)
+				continue;
 			Integer time = runningTime.get(new Integer(i).toString());
 			writeCfgValues(paramNameList, cfg, writer);
 			if (progInfo != null)
