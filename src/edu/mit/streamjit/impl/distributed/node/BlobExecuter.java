@@ -78,6 +78,8 @@ class BlobExecuter {
 
 	private DrainType drainType;
 
+	private final boolean debug = false;
+
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels) {
@@ -454,8 +456,12 @@ class BlobExecuter {
 				Affinity.setThreadAffinity(cores);
 
 			try {
-				while (!stopping)
+				while (!stopping) {
+					if (be.debug)
+						System.out.println(Thread.currentThread().getName()
+								+ " :new run....");
 					coreCode.run();
+				}
 			} catch (Error | Exception e) {
 				System.out.println(Thread.currentThread().getName()
 						+ " crashed...");
@@ -493,8 +499,9 @@ class BlobExecuter {
 		public void run() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			// System.out.println("Time taken to drain " + blobExec.blobID +
-			// " is " + time + " ms");
+			if(blobExec.debug)
+				System.out.println("Time taken to drain " + blobExec.blobID
+						+ " is " + time + " ms");
 			try {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNTimeInfo.DrainingTime(
