@@ -106,7 +106,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * @return The ratio between the number of workers in the largest blob and
 	 *         the number of workers in the smallest blob.
 	 */
-	private float bigToSmallBlobRatio() {
+	public float bigToSmallBlobRatio() {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		int currentBlobSize;
@@ -126,7 +126,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * @return The ratio between the highest number of workers assigned to a
 	 *         machine and the lowest number of workers assigned to a machine.
 	 */
-	private float loadRatio() {
+	public float loadRatio() {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		int workersInCurrentNode;
@@ -146,7 +146,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	/**
 	 * @return The ratio between the total number of blobs to the total nodes.
 	 */
-	private float blobToNodeRatio() {
+	public float blobToNodeRatio() {
 		int nodes = 0;
 		int blobs = 0;
 		for (List<Set<Worker<?, ?>>> blobList : app.partitionsMachineMap
@@ -162,7 +162,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * @return The ratio between the total channels in the stream graph to the
 	 *         {@link BoundaryChannel} in the current configuration.
 	 */
-	private float totalToBoundaryChannelRatio() {
+	public float totalToBoundaryChannelRatio() {
 		int totalChannels = 0;
 		int boundaryChannels = 0;
 		for (Integer machineID : app.partitionsMachineMap.keySet()) {
@@ -219,7 +219,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		}
 	}
 
-	private boolean hasCycle() {
+	public boolean hasCycle() {
 		Set<List<Integer>> machinePaths = buildMachinePaths();
 		for (List<Integer> path : machinePaths) {
 			Set<Integer> machines = new HashSet<Integer>();
