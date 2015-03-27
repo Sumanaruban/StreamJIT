@@ -18,8 +18,8 @@ public class data_generator_float {
 		FileOutputStream out=null;
 		FileInputStream in=null;
 		try {
-			out = new FileOutputStream("src/edu/mit/streamjit/transmitter/data_float.in");
-			in = new FileInputStream("src/edu/mit/streamjit/transmitter/data_float.in");
+			out = new FileOutputStream("src/edu/mit/streamjit/test/apps/lte/transmitter/data_float.in");
+			in = new FileInputStream("src/edu/mit/streamjit/test/apps/lte/transmitter/data_float.in");
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

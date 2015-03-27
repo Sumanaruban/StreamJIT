@@ -28,7 +28,7 @@ public class Receiver {
 //		Benchmarker.runBenchmark(new TransmitterBenchmark(), sc).get(0).print(System.out);
 		OneToOneElement<Byte, Byte> streamgraph = new Pipeline<>(new TurboDecoder());
 		StreamCompiler compiler = new DebugStreamCompiler();
-		Path path = Paths.get("src/edu/mit/streamjit/receiver/data.in");
+		Path path = Paths.get("src/edu/mit/streamjit/test/apps/lte/receiver/data.in");
 		Input<Byte> input = Input.fromBinaryFile(path, Byte.class,
 				ByteOrder.LITTLE_ENDIAN);
 		Input<Byte> repeated = Datasets.nCopies(1, input);
@@ -40,8 +40,8 @@ public class Receiver {
 //	@ServiceProvider(Benchmark.class)
 //	public static final class TransmitterBenchmark extends SuppliedBenchmark {
 //		public TransmitterBenchmark() {
-//			super("Transmitter", TransmitterKernel.class, new Dataset("src/edu/mit/streamjit/transmitter/data.in",
-//					(Input)Input.fromBinaryFile(Paths.get("src/edu/mit/streamjit/transmitter/data.in"), Byte.class, ByteOrder.LITTLE_ENDIAN)
+//			super("Transmitter", TransmitterKernel.class, new Dataset("src/edu/mit/streamjit/test/apps/lte/transmitter/data.in",
+//					(Input)Input.fromBinaryFile(Paths.get("src/edu/mit/streamjit/test/apps/lte/transmitter/data.in"), Byte.class, ByteOrder.LITTLE_ENDIAN)
 ////					, (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/fft/streamit/FFT5.out"), Float.class, ByteOrder.LITTLE_ENDIAN))
 //			));
 //		}

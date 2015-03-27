@@ -14,8 +14,8 @@ public class data_generator {
 		FileOutputStream out=null;
 		FileInputStream in=null;
 		try {
-			out = new FileOutputStream("src/edu/mit/streamjit/transmitter/data.in");
-			in = new FileInputStream("src/edu/mit/streamjit/transmitter/data.in");
+			out = new FileOutputStream("src/edu/mit/streamjit/test/apps/lte/transmitter/data.in");
+			in = new FileInputStream("src/edu/mit/streamjit/test/apps/lte/transmitter/data.in");
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
