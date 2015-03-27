@@ -1,4 +1,4 @@
-package edu.mit.streamjit.receiver;
+package edu.mit.streamjit.test.apps.lte.receiver;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

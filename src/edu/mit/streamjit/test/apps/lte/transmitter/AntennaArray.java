@@ -1,4 +1,4 @@
-package edu.mit.streamjit.transmitter;
+package edu.mit.streamjit.test.apps.lte.transmitter;
 
 import edu.mit.streamjit.api.RoundrobinJoiner;
 import edu.mit.streamjit.api.RoundrobinSplitter;

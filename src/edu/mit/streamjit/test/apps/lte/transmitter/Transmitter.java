@@ -1,4 +1,4 @@
-package edu.mit.streamjit.transmitter;
+package edu.mit.streamjit.test.apps.lte.transmitter;
 
 import java.nio.ByteOrder;
 import java.nio.file.Path;

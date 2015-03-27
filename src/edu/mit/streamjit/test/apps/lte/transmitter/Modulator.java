@@ -1,4 +1,4 @@
-package edu.mit.streamjit.transmitter;
+package edu.mit.streamjit.test.apps.lte.transmitter;
 
 public class Modulator extends edu.mit.streamjit.api.Filter<Byte, Float> {
 	
