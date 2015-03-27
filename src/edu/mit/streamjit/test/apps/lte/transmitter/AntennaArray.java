@@ -6,8 +6,8 @@ import edu.mit.streamjit.api.Splitjoin;
 
 
 public class AntennaArray extends edu.mit.streamjit.api.Pipeline<Float, Float>{
-	static int fftlength=6;	
-	static int stuff=1;
+	public static int fftlength=6;
+	public static int stuff=1;
 	public AntennaArray(){				
 		super(new Splitjoin<Float,Float>(
 				new RoundrobinSplitter<Float>(fftlength*2),

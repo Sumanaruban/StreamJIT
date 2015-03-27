@@ -5,7 +5,7 @@ import edu.mit.streamjit.api.RoundrobinSplitter;
 import edu.mit.streamjit.api.Splitjoin;
 
 public class TurboEncoder extends edu.mit.streamjit.api.Pipeline<Byte, Byte> {
-	static int val=0;
+	public static int val=0;
 	public TurboEncoder(){
 		super(	
 				new Permutator(),
