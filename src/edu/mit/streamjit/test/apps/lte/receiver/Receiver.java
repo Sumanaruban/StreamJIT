@@ -55,6 +55,23 @@ public class Receiver {
 //		
 //	}
 
+	@ServiceProvider(Benchmark.class)
+	public static final class ReceiverBenchmark extends SuppliedBenchmark {
+
+		public ReceiverBenchmark() {
+			super("Receiver", TurboDecoder.class, dataset());
+		}
+
+		private static Dataset dataset() {
+			Path path = Paths
+					.get("src/edu/mit/streamjit/test/apps/lte/receiver/data.in");
+			Input<Byte> input = Input.fromBinaryFile(path, Byte.class,
+					ByteOrder.LITTLE_ENDIAN);
+			return new Dataset("data.in", input);
+		}
+
+	}
+
 	private static class Add extends edu.mit.streamjit.api.Filter<Byte, Byte> {
 
 		public Add() {
