@@ -10,25 +10,25 @@ import edu.mit.streamjit.api.WeightedRoundrobinSplitter;
 
 public class TurboDecoder extends edu.mit.streamjit.api.Pipeline<Byte, Byte> {
 	
-	static int block_size=40;
-	static int[] zero_transitions={0,4,5,1,2,6,7,3};
-	static int[] one_transitions={4,0,1,5,6,2,3,7};
-	static int[] zero_transitions_gammas={0,1,1,0,0,1,1,0};
-	static int[] one_transitions_gammas={3,2,2,3,3,2,2,3};
-	static int[] reverse_zero_transitions={0,3,4,7,1,2,5,6};
-	static int[] reverse_one_transitions={1,2,5,6,0,3,4,7};
+	public static int block_size=40;
+	public static int[] zero_transitions={0,4,5,1,2,6,7,3};
+	public static int[] one_transitions={4,0,1,5,6,2,3,7};
+	public static int[] zero_transitions_gammas={0,1,1,0,0,1,1,0};
+	public static int[] one_transitions_gammas={3,2,2,3,3,2,2,3};
+	public static int[] reverse_zero_transitions={0,3,4,7,1,2,5,6};
+	public static int[] reverse_one_transitions={1,2,5,6,0,3,4,7};
 	
-	static int[] pos_1={0,4};
-	static int[] pos_2={0,2,4,6};
-	static int[] pos_41={0,1,2,3};
-	static int[] pos_42={0,1};
+	public static int[] pos_1={0,4};
+	public static int[] pos_2={0,2,4,6};
+	public static int[] pos_41={0,1,2,3};
+	public static int[] pos_42={0,1};
 	
-	static int[] perms=new int[40];
-	static int[] reverse_perms=new int[40];
-	static int f1=3;
-	static int f2=10;
+	public static int[] perms=new int[40];
+	public static int[] reverse_perms=new int[40];
+	public static int f1=3;
+	public static int f2=10;
 	
-	static float Lc=5.0f;
+	public static float Lc=5.0f;
 	
 	public TurboDecoder(){
 		super(	new PolarEncoder(),
