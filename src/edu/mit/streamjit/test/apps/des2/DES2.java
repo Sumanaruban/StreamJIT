@@ -199,9 +199,9 @@ public final class DES2 {
 		}
 	}
 
-	private static final class DES2Kernel extends Pipeline<Integer, Integer> {
+	public static final class DES2Kernel extends Pipeline<Integer, Integer> {
 		private static final int testvector = 7;
-		private DES2Kernel() {
+		public DES2Kernel() {
 			add(new DEScoder(testvector));
 		}
 	}
