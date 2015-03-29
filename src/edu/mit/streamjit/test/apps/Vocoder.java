@@ -85,7 +85,7 @@ public final class Vocoder {
 		}
 	}
 
-	private static final class VocoderTopLevel extends Pipeline<Float, Float> {
+	public static final class VocoderTopLevel extends Pipeline<Float, Float> {
 		private static final int DFT_LENGTH_NOM = 28;
 		private static final int DFT_LENGTH = DFT_LENGTH_NOM/2 + 1;
 		private static final float FREQUENCY_FACTOR = 0.6f;
