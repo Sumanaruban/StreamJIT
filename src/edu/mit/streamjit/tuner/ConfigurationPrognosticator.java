@@ -80,6 +80,7 @@ public interface ConfigurationPrognosticator {
 			builder.add(cp1);
 			builder.add(cp2);
 			configProgs = builder.build();
+			writeTimeHeader(writer);
 		}
 
 		public ManyPrognosticators(ConfigurationPrognosticator cp1,
@@ -92,6 +93,7 @@ public interface ConfigurationPrognosticator {
 			builder.add(cp2);
 			builder.add(cps);
 			configProgs = builder.build();
+			writeTimeHeader(writer);
 		}
 
 		@Override
@@ -113,6 +115,16 @@ public interface ConfigurationPrognosticator {
 				writer.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
+			}
+		}
+
+		private static void writeTimeHeader(OutputStreamWriter writer) {
+			try {
+				writer.write(String.format("%.7s", "time"));
+				writer.write("\n");
+				writer.flush();
+			} catch (IOException e) {
+
 			}
 		}
 	}
