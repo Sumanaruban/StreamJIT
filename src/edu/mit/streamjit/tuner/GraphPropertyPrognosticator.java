@@ -30,15 +30,24 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 	private final Set<List<Integer>> paths;
 
+	/**
+	 * If many {@link ConfigurationPrognosticator}s are used, only one should
+	 * write the time to the writer.
+	 */
+	private final boolean manyProgs;
+
 	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app) {
-		this(app, Utils.fileWriter(app.name, "GraphProperty.txt"));
+		this(app, Utils.fileWriter(app.name, "GraphProperty.txt"), false);
 	}
 
 	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app,
-			OutputStreamWriter osWriter) {
+			OutputStreamWriter osWriter, boolean manyProgs) {
 		this.app = app;
 		this.writer = osWriter;
+		this.manyProgs = manyProgs;
 		writeHeader(writer);
+		if (!manyProgs)
+			writeTimeHeader(osWriter);
 		paths = app.paths();
 	}
 
@@ -51,7 +60,7 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		float boundaryChannelRatio = totalToBoundaryChannelRatio();
 		boolean hasCycle = hasCycle();
 		try {
-			writer.write(String.format("\n%6s\t\t", cfgPrefix));
+			writer.write(String.format("%6s\t\t", cfgPrefix));
 			writer.write(String.format("%.2f\t\t", bigToSmallBlobRatio));
 			writer.write(String.format("%.2f\t\t", loadRatio));
 			writer.write(String.format("%.2f\t\t", blobToNodeRatio));
@@ -201,9 +210,6 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 			writer.write("\t\t");
 			writer.write(String.format("%.7s", "A/R")); // Accepted or Rejected.
 			writer.write("\t\t");
-			writer.write(String.format("%.7s", "time"));
-			// writer.write("\t\t");
-			writer.flush();
 		} catch (IOException e) {
 
 		}
@@ -211,8 +217,10 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 	@Override
 	public void time(double time) {
+		if (manyProgs)
+			throw new IllegalStateException("manyProgs flag is true");
 		try {
-			writer.write(String.format("%.0f", time));
+			writer.write(String.format("%.0f\n", time));
 			writer.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -265,5 +273,15 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 		throw new IllegalArgumentException(String.format(
 				"Worker-%d is not assigned to anyof the machines", workerID));
+	}
+
+	private static void writeTimeHeader(OutputStreamWriter writer) {
+		try {
+			writer.write(String.format("%.7s", "time"));
+			writer.write("\n");
+			writer.flush();
+		} catch (IOException e) {
+
+		}
 	}
 }
