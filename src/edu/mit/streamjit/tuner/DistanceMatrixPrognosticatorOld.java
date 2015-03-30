@@ -13,10 +13,13 @@ import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
  * previous configuration and decides whether to accept or reject the current
  * configuration.
  * 
+ * [30-03-2015] Renamed to old. This one writes the status in a non tabular
+ * format.
+ * 
  * @author sumanan
  * @since 23 Mar, 2015
  */
-public class DistanceMatrixPrognosticator implements
+public class DistanceMatrixPrognosticatorOld implements
 		ConfigurationPrognosticator {
 
 	FullParameterSummary fullParameterSummary;
@@ -33,11 +36,11 @@ public class DistanceMatrixPrognosticator implements
 	ComparisionSummary prevCurSummary = null;
 	ComparisionSummary bestCurSummary = null;
 
-	public DistanceMatrixPrognosticator(String appName) {
+	public DistanceMatrixPrognosticatorOld(String appName) {
 		this(Utils.fileWriter(appName, "DistanceMatrix.txt"));
 	}
 
-	public DistanceMatrixPrognosticator(OutputStreamWriter osWriter) {
+	public DistanceMatrixPrognosticatorOld(OutputStreamWriter osWriter) {
 		this.writer = osWriter;
 	}
 
