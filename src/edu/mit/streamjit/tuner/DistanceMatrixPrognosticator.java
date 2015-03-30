@@ -107,7 +107,7 @@ public class DistanceMatrixPrognosticator implements
 	}
 
 	private static void writeSummary(OutputStreamWriter osWriter,
-			ComparisionSummary sum, double t1, double t2) {
+			ComparisionSummary sum) {
 		if (sum == null)
 			return;
 		try {
@@ -133,10 +133,6 @@ public class DistanceMatrixPrognosticator implements
 					sum.distance(ParamType.REMOVAL_STRATEGY)));
 			osWriter.write(String.format("%.2f\t\t",
 					sum.distance(ParamType.FUSION_STRATEGY)));
-			osWriter.write(String.format("%.2f\t\t", t1));
-			osWriter.write(String.format("%.2f\t\t", t2));
-			osWriter.write(String.format("%.2f\n", t1 - t2));
-			osWriter.flush();
 		} catch (IOException e) {
 
 		}
@@ -145,11 +141,23 @@ public class DistanceMatrixPrognosticator implements
 	@Override
 	public void time(double time) {
 		curConfigTime = time;
-		// writeSummary(writer, prevCurSummary, prevConfigTime, curConfigTime);
-		writeSummary(writer, bestCurSummary, bestConfigTime, curConfigTime);
+		// writeTime(writer, prevConfigTime, curConfigTime);
+		writeTime(writer, bestConfigTime, curConfigTime);
 		if (time > 0 && bestConfigTime > time) {
 			bestConfig = curConfig;
 			bestConfigTime = time;
+		}
+	}
+
+	private static void writeTime(OutputStreamWriter osWriter, double t1,
+			double t2) {
+		try {
+			osWriter.write(String.format("%.2f\t\t", t1));
+			osWriter.write(String.format("%.2f\t\t", t2));
+			osWriter.write(String.format("%.2f\n", t1 - t2));
+			osWriter.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }
