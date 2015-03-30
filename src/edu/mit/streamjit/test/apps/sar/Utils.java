@@ -1,7 +1,6 @@
 package edu.mit.streamjit.test.apps.sar;
 
 import edu.mit.streamjit.api.Filter;
-import edu.mit.streamjit.test.apps.sar.Sar.Complex;
 
 /**
  * 
@@ -104,6 +103,15 @@ public class Utils {
 					for (int i = 0; i < n; i++)
 						System.out.println((t[i][j].imag));
 			}
+		}
+	}
+
+	public static class Complex {
+		public double real;
+		public double imag;
+		public Complex(double real, double imag) {
+			this.real = real;
+			this.imag = imag;
 		}
 	}
 }

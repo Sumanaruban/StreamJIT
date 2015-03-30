@@ -2,7 +2,7 @@ package edu.mit.streamjit.test.apps.sar;
 
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Pipeline;
-import edu.mit.streamjit.test.apps.sar.Sar.Complex;
+import edu.mit.streamjit.test.apps.sar.Utils.Complex;
 
 /**
  * Ported from StreamIt. Refer
