@@ -1,6 +1,7 @@
 package edu.mit.streamjit.tuner;
 
-import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import com.google.common.collect.ImmutableList;
 
@@ -66,8 +67,10 @@ public interface ConfigurationPrognosticator {
 
 		private final ImmutableList<ConfigurationPrognosticator> configProgs;
 
+		private final OutputStreamWriter writer;
+
 		public ManyPrognosticators(StreamJitApp<?, ?> app) {
-			FileWriter writer = Utils.fileWriter(app.name, "manyProgs.txt");
+			writer = Utils.fileWriter(app.name, "manyProgs.txt");
 			ConfigurationPrognosticator cp1 = new GraphPropertyPrognosticator(
 					app, writer, false);
 			ConfigurationPrognosticator cp2 = new DistanceMatrixPrognosticator(
@@ -84,6 +87,7 @@ public interface ConfigurationPrognosticator {
 				ConfigurationPrognosticator... cps) {
 			ImmutableList.Builder<ConfigurationPrognosticator> builder = ImmutableList
 					.builder();
+			writer = Utils.fileWriter("manyProgs.txt");
 			builder.add(cp1);
 			builder.add(cp2);
 			builder.add(cps);
@@ -103,6 +107,12 @@ public interface ConfigurationPrognosticator {
 		public void time(double time) {
 			for (ConfigurationPrognosticator cp : configProgs) {
 				cp.time(time);
+			}
+			try {
+				writer.write(String.format("%.0f\n", time));
+				writer.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
