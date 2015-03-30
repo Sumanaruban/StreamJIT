@@ -36,8 +36,8 @@ public class ConfigurationAnalyzer {
 			appName = "FMRadioCore";
 		}
 		ConfigurationAnalyzer ca = new ConfigurationAnalyzer(appName);
-		ca.Analyze();
-		ca.Analyze2();
+		ca.compareWtPrev();
+		ca.compareWtCurrentBest();
 	}
 
 	private final String appName;
@@ -131,7 +131,7 @@ public class ConfigurationAnalyzer {
 		return ret;
 	}
 
-	private void Analyze() throws IOException {
+	private void compareWtPrev() throws IOException {
 		SqliteAdapter sqlite = null;
 		if (dbExists)
 			sqlite = connectDB(appName);
@@ -177,7 +177,7 @@ public class ConfigurationAnalyzer {
 		TimeLogProcessor.plot(summaryDir, plotFile);
 	}
 
-	private void Analyze2() throws IOException {
+	private void compareWtCurrentBest() throws IOException {
 		SqliteAdapter sqlite = null;
 		if (dbExists)
 			sqlite = connectDB(appName);
