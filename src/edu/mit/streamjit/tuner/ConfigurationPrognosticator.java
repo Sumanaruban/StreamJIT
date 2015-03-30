@@ -69,7 +69,7 @@ public interface ConfigurationPrognosticator {
 		public ManyPrognosticators(StreamJitApp<?, ?> app) {
 			FileWriter writer = Utils.fileWriter(app.name, "manyProgs.txt");
 			ConfigurationPrognosticator cp1 = new GraphPropertyPrognosticator(
-					app, writer, true);
+					app, writer, false);
 			ConfigurationPrognosticator cp2 = new DistanceMatrixPrognosticator(
 					writer);
 			ImmutableSet.Builder<ConfigurationPrognosticator> builder = ImmutableSet

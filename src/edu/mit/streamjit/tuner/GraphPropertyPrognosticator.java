@@ -34,19 +34,19 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * If many {@link ConfigurationPrognosticator}s are used, only one should
 	 * write the time to the writer.
 	 */
-	private final boolean manyProgs;
+	private final boolean needWriteTime;
 
 	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app) {
-		this(app, Utils.fileWriter(app.name, "GraphProperty.txt"), false);
+		this(app, Utils.fileWriter(app.name, "GraphProperty.txt"), true);
 	}
 
 	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app,
-			OutputStreamWriter osWriter, boolean manyProgs) {
+			OutputStreamWriter osWriter, boolean needWriteTime) {
 		this.app = app;
 		this.writer = osWriter;
-		this.manyProgs = manyProgs;
+		this.needWriteTime = needWriteTime;
 		writeHeader(writer);
-		if (!manyProgs)
+		if (needWriteTime)
 			writeTimeHeader(osWriter);
 		paths = app.paths();
 	}
@@ -217,13 +217,13 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 	@Override
 	public void time(double time) {
-		if (manyProgs)
-			throw new IllegalStateException("manyProgs flag is true");
-		try {
-			writer.write(String.format("%.0f\n", time));
-			writer.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (needWriteTime) {
+			try {
+				writer.write(String.format("%.0f\n", time));
+				writer.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
