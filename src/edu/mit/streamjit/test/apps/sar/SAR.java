@@ -12,20 +12,24 @@ import static edu.mit.streamjit.test.apps.sar.Statics.f0;
 import static edu.mit.streamjit.test.apps.sar.Statics.fc;
 import static edu.mit.streamjit.test.apps.sar.Statics.lambda_min;
 
+import java.io.IOException;
 import java.util.Collections;
 
+import com.google.common.base.Stopwatch;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
 
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.OneToOneElement;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.api.WeightedRoundrobinJoiner;
 import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
 import edu.mit.streamjit.test.Benchmark;
-import edu.mit.streamjit.test.Benchmarker;
 import edu.mit.streamjit.test.SuppliedBenchmark;
 import edu.mit.streamjit.test.apps.sar.GenRawSARStr.GenRawSAR;
 import edu.mit.streamjit.test.apps.sar.Utils.Complex;
@@ -40,10 +44,36 @@ import edu.mit.streamjit.test.apps.sar.Utils.Complex;
  */
 public class SAR {
 
-	public static void main(String[] args) throws InterruptedException {
-		StreamCompiler sc = new Compiler2StreamCompiler();
-		Benchmarker.runBenchmark(new SARBenchmark(), sc).get(0)
-				.print(System.out);
+	public static void main(String[] args) throws InterruptedException,
+			IOException {
+		int noOfNodes;
+		Stopwatch sw = Stopwatch.createStarted();
+		try {
+			noOfNodes = Integer.parseInt(args[0]);
+		} catch (Exception ex) {
+			noOfNodes = 3;
+		}
+
+		int ITEMS = 10_000_000;
+
+		Input in = (Input) Input.fromIterable(Collections.nCopies(ITEMS,
+				(byte) 0));
+
+		// startSNs(noOfNodes);
+		StreamCompiler compiler = new Compiler2StreamCompiler();
+
+		OneToOneElement<Void, Void> streamGraph = new SARKernel();
+		CompiledStream stream = compiler.compile(streamGraph, in,
+				Output.blackHole());
+		stream.awaitDrained();
+
+	}
+
+	private static void startSNs(int noOfNodes) throws IOException {
+		for (int i = 1; i < noOfNodes; i++)
+			new ProcessBuilder("xterm", "-e", "java", "-jar", "StreamNode.jar")
+					.start();
+		// new ProcessBuilder("java", "-jar", "StreamNode.jar").start();
 	}
 
 	@ServiceProvider(Benchmark.class)
@@ -53,11 +83,7 @@ public class SAR {
 		public SARBenchmark() {
 			super("SARKernel", SARKernel.class, new Dataset("" + ITEMS,
 					(Input) Input.fromIterable(Collections.nCopies(ITEMS,
-							(byte) 0))
-			// ,
-			// (Supplier)Suppliers.ofInstance((Input)Input.fromBinaryFile(Paths.get("/home/jbosboom/streamit/streams/apps/benchmarks/asplos06/beamformer/streamit/BeamFormer1.out"),
-			// Float.class, ByteOrder.LITTLE_ENDIAN))
-					));
+							(byte) 0))));
 		}
 	}
 
@@ -443,6 +469,7 @@ public class SAR {
 					if (kx[i][j] > 0) {
 						double value = kx[i][j] * Statics.Xc + ku[j] + 0.25
 								* Math.PI - 2 * k[i] * Statics.Xc;
+						fs0[i][j] = new Complex();
 						fs0[i][j].real = Math.cos(value);
 						fs0[i][j].imag = Math.sin(value);
 					}
