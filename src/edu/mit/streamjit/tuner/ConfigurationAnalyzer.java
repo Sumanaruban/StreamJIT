@@ -255,21 +255,21 @@ public class ConfigurationAnalyzer {
 			osWriter.write(String.format("%.2f\t\t",
 					sum.weightedNormalizedDistance()));
 			osWriter.write(String.format("%.5f\t\t",
-					sum.distance(ParamType.MULTIPLIER)));
+					sum.normalizedDistant(ParamType.MULTIPLIER)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.UNROLL_CORE)));
+					sum.normalizedDistant(ParamType.UNROLL_CORE)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.ALLOCATION_STRATEGY)));
+					sum.normalizedDistant(ParamType.ALLOCATION_STRATEGY)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.INTERNAL_STORAGE_STRATEGY)));
+					sum.normalizedDistant(ParamType.INTERNAL_STORAGE_STRATEGY)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.PARTITION)));
+					sum.normalizedDistant(ParamType.PARTITION)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.UNBOXING_STRATEGY)));
+					sum.normalizedDistant(ParamType.UNBOXING_STRATEGY)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.REMOVAL_STRATEGY)));
+					sum.normalizedDistant(ParamType.REMOVAL_STRATEGY)));
 			osWriter.write(String.format("%.2f\t\t",
-					sum.distance(ParamType.FUSION_STRATEGY)));
+					sum.normalizedDistant(ParamType.FUSION_STRATEGY)));
 			osWriter.write(String.format("%.2f\t\t", sum.t1));
 			osWriter.write(String.format("%.2f\t\t", sum.t2));
 			osWriter.write(String.format("%.2f", sum.t1 - sum.t2));
