@@ -71,7 +71,7 @@ public interface ConfigurationPrognosticator {
 			ConfigurationPrognosticator cp1 = new GraphPropertyPrognosticator(
 					app, writer, false);
 			ConfigurationPrognosticator cp2 = new DistanceMatrixPrognosticator(
-					writer);
+					writer, false);
 			ImmutableSet.Builder<ConfigurationPrognosticator> builder = ImmutableSet
 					.builder();
 			builder.add(cp1);

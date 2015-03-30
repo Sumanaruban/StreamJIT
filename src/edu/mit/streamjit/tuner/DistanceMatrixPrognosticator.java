@@ -34,13 +34,23 @@ public class DistanceMatrixPrognosticator implements
 	ComparisionSummary prevCurSummary = null;
 	ComparisionSummary bestCurSummary = null;
 
+	/**
+	 * If many {@link ConfigurationPrognosticator}s are used, only one should
+	 * write the time to the writer.
+	 */
+	private final boolean needWriteTime;
+
 	public DistanceMatrixPrognosticator(String appName) {
-		this(Utils.fileWriter(appName, "DistanceMatrix.txt"));
+		this(Utils.fileWriter(appName, "DistanceMatrix.txt"), true);
 	}
 
-	public DistanceMatrixPrognosticator(OutputStreamWriter osWriter) {
+	public DistanceMatrixPrognosticator(OutputStreamWriter osWriter,
+			boolean needWriteTime) {
 		this.writer = osWriter;
+		this.needWriteTime = needWriteTime;
 		writeHeader(writer);
+		if (needWriteTime)
+			writeTimeHeader(osWriter);
 	}
 
 	@Override
@@ -142,12 +152,6 @@ public class DistanceMatrixPrognosticator implements
 			writer.write("\t\t");
 			writer.write(String.format("%.7s", "A/R")); // Accepted or Rejected.
 			writer.write("\t\t");
-			writer.write(String.format("%.7s", "t1"));
-			writer.write("\t\t");
-			writer.write(String.format("%.7s", "t2"));
-			writer.write("\t\t");
-			writer.write(String.format("%.7s", "t1-t2"));
-			// writer.write("\t\t");
 			writer.flush();
 		} catch (IOException e) {
 
@@ -189,8 +193,10 @@ public class DistanceMatrixPrognosticator implements
 	@Override
 	public void time(double time) {
 		curConfigTime = time;
-		// writeTime(writer, prevConfigTime, curConfigTime);
-		writeTime(writer, bestConfigTime, curConfigTime);
+		if (needWriteTime) {
+			// writeTime(writer, prevConfigTime, curConfigTime);
+			writeTime(writer, bestConfigTime, curConfigTime);
+		}
 		if (time > 0 && bestConfigTime > time) {
 			bestConfig = curConfig;
 			bestConfigTime = time;
@@ -201,9 +207,20 @@ public class DistanceMatrixPrognosticator implements
 			double t2) {
 		try {
 			osWriter.write(String.format("%.2f\t\t", t1));
-			osWriter.write(String.format("%.2f\t\t", t2));
-			osWriter.write(String.format("%.2f\n", t1 - t2));
+			osWriter.write(String.format("%.2f\n", t2));
 			osWriter.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void writeTimeHeader(OutputStreamWriter writer) {
+		try {
+			writer.write(String.format("%.7s", "t1"));
+			writer.write("\t\t");
+			writer.write(String.format("%.7s", "t2"));
+			writer.write("\n");
+			writer.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
