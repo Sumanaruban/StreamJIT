@@ -2,7 +2,7 @@ package edu.mit.streamjit.tuner;
 
 import java.io.FileWriter;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
@@ -64,7 +64,7 @@ public interface ConfigurationPrognosticator {
 	public static final class ManyPrognosticators implements
 			ConfigurationPrognosticator {
 
-		private final ImmutableSet<ConfigurationPrognosticator> configProgs;
+		private final ImmutableList<ConfigurationPrognosticator> configProgs;
 
 		public ManyPrognosticators(StreamJitApp<?, ?> app) {
 			FileWriter writer = Utils.fileWriter(app.name, "manyProgs.txt");
@@ -72,7 +72,7 @@ public interface ConfigurationPrognosticator {
 					app, writer, false);
 			ConfigurationPrognosticator cp2 = new DistanceMatrixPrognosticator(
 					writer, false);
-			ImmutableSet.Builder<ConfigurationPrognosticator> builder = ImmutableSet
+			ImmutableList.Builder<ConfigurationPrognosticator> builder = ImmutableList
 					.builder();
 			builder.add(cp1);
 			builder.add(cp2);
@@ -82,7 +82,7 @@ public interface ConfigurationPrognosticator {
 		public ManyPrognosticators(ConfigurationPrognosticator cp1,
 				ConfigurationPrognosticator cp2,
 				ConfigurationPrognosticator... cps) {
-			ImmutableSet.Builder<ConfigurationPrognosticator> builder = ImmutableSet
+			ImmutableList.Builder<ConfigurationPrognosticator> builder = ImmutableList
 					.builder();
 			builder.add(cp1);
 			builder.add(cp2);
