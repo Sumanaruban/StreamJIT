@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.ParamType;
@@ -61,7 +62,54 @@ public class DistanceMatrixPrognosticator implements
 		// fullParameterSummary);
 		bestCurSummary = ComparisionSummary.compare(bestConfig, curConfig,
 				fullParameterSummary);
-		return true;
+		writeSummary(writer, bestCurSummary);
+		return decide(bestCurSummary);
+	}
+
+	private boolean decide(ComparisionSummary sum) {
+		StringBuilder s = new StringBuilder();
+		boolean accept = true;
+
+		if (sum.normalizedDistant(ParamType.MULTIPLIER) > 0.4) {
+			s.append("1");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.UNROLL_CORE) > 0.4) {
+			s.append("2");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.ALLOCATION_STRATEGY) > 0.4) {
+			s.append("3");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.INTERNAL_STORAGE_STRATEGY) > 0.4) {
+			s.append("4");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.PARTITION) > 0.4) {
+			s.append("5");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.UNBOXING_STRATEGY) > 0.4) {
+			s.append("6");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.REMOVAL_STRATEGY) > 0.4) {
+			s.append("7");
+			accept = false;
+		}
+		if (sum.normalizedDistant(ParamType.FUSION_STRATEGY) > 0.4) {
+			s.append("8");
+			accept = false;
+		}
+
+		try {
+			writer.write(String.format("%s\t\t",
+					accept ? "Acptd" : s.toString()));
+		} catch (IOException e) {
+
+		}
+		return !Options.prognosticate || accept;
 	}
 
 	private static void writeHeader(OutputStreamWriter writer) {
