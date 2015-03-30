@@ -1,17 +1,33 @@
 package edu.mit.streamjit.test.apps.sar;
 
+import static edu.mit.streamjit.test.apps.sar.Statics.L;
+import static edu.mit.streamjit.test.apps.sar.Statics.Rmax;
+import static edu.mit.streamjit.test.apps.sar.Statics.Rmin;
+import static edu.mit.streamjit.test.apps.sar.Statics.Tp;
+import static edu.mit.streamjit.test.apps.sar.Statics.X0;
+import static edu.mit.streamjit.test.apps.sar.Statics.Xc;
+import static edu.mit.streamjit.test.apps.sar.Statics.Y0;
+import static edu.mit.streamjit.test.apps.sar.Statics.c;
+import static edu.mit.streamjit.test.apps.sar.Statics.f0;
+import static edu.mit.streamjit.test.apps.sar.Statics.fc;
+import static edu.mit.streamjit.test.apps.sar.Statics.lambda_min;
+
 import java.util.Collections;
 
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
 
+import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
 import edu.mit.streamjit.api.Pipeline;
+import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
+import edu.mit.streamjit.api.WeightedRoundrobinJoiner;
 import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Benchmarker;
 import edu.mit.streamjit.test.SuppliedBenchmark;
+import edu.mit.streamjit.test.apps.sar.GenRawSARStr.GenRawSAR;
 import edu.mit.streamjit.test.apps.sar.Utils.Complex;
 
 /**
@@ -55,7 +71,146 @@ public class SAR {
 	// This function digitally reconstructs the SAR image using spatial
 	// frequency interpolation (see noted text, Section 4.5).
 	public static final class SARKernel extends Pipeline<Void, Void> {
+		public SARKernel() {
+			// genRawSAR.m
+			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			// %% u domain parameters and arrays for compressed SAR signal %%
+			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+			double duc = ((Xc * lambda_min) / (4 * Y0)) / 1.2;
+
+			/* number of samples on aperture */
+			int mc = 2 * (int) Math.ceil(L / duc);
+
+			double dku = Math.PI * 2 / ((double) mc * duc);
+
+			/* synthetic aperture array */
+			double[] uc = new double[mc];
+			double[] kuc = new double[mc];
+
+			for (int i = 0; i < mc; i++) {
+				uc[i] = duc * (((double) i) - ((double) mc) / 2.0);
+				kuc[i] = dku * (((double) i) - ((double) mc) / 2.0);
+			}
+
+			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			// %% u domain parameters and arrays for SAR signal %%
+			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+			double theta_min = Math.atan((0 - Y0 - L) / (Xc - X0));
+			double theta_max = Math.atan((Y0 + L) / (Xc - X0));
+
+			double du = lambda_min
+					/ (1.4 * 2 * (Math.sin(theta_max) - Math.sin(theta_min)));
+
+			/* number of samples on aperture */
+			int m = 2 * (int) Math.ceil(Math.PI / (du * dku));
+			du = Math.PI * 2 / (m * dku);
+
+			/* synthetic aperture array */
+			double[] u = new double[m];
+			double[] ku = new double[m];
+
+			for (int i = 0; i < m; i++) {
+				u[i] = du * (((float) i) - ((float) m) / 2.0);
+				ku[i] = dku * (((float) i) - ((float) m) / 2.0);
+			}
+
+			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+			// %% Fast-time domain parmeters and arrays %%
+			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+			double Ts = (2 / c) * Rmin;
+			double Tf = (2 / c) * Rmax + Tp;
+			double T = Tf - Ts;
+			Ts = Ts - 0.1 * T;
+			Tf = Tf + 0.1 * T;
+			T = Tf - Ts;
+			double Tmin = Math.max(T, (4 * X0) / (c * Math.cos(theta_max)));
+			double dt = 1 / (4 * f0);
+
+			/* number of time samples */
+			int n = 2 * (int) Math.ceil((0.5 * Tmin) / dt);
+
+			/* Wavenumber array */
+			double[] t = new double[n];
+			double[] k = new double[n];
+
+			for (int i = 0; i < n; i++) {
+				t[i] = Ts + i * dt;
+				k[i] = (Math.PI * 2 / c)
+						* (fc + 4 * f0 * (((float) i) - ((float) n) / 2.0) / n);
+			}
+
+			// NOTE: mock filter to ger around compiler limitation w.r.t. null
+			// splitters
+			Filter<Void, Integer> filter1 = new Filter<Void, Integer>(0, 1) {
+				@Override
+				public void work() {
+					push(1);
+				}
+			};
+			add(filter1);
+
+			Splitjoin<Integer, Complex> splitJoin1 = new Splitjoin<>(
+					new DuplicateSplitter<Integer>(),
+					new WeightedRoundrobinJoiner<Complex>(1, mc));
+			splitJoin1.add(new GenRawSARStr.FastTimeFilter(n, t));
+			splitJoin1.add(new Pipeline<>(new GenRawSAR(Tf, n, m, mc, t, k, ku,
+					uc), new FFT.FTX2D(n, mc)));
+
+			add(splitJoin1);
+
+			Filter<Complex, Complex> filter2 = new Filter<Utils.Complex, Utils.Complex>(
+					n + n * mc, n * mc) {
+				@Override
+				public void work() {
+					for (int i = 0; i < n; i++) {
+						Complex ftf = pop();
+						for (int j = 0; j < mc; j++) {
+							Complex s = pop();
+							Complex out = new Complex();
+
+							out.real = s.real * ftf.real - s.imag * ftf.imag;
+							out.imag = s.imag * ftf.real + s.real * ftf.imag;
+
+							push(out);
+						}
+					}
+				}
+			};
+			add(filter2);
+			// Digital Spotlighting and Bandwidth Expansion in ku Domain
+			// via Slow-time Compression and Decompression
+
+			// // Compression
+			add(new Compression(n, mc, k, uc));
+
+			// // Narrow-bandwidth Polar Format Processed reconstruction
+			add(new FFT.FTY2D(n, mc));
+
+			// // Zero-padding in ku domain for slow-time upsampling
+			add(new ZeroPadding(n, m, mc));
+
+			// // Transform to (omega,u) domain
+			add(new FFT.iFTY2D(n, m));
+
+			// // Decompression
+			add(new Decompression(n, m, k, u));
+
+			// // Digitally-spotlighted SAR signal spectrum
+			add(new FFT.FTY2D(n, m));
+
+			// SAR RECONSTRUCTION (multiple stages)
+			// - 2D Fourier Matched Filtering and Interpolation
+			// - Inverse 2D FFT for spatial domain image
+			add(new Reconstruction(n, m, k, ku));
+
+			// NOTE: to compate to MATLAB output, transpose again
+			// add floatTranspose(266, m);
+			add(new FloatPrinter());
+
+		}
 	}
 
 	public static final class FloatPrinter extends Filter<Double, Void> {
