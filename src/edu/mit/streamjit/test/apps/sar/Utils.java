@@ -33,9 +33,9 @@ public class Utils {
 	}
 
 	// output is absoluate value of complex input
-	public static final class complexAbsoluate extends Filter<Complex, Double> {
+	public static final class ComplexAbsoluate extends Filter<Complex, Double> {
 
-		public complexAbsoluate() {
+		public ComplexAbsoluate() {
 			super(1, 1);
 		}
 
@@ -48,11 +48,11 @@ public class Utils {
 	}
 
 	// transpose matrix of floating point value
-	public static final class floatTranspose extends Filter<Double, Double> {
+	public static final class FloatTranspose extends Filter<Double, Double> {
 		private final int rows;
 		private final int cols;
 
-		public floatTranspose(int rows, int cols) {
+		public FloatTranspose(int rows, int cols) {
 			super(rows * cols, rows * cols);
 			this.rows = rows;
 			this.cols = cols;
