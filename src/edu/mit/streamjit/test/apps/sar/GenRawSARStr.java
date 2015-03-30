@@ -147,7 +147,7 @@ public class GenRawSARStr {
 		@Override
 		public void work() {
 			double[][] td = new double[n][mc];
-			Complex[][] S = new Complex[n][mc];
+			Complex[][] S = Utils.initializedComplexArray(n, mc);
 			pop();
 
 			for (int h = 0; h < ntarget; h++) {
@@ -214,8 +214,8 @@ public class GenRawSARStr {
 			@Override
 			public void work() {
 				double[] td0 = new double[n];
-				Complex[] s0 = new Complex[n];
-				Complex[] ftf = new Complex[n];
+				Complex[] s0 = Utils.initializedComplexArray(n);
+				Complex[] ftf = Utils.initializedComplexArray(n);
 				pop();
 				for (int i = 0; i < n; i++) {
 					td0[i] = t[i] - 2 * Statics.Xc / Statics.c;

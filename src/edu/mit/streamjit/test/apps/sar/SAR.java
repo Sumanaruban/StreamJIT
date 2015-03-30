@@ -450,7 +450,7 @@ public class SAR {
 			this.k = k;
 			this.ku = ku;
 			this.kx = new double[n][m];
-			this.fs0 = new Complex[n][m];
+			this.fs0 = Utils.initializedComplexArray(n, m);
 
 			for (int i = 0; i < n; i++) {
 				for (int j = 0; j < m; j++) {
@@ -564,7 +564,7 @@ public class SAR {
 
 		@Override
 		public void work() {
-			Complex[][] F = new Complex[nx][m];
+			Complex[][] F = Utils.initializedComplexArray(nx, m);
 			int[][] ikx = new int[I][m];
 			double[][] SINC = new double[I][m];
 			double[][] HAM = new double[I][m];

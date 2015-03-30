@@ -81,7 +81,7 @@ public class Utils {
 
 		@Override
 		public void work() {
-			Complex[][] t = new Complex[n][m];
+			Complex[][] t = initializedComplexArray(n, m);
 			for (int i = 0; i < n; i++) {
 				for (int j = 0; j < m; j++) {
 					t[i][j] = pop();
@@ -117,5 +117,20 @@ public class Utils {
 		public Complex() {
 			this(0, 0);
 		}
+	}
+
+	public static Complex[][] initializedComplexArray(int rows, int cols) {
+		Complex[][] C = new Complex[rows][cols];
+		for (int i = 0; i < rows; i++)
+			for (int j = 0; j < cols; j++)
+				C[i][j] = new Complex();
+		return C;
+	}
+
+	public static Complex[] initializedComplexArray(int rows) {
+		Complex[] C = new Complex[rows];
+		for (int i = 0; i < rows; i++)
+			C[i] = new Complex();
+		return C;
 	}
 }

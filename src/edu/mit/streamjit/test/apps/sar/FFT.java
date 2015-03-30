@@ -143,7 +143,7 @@ public class FFT {
 		@Override
 		public void work() {
 
-			Complex[][] temp = new Complex[rows][cols];
+			Complex[][] temp = Utils.initializedComplexArray(rows, cols);
 			int r = rows_mid;
 			int c = cols_mid;
 
@@ -191,8 +191,7 @@ public class FFT {
 
 		@Override
 		public void work() {
-
-			Complex[] temp = new Complex[rows];
+			Complex[] temp = Utils.initializedComplexArray(rows);
 
 			for (int i = 0; i < rows; i++) {
 				float real = 0;
@@ -241,7 +240,7 @@ public class FFT {
 		@Override
 		public void work() {
 
-			Complex[][] temp = new Complex[rows][cols];
+			Complex[][] temp = Utils.initializedComplexArray(rows, cols);
 
 			for (int i = 0; i < cols; i++) {
 				for (int j = 0; j < rows; j++) {
@@ -297,7 +296,7 @@ public class FFT {
 		@Override
 		public void work() {
 
-			Complex[][] temp = new Complex[rows][cols];
+			Complex[][] temp = Utils.initializedComplexArray(rows, cols);
 
 			for (int i = 0; i < cols; i++) {
 				for (int j = 0; j < rows; j++) {
