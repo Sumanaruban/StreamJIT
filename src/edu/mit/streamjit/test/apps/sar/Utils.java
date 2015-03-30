@@ -113,5 +113,9 @@ public class Utils {
 			this.real = real;
 			this.imag = imag;
 		}
+
+		public Complex() {
+			this(0, 0);
+		}
 	}
 }
