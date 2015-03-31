@@ -293,7 +293,11 @@ public class StreamJitAppManager {
 
 		sendDeadlockfreeBufSizes();
 
-		boolean isCompiled = apStsPro.waitForCompilation();
+		boolean isCompiled;
+		if (apStsPro.compilationError)
+			isCompiled = false;
+		else
+			isCompiled = apStsPro.waitForCompilation();
 		app.eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
 
@@ -318,11 +322,13 @@ public class StreamJitAppManager {
 
 	private void sendDeadlockfreeBufSizes() {
 		ciP.waitforBufSizes();
-		ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-				.finalInputBufSizes(ciP.bufSizes, app);
-		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
-				finalInputBuf);
-		controller.sendToAll(me);
+		if (!apStsPro.compilationError) {
+			ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
+					.finalInputBufSizes(ciP.bufSizes, app);
+			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
+					finalInputBuf);
+			controller.sendToAll(me);
+		}
 	}
 
 	public void setDrainer(AbstractDrainer drainer) {
@@ -626,9 +632,8 @@ public class StreamJitAppManager {
 	 * @author sumanan
 	 * 
 	 */
-	private class CompilationInfoProcessorImpl
-			implements
-				CompilationInfoProcessor {
+	private class CompilationInfoProcessorImpl implements
+			CompilationInfoProcessor {
 
 		private Map<Integer, BufferSizes> bufSizes;
 
