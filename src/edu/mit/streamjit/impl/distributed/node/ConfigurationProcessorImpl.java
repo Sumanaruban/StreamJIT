@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.api.OneToOneElement;
@@ -34,12 +35,14 @@ import edu.mit.streamjit.impl.common.Configuration.PartitionParameter;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter.BlobSpecifier;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.NetworkInfo;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.CompilationTime;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.util.json.Jsonifiers;
@@ -106,6 +109,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			try {
 				streamNode.controllerConnection
 						.writeObject(AppStatus.COMPILATION_ERROR);
+				sendEmptyBuffersizes();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -113,7 +117,6 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			System.out.println("Couldn't get the blobset....");
 		}
 	}
-
 	private ImmutableSet<Blob> getBlobs(Configuration dyncfg,
 			DrainData drainData) {
 
@@ -335,6 +338,30 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 		System.out.println("All blobs have been created");
 		return blobSet.build();
+	}
+
+	/**
+	 * Send empty buffer sizes if compilation error occurred. If we didn't send
+	 * this, Controller would be waiting forever at
+	 * CompilationInfoProcessorImpl.waitforBufSizes().
+	 */
+	private void sendEmptyBuffersizes() {
+		ImmutableMap.Builder<Token, Integer> minInitInputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minInitOutputBufCapaciyBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minSteadyInputBufCapacityBuilder = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> minSteadyOutputBufCapacityBuilder = new ImmutableMap.Builder<>();
+
+		SNMessageElement bufSizes = new CompilationInfo.BufferSizes(
+				streamNode.getNodeID(), minInitInputBufCapaciyBuilder.build(),
+				minInitOutputBufCapaciyBuilder.build(),
+				minSteadyInputBufCapacityBuilder.build(),
+				minSteadyOutputBufCapacityBuilder.build());
+
+		try {
+			streamNode.controllerConnection.writeObject(bufSizes);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private class MakeBlob implements Callable<Blob> {
