@@ -1,5 +1,7 @@
 package edu.mit.streamjit.test.apps.sar;
 
+import java.io.Serializable;
+
 import edu.mit.streamjit.api.Filter;
 
 /**
@@ -106,7 +108,8 @@ public class Utils {
 		}
 	}
 
-	public static class Complex {
+	public static class Complex implements Serializable {
+		private static final long serialVersionUID = 1L;
 		public double real;
 		public double imag;
 		public Complex(double real, double imag) {
