@@ -190,8 +190,6 @@ public class GenRawSARStr {
 	}
 
 	public static final class FastTimeFilter extends Pipeline<Integer, Complex> {
-		private final int n;
-		private final double[] t;
 
 		public FastTimeFilter(int n, double[] t) {
 			if (t.length != n)
@@ -199,16 +197,18 @@ public class GenRawSARStr {
 						String.format(
 								"Array t's length must be equal to n. t.length=%d, n=%d\n",
 								t.length, n));
-			this.n = n;
-			this.t = t;
-			add(new Filter1());
+			add(new Filter1(n, t));
 			add(new FFT.FTX1D(n));
 			add(new Utils.Conjugate(n));
 		}
 
-		class Filter1 extends Filter<Integer, Complex> {
-			public Filter1() {
+		static class Filter1 extends Filter<Integer, Complex> {
+			private final int n;
+			private final double[] t;
+			public Filter1(int n, double[] t) {
 				super(1, n);
+				this.n = n;
+				this.t = t;
 			}
 
 			@Override
