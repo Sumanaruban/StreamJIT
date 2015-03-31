@@ -212,6 +212,10 @@ public interface Visualizer {
 					String second = suc.getClass().getSimpleName();
 					int id = Workers.getIdentifier(w);
 					int sucID = Workers.getIdentifier(suc);
+					if (first.equals(""))
+						first = "Anonymous";
+					if (second.equals(""))
+						second = "Anonymous";
 					try {
 						writer.write(String.format("\t%d -> %d;\n", id, sucID));
 						first = first + "_" + id;
