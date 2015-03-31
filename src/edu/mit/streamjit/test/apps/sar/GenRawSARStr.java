@@ -6,7 +6,7 @@ import edu.mit.streamjit.test.apps.sar.Utils.Complex;
 
 public class GenRawSARStr {
 
-	public static final class GenRawSAR extends Filter<Complex, Complex> {
+	public static final class GenRawSAR extends Filter<Integer, Complex> {
 
 		private final double Tf;
 		private final int n;
