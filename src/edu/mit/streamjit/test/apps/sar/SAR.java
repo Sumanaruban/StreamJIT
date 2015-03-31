@@ -62,7 +62,7 @@ public class SAR {
 		// startSNs(noOfNodes);
 		StreamCompiler compiler = new Compiler2StreamCompiler();
 
-		OneToOneElement<Void, Void> streamGraph = new SARKernel();
+		OneToOneElement<Void, Double> streamGraph = new SARKernel();
 		CompiledStream stream = compiler.compile(streamGraph, in,
 				Output.blackHole());
 		stream.awaitDrained();
@@ -96,7 +96,7 @@ public class SAR {
 	//
 	// This function digitally reconstructs the SAR image using spatial
 	// frequency interpolation (see noted text, Section 4.5).
-	public static final class SARKernel extends Pipeline<Void, Void> {
+	public static final class SARKernel extends Pipeline<Void, Double> {
 		public SARKernel() {
 			// genRawSAR.m
 			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -234,7 +234,7 @@ public class SAR {
 
 			// NOTE: to compate to MATLAB output, transpose again
 			// add floatTranspose(266, m);
-			add(new FloatPrinter());
+			// add(new FloatPrinter());
 
 		}
 	}
@@ -404,7 +404,7 @@ public class SAR {
 		}
 	}
 
-	public static final class Reconstruction extends Pipeline<Complex, Float> {
+	public static final class Reconstruction extends Pipeline<Complex, Double> {
 
 		public Reconstruction(int n, int m, double[] k, double[] ku) {
 			add(new MatchedFiltering(n, m, k, ku));
