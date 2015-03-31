@@ -106,10 +106,20 @@ public interface Visualizer {
 		 */
 		private class DOTstreamVisitor extends StreamVisitor {
 
+			/**
+			 * Generates the stream graph with worker's ids (compact graph).
+			 */
 			private final FileWriter writer;
+
+			/**
+			 * Generates the stream graph with worker's descriptive names.
+			 */
+			private final FileWriter writer2;
 
 			DOTstreamVisitor() {
 				writer = Utils.fileWriter(appName, "streamgraph.dot");
+				writer2 = Utils.fileWriter(appName, "streamgraphWtNames.dot");
+
 			}
 
 			private void initilizeDot() {
@@ -119,6 +129,10 @@ public interface Visualizer {
 					writer.write("\tnodesep=0.5;\n");
 					writer.write("\tranksep=equally;\n");
 					// writer.write("\tnode [shape = circle];\n");
+					writer2.write(String.format("digraph %s {\n", appName));
+					writer2.write("\trankdir=TD;\n");
+					writer2.write("\tnodesep=0.5;\n");
+					writer2.write("\tranksep=equally;\n");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -129,6 +143,9 @@ public interface Visualizer {
 					writer.write("}");
 					writer.flush();
 					writer.close();
+					writer2.write("}");
+					writer2.flush();
+					writer2.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -186,6 +203,7 @@ public interface Visualizer {
 			public void endVisit() {
 				closeDot();
 				runDot("streamgraph");
+				runDot("streamgraphWtNames");
 			}
 
 			private void updateDot(Worker<?, ?> w) {
@@ -196,8 +214,10 @@ public interface Visualizer {
 					int sucID = Workers.getIdentifier(suc);
 					try {
 						writer.write(String.format("\t%d -> %d;\n", id, sucID));
-						// writer.write(String.format("\t%s -> %s;\n", first,
-						// second));
+						first = first + "_" + id;
+						second = second + "_" + sucID;
+						writer2.write(String.format("\t%s -> %s;\n", first,
+								second));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
