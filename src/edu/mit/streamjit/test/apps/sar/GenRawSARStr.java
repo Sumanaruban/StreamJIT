@@ -87,6 +87,7 @@ public class GenRawSARStr {
 			this.xn = new double[48];
 			this.yn = new double[48];
 			this.fn = new double[48];
+			init();
 		}
 
 		private void init() {
