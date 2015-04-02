@@ -240,7 +240,7 @@ public class TimeLogProcessor {
 		File plotfile = new File(dir, "totalStats.plt");
 		FileWriter writer = new FileWriter(plotfile, false);
 		if (pdf) {
-			writer.write("set terminal pdf enhanced color\n");
+			writer.write("set terminal pdfcairo enhanced color\n");
 			writer.write(String.format("set output \"%s.pdf\"\n", title));
 		} else {
 			writer.write("set terminal postscript eps enhanced color\n");
@@ -249,24 +249,34 @@ public class TimeLogProcessor {
 		writer.write("set ylabel \"Time(ms)\"\n");
 		writer.write("set xlabel \"Tuning Rounds\"\n");
 		writer.write(String.format("set title \"%s\"\n", title));
-		writer.write("set grid\n");
+
+		writer.write("set tic scale 0\n");
+		writer.write("set grid ytics lc rgb \"#C0C0C0\"\n");
+		writer.write("set nokey\n");
+		writer.write("unset border\n");
+
 		writer.write("#set yrange [0:*]\n");
-		writer.write(String
-				.format("plot \"%s\" using 1:6 with linespoints title \"Current best running time\"\n",
-						ptotalFile));
-		writer.write(String.format(
-				"plot \"%s\" using 1:4 with linespoints title \"Run time\"\n",
+
+		writer.write("set title \"Current best running time\"\n");
+		writer.write(String.format("plot \"%s\" using 1:6 with linespoints\n",
 				ptotalFile));
-		writer.write(String
-				.format("plot \"%s\" using 1:3 with linespoints title \"Compile time\"\n",
-						ptotalFile));
-		writer.write(String
-				.format("plot \"%s\" using 1:5 with linespoints title \"Drain time\"\n",
-						ptotalFile));
+
+		writer.write("set title \"Run time\"\n");
+		writer.write(String.format("plot \"%s\" using 1:4 with linespoints\n",
+				ptotalFile));
+
+		writer.write("set title \"Compile time\"\n");
+		writer.write(String.format("plot \"%s\" using 1:3 with linespoints\n",
+				ptotalFile));
+
+		writer.write("set title \"Drain time\"\n");
+		writer.write(String.format("plot \"%s\" using 1:5 with linespoints\n",
+				ptotalFile));
+
+		writer.write("set title \"Tuning Round time\"\n");
 		writer.write("set ylabel \"Time(s)\"\n");
-		writer.write(String
-				.format("plot \"%s\" using 1:2 with linespoints title \"Tuning Round time\"\n",
-						ptotalFile));
+		writer.write(String.format("plot \"%s\" using 1:2 with linespoints\n",
+				ptotalFile));
 		writer.close();
 		return plotfile;
 	}
@@ -283,7 +293,7 @@ public class TimeLogProcessor {
 		File plotfile = new File(dir, "processed.plt");
 		FileWriter writer = new FileWriter(plotfile, false);
 		if (pdf) {
-			writer.write("set terminal pdf enhanced color\n");
+			writer.write("set terminal pdfcairo enhanced color\n");
 			writer.write(String.format("set output \"%sP.pdf\"\n", title));
 		} else {
 			writer.write("set terminal postscript eps enhanced color\n");
@@ -292,20 +302,35 @@ public class TimeLogProcessor {
 		writer.write("set ylabel \"Time(ms)\"\n");
 		writer.write("set xlabel \"Tuning Rounds\"\n");
 		writer.write(String.format("set title \"%s\"\n", title));
-		writer.write("set grid\n");
+
+		writer.write("set tic scale 0\n");
+		writer.write("set grid ytics lc rgb \"#C0C0C0\"\n");
+		writer.write("set nokey\n");
+		writer.write("unset border\n");
+
 		writer.write("#set yrange [0:*]\n");
+
+		writer.write("set title \"Current best running time\"\n");
 		writer.write(String
 				.format("plot \"%s\" using 1:4 with linespoints title \"Current best running time\"\n",
 						pRunTimeFile));
+
+		writer.write("set title \"Run time\"\n");
 		writer.write(String.format(
 				"plot \"%s\" using 1:3 with linespoints title \"Run time\"\n",
 				pRunTimeFile));
+
+		writer.write("set title \"Compile time\"\n");
 		writer.write(String
 				.format("plot \"%s\" using 1:3 with linespoints title \"Compile time\"\n",
 						pCompTimeFile));
+
+		writer.write("set title \"Drain time\"\n");
 		writer.write(String
 				.format("plot \"%s\" using 1:3 with linespoints title \"Drain time\"\n",
 						pDrainTimeFile));
+
+		writer.write("set title \"Tuning Round time\"\n");
 		writer.write("set ylabel \"Time(s)\"\n");
 		writer.write(String
 				.format("plot \"%s\" using 1:3 with linespoints title \"Tuning Round time\"\n",
