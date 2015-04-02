@@ -523,24 +523,7 @@ public class TimeLogProcessor {
 	}
 
 	private static String getBenchmarkName(String appName) {
-		Properties prop = new Properties();
-		InputStream input = null;
-		try {
-			String readmePath;
-			String tuneDirPath = String.format("%s%stune", appName,
-					File.separator);
-			File tuneDir = new File(tuneDirPath);
-			if (tuneDir.exists())
-				readmePath = String.format("%s%sREADME.txt", tuneDirPath,
-						File.separator);
-			else
-				readmePath = String.format("%s%sREADME.txt", appName,
-						File.separator);
-			input = new FileInputStream(readmePath);
-			prop.load(input);
-		} catch (IOException ex) {
-			System.err.println("Failed to load README.txt");
-		}
+		Properties prop = getProperties(appName);
 		return prop.getProperty("benchmarkName");
 	}
 
@@ -575,5 +558,27 @@ public class TimeLogProcessor {
 				dataFile));
 		writer.close();
 		return plotfile;
+	}
+
+	private static Properties getProperties(String appName) {
+		Properties prop = new Properties();
+		InputStream input = null;
+		try {
+			String readmePath;
+			String tuneDirPath = String.format("%s%stune", appName,
+					File.separator);
+			File tuneDir = new File(tuneDirPath);
+			if (tuneDir.exists())
+				readmePath = String.format("%s%sREADME.txt", tuneDirPath,
+						File.separator);
+			else
+				readmePath = String.format("%s%sREADME.txt", appName,
+						File.separator);
+			input = new FileInputStream(readmePath);
+			prop.load(input);
+		} catch (IOException ex) {
+			System.err.println("Failed to load README.txt");
+		}
+		return prop;
 	}
 }
