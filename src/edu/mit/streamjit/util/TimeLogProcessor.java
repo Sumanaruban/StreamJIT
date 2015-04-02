@@ -203,6 +203,7 @@ public class TimeLogProcessor {
 		FileWriter verify = new FileWriter(String.format("%s%sverify.txt",
 				appName, File.separator), true);
 		int min = Integer.MAX_VALUE;
+		String bestCfgs = "";
 		writer.write("cfg\tTRTime\tcomp\trun\tdrain\tmin\n");
 		for (int i = 1; i <= tuningRoundTime.size(); i++) {
 			String key = new Integer(i).toString();
@@ -213,6 +214,8 @@ public class TimeLogProcessor {
 				continue;
 			} else if (time < min) {
 				verify.write(String.format("%s=%d\n", key, time));
+				// bestCfgs += key + ",";
+				bestCfgs = key;
 				min = time;
 			}
 
@@ -228,6 +231,7 @@ public class TimeLogProcessor {
 		plot(summaryDir, f);
 		f = createProcessedPlotFile(summaryDir, appName);
 		plot(summaryDir, f);
+		writeSummary(summaryDir, appName, min, bestCfgs, tuningRoundTime.size());
 	}
 
 	/**
@@ -580,5 +584,33 @@ public class TimeLogProcessor {
 			System.err.println("Failed to load README.txt");
 		}
 		return prop;
+	}
+
+	private static void writeSummary(File summaryDir, String appName,
+			Integer bestTime, String bestCfgs, Integer totalRounds)
+			throws IOException {
+		File totalSummary = new File(summaryDir, "summary.txt");
+		FileWriter summaryWriter = new FileWriter(totalSummary, false);
+		Properties prop = getProperties(appName);
+
+		double throughput = (double) Options.outputCount / bestTime;
+
+		summaryWriter.write(String.format("%s\t",
+				prop.getProperty("benchmarkName")));
+
+		summaryWriter.write(String.format("%d\t", Options.outputCount));
+
+		summaryWriter.write(String.format("%s\t",
+				prop.getProperty("TotalRunningTime")));
+
+		summaryWriter.write(String.format("%d\t", totalRounds));
+
+		summaryWriter.write("Lanka\t");
+
+		summaryWriter.write(String.format("%d\t", bestTime));
+		summaryWriter.write(String.format("%.5f\t", throughput));
+
+		summaryWriter.write(String.format("%s\n", bestCfgs));
+		summaryWriter.close();
 	}
 }
