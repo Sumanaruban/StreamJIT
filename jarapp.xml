@@ -166,18 +166,18 @@ fi
 mkdir -p $app
 cd $app
 mkdir -p $mainClass
+db=""
+jar=""
 if [ "$all" = "all" ];then
-	echo "Going to download all files, best configurations and tuning DB..."
-	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot,$mainClass,*.jar\} $mainClass/
-	cfgList
-	cd $mainClass
-	mkdir -p configurations
-	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/configurations/\{$kk\} configurations/
-	cd ..
-else
-	echo "Going to download essential files only..."
-	scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot\} $mainClass/
+	db=,$mainClass
+	jar=,*.jar
 fi
+scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot$db\} $mainClass/
+cfgList
+cd $mainClass
+mkdir -p configurations
+scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/configurations/\{_streamgraphWtNames.svg,$kk\} configurations/
+cd ..
 scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/\{*.sh,slurm-*,options.properties\} .
 #to download everything.
 #rsync -avh --progress ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app .
