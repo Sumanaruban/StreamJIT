@@ -56,13 +56,12 @@ public class SAR {
 
 		int ITEMS = 10_000_000;
 
-		Input in = (Input) Input.fromIterable(Collections.nCopies(ITEMS,
-				(byte) 0));
+		Input in = (Input) Input.fromIterable(Collections.nCopies(ITEMS, 0));
 
 		// startSNs(noOfNodes);
 		StreamCompiler compiler = new Compiler2StreamCompiler();
 
-		OneToOneElement<Void, Double> streamGraph = new SARKernel();
+		OneToOneElement<Integer, Double> streamGraph = new SARKernel();
 		CompiledStream stream = compiler.compile(streamGraph, in,
 				Output.blackHole());
 		stream.awaitDrained();
@@ -82,8 +81,7 @@ public class SAR {
 		private static final int ITEMS = 10_000_000;
 		public SARBenchmark() {
 			super("SARKernel", SARKernel.class, new Dataset("" + ITEMS,
-					(Input) Input.fromIterable(Collections.nCopies(ITEMS,
-							(byte) 0))));
+					(Input) Input.fromIterable(Collections.nCopies(ITEMS, 0))));
 		}
 	}
 
@@ -96,7 +94,7 @@ public class SAR {
 	//
 	// This function digitally reconstructs the SAR image using spatial
 	// frequency interpolation (see noted text, Section 4.5).
-	public static final class SARKernel extends Pipeline<Void, Double> {
+	public static final class SARKernel extends Pipeline<Integer, Double> {
 		public SARKernel() {
 			// genRawSAR.m
 			// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -168,15 +166,16 @@ public class SAR {
 						* (fc + 4 * f0 * (((float) i) - ((float) n) / 2.0) / n);
 			}
 
-			// NOTE: mock filter to ger around compiler limitation w.r.t. null
-			// splitters
-			Filter<Void, Integer> filter1 = new Filter<Void, Integer>(0, 1) {
-				@Override
-				public void work() {
-					push(1);
-				}
-			};
-			add(filter1);
+			// // NOTE: mock filter to ger around compiler limitation w.r.t.
+			// null
+			// // splitters
+			// Filter<Void, Integer> filter1 = new Filter<Void, Integer>(0, 1) {
+			// @Override
+			// public void work() {
+			// push(1);
+			// }
+			// };
+			// add(filter1);
 
 			Splitjoin<Integer, Complex> splitJoin1 = new Splitjoin<>(
 					new DuplicateSplitter<Integer>(),
