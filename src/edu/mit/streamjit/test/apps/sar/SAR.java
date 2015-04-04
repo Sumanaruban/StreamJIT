@@ -235,6 +235,7 @@ public class SAR {
 			// NOTE: to compate to MATLAB output, transpose again
 			// add(new FFT.Transpose(266, m));
 			// add(new FloatPrinter());
+			// add(new Printer());
 
 		}
 	}
@@ -248,6 +249,20 @@ public class SAR {
 		@Override
 		public void work() {
 			System.out.println(pop());
+		}
+	}
+
+	public static final class Printer extends Filter<Double, Double> {
+
+		public Printer() {
+			super(1, 1);
+		}
+
+		@Override
+		public void work() {
+			double d = pop();
+			System.out.println(d);
+			push(d);
 		}
 	}
 
