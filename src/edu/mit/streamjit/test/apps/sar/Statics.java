@@ -16,8 +16,11 @@ public final class Statics {
 	public static final double ASPECT_RATIO = 0.4;
 	public static final double RANGE_FACTOR = 10.0;
 
+	// [04-04-2015] L was 100 in the StreamIt version. But L=100 causes big
+	// buffer sizes, longer init schedule delay and discrete output pattern.
+	// So I changed it to 1 to have more smoother and continuous outputs.
 	/* synthetic aperture is 2*L */
-	public static final double L = 100 * SCALE_FACTOR;
+	public static final double L = 1 * SCALE_FACTOR;
 
 	/* target area in cross-range is within */
 	public static final double Y0 = L;
