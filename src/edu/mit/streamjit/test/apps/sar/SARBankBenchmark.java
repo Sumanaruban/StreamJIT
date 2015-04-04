@@ -21,12 +21,13 @@ public class SARBankBenchmark extends SuppliedBenchmark {
 	public SARBankBenchmark() {
 		super(String.format("SARBank %d", Options.appArg1), SARBank.class,
 				ImmutableList.of(Options.appArg1), new Dataset("" + ITEMS,
-						(Input) Input.fromIterable(Collections.nCopies(ITEMS,
-								(byte) 0))));
+						(Input) Input.fromIterable(Collections
+								.nCopies(ITEMS, 0))));
 	}
-	public static final class SARBank extends Splitjoin<Void, Double> {
+	public static final class SARBank extends Splitjoin<Integer, Double> {
 		public SARBank(int replicas) {
-			super(new DuplicateSplitter<Void>(), new RoundrobinJoiner<Double>());
+			super(new DuplicateSplitter<Integer>(),
+					new RoundrobinJoiner<Double>());
 			for (int i = 0; i < replicas; i++) {
 				add(new SAR.SARKernel());
 			}
