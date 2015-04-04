@@ -233,7 +233,7 @@ public class SAR {
 			add(new Reconstruction(n, m, k, ku));
 
 			// NOTE: to compate to MATLAB output, transpose again
-			// add floatTranspose(266, m);
+			// add(new FFT.Transpose(266, m));
 			// add(new FloatPrinter());
 
 		}
