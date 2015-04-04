@@ -626,6 +626,14 @@ public class ConfigurationAnalyzer {
 			}
 			// System.err.println("No matches to " + param.toString());
 		}
+
+		public void print() {
+			System.out.println("totalCount=" + totalCount);
+			for (ParamType p : ParamType.values()) {
+				System.out.println(String.format("\t%s=%d", p,
+						parmTypeCount.get(p)));
+			}
+		}
 	}
 
 	final static int PARTITIONW;
