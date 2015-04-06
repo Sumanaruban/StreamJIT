@@ -282,6 +282,7 @@ public class StreamJitAppManager {
 			start();
 			isRunning = true;
 		} else {
+			drainingFinished(false);
 			isRunning = false;
 		}
 
