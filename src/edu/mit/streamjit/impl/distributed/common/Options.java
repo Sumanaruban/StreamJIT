@@ -197,6 +197,7 @@ public final class Options {
 	public static final int dynTuningCount;
 	public static final boolean blockCore;
 	public static final boolean penalize;
+	public static final int blockCorePattern;
 
 	static {
 		Properties prop = loadProperties();
@@ -244,6 +245,8 @@ public final class Options {
 		dynTuningCount = Integer.parseInt(prop.getProperty("dynTuningCount"));
 		blockCore = Boolean.parseBoolean(prop.getProperty("blockCore"));
 		penalize = Boolean.parseBoolean(prop.getProperty("penalize"));
+		blockCorePattern = Integer.parseInt(prop
+				.getProperty("blockCorePattern"));
 	}
 
 	public static Properties getProperties() {
@@ -280,6 +283,7 @@ public final class Options {
 		setProperty(prop, "dynTuningCount", dynTuningCount);
 		setProperty(prop, "blockCore", blockCore);
 		setProperty(prop, "penalize", penalize);
+		setProperty(prop, "blockCorePattern", blockCorePattern);
 		return prop;
 	}
 
