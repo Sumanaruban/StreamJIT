@@ -8,6 +8,7 @@ import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.tuner.MethodTimeLogger.FileMethodTimeLogger;
 import edu.mit.streamjit.util.Pair;
@@ -37,8 +38,15 @@ public class Reconfigurer {
 		this.app = app;
 		this.cfgManager = cfgManager;
 		this.logger = logger;
-		this.prognosticator = new GraphPropertyPrognosticator(app);
+		this.prognosticator = prognosticator(app);
 		this.mLogger = new FileMethodTimeLogger(app.name);
+	}
+
+	private ConfigurationPrognosticator prognosticator(StreamJitApp<?, ?> app) {
+		if (Options.prognosticate)
+			return new GraphPropertyPrognosticator(app);
+		else
+			return new ConfigurationPrognosticator.NoPrognostication();
 	}
 
 	/**
