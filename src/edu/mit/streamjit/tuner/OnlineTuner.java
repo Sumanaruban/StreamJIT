@@ -326,8 +326,14 @@ public class OnlineTuner implements Runnable {
 			for (int i = 0; i < noOfCorestoBlock; i++)
 				cores.add(i);
 
-			configurer.manager.blockCores(1, cores);
+			int noOfNodestoBlock = cfgManager.noOfMachines();
+			if (Options.blockCorePattern == 2 || Options.blockCorePattern == 3)
+				noOfNodestoBlock = noOfNodestoBlock / 2;
+
+			for (int i = 0; i < noOfNodestoBlock; i++)
+				configurer.manager.blockCores(i, cores);
 		}
+
 		private void summarize(int round) {
 			FileWriter writer = Utils.fileWriter(app.name, "dynamism.txt");
 			try {

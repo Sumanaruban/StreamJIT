@@ -176,4 +176,8 @@ public class ConfigurationManager {
 		}
 		throw new IllegalArgumentException("No valid up nodes...");
 	}
+
+	public int noOfMachines() {
+		return noOfMachines;
+	}
 }
