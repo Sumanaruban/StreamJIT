@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -315,7 +317,10 @@ public class OnlineTuner implements Runnable {
 
 		private void blockCores() {
 			System.err.println("blockCores...");
-			configurer.manager.blockCores(1);
+			Set<Integer> cores = new HashSet<>();
+			for (int i = 0; i < Options.maxNumCores; i++)
+				cores.add(i);
+			configurer.manager.blockCores(1, cores);
 		}
 
 		private void summarize(int round) {

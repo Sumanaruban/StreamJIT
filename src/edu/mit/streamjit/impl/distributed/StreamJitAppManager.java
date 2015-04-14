@@ -453,10 +453,7 @@ public class StreamJitAppManager {
 		return profiler;
 	}
 
-	public void blockCores(int nodeID) {
-		Set<Integer> cores = new HashSet<>();
-		for (int i = 0; i < Options.maxNumCores; i++)
-			cores.add(i);
+	public void blockCores(int nodeID, Set<Integer> cores) {
 		System.out.println(String.format("Blocking cores %s of node %d",
 				cores.toString(), nodeID));
 		BlockCores bc = new BlockCores(cores);
