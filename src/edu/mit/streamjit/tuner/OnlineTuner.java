@@ -317,12 +317,17 @@ public class OnlineTuner implements Runnable {
 
 		private void blockCores() {
 			System.err.println("blockCores...");
+
 			Set<Integer> cores = new HashSet<>();
-			for (int i = 0; i < Options.maxNumCores; i++)
+			int noOfCorestoBlock = Options.maxNumCores;
+			if (Options.blockCorePattern == 1 || Options.blockCorePattern == 2)
+				noOfCorestoBlock = Options.maxNumCores / 2;
+
+			for (int i = 0; i < noOfCorestoBlock; i++)
 				cores.add(i);
+
 			configurer.manager.blockCores(1, cores);
 		}
-
 		private void summarize(int round) {
 			FileWriter writer = Utils.fileWriter(app.name, "dynamism.txt");
 			try {
