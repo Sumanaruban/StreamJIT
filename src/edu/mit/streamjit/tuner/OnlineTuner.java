@@ -271,7 +271,8 @@ public class OnlineTuner implements Runnable {
 				simulateDynamism();
 				newcfgPrefix = String.format("BeginDyn%d:%s", dynCount,
 						cfgPrefix);
-				ConfigurationUtils.addConfigPrefix(bestCfg, newcfgPrefix);
+				bestCfg = ConfigurationUtils.addConfigPrefix(bestCfg,
+						newcfgPrefix);
 				runBestCfg(bestCfg);
 				System.out.println("Going for dynamism tuning...");
 			}
