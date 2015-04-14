@@ -326,11 +326,11 @@ public class OnlineTuner implements Runnable {
 			for (int i = 0; i < noOfCorestoBlock; i++)
 				cores.add(i);
 
-			int noOfNodestoBlock = cfgManager.noOfMachines();
+			int noOfNodestoBlock = cfgManager.noOfMachines() - 1;
 			if (Options.blockCorePattern == 2 || Options.blockCorePattern == 3)
 				noOfNodestoBlock = noOfNodestoBlock / 2;
 
-			for (int i = 0; i < noOfNodestoBlock; i++)
+			for (int i = 1; i <= noOfNodestoBlock; i++)
 				configurer.manager.blockCores(i, cores);
 		}
 
