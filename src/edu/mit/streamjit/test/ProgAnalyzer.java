@@ -5,8 +5,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.api.OneToOneElement;
 import edu.mit.streamjit.impl.common.Configuration;
@@ -21,6 +25,7 @@ import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio.FMRadioBenchmarkProvider;
 import edu.mit.streamjit.test.sanity.nestedsplitjoinexample.NestedSplitJoin;
 import edu.mit.streamjit.tuner.ConfigurationPrognosticator;
+import edu.mit.streamjit.tuner.DistanceMatrixPrognosticator;
 import edu.mit.streamjit.tuner.GraphPropertyPrognosticator;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.TimeLogProcessor;
@@ -49,23 +54,16 @@ public class ProgAnalyzer {
 
 		ProgAnalyzer csv = new ProgAnalyzer(appName, noOfNodes);
 		csv.startWrite();
-		System.out.println("acceptCount - " + csv.acceptCount);
-		System.out.println("rejectedCount - " + csv.rejectCount);
 	}
 
 	private final String appName;
-	int acceptCount = 0;
-	int rejectCount = 0;
-
 	private final StreamJitApp<?, ?> app;
 	private final ConfigurationManager cfgManager;
-	private final ConfigurationPrognosticator prog1;
 
 	public ProgAnalyzer(String appName, int nodes) {
 		this.appName = appName;
 		OneToOneElement<?, ?> streamGraph = streamGraph();
 		this.app = new StreamJitApp<>(streamGraph);
-		prog1 = new GraphPropertyPrognosticator(app);
 		PartitionManager partitionManager = new HotSpotTuning(app);
 		partitionManager.getDefaultConfiguration(
 				Workers.getAllWorkersInGraph(app.source), nodes);
@@ -73,43 +71,34 @@ public class ProgAnalyzer {
 	}
 
 	public void startWrite() throws IOException {
-		String fileName = String.format("%sProgAnalyze.txt",
-				TimeLogProcessor.getTitle(appName));
-		FileWriter writer = Utils.fileWriter(appName, fileName);
+
+		java.util.List<CfgProgWriter> cfgProgList = new ArrayList<ProgAnalyzer.CfgProgWriter>();
+		cfgProgList.add(new CfgProgWriter(new GraphPropertyPrognosticator(app),
+				"graph"));
+		cfgProgList.add(new CfgProgWriter(new DistanceMatrixPrognosticator(
+				appName), "dist"));
+
 		Map<String, Integer> runningTime = processRunTime(appName);
-		writeHeader(writer);
 		for (int i = 1; i <= runningTime.size(); i++) {
 			System.out.println("cfg = " + i);
+			Stopwatch sw = Stopwatch.createStarted();
 			Configuration cfg = ConfigurationUtils
 					.readConfiguration(appName, i);
+			System.out.println("readConfiguration = "
+					+ sw.elapsed(TimeUnit.MILLISECONDS));
 			if (cfg == null)
 				continue;
+
 			Integer time = runningTime.get(new Integer(i).toString());
-			cfgManager.newConfiguration(cfg);
-			boolean val = prog1.prognosticate(cfg);
 			if (time == null)
 				time = -1;
-			prog1.time(time);
 
-			writer.write(new Integer(i).toString());
-			writer.write('\t');
-			if (val) {
-				acceptCount++;
-				writer.write(time.toString());
-				writer.write("\t");
-				writer.write("0");
-				writer.write("\n");
-
-			} else {
-				rejectCount++;
-				writer.write("0");
-				writer.write("\t");
-				writer.write(time.toString());
-				writer.write("\n");
-			}
+			cfgManager.newConfiguration(cfg);
+			for (CfgProgWriter w : cfgProgList)
+				w.newCfg(cfg, time, i);
 		}
-		writer.flush();
-		writer.close();
+		for (CfgProgWriter w : cfgProgList)
+			w.end();
 	}
 
 	private void writeHeader(FileWriter writer) throws IOException {
@@ -251,5 +240,55 @@ public class ProgAnalyzer {
 				dataFile));
 		writer.close();
 		return plotfile;
+	}
+
+	private class CfgProgWriter {
+
+		private final ConfigurationPrognosticator prog;
+		private final String name;
+		private final FileWriter writer;
+		int acceptCount = 0;
+		int rejectCount = 0;
+
+		CfgProgWriter(ConfigurationPrognosticator prog, String name)
+				throws IOException {
+			this.name = name;
+			this.prog = prog;
+			String fileName = String.format("%s%sPA.txt",
+					TimeLogProcessor.getTitle(appName), name);
+			writer = Utils.fileWriter(appName, fileName);
+			writeHeader(writer);
+		}
+
+		private void newCfg(Configuration cfg, Integer time, Integer cfgPrefix)
+				throws IOException {
+			boolean val = prog.prognosticate(cfg);
+			prog.time(time);
+
+			writer.write(cfgPrefix.toString());
+			writer.write('\t');
+			if (val) {
+				acceptCount++;
+				writer.write(time.toString());
+				writer.write("\t");
+				writer.write("0");
+				writer.write("\n");
+
+			} else {
+				rejectCount++;
+				writer.write("0");
+				writer.write("\t");
+				writer.write(time.toString());
+				writer.write("\n");
+
+			}
+		}
+
+		private void end() throws IOException {
+			writer.flush();
+			writer.close();
+			System.out.println(String.format("%s - Accepted=%d, Rejected=%d",
+					name, acceptCount, rejectCount));
+		}
 	}
 }
