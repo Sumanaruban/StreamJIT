@@ -9,6 +9,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Configuration.FloatParameter;
+import edu.mit.streamjit.impl.common.Configuration.IntParameter;
+import edu.mit.streamjit.impl.common.Configuration.Parameter;
+import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 
 /**
  * {@link ConfigurationUtils} contains common utility methods those deal with
@@ -174,5 +178,43 @@ public class ConfigurationUtils {
 			return null;
 		String prefix = (String) config.getExtraData("configPrefix");
 		return prefix == null ? "" : prefix;
+	}
+
+	public static void printSearchSpaceSize(Configuration cfg) {
+		int inparam = 0;
+		int swtparam = 0;
+		int floatparam = 0;
+		int otherParams = 0;
+
+		double possibe = 0;
+
+		for (Parameter p : cfg.getParametersMap().values()) {
+			if (p.getClass() == Configuration.IntParameter.class) {
+				inparam++;
+				IntParameter i = (IntParameter) p;
+				possibe += Math.log10(i.getMax() - i.getMin());
+			}
+
+			else if (p.getClass() == Configuration.SwitchParameter.class) {
+				swtparam++;
+				SwitchParameter<?> j = (SwitchParameter<?>) p;
+				possibe += Math.log10(j.getUniverse().size());
+			}
+
+			else if (p.getClass() == Configuration.FloatParameter.class) {
+				FloatParameter i = (FloatParameter) p;
+				possibe += Math.log10((i.getMax() - i.getMin()) * 1000);
+			} else
+				otherParams++;
+		}
+
+		System.out.println("No of total parameters = "
+				+ cfg.getParametersMap().size());
+		System.out.println("No of IntParameters = " + inparam);
+		System.out.println("No of SwitchParameter = " + swtparam);
+		System.out.println("No of FloatParameter = " + floatparam);
+		System.out.println("No of other parameters = " + otherParams);
+		System.out.println(String.format("SearchSpace size = 10^(%.3f)",
+				possibe));
 	}
 }
