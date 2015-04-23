@@ -185,25 +185,24 @@ public class ConfigurationUtils {
 		int swtparam = 0;
 		int floatparam = 0;
 		int otherParams = 0;
-
-		double possibe = 0;
+		double sssize = 0;
 
 		for (Parameter p : cfg.getParametersMap().values()) {
 			if (p.getClass() == Configuration.IntParameter.class) {
 				inparam++;
 				IntParameter i = (IntParameter) p;
-				possibe += Math.log10(i.getMax() - i.getMin());
+				sssize += Math.log10(i.getMax() - i.getMin());
 			}
 
 			else if (p.getClass() == Configuration.SwitchParameter.class) {
 				swtparam++;
 				SwitchParameter<?> j = (SwitchParameter<?>) p;
-				possibe += Math.log10(j.getUniverse().size());
+				sssize += Math.log10(j.getUniverse().size());
 			}
 
 			else if (p.getClass() == Configuration.FloatParameter.class) {
 				FloatParameter i = (FloatParameter) p;
-				possibe += Math.log10((i.getMax() - i.getMin()) * 1000);
+				sssize += Math.log10((i.getMax() - i.getMin()) * 1000);
 			} else
 				otherParams++;
 		}
@@ -215,6 +214,6 @@ public class ConfigurationUtils {
 		System.out.println("No of FloatParameter = " + floatparam);
 		System.out.println("No of other parameters = " + otherParams);
 		System.out.println(String.format("SearchSpace size = 10^(%.3f)",
-				possibe));
+				sssize));
 	}
 }
