@@ -148,8 +148,109 @@ public class BufferSizeCalc {
 			printFinalSizes(minInitInputBufCapacity, minInitOutputBufCapacity,
 					minSteadyInputBufCapacity, minSteadyOutputBufCapacity,
 					finalInputBuf);
-
+		steadyStateRatios(bufSizes, app);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
+	}
+
+	private static class bufInfo2 {
+		int steadyInput;
+		int steadyOutput;
+		Variable outVar;
+		Variable inVar;
+
+		void addconstrain(ILPSolver solver) {
+			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
+					steadyInput, inVar);
+			solver.constrainEquals(exp, 0);
+		}
+	}
+
+	/**
+	 * Calculates blobs' execution ratios during steady state execution.
+	 * Calculates the total graph's steady state input and output.
+	 */
+	private static void steadyStateRatios(Map<Integer, BufferSizes> bufSizes,
+			StreamJitApp<?, ?> app) {
+
+		Token globalOutToken = null;
+		Token globalInToken = null;
+		Token globalOutBlob = null;
+		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
+
+		for (BufferSizes b : bufSizes.values()) {
+			minSteadyInputBufCapacity.putAll(b.minSteadyInputBufCapacity);
+			minSteadyOutputBufCapacity.putAll(b.minSteadyOutputBufCapacity);
+		}
+
+		ILPSolver solver = new ILPSolver();
+		Map<Token, bufInfo2> bufInfos = new HashMap<>();
+		Map<Token, Variable> variables = new HashMap<>();
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Variable v = solver.newVariable(blob.toString());
+			variables.put(blob, v);
+			LinearExpr expr = v.asLinearExpr(1);
+			solver.constrainAtLeast(expr, 1);
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			for (Token out : outputs) {
+				if (out.isOverallOutput()) {
+					globalOutToken = out;
+					globalOutBlob = blob;
+					continue;
+				}
+				bufInfo2 b = new bufInfo2();
+				b.steadyOutput = minSteadyOutputBufCapacity.get(out);
+				b.outVar = v;
+				bufInfos.put(out, b);
+			}
+		}
+
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Set<Token> inputs = app.blobGraph.getInputs(blob);
+			Variable v = variables.get(blob);
+			if (v == null)
+				throw new IllegalStateException("No variable");
+			for (Token in : inputs) {
+				if (in.isOverallInput()) {
+					globalInToken = in;
+					continue;
+				}
+				bufInfo2 b = bufInfos.get(in);
+				if (b == null)
+					throw new IllegalStateException("No buffer info");
+				b.steadyInput = minSteadyInputBufCapacity.get(in);
+				b.inVar = v;
+				b.addconstrain(solver);
+			}
+		}
+
+		LinearExpr lf = null;
+		for (Variable v : variables.values()) {
+			if (lf == null)
+				lf = v.asLinearExpr(1);
+			else
+				lf = lf.plus(1, v);
+		}
+		solver.minimize(lf);
+		solver.solve();
+
+		int steadyIn = -1;
+		int steadyOut = -1;
+
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			int steadyRun = variables.get(blob).value();
+			System.out.println("Steady run factor of blob " + blob.toString()
+					+ " is " + steadyRun);
+			if (blob.equals(globalInToken))
+				steadyIn = minSteadyInputBufCapacity.get(globalInToken)
+						* steadyRun;
+			if (blob.equals(globalOutBlob))
+				steadyOut = minSteadyOutputBufCapacity.get(globalOutToken)
+						* steadyRun;
+		}
+
+		System.out.println("Total graph's steady in = " + steadyIn);
+		System.out.println("Total graph's steady out = " + steadyOut);
 	}
 
 	private static void printFinalSizes(
