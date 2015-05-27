@@ -104,7 +104,8 @@ public class OnlineTuner implements Runnable {
 				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
-				tuner.writeLine(new Double(time).toString());
+				tuner.writeLine(String.format("%s:%s", ConfigurationUtils
+						.getConfigPrefix(config), new Double(time).toString()));
 				searchTimeSW.reset();
 				searchTimeSW.start();
 
