@@ -1,4 +1,6 @@
 # May 27, 2015
+import sys
+
 import deps  # fix sys.path
 import opentuner
 
@@ -10,7 +12,7 @@ class StreamJITMD(MeasurementDriver):
     def __init__(self, **kwargs):
         super(StreamJITMD, self).__init__(**kwargs)
         self.pendingResults={}
-        self.parallel_cfgs = 1
+        self.parallel_cfgs = 2
 
     #Copied from MeasurementDriver.process_all()
     def process_all(self):
@@ -65,3 +67,9 @@ class StreamJITMD(MeasurementDriver):
             raise RuntimeError("Unknown desired_result_id %d"%desired_result_id)
         del self.pendingResults[desired_result_id]
         self.report_result(desired_result, result, input)
+
+    def tuning_completed(self):
+        while len(self.pendingResults) > 0:
+            self.update_result()
+        self.interface.connection.close()
+        sys.exit(0)
