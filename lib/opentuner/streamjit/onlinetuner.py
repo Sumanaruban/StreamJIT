@@ -44,12 +44,19 @@ class StreamJitMI(MeasurementInterface):
 			#data = raw_input ( "exit cmd received. Press Keyboard to exit..." )
 			self.connection.close()
 			sys.exit(1)
-		exetime = float(msg)
+
+		pair = msg.split(':')
+		if len(pair) != 2:
+			raise RuntimeError('''Time must be reported in "configPrefix:time" format.''')
+		else:
+			configPrefix = pair[0]
+			exetime = float(pair[1])
+
 		if exetime < 0:
-			print "Error in execution"
+			print "Error in configuration %s"%configPrefix
 			return opentuner.resultsdb.models.Result(state='ERROR', time=float('inf'))
 		else:	
-			print "Execution time is %f"%exetime
+			print "Execution time of configuration %s is %fms"%(configPrefix, exetime)
 			return opentuner.resultsdb.models.Result(time=exetime)
 
 	def niceprint(self, cfg):
