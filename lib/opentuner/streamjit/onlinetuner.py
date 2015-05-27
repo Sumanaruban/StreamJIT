@@ -36,6 +36,7 @@ class StreamJitMI(MeasurementInterface):
 		#self.niceprint(cfg_data)
 		for k in self.config.params:
 			self.config.getParameter(k).update_value_for_json(cfg_data)
+		self.config.put_extra_data("configPrefix", str(self.trycount), "java.lang.String")
 		self.connection.sendmsg(self.config.toJSON())
 
 		msg = self.connection.recvmsg()

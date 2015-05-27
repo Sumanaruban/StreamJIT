@@ -204,7 +204,7 @@ public class OnlineTuner implements Runnable {
 				"---------------------%s-------------------------", cfgPrefix));
 		logger.newConfiguration(cfgPrefix);
 		Configuration config = Configuration.fromJson(cfgJson);
-		config = ConfigurationUtils.addConfigPrefix(config, cfgPrefix);
+		// config = ConfigurationUtils.addConfigPrefix(config, cfgPrefix);
 
 		if (Options.saveAllConfigurations)
 			ConfigurationUtils.saveConfg(cfgJson, cfgPrefix, app.name);
