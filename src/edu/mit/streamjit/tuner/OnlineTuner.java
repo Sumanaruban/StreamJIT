@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Stopwatch;
 
@@ -36,6 +38,7 @@ public class OnlineTuner implements Runnable {
 	private final Reconfigurer configurer;
 	private long currentBestTime;
 	private Configuration bestCfg;
+	private final OpenTunerListener listener;
 
 	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
 		this.configurer = configurer;
@@ -47,6 +50,7 @@ public class OnlineTuner implements Runnable {
 		this.prognosticator = configurer.prognosticator;
 		this.mLogger = app.eLogger;
 		this.currentBestTime = Integer.MAX_VALUE;
+		this.listener = new OpenTunerListener(tuner);
 	}
 
 	@Override
@@ -70,10 +74,10 @@ public class OnlineTuner implements Runnable {
 			while (configurer.manager.getStatus() != AppStatus.STOPPED) {
 				mLogger.bTuningRound(new Integer(++round).toString());
 				mLogger.bEvent("serialcfg");
-				String cfgJson = tuner.readLine();
+				String cfgJson = listener.cfgJson();
 				logger.logSearchTime(searchTimeSW
 						.elapsed(TimeUnit.MILLISECONDS));
-				if (cfgJson == null) {
+				if (cfgJson == "") {
 					System.err.println("OpenTuner closed unexpectly.");
 					break;
 				}
@@ -146,6 +150,7 @@ public class OnlineTuner implements Runnable {
 
 		tuner.writeLine("confg");
 		tuner.writeLine(Jsonifiers.toJson(app.getConfiguration()).toString());
+		new Thread(listener).start();
 	}
 
 	private long getTime() {
@@ -226,6 +231,54 @@ public class OnlineTuner implements Runnable {
 			TimeLogProcessor.summarize(app.name);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private static class OpenTunerListener implements Runnable {
+		private ConcurrentLinkedQueue<String> cfgQueue;
+		private final AtomicBoolean stopFlag;
+		private final AtomicBoolean openTunerStopped;
+		private final OpenTuner tuner;
+
+		private OpenTunerListener(OpenTuner tuner) {
+			this.cfgQueue = new ConcurrentLinkedQueue<String>();
+			this.stopFlag = new AtomicBoolean(false);
+			this.openTunerStopped = new AtomicBoolean(false);
+			this.tuner = tuner;
+		}
+
+		@Override
+		public void run() {
+			while (!stopFlag.get()) {
+				try {
+					String cfgJson = tuner.readLine();
+					if (cfgJson == null) {
+						cfgJson = "";
+						openTunerStopped.set(true);
+						stopFlag.set(true);
+					} else if (cfgJson.equals("Completed")) {
+						stopFlag.set(true);
+					}
+					cfgQueue.offer(cfgJson);
+				} catch (IOException e) {
+					e.printStackTrace();
+					cfgQueue.offer("");
+					stopFlag.set(true);
+					openTunerStopped.set(true);
+				}
+			}
+		}
+
+		public String cfgJson() {
+			if (openTunerStopped.get())
+				return "";
+			String cfgJson;
+			while ((cfgJson = cfgQueue.poll()) == null);
+			return cfgJson;
+		}
+
+		public void stop() {
+			this.stopFlag.set(true);
 		}
 	}
 }
