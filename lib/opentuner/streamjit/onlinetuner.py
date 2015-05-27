@@ -27,6 +27,7 @@ class StreamJitMI(MeasurementInterface):
 		self.config = configuration
 		signal.signal(signal.SIGUSR1, self.receive_signal)
 		print 'My PID is:', os.getpid()
+		self.submitted_desired_result={}
 
 	def run(self, desired_result, input, limit):
 		self.trycount = self.trycount + 1
@@ -38,26 +39,7 @@ class StreamJitMI(MeasurementInterface):
 			self.config.getParameter(k).update_value_for_json(cfg_data)
 		self.config.put_extra_data("configPrefix", str(self.trycount), "java.lang.String")
 		self.connection.sendmsg(self.config.toJSON())
-
-		msg = self.connection.recvmsg()
-		if (msg == "exit\n"):
-			#data = raw_input ( "exit cmd received. Press Keyboard to exit..." )
-			self.connection.close()
-			sys.exit(1)
-
-		pair = msg.split(':')
-		if len(pair) != 2:
-			raise RuntimeError('''Time must be reported in "configPrefix:time" format.''')
-		else:
-			configPrefix = pair[0]
-			exetime = float(pair[1])
-
-		if exetime < 0:
-			print "Error in configuration %s"%configPrefix
-			return opentuner.resultsdb.models.Result(state='ERROR', time=float('inf'))
-		else:	
-			print "Execution time of configuration %s is %fms"%(configPrefix, exetime)
-			return opentuner.resultsdb.models.Result(time=exetime)
+		self.submitted_desired_result[self.trycount]=desired_result.id
 
 	def niceprint(self, cfg):
 		print "\n--------------------------------------------------"
@@ -97,6 +79,32 @@ class StreamJitMI(MeasurementInterface):
 	def tuning_run_main(self, trm):
 		self.tuningrunmain=trm
 
+	def wait_for_result(self):
+		msg = self.connection.recvmsg()
+		if (msg == "exit\n"):
+			#data = raw_input ( "exit cmd received. Press Keyboard to exit..." )
+			self.connection.close()
+			sys.exit(1)
+
+		pair = msg.split(':')
+		if len(pair) != 2:
+			raise RuntimeError('''Time must be reported in "configPrefix:time" format.''')
+		else:
+			configPrefix = int(pair[0])
+			exetime = float(pair[1])
+
+		if self.submitted_desired_result.has_key(configPrefix):
+			desired_result_id = self.submitted_desired_result[configPrefix]
+			del self.submitted_desired_result[configPrefix]
+		else:
+			raise RuntimeError("Unknown configuration %d"%configPrefix)
+
+		if exetime < 0:
+			print "Error in configuration %d"%configPrefix
+			return desired_result_id, opentuner.resultsdb.models.Result(state='ERROR', time=float('inf'))
+		else:
+			print "Execution time of configuration %d is %fms"%(configPrefix, exetime)
+			return desired_result_id, opentuner.resultsdb.models.Result(time=exetime)
 
 def main(args, cfg, connection):
 	logging.basicConfig(level=logging.INFO)
