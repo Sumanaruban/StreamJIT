@@ -16,6 +16,7 @@ from opentuner.measurement import MeasurementInterface
 from opentuner.measurement.inputmanager import FixedInputManager
 from opentuner.tuningrunmain import TuningRunMain
 from opentuner.search.objective import MinimizeTime
+from streamjitmd import StreamJITMD
 
 class StreamJitMI(MeasurementInterface):
 	''' Measurement Interface for tunning a StreamJit application'''
@@ -100,7 +101,7 @@ def main(args, cfg, connection):
 	mi = StreamJitMI(args, cfg, connection, manipulator, FixedInputManager(),
                     MinimizeTime())
 
-	m = TuningRunMain(mi, args)
+	m = TuningRunMain(mi, args, measurement_driver=StreamJITMD)
 	mi.tuning_run_main(m)
 	m.main()
 
