@@ -10,6 +10,7 @@ class StreamJITMD(MeasurementDriver):
     def __init__(self, **kwargs):
         super(StreamJITMD, self).__init__(**kwargs)
         self.pendingResults={}
+        self.parallel_cfgs = 1
 
     #Copied from MeasurementDriver.process_all()
     def process_all(self):
@@ -23,7 +24,9 @@ class StreamJITMD(MeasurementDriver):
         else:
           for dr in q.all():
             if self.claim_desired_result(dr):
-              if len(self.pendingResults) > 0:
+              if len(self.pendingResults) > self.parallel_cfgs:
+                  raise RuntimeError("len(self.pendingResults) > self.parallel_cfgs. This shouldn't happen")
+              elif len(self.pendingResults) == self.parallel_cfgs:
                   self.update_result()
               self.run_desired_result(dr)
 
