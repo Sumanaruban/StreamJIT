@@ -9,11 +9,25 @@ class StreamJITMD(MeasurementDriver):
 
     def __init__(self, **kwargs):
         super(StreamJITMD, self).__init__(**kwargs)
+        self.pendingResults={}
 
+    #Copied from MeasurementDriver.process_all()
     def process_all(self):
-        print "process_all..."
-        super(StreamJITMD, self).process_all()
+        """ process all desired_results in the database"""
+        self.lap_timer()  # reset timer
+        q = self.query_pending_desired_results()
 
+        if self.interface.parallel_compile:
+          #This shouldn't happen in StreamJIT case. I just deleted code that handles this case. Sumanan. 27-May-2015.
+          raise RuntimeError("This shouldn't happen in StreamJIT case")
+        else:
+          for dr in q.all():
+            if self.claim_desired_result(dr):
+              if len(self.pendingResults) > 0:
+                  self.update_result()
+              self.run_desired_result(dr)
+
+    #Copied from MeasurementDriver.run_desired_result()
     def run_desired_result(self, desired_result, compile_result=None,
                          exec_id=None):
         """
@@ -37,5 +51,14 @@ class StreamJITMD(MeasurementDriver):
         result = self.interface.run_precompiled(desired_result, input,
                                             desired_result.limit,
                                             compile_result, exec_id)
+        self.pendingResults[desired_result.id] = desired_result,input
 
+
+    def update_result(self):
+        desired_result_id, result = self.interface.wait_for_result()
+        if self.pendingResults.has_key(desired_result_id):
+            desired_result, input = self.pendingResults[desired_result_id]
+        else:
+            raise RuntimeError("Unknown desired_result_id %d"%desired_result_id)
+        del self.pendingResults[desired_result_id]
         self.report_result(desired_result, result, input)
