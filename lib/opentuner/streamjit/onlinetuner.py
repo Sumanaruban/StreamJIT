@@ -31,7 +31,7 @@ class StreamJitMI(MeasurementInterface):
 
 	def run(self, desired_result, input, limit):
 		self.trycount = self.trycount + 1
-		print self.trycount
+		#print self.trycount
 
 		cfg_data = desired_result.configuration.data
 		#self.niceprint(cfg_data)
@@ -62,8 +62,8 @@ class StreamJitMI(MeasurementInterface):
 
 		self.connection.sendmsg("Completed")
 		self.connection.sendmsg(self.config.toJSON())
-		self.connection.close()
-		sys.exit(0)
+		self.tuningrunmain.measurement_driver.tuning_completed()
+
 
 	def receive_signal(self, signum, stack):
 		print 'Received Signal:', signum
