@@ -74,11 +74,14 @@ public class ConfigurationManager {
 
 		Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap = partitionManager
 				.partitionMap(config);
+		BlobGraph bg;
 		try {
-			app.verifyConfiguration(partitionsMachineMap);
+			bg = app.verifyConfiguration(partitionsMachineMap);
 		} catch (StreamCompilationFailedException ex) {
 			return false;
 		}
+		app.blobGraph = bg;
+		app.partitionsMachineMap = partitionsMachineMap;
 		app.setConfiguration(config);
 		return true;
 	}
