@@ -49,16 +49,11 @@ public class ConfigurationManager {
 	 * configuration.
 	 * <p>
 	 * Builds partitionsMachineMap and {@link BlobGraph} from the new
-	 * Configuration, and verifies for any cycles among blobs. If it is a valid
-	 * configuration, (i.e., no cycles among the blobs), then {@link #app}
-	 * object's member variables {@link StreamJitApp#blobConfiguration},
-	 * {@link StreamJitApp#blobGraph} and
-	 * {@link StreamJitApp#partitionsMachineMap} will be assigned according to
-	 * reflect the new configuration, no changes otherwise.
+	 * configuration, and verifies for any cycles among blobs.
 	 * 
 	 * @param config
 	 *            configuration from {@link OnlineTuner}.
-	 * @return true iff valid configuration is passed.
+	 * @return {@link NewConfiguration}
 	 */
 	public NewConfiguration newConfiguration(Configuration config) {
 		// for (Parameter p : config.getParametersMap().values()) {
