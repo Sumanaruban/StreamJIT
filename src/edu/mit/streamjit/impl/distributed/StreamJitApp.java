@@ -164,28 +164,28 @@ public class StreamJitApp<I, O> {
 	 */
 	public boolean newPartitionMap(
 			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
+		BlobGraph bg;
 		try {
-			verifyConfiguration(partitionsMachineMap);
+			bg = verifyConfiguration(partitionsMachineMap);
 		} catch (StreamCompilationFailedException ex) {
 			return false;
 		}
+		this.blobGraph = bg;
+		this.partitionsMachineMap = partitionsMachineMap;
 		return true;
 	}
 
 	/**
 	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
 	 * any cycles among blobs. If it is a valid partitionsMachineMap, (i.e., no
-	 * cycles among the blobs), then this objects member variables
-	 * {@link StreamJitApp#blobGraph} and
-	 * {@link StreamJitApp#partitionsMachineMap} will be assigned according to
-	 * the new configuration, no changes otherwise.
+	 * cycles among the blobs), then returns the built {@link BlobGraph}.
 	 * 
 	 * @param partitionsMachineMap
 	 * 
 	 * @throws StreamCompilationFailedException
 	 *             if any cycles found among blobs.
 	 */
-	public void verifyConfiguration(
+	public BlobGraph verifyConfiguration(
 			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 
 		if (!Options.singleNodeOnline) {
@@ -205,8 +205,7 @@ public class StreamJitApp<I, O> {
 			printPartition(partitionsMachineMap);
 			throw ex;
 		}
-		this.blobGraph = bg;
-		this.partitionsMachineMap = partitionsMachineMap;
+		return bg;
 	}
 
 	private void printPartition(
