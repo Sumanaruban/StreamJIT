@@ -321,10 +321,12 @@ public class StreamJitApp<I, O> {
 	}
 
 	/**
-	 * @param configuration
-	 *            the configuration to set
+	 * @param newConfiguration
 	 */
 	public void setNewConfiguration(NewConfiguration newConfiguration) {
+		if (!newConfiguration.verificationPassed)
+			throw new IllegalStateException(
+					"Invalid newConfiguration. newConfiguration.verificationPassed=false.");
 		this.blobGraph = newConfiguration.blobGraph;
 		this.partitionsMachineMap = newConfiguration.partitionsMachineMap;
 		this.configuration = newConfiguration.configuration;
