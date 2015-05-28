@@ -60,7 +60,7 @@ public class ConfigurationManager {
 	 *            configuration from {@link OnlineTuner}.
 	 * @return true iff valid configuration is passed.
 	 */
-	public NextConfiguration newConfiguration(Configuration config) {
+	public NewConfiguration newConfiguration(Configuration config) {
 		// for (Parameter p : config.getParametersMap().values()) {
 		// if (p instanceof IntParameter) {
 		// IntParameter ip = (IntParameter) p;
@@ -78,22 +78,22 @@ public class ConfigurationManager {
 		try {
 			bg = app.verifyConfiguration(partitionsMachineMap);
 		} catch (StreamCompilationFailedException ex) {
-			return new NextConfiguration(null, partitionsMachineMap, config,
+			return new NewConfiguration(null, partitionsMachineMap, config,
 					false);
 		}
 		app.blobGraph = bg;
 		app.partitionsMachineMap = partitionsMachineMap;
 		app.setConfiguration(config);
-		return new NextConfiguration(bg, partitionsMachineMap, config, true);
+		return new NewConfiguration(bg, partitionsMachineMap, config, true);
 	}
 
-	public static class NextConfiguration {
+	public static class NewConfiguration {
 		public final BlobGraph blobGraph;
 		public final Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap;
 		public final Configuration configuration;
 		public final boolean verificationPassed;
 
-		private NextConfiguration(BlobGraph blobGraph,
+		private NewConfiguration(BlobGraph blobGraph,
 				Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
 				Configuration configuration, boolean verificationPassed) {
 			this.blobGraph = blobGraph;
