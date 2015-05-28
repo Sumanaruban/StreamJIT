@@ -51,7 +51,7 @@ public class OnlineTuner implements Runnable {
 		this.prognosticator = configurer.prognosticator;
 		this.mLogger = app.eLogger;
 		this.currentBestTime = Integer.MAX_VALUE;
-		this.listener = new OpenTunerListener(tuner);
+		this.listener = new OpenTunerListener(tuner, app.name, configurer);
 	}
 
 	@Override
@@ -75,29 +75,32 @@ public class OnlineTuner implements Runnable {
 			while (configurer.manager.getStatus() != AppStatus.STOPPED) {
 				mLogger.bTuningRound(new Integer(++round).toString());
 				mLogger.bEvent("serialcfg");
-				String cfgJson = listener.cfgJson();
+				NewConfiguration newconfig = listener.nextConfig();
 				logger.logSearchTime(searchTimeSW
 						.elapsed(TimeUnit.MILLISECONDS));
-				if (cfgJson == "") {
+				if (newconfig == null) {
 					System.err.println("OpenTuner closed unexpectly.");
 					break;
 				}
 
 				// At the end of the tuning, Opentuner will send "Completed"
 				// msg. This means no more tuning.
-				if (cfgJson.equals("Completed")) {
-					mLogger.bEvent("handleTermination");
-					handleTermination();
-					mLogger.eEvent("handleTermination");
-					break;
-				}
+				/*
+				 * if (cfgJson.equals("Completed")) {
+				 * mLogger.bEvent("handleTermination"); handleTermination();
+				 * mLogger.eEvent("handleTermination"); break; }
+				 */
 
 				mLogger.bEvent("newCfg");
-				Configuration config = newCfg(round, cfgJson);
+				String cfgPrefix = ConfigurationUtils
+						.getConfigPrefix(newconfig.configuration);
+
+				System.out.println(String.format(
+						"---------------------%s-------------------------",
+						cfgPrefix));
+
 				mLogger.eEvent("newCfg");
 				mLogger.bEvent("reconfigure");
-				NewConfiguration newconfig = configurer
-						.newConfiguration(config);
 				ret = configurer.reconfigure(newconfig);
 				mLogger.eEvent("reconfigure");
 				long time;
@@ -107,12 +110,12 @@ public class OnlineTuner implements Runnable {
 					time = ret.second;
 				if (time > 1 && currentBestTime > time) {
 					currentBestTime = time;
-					bestCfg = config;
+					bestCfg = newconfig.configuration;
 				}
 				logger.logRunTime(time);
 				prognosticator.time(time);
-				tuner.writeLine(String.format("%s:%s", ConfigurationUtils
-						.getConfigPrefix(config), new Double(time).toString()));
+				tuner.writeLine(String.format("%s:%s", cfgPrefix, new Double(
+						time).toString()));
 				searchTimeSW.reset();
 				searchTimeSW.start();
 
@@ -208,19 +211,6 @@ public class OnlineTuner implements Runnable {
 		new Verifier(configurer).verifyTuningTimes(cfgPrefixes);
 	}
 
-	private Configuration newCfg(int round, String cfgJson) {
-		String cfgPrefix = new Integer(round).toString();
-		System.out.println(String.format(
-				"---------------------%s-------------------------", cfgPrefix));
-		logger.newConfiguration(cfgPrefix);
-		Configuration config = Configuration.fromJson(cfgJson);
-		// config = ConfigurationUtils.addConfigPrefix(config, cfgPrefix);
-
-		if (Options.saveAllConfigurations)
-			ConfigurationUtils.saveConfg(cfgJson, cfgPrefix, app.name);
-		return config;
-	}
-
 	private void tuningFinished() {
 		try {
 			configurer.drainer.dumpDraindataStatistics();
@@ -239,16 +229,22 @@ public class OnlineTuner implements Runnable {
 	}
 
 	private static class OpenTunerListener implements Runnable {
-		private ConcurrentLinkedQueue<String> cfgQueue;
+		private ConcurrentLinkedQueue<NewConfiguration> cfgQueue;
 		private final AtomicBoolean stopFlag;
 		private final AtomicBoolean openTunerStopped;
 		private final OpenTuner tuner;
+		private final String appName;
+		private final Reconfigurer configurer;
+		private NewConfiguration finalConfig = null;
 
-		private OpenTunerListener(OpenTuner tuner) {
-			this.cfgQueue = new ConcurrentLinkedQueue<String>();
+		private OpenTunerListener(OpenTuner tuner, String appName,
+				Reconfigurer configurer) {
+			this.cfgQueue = new ConcurrentLinkedQueue<NewConfiguration>();
 			this.stopFlag = new AtomicBoolean(false);
 			this.openTunerStopped = new AtomicBoolean(false);
 			this.tuner = tuner;
+			this.appName = appName;
+			this.configurer = configurer;
 		}
 
 		@Override
@@ -257,32 +253,61 @@ public class OnlineTuner implements Runnable {
 				try {
 					String cfgJson = tuner.readLine();
 					if (cfgJson == null) {
-						cfgJson = "";
 						openTunerStopped.set(true);
 						stopFlag.set(true);
 					} else if (cfgJson.equals("Completed")) {
+						cfgJson = tuner.readLine();
+						finalConfig = newcfgJson(cfgJson);
 						stopFlag.set(true);
 					}
-					cfgQueue.offer(cfgJson);
+					NewConfiguration newcfg = newcfgJson(cfgJson);
+					newConfiguration(newcfg);
 				} catch (IOException e) {
 					e.printStackTrace();
-					cfgQueue.offer("");
 					stopFlag.set(true);
 					openTunerStopped.set(true);
 				}
 			}
 		}
 
-		public String cfgJson() {
+		public NewConfiguration nextConfig() {
+			NewConfiguration newCfg = null;
 			if (openTunerStopped.get())
-				return "";
-			String cfgJson;
-			while ((cfgJson = cfgQueue.poll()) == null);
-			return cfgJson;
+				return null;
+			while ((newCfg = cfgQueue.poll()) == null) {
+				if (openTunerStopped.get())
+					return null;
+				if (finalConfig != null)
+					return finalConfig;
+			}
+			return newCfg;
 		}
 
 		public void stop() {
 			this.stopFlag.set(true);
+		}
+
+		private NewConfiguration newcfgJson(String cfgJson) {
+			Configuration config = Configuration.fromJson(cfgJson);
+			String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
+
+			if (Options.saveAllConfigurations)
+				ConfigurationUtils.saveConfg(cfgJson, cfgPrefix, appName);
+			return configurer.newConfiguration(config);
+		}
+
+		private void newConfiguration(NewConfiguration newConfig) {
+			if (newConfig.verificationPassed
+					&& newConfig.isPrognosticationPassed())
+				cfgQueue.offer(newConfig);
+			else
+				try {
+					tuner.writeLine(String.format("%s:%s", ConfigurationUtils
+							.getConfigPrefix(newConfig.configuration),
+							new Double(-1).toString()));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 	}
 }
