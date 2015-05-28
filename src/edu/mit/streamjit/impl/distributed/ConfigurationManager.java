@@ -92,6 +92,7 @@ public class ConfigurationManager {
 		public final Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap;
 		public final Configuration configuration;
 		public final boolean verificationPassed;
+		private boolean prognosticationPassed;
 
 		private NewConfiguration(BlobGraph blobGraph,
 				Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
@@ -100,6 +101,15 @@ public class ConfigurationManager {
 			this.partitionsMachineMap = partitionsMachineMap;
 			this.configuration = configuration;
 			this.verificationPassed = verificationPassed;
+			this.prognosticationPassed = false;
+		}
+
+		public boolean isPrognosticationPassed() {
+			return prognosticationPassed;
+		}
+
+		public void setPrognosticationPassed(boolean prognosticationPassed) {
+			this.prognosticationPassed = prognosticationPassed;
 		}
 	}
 }
