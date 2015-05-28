@@ -18,10 +18,10 @@ import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
 import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
@@ -231,16 +231,20 @@ public class ConfigToCSVConverter {
 		private void writegraphProperty(FileWriter writer, Configuration cfg)
 				throws IOException {
 			NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
-			app.setNewConfiguration(newConfig);
-			// prog.prognosticate(cfg);
-			writer.write(String.format("%.2f%c", prog.bigToSmallBlobRatio(),
-					delimiter));
-			writer.write(String.format("%.2f%c", prog.loadRatio(), delimiter));
-			writer.write(String.format("%.2f%c", prog.blobToNodeRatio(),
+			writer.write(String.format("%.2f%c",
+					prog.bigToSmallBlobRatio(newConfig.partitionsMachineMap),
 					delimiter));
 			writer.write(String.format("%.2f%c",
-					prog.totalToBoundaryChannelRatio(), delimiter));
-			writer.write(String.format("%s%c", prog.hasCycle() ? "True"
+					prog.loadRatio(newConfig.partitionsMachineMap), delimiter));
+			writer.write(String.format("%.2f%c",
+					prog.blobToNodeRatio(newConfig.partitionsMachineMap),
+					delimiter));
+			writer.write(String.format(
+					"%.2f%c",
+					prog.totalToBoundaryChannelRatio(newConfig.partitionsMachineMap),
+					delimiter));
+			writer.write(String.format("%s%c", prog
+					.hasCycle(newConfig.partitionsMachineMap) ? "True"
 					: "False", delimiter));
 		}
 
