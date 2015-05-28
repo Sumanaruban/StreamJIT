@@ -7,6 +7,7 @@ import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
@@ -77,9 +78,9 @@ public class Reconfigurer {
 			return new Pair<Boolean, Integer>(false, -2);
 
 		mLogger.bEvent("cfgManagerNewcfg");
-		boolean validCfg = cfgManager.newConfiguration(config).verificationPassed;
+		NewConfiguration newConfiguration = cfgManager.newConfiguration(config);
 		mLogger.eEvent("cfgManagerNewcfg");
-		if (!validCfg)
+		if (!newConfiguration.verificationPassed)
 			return new Pair<Boolean, Integer>(true, -3);
 
 		mLogger.bEvent("prognosticate");
