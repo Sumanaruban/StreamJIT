@@ -21,6 +21,7 @@ import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
 import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
@@ -229,7 +230,8 @@ public class ConfigToCSVConverter {
 
 		private void writegraphProperty(FileWriter writer, Configuration cfg)
 				throws IOException {
-			cfgManager.newConfiguration(cfg);
+			NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
+			app.setNewConfiguration(newConfig);
 			// prog.prognosticate(cfg);
 			writer.write(String.format("%.2f%c", prog.bigToSmallBlobRatio(),
 					delimiter));

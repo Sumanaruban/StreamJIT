@@ -81,9 +81,6 @@ public class ConfigurationManager {
 			return new NewConfiguration(null, partitionsMachineMap, config,
 					false);
 		}
-		app.blobGraph = bg;
-		app.partitionsMachineMap = partitionsMachineMap;
-		app.setConfiguration(config);
 		return new NewConfiguration(bg, partitionsMachineMap, config, true);
 	}
 

@@ -58,6 +58,7 @@ import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph;
 import edu.mit.streamjit.impl.compiler2.Compiler2BlobFactory;
 import edu.mit.streamjit.impl.concurrent.ConcurrentChannelFactory;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
@@ -323,8 +324,10 @@ public class StreamJitApp<I, O> {
 	 * @param configuration
 	 *            the configuration to set
 	 */
-	public void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
+	public void setNewConfiguration(NewConfiguration newConfiguration) {
+		this.blobGraph = newConfiguration.blobGraph;
+		this.partitionsMachineMap = newConfiguration.partitionsMachineMap;
+		this.configuration = newConfiguration.configuration;
 		visualizer.newConfiguration(configuration);
 		visualizer.newPartitionMachineMap(partitionsMachineMap);
 	}

@@ -89,6 +89,7 @@ public class Reconfigurer {
 			if (!intermediateDraining)
 				return new Pair<Boolean, Integer>(false, -5);
 
+			app.setNewConfiguration(newConfig);
 			drainer.setBlobGraph(app.blobGraph);
 			int multiplier = getMultiplier(newConfig.configuration);
 			mLogger.bEvent("managerReconfigure");
