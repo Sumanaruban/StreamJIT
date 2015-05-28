@@ -5,13 +5,13 @@ import java.io.OutputStreamWriter;
 
 import com.google.common.collect.ImmutableList;
 
-import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 
 /**
- * Prognosticates the {@link Configuration}s given by the OpenTuner and tell
- * whether a {@link Configuration} is more likely to give a better search
+ * Prognosticates a {@link NewConfiguration} given by the OpenTuner and tell
+ * whether the {@link NewConfiguration} is more likely to give a better search
  * objective improvement or not. Depends on the prognosticated information,
  * {@link OnlineTuner} may reconfigure the application or reject the
  * configuration. Currently, the search objective is performance optimization.
@@ -24,15 +24,15 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 public interface ConfigurationPrognosticator {
 
 	/**
-	 * Prognosticate a {@link Configuration} and tell whether a
-	 * {@link Configuration} is more likely to give a better search objective
+	 * Prognosticate a {@link NewConfiguration} and tell whether the
+	 * {@link NewConfiguration} is more likely to give a better search objective
 	 * improvement or not.
 	 * 
 	 * @param config
 	 * @return {@code true} iff the config is more likely to give a better
 	 *         search objective improvement.
 	 */
-	public boolean prognosticate(Configuration config);
+	public boolean prognosticate(NewConfiguration config);
 
 	/**
 	 * An auxiliary method that can be used to update a configuration's running
@@ -43,14 +43,14 @@ public interface ConfigurationPrognosticator {
 	public void time(double time);
 
 	/**
-	 * No Prognostication. The method {@link #prognosticate(Configuration)}
+	 * No Prognostication. The method {@link #prognosticate(NewConfiguration)}
 	 * always returns {@code true}
 	 */
 	public static final class NoPrognostication implements
 			ConfigurationPrognosticator {
 
 		@Override
-		public boolean prognosticate(Configuration config) {
+		public boolean prognosticate(NewConfiguration config) {
 			return true;
 		}
 
@@ -97,7 +97,7 @@ public interface ConfigurationPrognosticator {
 		}
 
 		@Override
-		public boolean prognosticate(Configuration config) {
+		public boolean prognosticate(NewConfiguration config) {
 			boolean ret = true;
 			for (ConfigurationPrognosticator cp : configProgs) {
 				ret = ret & cp.prognosticate(config);

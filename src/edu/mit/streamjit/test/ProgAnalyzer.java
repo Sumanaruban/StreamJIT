@@ -16,10 +16,10 @@ import edu.mit.streamjit.api.OneToOneElement;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
 import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
@@ -95,10 +95,9 @@ public class ProgAnalyzer {
 				time = -1;
 
 			NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
-			app.setNewConfiguration(newConfig);
 
 			for (CfgProgWriter w : cfgProgList)
-				w.newCfg(cfg, time, i);
+				w.newCfg(newConfig, time, i);
 		}
 		for (CfgProgWriter w : cfgProgList)
 			w.end();
@@ -263,9 +262,9 @@ public class ProgAnalyzer {
 			writeHeader(writer);
 		}
 
-		private void newCfg(Configuration cfg, Integer time, Integer cfgPrefix)
-				throws IOException {
-			boolean val = prog.prognosticate(cfg);
+		private void newCfg(NewConfiguration newConfig, Integer time,
+				Integer cfgPrefix) throws IOException {
+			boolean val = prog.prognosticate(newConfig);
 			prog.time(time);
 
 			writer.write(cfgPrefix.toString());

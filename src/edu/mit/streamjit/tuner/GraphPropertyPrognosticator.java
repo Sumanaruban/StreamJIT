@@ -5,11 +5,12 @@ import java.io.OutputStreamWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.mit.streamjit.api.Worker;
-import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Workers;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -23,8 +24,6 @@ import edu.mit.streamjit.util.ConfigurationUtils;
  * @since 7 Jan, 2015
  */
 public class GraphPropertyPrognosticator implements ConfigurationPrognosticator {
-
-	private final StreamJitApp<?, ?> app;
 
 	private final OutputStreamWriter writer;
 
@@ -42,7 +41,6 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 
 	public GraphPropertyPrognosticator(StreamJitApp<?, ?> app,
 			OutputStreamWriter osWriter, boolean needWriteTime) {
-		this.app = app;
 		this.writer = osWriter;
 		this.needWriteTime = needWriteTime;
 		writeHeader(writer);
@@ -52,13 +50,14 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	}
 
 	@Override
-	public boolean prognosticate(Configuration config) {
-		String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
-		float bigToSmallBlobRatio = bigToSmallBlobRatio();
-		float loadRatio = loadRatio();
-		float blobToNodeRatio = blobToNodeRatio();
-		float boundaryChannelRatio = totalToBoundaryChannelRatio();
-		boolean hasCycle = hasCycle();
+	public boolean prognosticate(NewConfiguration newconfig) {
+		String cfgPrefix = ConfigurationUtils
+				.getConfigPrefix(newconfig.configuration);
+		float bigToSmallBlobRatio = bigToSmallBlobRatio(newconfig.partitionsMachineMap);
+		float loadRatio = loadRatio(newconfig.partitionsMachineMap);
+		float blobToNodeRatio = blobToNodeRatio(newconfig.partitionsMachineMap);
+		float boundaryChannelRatio = totalToBoundaryChannelRatio(newconfig.partitionsMachineMap);
+		boolean hasCycle = hasCycle(newconfig.partitionsMachineMap);
 		try {
 			writer.write(String.format("%6s\t\t", cfgPrefix));
 			writer.write(String.format("%.2f\t\t", bigToSmallBlobRatio));
@@ -115,12 +114,12 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * @return The ratio between the number of workers in the largest blob and
 	 *         the number of workers in the smallest blob.
 	 */
-	public float bigToSmallBlobRatio() {
+	public float bigToSmallBlobRatio(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		int currentBlobSize;
-		for (List<Set<Worker<?, ?>>> blobList : app.partitionsMachineMap
-				.values()) {
+		for (List<Set<Worker<?, ?>>> blobList : partitionsMachineMap.values()) {
 			for (Set<Worker<?, ?>> blobWorkers : blobList) {
 				currentBlobSize = blobWorkers.size();
 				min = Math.min(min, currentBlobSize);
@@ -135,12 +134,12 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * @return The ratio between the highest number of workers assigned to a
 	 *         machine and the lowest number of workers assigned to a machine.
 	 */
-	public float loadRatio() {
+	public float loadRatio(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		int workersInCurrentNode;
-		for (List<Set<Worker<?, ?>>> blobList : app.partitionsMachineMap
-				.values()) {
+		for (List<Set<Worker<?, ?>>> blobList : partitionsMachineMap.values()) {
 			workersInCurrentNode = 0;
 			for (Set<Worker<?, ?>> blobWorkers : blobList) {
 				workersInCurrentNode += blobWorkers.size();
@@ -155,11 +154,11 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	/**
 	 * @return The ratio between the total number of blobs to the total nodes.
 	 */
-	public float blobToNodeRatio() {
+	public float blobToNodeRatio(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 		int nodes = 0;
 		int blobs = 0;
-		for (List<Set<Worker<?, ?>>> blobList : app.partitionsMachineMap
-				.values()) {
+		for (List<Set<Worker<?, ?>>> blobList : partitionsMachineMap.values()) {
 			nodes++;
 			blobs += blobList.size();
 		}
@@ -171,11 +170,12 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 	 * @return The ratio between the total channels in the stream graph to the
 	 *         {@link BoundaryChannel} in the current configuration.
 	 */
-	public float totalToBoundaryChannelRatio() {
+	public float totalToBoundaryChannelRatio(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 		int totalChannels = 0;
 		int boundaryChannels = 0;
-		for (Integer machineID : app.partitionsMachineMap.keySet()) {
-			List<Set<Worker<?, ?>>> blobList = app.partitionsMachineMap
+		for (Integer machineID : partitionsMachineMap.keySet()) {
+			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
 					.get(machineID);
 			Set<Worker<?, ?>> allWorkers = new HashSet<>();
 			for (Set<Worker<?, ?>> blobWorkers : blobList) {
@@ -227,8 +227,9 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		}
 	}
 
-	public boolean hasCycle() {
-		Set<List<Integer>> machinePaths = buildMachinePaths();
+	public boolean hasCycle(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
+		Set<List<Integer>> machinePaths = buildMachinePaths(partitionsMachineMap);
 		for (List<Integer> path : machinePaths) {
 			Set<Integer> machines = new HashSet<Integer>();
 			for (int i = 0; i < path.size() - 1; i++) {
@@ -242,14 +243,15 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		return false;
 	}
 
-	private Set<List<Integer>> buildMachinePaths() {
+	private Set<List<Integer>> buildMachinePaths(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
 		Set<List<Integer>> machinePaths = new HashSet<List<Integer>>();
 		List<Integer> machinePath;
 		for (List<Integer> path : paths) {
 			machinePath = new LinkedList<Integer>();
 			int curMachine = -1;
 			for (Integer worker : path) {
-				int machine = getAssignedMachine(worker);
+				int machine = getAssignedMachine(worker, partitionsMachineMap);
 				if (curMachine != machine) {
 					machinePath.add(machine);
 					curMachine = machine;
@@ -260,9 +262,10 @@ public class GraphPropertyPrognosticator implements ConfigurationPrognosticator 
 		return machinePaths;
 	}
 
-	private int getAssignedMachine(int workerID) {
-		for (Integer machineID : app.partitionsMachineMap.keySet()) {
-			for (Set<Worker<?, ?>> blobWorkers : app.partitionsMachineMap
+	private int getAssignedMachine(int workerID,
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
+		for (Integer machineID : partitionsMachineMap.keySet()) {
+			for (Set<Worker<?, ?>> blobWorkers : partitionsMachineMap
 					.get(machineID)) {
 				for (Worker<?, ?> w : blobWorkers) {
 					if (Workers.getIdentifier(w) == workerID)

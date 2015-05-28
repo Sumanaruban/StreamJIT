@@ -114,7 +114,7 @@ public class Reconfigurer {
 		boolean prog = false;
 		if (newConfiguration.verificationPassed) {
 			mLogger.bPrognosticate();
-			prog = prognosticator.prognosticate(config);
+			prog = prognosticator.prognosticate(newConfiguration);
 			mLogger.ePrognosticate();
 		}
 		newConfiguration.setPrognosticationPassed(prog);
