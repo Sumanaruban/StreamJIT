@@ -49,6 +49,7 @@ import edu.mit.streamjit.impl.common.OutputBufferFactory;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.HeadChannel.HeadBuffer;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
@@ -309,7 +310,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		} else
 			this.cfg = defaultCfg;
 
-		cfgManager.newConfiguration(this.cfg);
+		NewConfiguration newConfig = cfgManager.newConfiguration(this.cfg);
+		app.setNewConfiguration(newConfig);
 	}
 
 	private <I, O> boolean verifyCfg(Configuration defaultCfg, Configuration cfg) {

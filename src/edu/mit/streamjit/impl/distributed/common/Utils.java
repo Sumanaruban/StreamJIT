@@ -54,6 +54,7 @@ import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
@@ -266,7 +267,8 @@ public class Utils {
 					prefix);
 			if (cfg != null) {
 				cfg = ConfigurationUtils.addConfigPrefix(cfg, prefix);
-				cfgManager.newConfiguration(cfg);
+				NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
+				app.setNewConfiguration(newConfig);
 			}
 		}
 

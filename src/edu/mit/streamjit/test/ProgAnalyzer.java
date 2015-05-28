@@ -19,6 +19,7 @@ import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
 import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
@@ -93,7 +94,9 @@ public class ProgAnalyzer {
 			if (time == null)
 				time = -1;
 
-			cfgManager.newConfiguration(cfg);
+			NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
+			app.setNewConfiguration(newConfig);
+
 			for (CfgProgWriter w : cfgProgList)
 				w.newCfg(cfg, time, i);
 		}
