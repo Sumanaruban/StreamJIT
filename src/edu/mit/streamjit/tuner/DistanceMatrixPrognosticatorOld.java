@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.ComparisionSummary.ParamClassSummary;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
@@ -45,20 +46,21 @@ public class DistanceMatrixPrognosticatorOld implements
 	}
 
 	@Override
-	public boolean prognosticate(Configuration config) {
-		if (config == null)
+	public boolean prognosticate(NewConfiguration newConfig) {
+		if (newConfig.configuration == null)
 			throw new IllegalArgumentException("Null Configuration");
 		if (fullParameterSummary == null) {
-			fullParameterSummary = new FullParameterSummary(config);
-			curConfig = config;
-			prevConfig = config;
-			bestConfig = config;
+			fullParameterSummary = new FullParameterSummary(
+					newConfig.configuration);
+			curConfig = newConfig.configuration;
+			prevConfig = newConfig.configuration;
+			bestConfig = newConfig.configuration;
 			writeHeader(writer, fullParameterSummary);
 			return true;
 		}
 		prevConfig = curConfig;
 		prevConfigTime = curConfigTime;
-		curConfig = config;
+		curConfig = newConfig.configuration;
 
 		prevCurSummary = ComparisionSummary.compare(prevConfig, curConfig,
 				fullParameterSummary);
