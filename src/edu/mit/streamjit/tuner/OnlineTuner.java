@@ -14,6 +14,7 @@ import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.util.ConfigurationUtils;
@@ -95,7 +96,9 @@ public class OnlineTuner implements Runnable {
 				Configuration config = newCfg(round, cfgJson);
 				mLogger.eEvent("newCfg");
 				mLogger.bEvent("reconfigure");
-				ret = configurer.reconfigure(config);
+				NewConfiguration newconfig = configurer
+						.newConfiguration(config);
+				ret = configurer.reconfigure(newconfig);
 				mLogger.eEvent("reconfigure");
 				long time;
 				if (ret.second > 0)
@@ -186,7 +189,8 @@ public class OnlineTuner implements Runnable {
 		if (needTermination) {
 			configurer.terminate();
 		} else {
-			Pair<Boolean, Integer> ret = configurer.reconfigure(finalcfg);
+			NewConfiguration newconfig = configurer.newConfiguration(finalcfg);
+			Pair<Boolean, Integer> ret = configurer.reconfigure(newconfig);
 			if (ret.first && ret.second > 0)
 				System.out
 						.println("Application is running forever with the final configuration.");

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
@@ -172,7 +173,8 @@ public class Verifier implements Runnable {
 			for (int i = 0; i < count; i++) {
 				long time;
 				configurer.logger.newConfiguration(cfgPrefix);
-				ret = configurer.reconfigure(cfg);
+				NewConfiguration newconfig = configurer.newConfiguration(cfg);
+				ret = configurer.reconfigure(newconfig);
 				if (ret.second > 0)
 					time = configurer.getFixedOutputTime(0);
 				else {
