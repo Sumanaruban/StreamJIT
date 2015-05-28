@@ -75,7 +75,7 @@ public class Reconfigurer {
 			return new Pair<Boolean, Integer>(false, -2);
 
 		mLogger.bEvent("cfgManagerNewcfg");
-		boolean validCfg = cfgManager.newConfiguration(config);
+		boolean validCfg = cfgManager.newConfiguration(config).verificationPassed;
 		mLogger.eEvent("cfgManagerNewcfg");
 		if (!validCfg)
 			return new Pair<Boolean, Integer>(true, -3);
