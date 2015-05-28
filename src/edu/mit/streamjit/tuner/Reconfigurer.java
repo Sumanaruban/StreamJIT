@@ -71,22 +71,16 @@ public class Reconfigurer {
 	 * @param cfgJson
 	 * @return
 	 */
-	public Pair<Boolean, Integer> reconfigure(Configuration config) {
+	public Pair<Boolean, Integer> reconfigure(NewConfiguration newConfig) {
 		int reason = 1;
 
 		if (manager.getStatus() == AppStatus.STOPPED)
 			return new Pair<Boolean, Integer>(false, -2);
 
-		mLogger.bEvent("cfgManagerNewcfg");
-		NewConfiguration newConfiguration = cfgManager.newConfiguration(config);
-		mLogger.eEvent("cfgManagerNewcfg");
-		if (!newConfiguration.verificationPassed)
+		if (!newConfig.verificationPassed)
 			return new Pair<Boolean, Integer>(true, -3);
 
-		mLogger.bEvent("prognosticate");
-		boolean prog = prognosticator.prognosticate(config);
-		mLogger.eEvent("prognosticate");
-		if (!prog)
+		if (!newConfig.isPrognosticationPassed())
 			return new Pair<Boolean, Integer>(true, -4);
 
 		mLogger.eEvent("serialcfg");
@@ -99,7 +93,7 @@ public class Reconfigurer {
 				return new Pair<Boolean, Integer>(false, -5);
 
 			drainer.setBlobGraph(app.blobGraph);
-			int multiplier = getMultiplier(config);
+			int multiplier = getMultiplier(newConfig.configuration);
 			mLogger.bEvent("managerReconfigure");
 			boolean reconfigure = manager.reconfigure(multiplier);
 			mLogger.eEvent("managerReconfigure");
@@ -112,6 +106,21 @@ public class Reconfigurer {
 			reason = -7;
 		}
 		return new Pair<Boolean, Integer>(true, reason);
+	}
+
+	public NewConfiguration newConfiguration(Configuration config) {
+		mLogger.bCfgManagerNewcfg();
+		NewConfiguration newConfiguration = cfgManager.newConfiguration(config);
+		mLogger.eCfgManagerNewcfg();
+
+		boolean prog = false;
+		if (newConfiguration.verificationPassed) {
+			mLogger.bPrognosticate();
+			prog = prognosticator.prognosticate(config);
+			mLogger.ePrognosticate();
+		}
+		newConfiguration.setPrognosticationPassed(prog);
+		return newConfiguration;
 	}
 
 	/**
