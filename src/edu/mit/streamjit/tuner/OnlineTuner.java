@@ -255,6 +255,7 @@ public class OnlineTuner implements Runnable {
 					if (cfgJson == null) {
 						openTunerStopped.set(true);
 						stopFlag.set(true);
+						break;
 					} else if (cfgJson.equals("Completed")) {
 						cfgJson = tuner.readLine();
 						finalConfig = newcfgJson(cfgJson);
