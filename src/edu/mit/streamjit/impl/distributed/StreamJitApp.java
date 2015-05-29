@@ -21,13 +21,9 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,43 +39,28 @@ import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.AbstractReadOnlyBuffer;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
-import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
-import edu.mit.streamjit.impl.common.Configuration.IntParameter;
-import edu.mit.streamjit.impl.common.Configuration.PartitionParameter;
-import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
 import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Portals;
 import edu.mit.streamjit.impl.common.VerifyStreamGraph;
 import edu.mit.streamjit.impl.common.Workers;
-import edu.mit.streamjit.impl.common.drainer.BlobGraph;
-import edu.mit.streamjit.impl.compiler2.Compiler2BlobFactory;
-import edu.mit.streamjit.impl.concurrent.ConcurrentChannelFactory;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
-import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
-import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.impl.interp.ChannelFactory;
 import edu.mit.streamjit.impl.interp.Interpreter;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.tuner.EventTimeLogger.FileEventTimeLogger;
-import edu.mit.streamjit.tuner.OnlineTuner;
 import edu.mit.streamjit.util.Pair;
 
 /**
- * This class contains all information about the current streamJit application
- * including {@link BlobGraph}, current {@link Configuration},
- * partitionsMachineMap1, and etc. Three main classes,
- * {@link DistributedStreamCompiler}, {@link Controller} and {@link OnlineTuner}
- * will be using this class of their functional purpose.
+ * This class contains all static information about the current StreamJit
+ * application. {@link AppInstance} contains all dynamic information of the
+ * current streamJit application.
  * <p>
- * All member variables of this class are public, because this class is supposed
- * to be used by only trusted classes.
+ * This class is immutable.
  * </p>
  * 
  * @author Sumanan sumanan@mit.edu
@@ -102,32 +83,13 @@ public class StreamJitApp<I, O> {
 
 	final OneToOneElement<I, O> streamGraph;
 
-	public BlobGraph blobGraph;
-
-	public Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap;
-
 	public ImmutableMap<Token, Buffer> bufferMap;
 
 	public final List<MessageConstraint> constraints;
 
-	public DrainData drainData = null;
-
 	public final Visualizer visualizer;
 
 	public final EventTimeLogger eLogger;
-
-	/**
-	 * Keeps track of assigned machine Ids of each blob. This information is
-	 * need for draining. TODO: If possible use a better solution.
-	 */
-	public Map<Token, Integer> blobtoMachineMap;
-
-	/**
-	 * The latest valid {@link Configuration} that is received from OpenTuner.
-	 * {@link BlobFactory#getDefaultConfiguration(java.util.Set) generates the
-	 * initial configuration}.
-	 */
-	private Configuration configuration = null;
 
 	public StreamJitApp(OneToOneElement<I, O> streamGraph) {
 		this.streamGraph = streamGraph;
@@ -149,100 +111,6 @@ public class StreamJitApp<I, O> {
 			return new FileEventTimeLogger(name, "controller");
 		else
 			return new EventTimeLogger.NoEventTimeLogger();
-	}
-
-	/**
-	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
-	 * any cycles among blobs. If it is a valid partitionsMachineMap, (i.e., no
-	 * cycles among the blobs), then this objects member variables
-	 * {@link StreamJitApp#blobGraph} and
-	 * {@link StreamJitApp#partitionsMachineMap} will be assigned according to
-	 * the new configuration, no changes otherwise.
-	 * 
-	 * @param partitionsMachineMap
-	 * 
-	 * @return true iff no cycles among blobs
-	 */
-	public boolean newPartitionMap(
-			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
-		BlobGraph bg;
-		try {
-			bg = verifyConfiguration(partitionsMachineMap);
-		} catch (StreamCompilationFailedException ex) {
-			return false;
-		}
-		this.blobGraph = bg;
-		this.partitionsMachineMap = partitionsMachineMap;
-		return true;
-	}
-
-	/**
-	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
-	 * any cycles among blobs. If it is a valid partitionsMachineMap, (i.e., no
-	 * cycles among the blobs), then returns the built {@link BlobGraph}.
-	 * 
-	 * @param partitionsMachineMap
-	 * 
-	 * @throws StreamCompilationFailedException
-	 *             if any cycles found among blobs.
-	 */
-	public BlobGraph verifyConfiguration(
-			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
-
-		if (!Options.singleNodeOnline) {
-			// printPartition(partitionsMachineMap);
-		}
-
-		List<Set<Worker<?, ?>>> partitionList = new ArrayList<>();
-		for (List<Set<Worker<?, ?>>> lst : partitionsMachineMap.values()) {
-			partitionList.addAll(lst);
-		}
-
-		BlobGraph bg = null;
-		try {
-			bg = new BlobGraph(partitionList);
-		} catch (StreamCompilationFailedException ex) {
-			System.err.println("Cycles found in the worker->blob assignment");
-			printPartition(partitionsMachineMap);
-			throw ex;
-		}
-		return bg;
-	}
-
-	private void printPartition(
-			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
-		for (int machine : partitionsMachineMap.keySet()) {
-			System.err.print("\nMachine - " + machine);
-			for (Set<Worker<?, ?>> blobworkers : partitionsMachineMap
-					.get(machine)) {
-				System.err.print("\n\tBlob worker set : ");
-				for (Worker<?, ?> w : blobworkers) {
-					System.err.print(Workers.getIdentifier(w) + " ");
-				}
-			}
-		}
-		System.err.println();
-	}
-
-	/**
-	 * From aggregated drain data, get subset of it which is relevant to a
-	 * particular machine. Builds and returns machineID to DrainData map.
-	 * 
-	 * @return Drain data mapped to machines.
-	 */
-	public ImmutableMap<Integer, DrainData> getDrainData() {
-		ImmutableMap.Builder<Integer, DrainData> builder = ImmutableMap
-				.builder();
-
-		if (this.drainData != null) {
-			for (Integer machineID : partitionsMachineMap.keySet()) {
-				List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
-						.get(machineID);
-				DrainData dd = drainData.subset(getWorkerIds(blobList));
-				builder.put(machineID, dd);
-			}
-		}
-		return builder.build();
 	}
 
 	/**
@@ -301,37 +169,6 @@ public class StreamJitApp<I, O> {
 				bufMapBuilder.put(en);
 		}
 		return bufMapBuilder.build();
-	}
-
-	private Set<Integer> getWorkerIds(List<Set<Worker<?, ?>>> blobList) {
-		Set<Integer> workerIds = new HashSet<>();
-		for (Set<Worker<?, ?>> blobworkers : blobList) {
-			for (Worker<?, ?> w : blobworkers) {
-				workerIds.add(Workers.getIdentifier(w));
-			}
-		}
-		return workerIds;
-	}
-
-	/**
-	 * @return the configuration
-	 */
-	public Configuration getConfiguration() {
-		return configuration;
-	}
-
-	/**
-	 * @param newConfiguration
-	 */
-	public void setNewConfiguration(NewConfiguration newConfiguration) {
-		if (!newConfiguration.verificationPassed)
-			throw new IllegalStateException(
-					"Invalid newConfiguration. newConfiguration.verificationPassed=false.");
-		this.blobGraph = newConfiguration.blobGraph;
-		this.partitionsMachineMap = newConfiguration.partitionsMachineMap;
-		this.configuration = newConfiguration.configuration;
-		visualizer.newConfiguration(configuration);
-		visualizer.newPartitionMachineMap(partitionsMachineMap);
 	}
 
 	private Pair<Worker<I, ?>, Worker<?, O>> visit(OneToOneElement<I, O> stream) {
@@ -403,76 +240,5 @@ public class StreamJitApp<I, O> {
 						topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
 		return builder.build();
-	}
-
-	/**
-	 * For every reconfiguration, this method may be called by an appropriate
-	 * class to get new configuration information that can be sent to all
-	 * participating {@link StreamNode}s. Mainly this configuration contains
-	 * partition information.
-	 * 
-	 * @return new partition information
-	 */
-	public Configuration getDynamicConfiguration() {
-		Configuration.Builder builder = Configuration.builder();
-
-		int maxCores = maxCores();
-
-		Map<Integer, Integer> machineCoreMap = new HashMap<>();
-		for (Entry<Integer, List<Set<Worker<?, ?>>>> machine : partitionsMachineMap
-				.entrySet()) {
-			machineCoreMap.put(machine.getKey(), machine.getValue().size()
-					* maxCores);
-		}
-
-		PartitionParameter.Builder partParam = PartitionParameter.builder(
-				GlobalConstants.PARTITION, machineCoreMap);
-
-		BlobFactory intFactory = new Interpreter.InterpreterBlobFactory();
-		BlobFactory comp2Factory = new Compiler2BlobFactory();
-		partParam.addBlobFactory(intFactory);
-		partParam.addBlobFactory(comp2Factory);
-		blobtoMachineMap = new HashMap<>();
-
-		BlobFactory bf = Options.useCompilerBlob ? comp2Factory : intFactory;
-		for (Integer machineID : partitionsMachineMap.keySet()) {
-			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
-					.get(machineID);
-			for (Set<Worker<?, ?>> blobWorkers : blobList) {
-				// TODO: One core per blob. Need to change this.
-				partParam.addBlob(machineID, maxCores, bf, blobWorkers);
-
-				// TODO: Temp fix to build.
-				Token t = Utils.getblobID(blobWorkers);
-				blobtoMachineMap.put(t, machineID);
-			}
-		}
-
-		builder.addParameter(partParam.build());
-		if (Options.useCompilerBlob)
-			builder.addSubconfiguration("blobConfigs", getConfiguration());
-		else
-			builder.addSubconfiguration("blobConfigs", getInterpreterConfg());
-		return builder.build();
-	}
-
-	private Configuration getInterpreterConfg() {
-		Configuration.Builder builder = Configuration.builder();
-		List<ChannelFactory> universe = Arrays
-				.<ChannelFactory> asList(new ConcurrentChannelFactory());
-		SwitchParameter<ChannelFactory> cfParameter = new SwitchParameter<ChannelFactory>(
-				"channelFactory", ChannelFactory.class, universe.get(0),
-				universe);
-
-		builder.addParameter(cfParameter);
-		return builder.build();
-	}
-
-	private int maxCores() {
-		IntParameter maxCoreParam = configuration.getParameter("maxNumCores",
-				IntParameter.class);
-		if (maxCoreParam != null)
-			return maxCoreParam.getValue();
-		return Options.maxNumCores;
 	}
 }

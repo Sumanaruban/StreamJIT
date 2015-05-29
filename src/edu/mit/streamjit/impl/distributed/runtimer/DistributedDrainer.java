@@ -53,7 +53,7 @@ public class DistributedDrainer extends AbstractDrainer {
 
 	@Override
 	protected void drain(Token blobID, DrainType drainType) {
-		manager.drain(blobID, drainType);
+		manager.drain(blobID, drainType, appinst);
 	}
 
 	@Override

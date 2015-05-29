@@ -166,12 +166,12 @@ public class StreamJitAppManager {
 		return apStsPro;
 	}
 
-	public void drain(Token blobID, DrainType drainType) {
+	public void drain(Token blobID, DrainType drainType, AppInstance appinst) {
 		// System.out.println("Drain requested to blob " + blobID);
-		if (!app.blobtoMachineMap.containsKey(blobID))
+		if (!appinst.blobtoMachineMap.containsKey(blobID))
 			throw new IllegalArgumentException(blobID
 					+ " not found in the blobtoMachineMap");
-		int nodeID = app.blobtoMachineMap.get(blobID);
+		int nodeID = appinst.blobtoMachineMap.get(blobID);
 		controller.send(nodeID,
 				new CTRLRDrainElement.DoDrain(blobID, drainType));
 	}
@@ -266,20 +266,20 @@ public class StreamJitAppManager {
 		return isRunning;
 	}
 
-	public boolean reconfigure(int multiplier) {
+	public boolean reconfigure(int multiplier, AppInstance appinst) {
 		reset();
-		Configuration.Builder builder = Configuration.builder(app
+		Configuration.Builder builder = Configuration.builder(appinst
 				.getDynamicConfiguration());
 
-		conInfoMap = conManager.conInfoMap(app.getConfiguration(),
-				app.partitionsMachineMap, app.source, app.sink);
+		conInfoMap = conManager.conInfoMap(appinst.getConfiguration(),
+				appinst.partitionsMachineMap, app.source, app.sink);
 
 		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
 
 		Configuration cfg = builder.build();
 		String jsonStirng = cfg.toJson();
 
-		ImmutableMap<Integer, DrainData> drainDataMap = app.getDrainData();
+		ImmutableMap<Integer, DrainData> drainDataMap = appinst.getDrainData();
 
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
@@ -289,9 +289,9 @@ public class StreamJitAppManager {
 			controller.send(nodeID, json);
 		}
 
-		setupHeadTail(conInfoMap, app.bufferMap, multiplier);
+		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
 
-		sendDeadlockfreeBufSizes();
+		sendDeadlockfreeBufSizes(appinst);
 
 		boolean isCompiled;
 		if (apStsPro.compilationError)
@@ -310,7 +310,7 @@ public class StreamJitAppManager {
 		}
 
 		if (profiler != null) {
-			String cfgPrefix = ConfigurationUtils.getConfigPrefix(app
+			String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
 					.getConfiguration());
 			profiler.logger().newConfiguration(cfgPrefix);
 		}
@@ -320,11 +320,11 @@ public class StreamJitAppManager {
 		return isRunning;
 	}
 
-	private void sendDeadlockfreeBufSizes() {
+	private void sendDeadlockfreeBufSizes(AppInstance appinst) {
 		ciP.waitforBufSizes();
 		if (!apStsPro.compilationError) {
 			ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-					.finalInputBufSizes(ciP.bufSizes, app);
+					.finalInputBufSizes(ciP.bufSizes, appinst);
 			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 					finalInputBuf);
 			controller.sendToAll(me);
@@ -365,7 +365,8 @@ public class StreamJitAppManager {
 	 * @param bufferMap
 	 */
 	private void setupHeadTail(Map<Token, ConnectionInfo> conInfoMap,
-			ImmutableMap<Token, Buffer> bufferMap, int multiplier) {
+			ImmutableMap<Token, Buffer> bufferMap, int multiplier,
+			AppInstance appinst) {
 
 		ConnectionInfo headconInfo = conInfoMap.get(headToken);
 		assert headconInfo != null : "No head connection info exists in conInfoMap";
@@ -402,17 +403,17 @@ public class StreamJitAppManager {
 
 		int skipCount = Math.max(Options.outputCount, multiplier * 5);
 		tailChannel = tailChannel(bufferMap.get(tailToken), tailconInfo,
-				skipCount);
+				skipCount, appinst);
 	}
 
 	private TailChannel tailChannel(Buffer buffer, ConnectionInfo conInfo,
-			int skipCount) {
+			int skipCount, AppInstance appinst) {
 		String appName = app.name;
 		int steadyCount = Options.outputCount;
 		int debugLevel = 0;
 		String bufferTokenName = "tailChannel - " + tailToken.toString();
 		ConnectionProvider conProvider = controller.getConProvider();
-		String cfgPrefix = ConfigurationUtils.getConfigPrefix(app
+		String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
 				.getConfiguration());
 		switch (Options.tailChannel) {
 			case 1 :

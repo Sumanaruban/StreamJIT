@@ -51,6 +51,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph.BlobNode;
+import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
@@ -102,6 +103,8 @@ public abstract class AbstractDrainer {
 	 */
 	protected BlobGraph blobGraph;
 
+	protected AppInstance appinst;
+
 	/**
 	 * Latch to block the external thread that calls
 	 * {@link CompiledStream#awaitDrained()}.
@@ -148,9 +151,10 @@ public abstract class AbstractDrainer {
 	 * 
 	 * @param blobGraph
 	 */
-	public final void setBlobGraph(BlobGraph blobGraph) {
+	public final void setAppInstance(AppInstance appinst) {
 		if (state == DrainerState.NODRAINING) {
-			this.blobGraph = blobGraph;
+			this.blobGraph = appinst.blobGraph;
+			this.appinst = appinst;
 			unDrainedNodes = new AtomicInteger(blobGraph.getBlobIds().size());
 			noOfDrainData = new AtomicInteger(blobGraph.getBlobIds().size());
 			blobGraph.setDrainer(this);
@@ -311,7 +315,7 @@ public abstract class AbstractDrainer {
 	public final void awaitDrainData() throws InterruptedException {
 		if (Options.useDrainData) {
 			drainDataLatch.await();
-			app.drainData = getDrainData();
+			appinst.drainData = getDrainData();
 		}
 	}
 

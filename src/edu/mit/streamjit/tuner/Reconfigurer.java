@@ -4,10 +4,11 @@ import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
+import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
@@ -89,11 +90,11 @@ public class Reconfigurer {
 			if (!intermediateDraining)
 				return new Pair<Boolean, Integer>(false, -5);
 
-			app.setNewConfiguration(newConfig);
-			drainer.setBlobGraph(app.blobGraph);
+			AppInstance appinst = AppInstance.newConfiguration(app, newConfig);
+			drainer.setAppInstance(appinst);
 			int multiplier = getMultiplier(newConfig.configuration);
 			mLogger.bEvent("managerReconfigure");
-			boolean reconfigure = manager.reconfigure(multiplier);
+			boolean reconfigure = manager.reconfigure(multiplier, appinst);
 			mLogger.eEvent("managerReconfigure");
 			if (!reconfigure)
 				reason = -6;

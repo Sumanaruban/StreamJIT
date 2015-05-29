@@ -13,8 +13,8 @@ import com.google.common.base.Stopwatch;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
-import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.util.ConfigurationUtils;
@@ -37,11 +37,13 @@ public class OnlineTuner implements Runnable {
 	private final ConfigurationPrognosticator prognosticator;
 	private final EventTimeLogger mLogger;
 	private final Reconfigurer configurer;
+	private final Configuration defaultCfg;
 	private long currentBestTime;
 	private Configuration bestCfg;
 	private final OpenTunerListener listener;
 
-	public OnlineTuner(Reconfigurer configurer, boolean needTermination) {
+	public OnlineTuner(Reconfigurer configurer, boolean needTermination,
+			Configuration defaultCfg) {
 		this.configurer = configurer;
 		this.app = configurer.app;
 		this.cfgManager = configurer.cfgManager;
@@ -52,6 +54,7 @@ public class OnlineTuner implements Runnable {
 		this.mLogger = app.eLogger;
 		this.currentBestTime = Integer.MAX_VALUE;
 		this.listener = new OpenTunerListener(tuner, app.name, configurer);
+		this.defaultCfg = defaultCfg;
 	}
 
 	@Override
@@ -155,7 +158,7 @@ public class OnlineTuner implements Runnable {
 		tuner.writeLine(new Integer(Options.tuningRounds).toString());
 
 		tuner.writeLine("confg");
-		tuner.writeLine(Jsonifiers.toJson(app.getConfiguration()).toString());
+		tuner.writeLine(Jsonifiers.toJson(defaultCfg).toString());
 		new Thread(listener).start();
 	}
 
