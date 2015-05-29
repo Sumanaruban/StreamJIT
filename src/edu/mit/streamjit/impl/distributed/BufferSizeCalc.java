@@ -57,7 +57,7 @@ public class BufferSizeCalc {
 	 * {@link #sendNewbufSizes()} doesn't guarantee deadlock freeness.
 	 */
 	public static GraphSchedule finalInputBufSizes(
-			Map<Integer, BufferSizes> bufSizes, StreamJitApp<?, ?> app) {
+			Map<Integer, BufferSizes> bufSizes, AppInstance app) {
 
 		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
@@ -170,7 +170,7 @@ public class BufferSizeCalc {
 	 * Calculates the total graph's steady state input and output.
 	 */
 	private static void steadyStateRatios(Map<Integer, BufferSizes> bufSizes,
-			StreamJitApp<?, ?> app) {
+			AppInstance app) {
 
 		Token globalOutToken = null;
 		Token globalInToken = null;
@@ -289,7 +289,7 @@ public class BufferSizeCalc {
 	 * [2014-03-01]
 	 */
 	private void sendNewbufSizes(Map<Integer, BufferSizes> bufSizes,
-			StreamJitApp<?, ?> app, Controller controller) {
+			AppInstance app, Controller controller) {
 		Map<Token, Integer> minInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minOutputBufCapacity = new HashMap<>();
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();

@@ -71,7 +71,7 @@ public class ConfigurationManager {
 				.partitionMap(config);
 		BlobGraph bg;
 		try {
-			bg = app.verifyConfiguration(partitionsMachineMap);
+			bg = AppInstance.verifyConfiguration(partitionsMachineMap);
 		} catch (StreamCompilationFailedException ex) {
 			return new NewConfiguration(null, partitionsMachineMap, config,
 					false);
