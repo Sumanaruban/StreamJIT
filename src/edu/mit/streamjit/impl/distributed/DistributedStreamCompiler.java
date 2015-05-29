@@ -144,19 +144,19 @@ public class DistributedStreamCompiler implements StreamCompiler {
 				partitionManager);
 		ConnectionManager conManager = connectionManager(controller.controllerNodeID);
 
-		setConfiguration(controller, app, partitionManager, conManager,
-				cfgManager);
+		AppInstance appinst = setConfiguration(controller, app,
+				partitionManager, conManager, cfgManager);
 
 		TimeLogger logger = new TimeLoggers.FileTimeLogger(app.name);
 		StreamJitAppManager manager = new StreamJitAppManager(controller, app,
 				conManager, logger);
 		final AbstractDrainer drainer = new DistributedDrainer(app, logger,
 				manager);
-		drainer.setBlobGraph(app.blobGraph);
+		drainer.setAppInstance(appinst);
 
 		boolean needTermination = setBufferMap(input, output, drainer, app);
 
-		manager.reconfigure(1);
+		manager.reconfigure(1, appinst);
 		CompiledStream cs = new DistributedCompiledStream(drainer);
 
 		if (Options.tune > 0 && this.cfg != null) {
@@ -238,14 +238,16 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		return partitionsMachineMap;
 	}
 
-	private <I, O> void manualPartition(StreamJitApp<I, O> app) {
+	private <I, O> AppInstance manualPartition(StreamJitApp<I, O> app) {
 		Integer[] machineIds = new Integer[this.noOfnodes - 1];
 		for (int i = 0; i < machineIds.length; i++) {
 			machineIds[i] = i + 1;
 		}
 		Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap = getMachineWorkerMap(
 				machineIds, app.streamGraph, app.source, app.sink);
-		app.newPartitionMap(partitionsMachineMap);
+		AppInstance appinst = AppInstance.newPartitionMap(app,
+				partitionsMachineMap);
+		return appinst;
 	}
 
 	/**
@@ -289,7 +291,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		return needTermination;
 	}
 
-	private <I, O> void setConfiguration(Controller controller,
+	private <I, O> AppInstance setConfiguration(Controller controller,
 			StreamJitApp<I, O> app, PartitionManager partitionManager,
 			ConnectionManager conManager, ConfigurationManager cfgManager) {
 		BlobFactory bf = new DistributedBlobFactory(partitionManager,
@@ -311,7 +313,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 			this.cfg = defaultCfg;
 
 		NewConfiguration newConfig = cfgManager.newConfiguration(this.cfg);
-		app.setNewConfiguration(newConfig);
+		return AppInstance.newConfiguration(app, newConfig);
 	}
 
 	private <I, O> boolean verifyCfg(Configuration defaultCfg, Configuration cfg) {
@@ -324,7 +326,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	private void tuneOrVerify(Reconfigurer configurer, boolean needTermination) {
 		Runnable r;
 		if (Options.tune == 1) {
-			r = new OnlineTuner(configurer, needTermination);
+			r = new OnlineTuner(configurer, needTermination, this.cfg);
 			new Thread(r, "OnlineTuner").start();
 		} else if (Options.tune == 2) {
 			r = new Verifier(configurer);
