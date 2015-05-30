@@ -44,6 +44,7 @@ import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.NetworkInfo;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.CompilationTime;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.util.ConfigurationUtils;
@@ -113,7 +114,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		} else {
 			try {
 				streamNode.controllerConnection
-						.writeObject(AppStatus.COMPILATION_ERROR);
+						.writeObject(new SNMessageElementHolder(
+								AppStatus.COMPILATION_ERROR, 1));
 				sendEmptyBuffersizes();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -159,7 +161,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		CompilationTime ct = new CompilationTime(blobID,
 				sw.elapsed(TimeUnit.MILLISECONDS));
 		try {
-			streamNode.controllerConnection.writeObject(ct);
+			streamNode.controllerConnection
+					.writeObject(new SNMessageElementHolder(ct, 1));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -185,7 +188,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			System.out.println("Jar file not found....");
 			try {
 				streamNode.controllerConnection
-						.writeObject(Error.FILE_NOT_FOUND);
+						.writeObject(new SNMessageElementHolder(
+								Error.FILE_NOT_FOUND, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -228,7 +232,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			// TODO: Try catch inside a catch block. Good practice???
 			try {
 				streamNode.controllerConnection
-						.writeObject(Error.WORKER_NOT_FOUND);
+						.writeObject(new SNMessageElementHolder(
+								Error.WORKER_NOT_FOUND, 1));
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -247,7 +252,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			// TODO: Try catch inside a catch block. Good practice???
 			try {
 				streamNode.controllerConnection
-						.writeObject(Error.WORKER_NOT_FOUND);
+						.writeObject(new SNMessageElementHolder(
+								Error.WORKER_NOT_FOUND, 1));
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -364,7 +370,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				minSteadyOutputBufCapacityBuilder.build());
 
 		try {
-			streamNode.controllerConnection.writeObject(bufSizes);
+			streamNode.controllerConnection
+					.writeObject(new SNMessageElementHolder(bufSizes, 1));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
