@@ -542,8 +542,9 @@ class BlobExecuter {
 					+ "-draining", time);
 			try {
 				blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(new SNTimeInfo.DrainingTime(
-								blobExec.blobID, time));
+						.writeObject(new SNMessageElementHolder(
+								new SNTimeInfo.DrainingTime(blobExec.blobID,
+										time), 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
