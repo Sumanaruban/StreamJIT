@@ -18,6 +18,7 @@ import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.ConcurrentArrayLocalBuffer;
 import edu.mit.streamjit.impl.distributed.node.LocalBuffer.LocalBuffer1;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
@@ -308,7 +309,8 @@ public interface BufferManager {
 					minSteadyOutputBufCapacityBuilder.build());
 
 			try {
-				streamNode.controllerConnection.writeObject(bufSizes);
+				streamNode.controllerConnection
+						.writeObject(new SNMessageElementHolder(bufSizes, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -35,6 +35,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.affinity.Affinity;
@@ -281,7 +282,7 @@ class BlobExecuter {
 		SNMessageElement drained = new SNDrainElement.Drained(blobID);
 		try {
 			this.blobsManagerImpl.streamNode.controllerConnection
-					.writeObject(drained);
+					.writeObject(new SNMessageElementHolder(drained, 1));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -296,7 +297,7 @@ class BlobExecuter {
 
 			try {
 				this.blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(me);
+						.writeObject(new SNMessageElementHolder(me, 1));
 				// System.out.println(blobID + " DrainData has been sent");
 				drainState = 6;
 
@@ -532,7 +533,8 @@ class BlobExecuter {
 					else if (be.drainState == 0) {
 						try {
 							blobsManagerImpl.streamNode.controllerConnection
-									.writeObject(AppStatus.ERROR);
+									.writeObject(new SNMessageElementHolder(
+											AppStatus.ERROR, 1));
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}

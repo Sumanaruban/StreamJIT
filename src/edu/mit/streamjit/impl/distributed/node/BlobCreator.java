@@ -24,6 +24,7 @@ import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter.BlobSpecifier;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.CompilationTime;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 
@@ -116,7 +117,8 @@ public class BlobCreator {
 		CompilationTime ct = new CompilationTime(blobID,
 				sw.elapsed(TimeUnit.MILLISECONDS));
 		try {
-			streamNode.controllerConnection.writeObject(ct);
+			streamNode.controllerConnection
+					.writeObject(new SNMessageElementHolder(ct, 1));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

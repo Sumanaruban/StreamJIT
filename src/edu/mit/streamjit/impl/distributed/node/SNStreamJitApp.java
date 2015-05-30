@@ -20,6 +20,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.NetworkInfo;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.util.json.Jsonifiers;
 
 /**
@@ -111,7 +112,8 @@ public class SNStreamJitApp {
 			// TODO: Try catch inside a catch block. Good practice???
 			try {
 				streamNode.controllerConnection
-						.writeObject(Error.WORKER_NOT_FOUND);
+						.writeObject(new SNMessageElementHolder(
+								Error.WORKER_NOT_FOUND, 1));
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -145,7 +147,8 @@ public class SNStreamJitApp {
 			System.out.println("Jar file not found....");
 			try {
 				streamNode.controllerConnection
-						.writeObject(Error.FILE_NOT_FOUND);
+						.writeObject(new SNMessageElementHolder(
+								Error.FILE_NOT_FOUND, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -164,7 +167,8 @@ public class SNStreamJitApp {
 			// TODO: Try catch inside a catch block. Good practice???
 			try {
 				streamNode.controllerConnection
-						.writeObject(Error.WORKER_NOT_FOUND);
+						.writeObject(new SNMessageElementHolder(
+								Error.WORKER_NOT_FOUND, 1));
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();

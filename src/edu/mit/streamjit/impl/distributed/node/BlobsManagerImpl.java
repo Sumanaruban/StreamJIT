@@ -54,14 +54,14 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Utils;
-import edu.mit.streamjit.impl.distributed.node.BufferManager.SNLocalBufferManager;
+import edu.mit.streamjit.impl.distributed.node.BufferManager.GlobalBufferManager;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData.BlobBufferStatus;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData.BufferStatus;
 import edu.mit.streamjit.impl.distributed.profiler.StreamNodeProfiler;
-import edu.mit.streamjit.impl.distributed.node.BufferManager.GlobalBufferManager;
 
 /**
  * {@link BlobsManagerImpl} responsible to run all {@link Blob}s those are
@@ -347,7 +347,9 @@ public class BlobsManagerImpl implements BlobsManager {
 			stop();
 			System.out.println("StraemJit app stopped...");
 			try {
-				streamNode.controllerConnection.writeObject(AppStatus.STOPPED);
+				streamNode.controllerConnection
+						.writeObject(new SNMessageElementHolder(
+								AppStatus.STOPPED, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -567,7 +569,9 @@ public class BlobsManagerImpl implements BlobsManager {
 			createBEs(blobSet);
 
 			try {
-				streamNode.controllerConnection.writeObject(AppStatus.COMPILED);
+				streamNode.controllerConnection
+						.writeObject(new SNMessageElementHolder(
+								AppStatus.COMPILED, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

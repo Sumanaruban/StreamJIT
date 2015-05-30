@@ -18,6 +18,7 @@ import edu.mit.streamjit.impl.distributed.common.ConfigurationString.Configurati
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BlobCreator.CreationLogic;
 import edu.mit.streamjit.impl.distributed.node.BlobCreator.DrainDataCreationLogic;
@@ -100,7 +101,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				minSteadyOutputBufCapacityBuilder.build());
 
 		try {
-			streamNode.controllerConnection.writeObject(bufSizes);
+			streamNode.controllerConnection
+					.writeObject(new SNMessageElementHolder(bufSizes, 1));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -140,7 +142,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		} else {
 			try {
 				streamNode.controllerConnection
-						.writeObject(AppStatus.COMPILATION_ERROR);
+						.writeObject(new SNMessageElementHolder(
+								AppStatus.COMPILATION_ERROR, 1));
 				sendEmptyBuffersizes();
 			} catch (IOException e) {
 				e.printStackTrace();
