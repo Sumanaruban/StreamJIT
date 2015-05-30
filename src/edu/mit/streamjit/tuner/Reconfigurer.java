@@ -90,7 +90,7 @@ public class Reconfigurer {
 			if (!intermediateDraining)
 				return new Pair<Boolean, Integer>(false, -5);
 
-			AppInstance appinst = AppInstance.newConfiguration(app, newConfig);
+			AppInstance appinst = app.newConfiguration(newConfig);
 			drainer.setAppInstance(appinst);
 			int multiplier = getMultiplier(newConfig.configuration);
 			mLogger.bEvent("managerReconfigure");
