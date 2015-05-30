@@ -70,6 +70,8 @@ import edu.mit.streamjit.util.Pair;
  */
 public class StreamJitApp<I, O> {
 
+	private int appInstUniqueIDGen = 0;
+
 	/**
 	 * Since this is final, lets make public
 	 */
@@ -248,10 +250,10 @@ public class StreamJitApp<I, O> {
 		if (!newConfiguration.verificationPassed)
 			throw new IllegalStateException(
 					"Invalid newConfiguration. newConfiguration.verificationPassed=false.");
-		return new AppInstance(this, newConfiguration.partitionsMachineMap,
+		return new AppInstance(this, appInstUniqueIDGen++,
+				newConfiguration.partitionsMachineMap,
 				newConfiguration.configuration, newConfiguration.blobGraph);
 	}
-
 	/**
 	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
 	 * any cycles among blobs. If it is a valid partitionsMachineMap, (i.e., no
@@ -269,6 +271,7 @@ public class StreamJitApp<I, O> {
 		} catch (StreamCompilationFailedException ex) {
 			return null;
 		}
-		return new AppInstance(this, partitionsMachineMap, null, bg);
+		return new AppInstance(this, appInstUniqueIDGen++,
+				partitionsMachineMap, null, bg);
 	}
 }

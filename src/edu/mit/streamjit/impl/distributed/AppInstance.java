@@ -46,6 +46,8 @@ import edu.mit.streamjit.impl.interp.Interpreter;
  */
 public class AppInstance {
 
+	public final int id;
+
 	public final StreamJitApp<?, ?> app;
 
 	public final BlobGraph blobGraph;
@@ -114,9 +116,10 @@ public class AppInstance {
 		System.err.println();
 	}
 
-	AppInstance(StreamJitApp<?, ?> app,
+	AppInstance(StreamJitApp<?, ?> app, int id,
 			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
 			Configuration configuration, BlobGraph blobGraph) {
+		this.id = id;
 		this.app = app;
 		this.partitionsMachineMap = ImmutableMap.copyOf(partitionsMachineMap);
 		this.blobGraph = blobGraph;
