@@ -41,4 +41,16 @@ public interface CTRLRMessageElement extends Serializable {
 
 	public void accept(CTRLRMessageVisitor visitor);
 
+	public static class CTRLRMessageElementHolder implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		public final CTRLRMessageElement me;
+
+		public final int appInstId;
+
+		public CTRLRMessageElementHolder(CTRLRMessageElement me, int appInstId) {
+			this.appInstId = appInstId;
+			this.me = me;
+		}
+	}
 }

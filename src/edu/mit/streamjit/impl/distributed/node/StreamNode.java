@@ -25,7 +25,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ConnectException;
 
-import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.Connection;
@@ -102,8 +102,9 @@ public class StreamNode extends Thread {
 		System.out.println("Connected with Controller.");
 		while (run) {
 			try {
-				CTRLRMessageElement me = controllerConnection.readObject();
-				me.accept(mv);
+				CTRLRMessageElementHolder holder = controllerConnection
+						.readObject();
+				holder.me.accept(mv);
 			} catch (ClassNotFoundException e) {
 				// No way. Just ignore.
 			} catch (EOFException e) {

@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.Error;
@@ -148,7 +149,7 @@ public abstract class StreamNodeAgent {
 	public NodeInfo getNodeInfo() {
 		if (nodeInfo == null) {
 			try {
-				writeObject(Request.NodeInfo);
+				writeObject(new CTRLRMessageElementHolder(Request.NodeInfo, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
