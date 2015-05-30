@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.HashSet;
 
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
@@ -37,8 +38,8 @@ import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.MiscCtrlElemen
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Request;
-import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Request.RequestProcessor;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand.ProfilerCommandProcessor;
@@ -163,7 +164,8 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 		public void processNodeInfo() {
 			NodeInfo myInfo = NodeInfo.getMyinfo();
 			try {
-				streamNode.controllerConnection.writeObject(myInfo);
+				streamNode.controllerConnection
+						.writeObject(new SNMessageElementHolder(myInfo, 1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

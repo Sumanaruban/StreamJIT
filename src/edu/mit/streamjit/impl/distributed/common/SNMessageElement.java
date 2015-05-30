@@ -26,4 +26,18 @@ import java.io.Serializable;
 public interface SNMessageElement extends Serializable {
 
 	public void accept(SNMessageVisitor visitor);
+
+	public static class SNMessageElementHolder implements Serializable {
+
+		private static final long serialVersionUID = 1L;
+
+		public final SNMessageElement me;
+
+		public final int appInstId;
+
+		public SNMessageElementHolder(SNMessageElement me, int appInstId) {
+			this.appInstId = appInstId;
+			this.me = me;
+		}
+	}
 }

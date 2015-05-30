@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import edu.mit.streamjit.impl.distributed.common.Connection;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 
 public final class Profiler extends Thread {
 
@@ -43,9 +44,10 @@ public final class Profiler extends Thread {
 
 			for (StreamNodeProfiler p : profilers) {
 				try {
-					controllerConnection.writeObject(p.profile());
+					controllerConnection
+							.writeObject(new SNMessageElementHolder(
+									p.profile(), 1));
 				} catch (IOException e) {
-					// e.printStackTrace();
 					stopFlag.set(true);
 				}
 			}

@@ -35,7 +35,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.ConnectionFactory;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Request;
-import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.SynchronizedTCPConnection;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 
@@ -214,10 +214,9 @@ public class BlockingCommunicationManager implements CommunicationManager {
 		public void run() {
 			while (!SNAgent.isStopRequested() && connection.isStillConnected()) {
 				try {
-					SNMessageElement me = connection.readObject();
-					me.accept(SNAgent.getMv());
+					SNMessageElementHolder meHolder = connection.readObject();
+					meHolder.me.accept(SNAgent.getMv());
 				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
 					if (!SNAgent.isStopRequested())
