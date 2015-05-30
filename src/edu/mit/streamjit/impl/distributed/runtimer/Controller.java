@@ -29,7 +29,7 @@ import java.util.Set;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
-import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
@@ -96,14 +96,16 @@ public class Controller {
 					"Conflict in nodeID assignment. controllerNodeID has been assigned to a SteamNode");
 
 		setMachineIds();
-		sendToAll(Request.NodeInfo);
+		sendToAll(new CTRLRMessageElementHolder(
+				Request.NodeInfo, 1));
 	}
 
 	private void setMachineIds() {
 		for (StreamNodeAgent agent : StreamNodeMap.values()) {
 			try {
 				// TODO: Need to send in a single object.
-				agent.writeObject(Request.machineID);
+				agent.writeObject(new CTRLRMessageElementHolder(
+						Request.machineID, 1));
 				agent.writeObject(new Integer(agent.getNodeID()));
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -138,16 +140,17 @@ public class Controller {
 		builder.putExtraData(GlobalConstants.INETADDRESS_MAP, inetMap);
 		NetworkInfo networkinfo = new NetworkInfo(inetMap);
 		this.conProvider = new ConnectionProvider(controllerNodeID, networkinfo);
-		ConfigurationString json = new ConfigurationString.ConfigurationString1(
-				builder.build().toJson(), ConfigType.STATIC, null);
-		sendToAll(json);
+		ConfigurationString json = new ConfigurationString1(builder.build()
+				.toJson(), ConfigType.STATIC, null);
+		sendToAll(new CTRLRMessageElementHolder(
+				json, 1));
 	}
 
 	public Set<Integer> getAllNodeIDs() {
 		return StreamNodeMap.keySet();
 	}
 
-	public void send(int nodeID, CTRLRMessageElement message) {
+	public void send(int nodeID, CTRLRMessageElementHolder message) {
 		assert StreamNodeMap.containsKey(nodeID) : String.format(
 				"No StreamNode with nodeID %d found", nodeID);
 		StreamNodeAgent agent = StreamNodeMap.get(nodeID);
@@ -158,10 +161,10 @@ public class Controller {
 		}
 	}
 
-	public void sendToAll(Object object) {
+	public void sendToAll(CTRLRMessageElementHolder message) {
 		for (StreamNodeAgent node : StreamNodeMap.values()) {
 			try {
-				node.writeObject(object);
+				node.writeObject(message);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

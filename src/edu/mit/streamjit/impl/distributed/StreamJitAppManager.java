@@ -51,6 +51,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedul
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
@@ -175,8 +176,8 @@ public class StreamJitAppManager {
 			throw new IllegalArgumentException(blobID
 					+ " not found in the blobtoMachineMap");
 		int nodeID = appinst.blobtoMachineMap.get(blobID);
-		controller.send(nodeID,
-				new CTRLRDrainElement.DoDrain(blobID, drainType));
+		controller.send(nodeID, new CTRLRMessageElementHolder(
+				new CTRLRDrainElement.DoDrain(blobID, drainType), 1));
 	}
 
 	public void drainingFinished(boolean isFinal) {
@@ -289,7 +290,7 @@ public class StreamJitAppManager {
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString.ConfigurationString1(
 					jsonStirng, ConfigType.DYNAMIC, drainDataMap.get(nodeID));
-			controller.send(nodeID, json);
+			controller.send(nodeID, new CTRLRMessageElementHolder(json, 1));
 		}
 
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
@@ -332,7 +333,7 @@ public class StreamJitAppManager {
 			ImmutableMap<Token, Integer> finalInputBuf = graphSchedule.bufferSizes;
 			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 					finalInputBuf);
-			controller.sendToAll(me);
+			controller.sendToAll(new CTRLRMessageElementHolder(me, 1));
 		}
 	}
 
@@ -358,7 +359,8 @@ public class StreamJitAppManager {
 		MasterProfiler p = null;
 		if (Options.needProfiler) {
 			p = new MasterProfiler(app.name);
-			controller.sendToAll(ProfilerCommand.START);
+			controller.sendToAll(new CTRLRMessageElementHolder(
+					ProfilerCommand.START, 1));
 		}
 		return p;
 	}
@@ -450,7 +452,7 @@ public class StreamJitAppManager {
 		}
 
 		runInitSchedule();
-		controller.sendToAll(Command.START);
+		controller.sendToAll(new CTRLRMessageElementHolder(Command.START, 1));
 
 		if (tailChannel != null) {
 			tailThread = new Thread(tailChannel.getRunnable(),
@@ -630,8 +632,11 @@ public class StreamJitAppManager {
 				exConInfos.add(abEx.conInfo);
 
 				CTRLRMessageElement msg = new NewConInfo(coninfo, t);
-				controller.send(coninfo.getSrcID(), msg);
-				controller.send(coninfo.getDstID(), msg);
+
+				controller.send(coninfo.getSrcID(),
+						new CTRLRMessageElementHolder(msg, 1));
+				controller.send(coninfo.getDstID(),
+						new CTRLRMessageElementHolder(msg, 1));
 			}
 		}
 
