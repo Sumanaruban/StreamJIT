@@ -50,6 +50,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.IOInfo;
 import edu.mit.streamjit.impl.common.Workers;
+import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.PartitionManager;
@@ -268,7 +269,7 @@ public class Utils {
 			if (cfg != null) {
 				cfg = ConfigurationUtils.addConfigPrefix(cfg, prefix);
 				NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
-				app.setNewConfiguration(newConfig);
+				AppInstance.newConfiguration(app, newConfig);
 			}
 		}
 
@@ -276,7 +277,8 @@ public class Utils {
 				"final");
 		if (cfg != null) {
 			cfg = ConfigurationUtils.addConfigPrefix(cfg, "final");
-			cfgManager.newConfiguration(cfg);
+			NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
+			AppInstance.newConfiguration(app, newConfig);
 		}
 		sw.stop();
 		System.out.println(sw.elapsed(TimeUnit.SECONDS));
