@@ -47,6 +47,8 @@ import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Portals;
 import edu.mit.streamjit.impl.common.VerifyStreamGraph;
 import edu.mit.streamjit.impl.common.Workers;
+import edu.mit.streamjit.impl.common.drainer.BlobGraph;
+import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
@@ -240,5 +242,33 @@ public class StreamJitApp<I, O> {
 						topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
 		return builder.build();
+	}
+
+	public AppInstance newConfiguration(NewConfiguration newConfiguration) {
+		if (!newConfiguration.verificationPassed)
+			throw new IllegalStateException(
+					"Invalid newConfiguration. newConfiguration.verificationPassed=false.");
+		return new AppInstance(this, newConfiguration.partitionsMachineMap,
+				newConfiguration.configuration, newConfiguration.blobGraph);
+	}
+
+	/**
+	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
+	 * any cycles among blobs. If it is a valid partitionsMachineMap, (i.e., no
+	 * cycles among the blobs), then creates and returns an AppInstance; returns
+	 * null otherwise.
+	 * 
+	 * @return a new {@link AppInstance} if the partition is acyclic.
+	 *         <code>null</code> otherwise.
+	 */
+	public AppInstance newPartitionMap(
+			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
+		BlobGraph bg;
+		try {
+			bg = AppInstance.verifyConfiguration(partitionsMachineMap);
+		} catch (StreamCompilationFailedException ex) {
+			return null;
+		}
+		return new AppInstance(this, partitionsMachineMap, null, bg);
 	}
 }
