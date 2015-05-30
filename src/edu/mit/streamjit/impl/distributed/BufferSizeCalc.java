@@ -10,6 +10,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.ilpsolve.ILPSolver;
@@ -343,6 +344,6 @@ public class BufferSizeCalc {
 
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 				finalInputBuf);
-		controller.sendToAll(me);
+		controller.sendToAll(new CTRLRMessageElementHolder(me, 1));
 	}
 }
