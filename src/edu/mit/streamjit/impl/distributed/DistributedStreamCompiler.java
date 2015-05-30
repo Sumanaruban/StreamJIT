@@ -245,8 +245,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		}
 		Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap = getMachineWorkerMap(
 				machineIds, app.streamGraph, app.source, app.sink);
-		AppInstance appinst = AppInstance.newPartitionMap(app,
-				partitionsMachineMap);
+		AppInstance appinst = app.newPartitionMap(partitionsMachineMap);
 		return appinst;
 	}
 
@@ -313,7 +312,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 			this.cfg = defaultCfg;
 
 		NewConfiguration newConfig = cfgManager.newConfiguration(this.cfg);
-		return AppInstance.newConfiguration(app, newConfig);
+		return app.newConfiguration(newConfig);
 	}
 
 	private <I, O> boolean verifyCfg(Configuration defaultCfg, Configuration cfg) {

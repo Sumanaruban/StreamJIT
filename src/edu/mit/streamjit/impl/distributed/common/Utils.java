@@ -269,7 +269,7 @@ public class Utils {
 			if (cfg != null) {
 				cfg = ConfigurationUtils.addConfigPrefix(cfg, prefix);
 				NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
-				AppInstance.newConfiguration(app, newConfig);
+				app.newConfiguration(newConfig);
 			}
 		}
 
@@ -278,7 +278,7 @@ public class Utils {
 		if (cfg != null) {
 			cfg = ConfigurationUtils.addConfigPrefix(cfg, "final");
 			NewConfiguration newConfig = cfgManager.newConfiguration(cfg);
-			AppInstance.newConfiguration(app, newConfig);
+			app.newConfiguration(newConfig);
 		}
 		sw.stop();
 		System.out.println(sw.elapsed(TimeUnit.SECONDS));

@@ -24,7 +24,6 @@ import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph;
 import edu.mit.streamjit.impl.compiler2.Compiler2BlobFactory;
 import edu.mit.streamjit.impl.concurrent.ConcurrentChannelFactory;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
@@ -66,35 +65,6 @@ public class AppInstance {
 	public Map<Token, Integer> blobtoMachineMap;
 
 	public DrainData drainData = null;
-
-	public static AppInstance newConfiguration(StreamJitApp<?, ?> app,
-			NewConfiguration newConfiguration) {
-		if (!newConfiguration.verificationPassed)
-			throw new IllegalStateException(
-					"Invalid newConfiguration. newConfiguration.verificationPassed=false.");
-		return new AppInstance(app, newConfiguration.partitionsMachineMap,
-				newConfiguration.configuration, newConfiguration.blobGraph);
-	}
-
-	/**
-	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
-	 * any cycles among blobs. If it is a valid partitionsMachineMap, (i.e., no
-	 * cycles among the blobs), then creates and returns an AppInstance; returns
-	 * null otherwise.
-	 * 
-	 * @return a new {@link AppInstance} if the partition is acyclic.
-	 *         <code>null</code> otherwise.
-	 */
-	public static AppInstance newPartitionMap(StreamJitApp<?, ?> app,
-			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap) {
-		BlobGraph bg;
-		try {
-			bg = verifyConfiguration(partitionsMachineMap);
-		} catch (StreamCompilationFailedException ex) {
-			return null;
-		}
-		return new AppInstance(app, partitionsMachineMap, null, bg);
-	}
 
 	/**
 	 * Builds {@link BlobGraph} from the partitionsMachineMap, and verifies for
@@ -144,7 +114,7 @@ public class AppInstance {
 		System.err.println();
 	}
 
-	private AppInstance(StreamJitApp<?, ?> app,
+	AppInstance(StreamJitApp<?, ?> app,
 			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
 			Configuration configuration, BlobGraph blobGraph) {
 		this.app = app;
