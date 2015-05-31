@@ -31,6 +31,7 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
 
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.ConnectionFactory;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
@@ -229,7 +230,8 @@ public class BlockingCommunicationManager implements CommunicationManager {
 			try {
 				SNAgent.stopRequest();
 				if (connection.isStillConnected())
-					connection.writeObject(Request.EXIT);
+					connection.writeObject(new CTRLRMessageElementHolder(
+							Request.EXIT, 1));
 				connection.closeConnection();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
