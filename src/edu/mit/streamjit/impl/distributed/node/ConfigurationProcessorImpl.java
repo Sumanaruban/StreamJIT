@@ -129,16 +129,18 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		System.out
 				.println("------------------------------------------------------------");
 		System.out.println("New Configuration.....");
-		streamNode.releaseOldBM();
+		// streamNode.releaseOldBM();
 
 		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic);
 		if (blobSet != null) {
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
 
-			streamNode
-					.setBlobsManager(new BlobsManagerImpl(blobSet, conInfoMap,
-							streamNode, app.conProvider, app.topLevelClass));
+			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
+					streamNode, app.conProvider, app.topLevelClass);
+			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
+					streamNode, bm, 1);
+			streamNode.registerMessageVisitor(1, mv);;
 		} else {
 			try {
 				streamNode.controllerConnection
