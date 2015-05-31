@@ -56,23 +56,25 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	private final ConfigurationProcessor jp;
 	private final MiscCtrlElementProcessor miscProcessor;
 	private final ProfilerCommandProcessorImpl pm;
+	public final BlobsManager blobsManager;
 
-	public CTRLRMessageVisitorImpl(StreamNode streamNode) {
+	public CTRLRMessageVisitorImpl(StreamNode streamNode,
+			BlobsManager blobsManager) {
 		this.streamNode = streamNode;
 		this.rp = new RequestProcessorImpl();
 		this.jp = new ConfigurationProcessorImpl(streamNode);
 		this.miscProcessor = new MiscCtrlElementProcessorImpl();
 		this.pm = new ProfilerCommandProcessorImpl();
+		this.blobsManager = blobsManager;
 	}
 
 	@Override
 	public void visit(Command streamJitCommand) {
-		BlobsManager manager = streamNode.getBlobsManager();
-		if (manager == null) {
+		if (blobsManager == null) {
 			System.err.println("No AppStatusProcessor processor.");
 			return;
 		}
-		CommandProcessor cp = manager.getCommandProcessor();
+		CommandProcessor cp = blobsManager.getCommandProcessor();
 		streamJitCommand.process(cp);
 	}
 
@@ -88,13 +90,11 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 
 	@Override
 	public void visit(CTRLRDrainElement ctrlrDrainElement) {
-
-		BlobsManager manager = streamNode.getBlobsManager();
-		if (manager == null) {
+		if (blobsManager == null) {
 			System.err.println("No AppStatusProcessor processor.");
 			return;
 		}
-		CTRLRDrainProcessor dp = manager.getDrainProcessor();
+		CTRLRDrainProcessor dp = blobsManager.getDrainProcessor();
 		ctrlrDrainElement.process(dp);
 	}
 
@@ -105,12 +105,11 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 
 	@Override
 	public void visit(CTRLCompilationInfo ctrlCompilationInfo) {
-		BlobsManager manager = streamNode.getBlobsManager();
-		if (manager == null) {
+		if (blobsManager == null) {
 			System.err.println("No AppStatusProcessor processor.");
 			return;
 		}
-		CTRLCompilationInfoProcessor cip = manager
+		CTRLCompilationInfoProcessor cip = blobsManager
 				.getCompilationInfoProcessor();
 		ctrlCompilationInfo.process(cip);
 	}
