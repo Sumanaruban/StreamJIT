@@ -100,7 +100,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		System.out
 				.println("------------------------------------------------------------");
 		System.out.println("New Configuration.....");
-		streamNode.releaseOldBM();
+		// streamNode.releaseOldBM();
 		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
 		ImmutableSet<Blob> blobSet = getBlobs(cfg, drainData);
 		if (blobSet != null) {
@@ -109,8 +109,11 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 			String topLevelClass = (String) staticConfig
 					.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
-			streamNode.setBlobsManager(new BlobsManagerImpl(blobSet,
-					conInfoMap, streamNode, conProvider, topLevelClass));
+			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
+					streamNode, conProvider, topLevelClass);
+			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
+					streamNode, bm, 1);
+			streamNode.registerMessageVisitor(1, mv);
 		} else {
 			try {
 				streamNode.controllerConnection

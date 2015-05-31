@@ -24,6 +24,8 @@ package edu.mit.streamjit.impl.distributed.node;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.HashMap;
+import java.util.Map;
 
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
@@ -60,9 +62,12 @@ public class StreamNode extends Thread {
 								// more handy.
 	private CTRLRMessageVisitor mv;
 
-	private volatile BlobsManager blobsManager;
-
 	Profiler profiler;
+
+	/**
+	 * <appInstID, CTRLRMessageVisitor>
+	 */
+	private Map<Integer, CTRLRMessageVisitorImpl> messageVisitors;
 
 	public EventTimeLogger eventTimeLogger;
 
@@ -94,8 +99,9 @@ public class StreamNode extends Thread {
 	private StreamNode(Connection connection) {
 		super("Stream Node");
 		this.controllerConnection = connection;
-		this.mv = new CTRLRMessageVisitorImpl(this);
+		this.mv = new CTRLRMessageVisitorImpl(this, null, -1);
 		this.run = true;
+		this.messageVisitors = new HashMap<>();
 	}
 
 	public void run() {
@@ -104,7 +110,10 @@ public class StreamNode extends Thread {
 			try {
 				CTRLRMessageElementHolder holder = controllerConnection
 						.readObject();
-				holder.me.accept(mv);
+				CTRLRMessageVisitor messageVisitor = mv;
+				if (messageVisitors.containsKey(holder.appInstId))
+					messageVisitor = messageVisitors.get(holder.appInstId);
+				holder.me.accept(messageVisitor);
 			} catch (ClassNotFoundException e) {
 				// No way. Just ignore.
 			} catch (EOFException e) {
@@ -132,21 +141,31 @@ public class StreamNode extends Thread {
 	}
 
 	/**
-	 * @return the blobsManager
-	 */
-	public BlobsManager getBlobsManager() {
-		return blobsManager;
-	}
-
-	/**
 	 * @param blobsManager
 	 *            the blobsManager to set
+	 *
+	 *            public void setBlobsManager(BlobsManager blobsManager) {
+	 *            releaseOldBM(); this.blobsManager = blobsManager; if (profiler
+	 *            != null && blobsManager != null)
+	 *            profiler.addAll(blobsManager.profilers()); }
 	 */
-	public void setBlobsManager(BlobsManager blobsManager) {
-		releaseOldBM();
-		this.blobsManager = blobsManager;
-		if (profiler != null && blobsManager != null)
-			profiler.addAll(blobsManager.profilers());
+
+	public void registerMessageVisitor(int appInstId, CTRLRMessageVisitorImpl mv) {
+		if (messageVisitors.containsKey(appInstId))
+			throw new IllegalStateException(
+					String.format(
+							"CTRLRMessageVisitor for app instance %d is already registered",
+							appInstId));
+		messageVisitors.put(appInstId, mv);
+		if (profiler != null && mv.blobsManager != null)
+			profiler.addAll(mv.blobsManager.profilers());
+	}
+
+	public void unRegisterMessageVisitor(int appInstId) {
+		if (messageVisitors.containsKey(appInstId)) {
+			releaseOldBM(messageVisitors.get(appInstId).blobsManager);
+			messageVisitors.remove(appInstId);
+		}
 	}
 
 	public void exit() {
@@ -164,8 +183,9 @@ public class StreamNode extends Thread {
 	}
 
 	private void safelyCloseResources() {
-		if (blobsManager != null)
-			blobsManager.stop();
+		for (CTRLRMessageVisitorImpl mv : messageVisitors.values())
+			if (mv.blobsManager != null)
+				mv.blobsManager.stop();
 
 		if (profiler != null) {
 			profiler.stopProfiling();
@@ -188,7 +208,7 @@ public class StreamNode extends Thread {
 	/**
 	 * Un-references old BlobManager object before creating new one.
 	 */
-	void releaseOldBM() {
+	void releaseOldBM(BlobsManager blobsManager) {
 		// [2014-3-20] We need to release blobsmanager to release the
 		// memory. Otherwise, Blobthread2.corecode will occupy the memory.
 		if (blobsManager != null) {

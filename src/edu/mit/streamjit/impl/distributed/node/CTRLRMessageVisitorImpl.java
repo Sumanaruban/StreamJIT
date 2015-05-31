@@ -57,15 +57,17 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	private final MiscCtrlElementProcessor miscProcessor;
 	private final ProfilerCommandProcessorImpl pm;
 	public final BlobsManager blobsManager;
+	public final int appInstId;
 
 	public CTRLRMessageVisitorImpl(StreamNode streamNode,
-			BlobsManager blobsManager) {
+			BlobsManager blobsManager, int appInstId) {
 		this.streamNode = streamNode;
 		this.rp = new RequestProcessorImpl();
 		this.jp = new ConfigurationProcessorImpl(streamNode);
 		this.miscProcessor = new MiscCtrlElementProcessorImpl();
 		this.pm = new ProfilerCommandProcessorImpl();
 		this.blobsManager = blobsManager;
+		this.appInstId = appInstId;
 	}
 
 	@Override
