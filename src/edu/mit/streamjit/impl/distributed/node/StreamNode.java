@@ -30,6 +30,7 @@ import java.util.Map;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.Command;
+import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.ConnectionFactory;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
@@ -69,6 +70,8 @@ public class StreamNode extends Thread {
 	 */
 	private Map<Integer, CTRLRMessageVisitorImpl> messageVisitors;
 
+	public final ConfigurationProcessor jp;
+
 	public EventTimeLogger eventTimeLogger;
 
 	private boolean run; // As we assume that all controller communication and
@@ -100,6 +103,7 @@ public class StreamNode extends Thread {
 		super("Stream Node");
 		this.controllerConnection = connection;
 		this.mv = new CTRLRMessageVisitorImpl(this, null, -1);
+		this.jp = new ConfigurationProcessorImpl(this);
 		this.run = true;
 		this.messageVisitors = new HashMap<>();
 	}
