@@ -32,7 +32,6 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
-import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor;
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements;
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.MiscCtrlElementProcessor;
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
@@ -53,7 +52,6 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 
 	private final StreamNode streamNode;
 	private final RequestProcessor rp;
-	private final ConfigurationProcessor jp;
 	private final MiscCtrlElementProcessor miscProcessor;
 	private final ProfilerCommandProcessorImpl pm;
 	public final BlobsManager blobsManager;
@@ -63,7 +61,6 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 			BlobsManager blobsManager, int appInstId) {
 		this.streamNode = streamNode;
 		this.rp = new RequestProcessorImpl();
-		this.jp = new ConfigurationProcessorImpl(streamNode);
 		this.miscProcessor = new MiscCtrlElementProcessorImpl();
 		this.pm = new ProfilerCommandProcessorImpl();
 		this.blobsManager = blobsManager;
@@ -87,7 +84,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 
 	@Override
 	public void visit(ConfigurationString json) {
-		json.process(jp);
+		json.process(streamNode.jp);
 	}
 
 	@Override
