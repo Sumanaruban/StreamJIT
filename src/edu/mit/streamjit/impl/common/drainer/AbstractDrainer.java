@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.ImmutableList;
@@ -40,9 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Sets;
 
-import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Input;
-import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.TimeLogger;
@@ -102,12 +98,6 @@ public abstract class AbstractDrainer {
 	protected AppInstance appinst;
 
 	/**
-	 * Latch to block the external thread that calls
-	 * {@link CompiledStream#awaitDrained()}.
-	 */
-	private final CountDownLatch finalLatch;
-
-	/**
 	 * Blocks the online tuner thread until drainer gets all drained data.
 	 */
 	private CountDownLatch drainDataLatch;
@@ -135,7 +125,6 @@ public abstract class AbstractDrainer {
 
 	public AbstractDrainer(StreamJitApp<?, ?> app, TimeLogger logger) {
 		state = DrainerState.NODRAINING;
-		finalLatch = new CountDownLatch(1);
 		this.app = app;
 		this.logger = logger;
 	}
@@ -288,7 +277,8 @@ public abstract class AbstractDrainer {
 		// printDrainDataStats(app.drainData);
 		// dumpDrainData(app.drainData);
 		drainingDone(true);
-		stop();
+		// TODO: seamless
+		// stop();
 		return true;
 	}
 
@@ -406,21 +396,6 @@ public abstract class AbstractDrainer {
 		writer.close();
 	}
 
-	/**
-	 * @return true iff draining of the stream application is finished. See
-	 *         {@link CompiledStream#isDrained()} for more details.
-	 */
-	public final boolean isDrained() {
-		return finalLatch.getCount() == 0;
-	}
-
-	/**
-	 * See {@link CompiledStream#awaitDrained()} for more details.
-	 */
-	public final void awaitDrained() throws InterruptedException {
-		finalLatch.await();
-	}
-
 	public final void awaitDrainedIntrmdiate() throws InterruptedException {
 		intermediateLatch.await();
 
@@ -458,24 +433,6 @@ public abstract class AbstractDrainer {
 			}
 			System.out.println("****************************************");
 		}
-	}
-
-	/**
-	 * In any case, if the application could not be executed (may be due to
-	 * {@link Error}), {@link StreamCompiler} or appropriate class can call this
-	 * method to release the main thread.
-	 */
-	public void stop() {
-		assert state != DrainerState.INTERMEDIATE : "DrainerState.NODRAINING or DrainerState.FINAL is expected.";
-		this.finalLatch.countDown();
-	}
-
-	/**
-	 * See {@link CompiledStream#awaitDrained(long, TimeUnit)} for more details.
-	 */
-	public final void awaitDrained(long timeout, TimeUnit unit)
-			throws InterruptedException, TimeoutException {
-		finalLatch.await(timeout, unit);
 	}
 
 	/**

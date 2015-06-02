@@ -21,18 +21,21 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
+import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
@@ -101,6 +104,8 @@ public class StreamJitAppManager {
 	private SNExceptionProcessorImpl exP = null;
 
 	private final MasterProfiler profiler;
+
+	public final AppDrainer appDrainer;
 
 	/**
 	 * A {@link BoundaryOutputChannel} for the head of the stream graph. If the
@@ -674,6 +679,62 @@ public class StreamJitAppManager {
 							"Not all Stream nodes have sent the buffer size info");
 				}
 			}
+		}
+	}
+
+	public class AppDrainer {
+
+		/**
+		 * Latch to block the external thread that calls
+		 * {@link CompiledStream#awaitDrained()}.
+		 */
+		private final CountDownLatch finalLatch;
+
+		private AppDrainer() {
+			finalLatch = new CountDownLatch(1);
+		}
+
+		/**
+		 * @return true iff draining of the stream application is finished. See
+		 *         {@link CompiledStream#isDrained()} for more details.
+		 */
+		public final boolean isDrained() {
+			return finalLatch.getCount() == 0;
+		}
+
+		/**
+		 * See {@link CompiledStream#awaitDrained()} for more details.
+		 */
+		public final void awaitDrained() throws InterruptedException {
+			finalLatch.await();
+		}
+
+		/**
+		 * See {@link CompiledStream#awaitDrained(long, TimeUnit)} for more
+		 * details.
+		 */
+		public final void awaitDrained(long timeout, TimeUnit unit)
+				throws InterruptedException, TimeoutException {
+			finalLatch.await(timeout, unit);
+		}
+
+		/**
+		 * In any case, if the application could not be executed (may be due to
+		 * {@link Error}), {@link StreamCompiler} or appropriate class can call
+		 * this method to release the main thread.
+		 */
+		public void stop() {
+			// TODO: seamless
+			// assert state != DrainerState.INTERMEDIATE :
+			// "DrainerState.NODRAINING or DrainerState.FINAL is expected.";
+			this.finalLatch.countDown();
+		}
+
+		public boolean drainFinal(Boolean isSemeFinal) {
+			for (AppInstanceManager aim : appInstManagers.values()) {
+
+			}
+			return true;
 		}
 	}
 }

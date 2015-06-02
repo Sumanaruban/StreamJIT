@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import edu.mit.streamjit.impl.blob.AbstractReadOnlyBuffer;
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
+import edu.mit.streamjit.impl.distributed.StreamJitAppManager.AppDrainer;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
@@ -145,9 +145,9 @@ public class HeadChannel {
 	public static class HeadBuffer extends AbstractReadOnlyBuffer {
 
 		Buffer buffer;
-		AbstractDrainer drainer;
+		AppDrainer drainer;
 
-		public HeadBuffer(Buffer buffer, AbstractDrainer drainer) {
+		public HeadBuffer(Buffer buffer, AppDrainer drainer) {
 			this.buffer = buffer;
 			this.drainer = drainer;
 		}
