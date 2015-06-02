@@ -48,14 +48,13 @@ import edu.mit.streamjit.impl.common.InputBufferFactory;
 import edu.mit.streamjit.impl.common.OutputBufferFactory;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.Workers;
-import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.HeadChannel.HeadBuffer;
+import edu.mit.streamjit.impl.distributed.StreamJitAppManager.AppDrainer;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.CommunicationManager.CommunicationType;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.impl.distributed.runtimer.DistributedDrainer;
 import edu.mit.streamjit.partitioner.HorizontalPartitioner;
 import edu.mit.streamjit.partitioner.Partitioner;
 import edu.mit.streamjit.tuner.OnlineTuner;
@@ -150,17 +149,18 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		TimeLogger logger = new TimeLoggers.FileTimeLogger(app.name);
 		StreamJitAppManager manager = new StreamJitAppManager(controller, app,
 				conManager, logger);
-		final AbstractDrainer drainer = new DistributedDrainer(app, logger,
-				manager);
-		drainer.setAppInstance(appinst);
+		// final AbstractDrainer drainer = new DistributedDrainer(app, logger,
+		// manager);
+		// drainer.setAppInstance(appinst);
 
-		boolean needTermination = setBufferMap(input, output, drainer, app);
+		boolean needTermination = setBufferMap(input, output,
+				manager.appDrainer, app);
 
 		manager.reconfigure(1, appinst);
-		CompiledStream cs = new DistributedCompiledStream(drainer);
+		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer);
 
 		if (Options.tune > 0 && this.cfg != null) {
-			Reconfigurer configurer = new Reconfigurer(drainer, manager, app,
+			Reconfigurer configurer = new Reconfigurer(manager, app,
 					cfgManager, logger);
 			tuneOrVerify(configurer, needTermination);
 		}
@@ -253,7 +253,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	 * Sets head and tail buffers.
 	 */
 	private <I, O> boolean setBufferMap(Input<I> input, Output<O> output,
-			final AbstractDrainer drainer, StreamJitApp<I, O> app) {
+			final AppDrainer drainer, StreamJitApp<I, O> app) {
 		// TODO: derive a algorithm to find good buffer size and use here.
 		Buffer head = InputBufferFactory.unwrap(input).createReadableBuffer(
 				10000);
@@ -338,9 +338,9 @@ public class DistributedStreamCompiler implements StreamCompiler {
 
 	private static class DistributedCompiledStream implements CompiledStream {
 
-		AbstractDrainer drainer;
+		AppDrainer drainer;
 
-		public DistributedCompiledStream(AbstractDrainer drainer) {
+		public DistributedCompiledStream(AppDrainer drainer) {
 			this.drainer = drainer;
 		}
 
