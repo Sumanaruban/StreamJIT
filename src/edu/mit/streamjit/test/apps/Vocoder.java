@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.UnmodifiableIterator;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
+
 import edu.mit.streamjit.api.DuplicateSplitter;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Identity;
@@ -107,7 +108,8 @@ public final class Vocoder {
 							new PhaseStuff(n_LENGTH, m_LENGTH, DFT_LENGTH_REDUCED, NEW_LENGTH_REDUCED, DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR)
 					),
 					new PolarToRectangular(),
-					new SumReals(NEW_LENGTH),
+					// new SumReals(NEW_LENGTH),
+					new SumRealsPipeline(NEW_LENGTH),
 					new InvDelay((DFT_LENGTH - 2) * m_LENGTH / n_LENGTH),
 					new FloatToShort()
 			);
@@ -448,6 +450,20 @@ public final class Vocoder {
 			super(new RoundrobinSplitter<Float>(), new WeightedRoundrobinJoiner<Float>(1, 0),
 					new SumRealsRealHandler(DFTLen),
 					new FloatVoid());
+		}
+	}
+
+	private static final class SumRealsPipeline extends Pipeline<Float, Float> {
+		private SumRealsPipeline(int DFTLen) {
+			Filter<Float, Float> f = new Filter(2, 1){
+				@Override
+				public void work() {
+				push(pop());
+				pop();
+				}
+			};
+			add(f);
+			add(new SumRealsRealHandler(DFTLen));
 		}
 	}
 
