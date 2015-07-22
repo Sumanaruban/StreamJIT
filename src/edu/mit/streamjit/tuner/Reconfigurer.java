@@ -23,7 +23,6 @@ import edu.mit.streamjit.util.Pair;
  */
 public class Reconfigurer {
 
-	final AbstractDrainer drainer;
 	final StreamJitAppManager manager;
 	final StreamJitApp<?, ?> app;
 	final ConfigurationManager cfgManager;
@@ -31,10 +30,8 @@ public class Reconfigurer {
 	final ConfigurationPrognosticator prognosticator;
 	final EventTimeLogger mLogger;
 
-	public Reconfigurer(AbstractDrainer drainer, StreamJitAppManager manager,
-			StreamJitApp<?, ?> app, ConfigurationManager cfgManager,
-			TimeLogger logger) {
-		this.drainer = drainer;
+	public Reconfigurer(StreamJitAppManager manager, StreamJitApp<?, ?> app,
+			ConfigurationManager cfgManager, TimeLogger logger) {
 		this.manager = manager;
 		this.app = app;
 		this.cfgManager = cfgManager;
@@ -91,7 +88,6 @@ public class Reconfigurer {
 				return new Pair<Boolean, Integer>(false, -5);
 
 			AppInstance appinst = app.newConfiguration(newConfig);
-			drainer.setAppInstance(appinst);
 			int multiplier = getMultiplier(newConfig.configuration);
 			mLogger.bEvent("managerReconfigure");
 			boolean reconfigure = manager.reconfigure(multiplier, appinst);

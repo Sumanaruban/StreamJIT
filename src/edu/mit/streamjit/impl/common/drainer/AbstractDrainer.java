@@ -97,9 +97,9 @@ public abstract class AbstractDrainer {
 	/**
 	 * Blob graph of the stream application that needs to be drained.
 	 */
-	protected BlobGraph blobGraph;
+	protected final BlobGraph blobGraph;
 
-	protected AppInstance appinst;
+	protected final AppInstance appinst;
 
 	/**
 	 * Blocks the online tuner thread until drainer gets all drained data.
@@ -127,10 +127,13 @@ public abstract class AbstractDrainer {
 
 	private final StreamJitApp<?, ?> app;
 
-	public AbstractDrainer(StreamJitApp<?, ?> app, TimeLogger logger) {
+	public AbstractDrainer(AppInstance appinst, TimeLogger logger) {
 		state = DrainerState.NODRAINING;
-		this.app = app;
+		this.appinst = appinst;
+		this.app = appinst.app;
+		this.blobGraph = appinst.blobGraph;
 		this.logger = logger;
+		initialize();
 	}
 
 	/**
@@ -140,10 +143,8 @@ public abstract class AbstractDrainer {
 	 * 
 	 * @param blobGraph
 	 */
-	public final void setAppInstance(AppInstance appinst) {
+	private final void initialize() {
 		if (state == DrainerState.NODRAINING) {
-			this.blobGraph = appinst.blobGraph;
-			this.appinst = appinst;
 			unDrainedNodes = new AtomicInteger(blobGraph.getBlobIds().size());
 			noOfDrainData = new AtomicInteger(blobGraph.getBlobIds().size());
 			blobGraph.setDrainer(this);
@@ -175,7 +176,7 @@ public abstract class AbstractDrainer {
 	 * @return true iff draining process has been started. startDraining will
 	 *         fail if the final draining has already been called.
 	 */
-	public final boolean startDraining(int type) {
+	private final boolean startDraining(int type) {
 		if (state == DrainerState.NODRAINING) {
 			boolean isFinal = false;
 			switch (type) {
