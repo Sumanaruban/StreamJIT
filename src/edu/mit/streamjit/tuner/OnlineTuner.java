@@ -215,11 +215,11 @@ public class OnlineTuner implements Runnable {
 	}
 
 	private void tuningFinished() {
-		try {
-			configurer.drainer.dumpDraindataStatistics();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// TODO: seamless
+		/*
+		 * try { configurer.drainer.dumpDraindataStatistics(); } catch
+		 * (IOException e) { e.printStackTrace(); }
+		 */
 
 		if (needTermination)
 			configurer.terminate();
