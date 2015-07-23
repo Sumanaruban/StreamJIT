@@ -55,6 +55,9 @@ public interface MethodTimeLogger {
 	void bPrognosticate();
 	void ePrognosticate();
 
+	void bSerialCfg();
+	void eSerialCfg();
+
 	/**
 	 * Logs nothing.
 	 */
@@ -155,6 +158,14 @@ public interface MethodTimeLogger {
 		@Override
 		public void ePrognosticate() {
 		}
+
+		@Override
+		public void bSerialCfg() {
+		}
+
+		@Override
+		public void eSerialCfg() {
+		}
 	}
 
 	public static class MethodTimeLoggerImpl implements MethodTimeLogger {
@@ -173,6 +184,7 @@ public interface MethodTimeLogger {
 		private final Stopwatch tuningRound;
 		private final Stopwatch cfgManagerNewcfg;
 		private final Stopwatch prognosticate;
+		private final Stopwatch serialcfg;
 
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
@@ -194,6 +206,7 @@ public interface MethodTimeLogger {
 			this.tuningRound = Stopwatch.createUnstarted();
 			this.cfgManagerNewcfg = Stopwatch.createUnstarted();
 			this.prognosticate = Stopwatch.createUnstarted();
+			this.serialcfg = Stopwatch.createUnstarted();
 			write("Method\t\t\tUptime\t\telapsedtime\n");
 			write("====================================================\n");
 		}
@@ -317,6 +330,16 @@ public interface MethodTimeLogger {
 		@Override
 		public void ePrognosticate() {
 			end(prognosticate, "prognosticate");
+		}
+
+		@Override
+		public void bSerialCfg() {
+			begin(serialcfg);
+		}
+
+		@Override
+		public void eSerialCfg() {
+			end(serialcfg, "SerialConfig");
 		}
 
 		private void begin(Stopwatch sw) {

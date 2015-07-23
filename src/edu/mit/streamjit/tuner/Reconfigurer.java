@@ -87,6 +87,7 @@ public class Reconfigurer {
 		if (!prog)
 			return new Pair<Boolean, Integer>(true, -4);
 
+		mLogger.eSerialCfg();
 		try {
 			mLogger.bIntermediateDraining();
 			boolean intermediateDraining = intermediateDraining();
