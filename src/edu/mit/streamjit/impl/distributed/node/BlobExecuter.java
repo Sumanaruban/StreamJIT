@@ -454,8 +454,8 @@ class BlobExecuter {
 		public void run() {
 			if (cores != null && cores.size() > 0)
 				Affinity.setThreadAffinity(cores);
-
 			try {
+				// logFiringTime();
 				while (!stopping) {
 					if (be.debug)
 						System.out.println(Thread.currentThread().getName()
@@ -480,6 +480,21 @@ class BlobExecuter {
 				}
 			}
 		}
+
+		private void logFiringTime() {
+			int meassureCount = 5;
+			Stopwatch sw = Stopwatch.createStarted();
+			for (int i = 0; i < meassureCount; i++) {
+				if (stopping)
+					break;
+				coreCode.run();
+			}
+			if (!stopping) {
+				long time = sw.elapsed(TimeUnit.MILLISECONDS);
+				System.out.println("Average Firing Time =" + time
+						/ meassureCount + "ms");
+			}
+		}
 	}
 
 	class DrainCallback implements Runnable {
@@ -499,7 +514,7 @@ class BlobExecuter {
 		public void run() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			if(blobExec.debug)
+			if (blobExec.debug)
 				System.out.println("Time taken to drain " + blobExec.blobID
 						+ " is " + time + " ms");
 			try {
