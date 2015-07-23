@@ -144,6 +144,13 @@ public final class Options {
 	public static final int tailChannel;
 
 	/**
+	 * When {@link TailChannels} wait for fixed number of outputs, this flag
+	 * tells them whether they should wait infinitely to receive the fixed
+	 * number of outputs or not.
+	 */
+	public static final boolean timeOut;
+
+	/**
 	 * {@link OnlineTuner}'s verifier verifies the configurations if
 	 * {@link #tune}==2. evaluationCount determines the number of re runs for a
 	 * configuration. Default value is 2.
@@ -176,8 +183,6 @@ public final class Options {
 	public static final int blobToNodeRatio;
 
 	public static final int boundaryChannelRatio;
-
-	public static final boolean timeOut;
 
 	// StreamJit benchmark app's constructor arguments.
 	public static final int appArg1;
