@@ -75,31 +75,31 @@ public class Reconfigurer {
 		if (manager.getStatus() == AppStatus.STOPPED)
 			return new Pair<Boolean, Integer>(false, -2);
 
-		mLogger.bCfgManagerNewcfg();
+		mLogger.bEvent("cfgManagerNewcfg");
 		boolean validCfg = cfgManager.newConfiguration(config);
-		mLogger.eCfgManagerNewcfg();
+		mLogger.eEvent("cfgManagerNewcfg");
 		if (!validCfg)
 			return new Pair<Boolean, Integer>(true, -3);
 
-		mLogger.bPrognosticate();
+		mLogger.bEvent("prognosticate");
 		boolean prog = prognosticator.prognosticate(config);
-		mLogger.ePrognosticate();
+		mLogger.eEvent("prognosticate");
 		if (!prog)
 			return new Pair<Boolean, Integer>(true, -4);
 
-		mLogger.eSerialCfg();
+		mLogger.eEvent("serialcfg");
 		try {
-			mLogger.bIntermediateDraining();
+			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining();
-			mLogger.eIntermediateDraining();
+			mLogger.eEvent("intermediateDraining");
 			if (!intermediateDraining)
 				return new Pair<Boolean, Integer>(false, -5);
 
 			drainer.setBlobGraph(app.blobGraph);
 			int multiplier = getMultiplier(config);
-			mLogger.bManagerReconfigure();
+			mLogger.bEvent("managerReconfigure");
 			boolean reconfigure = manager.reconfigure(multiplier);
-			mLogger.eManagerReconfigure();
+			mLogger.eEvent("managerReconfigure");
 			if (!reconfigure)
 				reason = -6;
 		} catch (Exception ex) {
@@ -148,14 +148,14 @@ public class Reconfigurer {
 		// TODO: need to check the manager's status before passing the
 		// time. Exceptions, final drain, etc may causes app to stop
 		// executing.
-		mLogger.bGetFixedOutputTime();
+		mLogger.bEvent("getFixedOutputTime");
 		long time = -1;
 		try {
 			time = manager.getFixedOutputTime(timeout);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		mLogger.eGetFixedOutputTime();
+		mLogger.eEvent("getFixedOutputTime");
 		return time;
 	}
 }

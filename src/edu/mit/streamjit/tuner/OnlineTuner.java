@@ -61,15 +61,15 @@ public class OnlineTuner implements Runnable {
 		int round = 0;
 		Stopwatch searchTimeSW = Stopwatch.createStarted();
 		try {
-			mLogger.bStartTuner();
+			mLogger.bEvent("startTuner");
 			startTuner();
-			mLogger.eStartTuner();
+			mLogger.eEvent("startTuner");
 			Pair<Boolean, Integer> ret;
 
 			System.out.println("New tune run.............");
 			while (configurer.manager.getStatus() != AppStatus.STOPPED) {
 				mLogger.bTuningRound(++round);
-				mLogger.bSerialCfg();
+				mLogger.bEvent("serialcfg");
 				String cfgJson = tuner.readLine();
 				logger.logSearchTime(searchTimeSW
 						.elapsed(TimeUnit.MILLISECONDS));
@@ -81,18 +81,18 @@ public class OnlineTuner implements Runnable {
 				// At the end of the tuning, Opentuner will send "Completed"
 				// msg. This means no more tuning.
 				if (cfgJson.equals("Completed")) {
-					mLogger.bHandleTermination();
+					mLogger.bEvent("handleTermination");
 					handleTermination();
-					mLogger.eHandleTermination();
+					mLogger.eEvent("handleTermination");
 					break;
 				}
 
-				mLogger.bNewCfg();
+				mLogger.bEvent("newCfg");
 				Configuration config = newCfg(round, cfgJson);
-				mLogger.eNewCfg();
-				mLogger.bReconfigure();
+				mLogger.eEvent("newCfg");
+				mLogger.bEvent("reconfigure");
 				ret = configurer.reconfigure(config);
-				mLogger.eReconfigure();
+				mLogger.eEvent("reconfigure");
 				long time;
 				if (ret.second > 0)
 					time = getTime();
@@ -117,13 +117,13 @@ public class OnlineTuner implements Runnable {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-			mLogger.bTerminate();
+			mLogger.bEvent("terminate");
 			configurer.terminate();
-			mLogger.eTerminate();
+			mLogger.eEvent("terminate");
 		}
-		mLogger.bTuningFinished();
+		mLogger.bEvent("tuningFinished");
 		tuningFinished();
-		mLogger.eTuningFinished();
+		mLogger.eEvent("tuningFinished");
 	}
 
 	private void startTuner() throws IOException {

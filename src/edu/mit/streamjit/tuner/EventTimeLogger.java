@@ -33,44 +33,8 @@ public interface EventTimeLogger {
 	 */
 	void eEvent(String eventName);
 
-	void bStartTuner();
-	void eStartTuner();
-
-	void bHandleTermination();
-	void eHandleTermination();
-
-	void bNewCfg();
-	void eNewCfg();
-
-	void bReconfigure();
-	void eReconfigure();
-
-	void bTuningFinished();
-	void eTuningFinished();
-
-	void bTerminate();
-	void eTerminate();
-
-	void bIntermediateDraining();
-	void eIntermediateDraining();
-
-	void bManagerReconfigure();
-	void eManagerReconfigure();
-
-	void bGetFixedOutputTime();
-	void eGetFixedOutputTime();
-
 	void bTuningRound(int round);
 	void eTuningRound();
-
-	void bCfgManagerNewcfg();
-	void eCfgManagerNewcfg();
-
-	void bPrognosticate();
-	void ePrognosticate();
-
-	void bSerialCfg();
-	void eSerialCfg();
 
 	/**
 	 * Logs nothing.
@@ -86,107 +50,11 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void bStartTuner() {
-		}
-
-		@Override
-		public void eStartTuner() {
-		}
-
-		@Override
-		public void bHandleTermination() {
-		}
-
-		@Override
-		public void eHandleTermination() {
-		}
-
-		@Override
-		public void bNewCfg() {
-		}
-
-		@Override
-		public void eNewCfg() {
-		}
-
-		@Override
-		public void bReconfigure() {
-		}
-
-		@Override
-		public void eReconfigure() {
-		}
-
-		@Override
-		public void bTuningFinished() {
-		}
-
-		@Override
-		public void eTuningFinished() {
-		}
-
-		@Override
-		public void bTerminate() {
-		}
-
-		@Override
-		public void eTerminate() {
-		}
-
-		@Override
-		public void bIntermediateDraining() {
-		}
-
-		@Override
-		public void eIntermediateDraining() {
-		}
-
-		@Override
-		public void bManagerReconfigure() {
-		}
-
-		@Override
-		public void eManagerReconfigure() {
-		}
-
-		@Override
-		public void bGetFixedOutputTime() {
-		}
-
-		@Override
-		public void eGetFixedOutputTime() {
-		}
-
-		@Override
 		public void bTuningRound(int round) {
 		}
 
 		@Override
 		public void eTuningRound() {
-		}
-
-		@Override
-		public void bCfgManagerNewcfg() {
-		}
-
-		@Override
-		public void eCfgManagerNewcfg() {
-		}
-
-		@Override
-		public void bPrognosticate() {
-		}
-
-		@Override
-		public void ePrognosticate() {
-		}
-
-		@Override
-		public void bSerialCfg() {
-		}
-
-		@Override
-		public void eSerialCfg() {
 		}
 	}
 
@@ -234,96 +102,6 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void bStartTuner() {
-			bEvent("startTuner");
-		}
-
-		@Override
-		public void eStartTuner() {
-			eEvent("startTuner");
-		}
-
-		@Override
-		public void bHandleTermination() {
-			bEvent("handleTermination");
-		}
-
-		@Override
-		public void eHandleTermination() {
-			eEvent("handleTermination");
-		}
-
-		@Override
-		public void bNewCfg() {
-			bEvent("newCfg");
-		}
-
-		@Override
-		public void eNewCfg() {
-			eEvent("newCfg");
-		}
-
-		@Override
-		public void bReconfigure() {
-			bEvent("reconfigure");
-		}
-
-		@Override
-		public void eReconfigure() {
-			eEvent("reconfigure");
-		}
-
-		@Override
-		public void bTuningFinished() {
-			bEvent("tuningFinished");
-		}
-
-		@Override
-		public void eTuningFinished() {
-			eEvent("tuningFinished");
-		}
-
-		@Override
-		public void bTerminate() {
-			bEvent("terminate");
-		}
-
-		@Override
-		public void eTerminate() {
-			eEvent("terminate");
-		}
-
-		@Override
-		public void bIntermediateDraining() {
-			bEvent("intermediateDraining");
-		}
-
-		@Override
-		public void eIntermediateDraining() {
-			eEvent("intermediateDraining");
-		}
-
-		@Override
-		public void bManagerReconfigure() {
-			bEvent("managerReconfigure");
-		}
-
-		@Override
-		public void eManagerReconfigure() {
-			eEvent("managerReconfigure");
-		}
-
-		@Override
-		public void bGetFixedOutputTime() {
-			bEvent("getFixedOutputTime");
-		}
-
-		@Override
-		public void eGetFixedOutputTime() {
-			eEvent("getFixedOutputTime");
-		}
-
-		@Override
 		public void bTuningRound(int round) {
 			bEvent("tuningRound");
 			write(String
@@ -335,36 +113,6 @@ public interface EventTimeLogger {
 		public void eTuningRound() {
 			eEvent("tuningRound");
 
-		}
-
-		@Override
-		public void bCfgManagerNewcfg() {
-			bEvent("cfgManagerNewcfg");
-		}
-
-		@Override
-		public void eCfgManagerNewcfg() {
-			eEvent("cfgManagerNewcfg");
-		}
-
-		@Override
-		public void bPrognosticate() {
-			bEvent("prognosticate");
-		}
-
-		@Override
-		public void ePrognosticate() {
-			eEvent("prognosticate");
-		}
-
-		@Override
-		public void bSerialCfg() {
-			bEvent("serialcfg");
-		}
-
-		@Override
-		public void eSerialCfg() {
-			eEvent("serialcfg");
 		}
 
 		private void log(Event e) {
