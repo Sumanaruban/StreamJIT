@@ -17,7 +17,7 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
  * @author sumanan
  * @since 6 Mar, 2015
  */
-public interface MethodTimeLogger {
+public interface EventTimeLogger {
 
 	void bStartTuner();
 	void eStartTuner();
@@ -61,7 +61,7 @@ public interface MethodTimeLogger {
 	/**
 	 * Logs nothing.
 	 */
-	public static class NoMethodTimeLogger implements MethodTimeLogger {
+	public static class NoEventTimeLogger implements EventTimeLogger {
 
 		@Override
 		public void bStartTuner() {
@@ -168,7 +168,7 @@ public interface MethodTimeLogger {
 		}
 	}
 
-	public static class MethodTimeLoggerImpl implements MethodTimeLogger {
+	public static class EventTimeLoggerImpl implements EventTimeLogger {
 
 		private final OutputStreamWriter osWriter;
 
@@ -188,11 +188,11 @@ public interface MethodTimeLogger {
 
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
-		public MethodTimeLoggerImpl(OutputStream os) {
+		public EventTimeLoggerImpl(OutputStream os) {
 			this(getOSWriter(os));
 		}
 
-		public MethodTimeLoggerImpl(OutputStreamWriter osWriter) {
+		public EventTimeLoggerImpl(OutputStreamWriter osWriter) {
 			this.osWriter = osWriter;
 			this.startTuner = Stopwatch.createUnstarted();
 			this.handleTermination = Stopwatch.createUnstarted();
@@ -375,8 +375,8 @@ public interface MethodTimeLogger {
 	/**
 	 * Writes the method call time info to appName/onlineTuner.txt file.
 	 */
-	public static class FileMethodTimeLogger extends MethodTimeLoggerImpl {
-		public FileMethodTimeLogger(String appName) {
+	public static class FileEventTimeLogger extends EventTimeLoggerImpl {
+		public FileEventTimeLogger(String appName) {
 			super(Utils.fileWriter(appName, "onlineTuner.txt"));
 		}
 	}
@@ -384,8 +384,8 @@ public interface MethodTimeLogger {
 	/**
 	 * Prints the method call time info to the standard out.
 	 */
-	public static class PrintMethodTimeLogger extends MethodTimeLoggerImpl {
-		public PrintMethodTimeLogger() {
+	public static class PrintEventTimeLogger extends EventTimeLoggerImpl {
+		public PrintEventTimeLogger() {
 			super(System.out);
 		}
 	}

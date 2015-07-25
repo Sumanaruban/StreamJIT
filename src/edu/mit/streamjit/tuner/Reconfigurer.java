@@ -10,7 +10,7 @@ import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
-import edu.mit.streamjit.tuner.MethodTimeLogger.FileMethodTimeLogger;
+import edu.mit.streamjit.tuner.EventTimeLogger.FileEventTimeLogger;
 import edu.mit.streamjit.util.Pair;
 
 /**
@@ -28,7 +28,7 @@ public class Reconfigurer {
 	final ConfigurationManager cfgManager;
 	final TimeLogger logger;
 	final ConfigurationPrognosticator prognosticator;
-	final MethodTimeLogger mLogger;
+	final EventTimeLogger mLogger;
 
 	public Reconfigurer(AbstractDrainer drainer, StreamJitAppManager manager,
 			StreamJitApp<?, ?> app, ConfigurationManager cfgManager,
@@ -39,7 +39,7 @@ public class Reconfigurer {
 		this.cfgManager = cfgManager;
 		this.logger = logger;
 		this.prognosticator = prognosticator(app);
-		this.mLogger = new FileMethodTimeLogger(app.name);
+		this.mLogger = new FileEventTimeLogger(app.name);
 	}
 
 	private ConfigurationPrognosticator prognosticator(StreamJitApp<?, ?> app) {

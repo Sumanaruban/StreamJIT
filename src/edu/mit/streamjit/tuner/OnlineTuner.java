@@ -32,7 +32,7 @@ public class OnlineTuner implements Runnable {
 	private final boolean needTermination;
 	private final TimeLogger logger;
 	private final ConfigurationPrognosticator prognosticator;
-	private final MethodTimeLogger mLogger;
+	private final EventTimeLogger mLogger;
 	private final Reconfigurer configurer;
 	private long currentBestTime;
 	private Configuration bestCfg;
