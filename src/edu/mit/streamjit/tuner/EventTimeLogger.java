@@ -5,9 +5,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.impl.distributed.common.Utils;
 
@@ -19,6 +19,20 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
  */
 public interface EventTimeLogger {
 
+	/**
+	 * Call this method at the beginning of an event.
+	 * 
+	 * @param eventName
+	 */
+	void bEvent(String eventName);
+
+	/**
+	 * Call this method at the end of an event.
+	 * 
+	 * @param eventName
+	 */
+	void eEvent(String eventName);
+
 	void bStartTuner();
 	void eStartTuner();
 
@@ -26,7 +40,7 @@ public interface EventTimeLogger {
 	void eHandleTermination();
 
 	void bNewCfg();
-	void eNewCfg(int round);
+	void eNewCfg();
 
 	void bReconfigure();
 	void eReconfigure();
@@ -46,7 +60,7 @@ public interface EventTimeLogger {
 	void bGetFixedOutputTime();
 	void eGetFixedOutputTime();
 
-	void bTuningRound();
+	void bTuningRound(int round);
 	void eTuningRound();
 
 	void bCfgManagerNewcfg();
@@ -62,6 +76,14 @@ public interface EventTimeLogger {
 	 * Logs nothing.
 	 */
 	public static class NoEventTimeLogger implements EventTimeLogger {
+
+		@Override
+		public void bEvent(String eventName) {
+		}
+
+		@Override
+		public void eEvent(String eventName) {
+		}
 
 		@Override
 		public void bStartTuner() {
@@ -84,7 +106,7 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void eNewCfg(int round) {
+		public void eNewCfg() {
 		}
 
 		@Override
@@ -136,7 +158,7 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void bTuningRound() {
+		public void bTuningRound(int round) {
 		}
 
 		@Override
@@ -171,20 +193,8 @@ public interface EventTimeLogger {
 	public static class EventTimeLoggerImpl implements EventTimeLogger {
 
 		private final OutputStreamWriter osWriter;
-
-		private final Stopwatch startTuner;
-		private final Stopwatch handleTermination;
-		private final Stopwatch newCfg;
-		private final Stopwatch reconfigure;
-		private final Stopwatch tuningFinished;
-		private final Stopwatch terminate;
-		private final Stopwatch intermediateDraining;
-		private final Stopwatch managerReconfigure;
-		private final Stopwatch getFixedOutputTime;
-		private final Stopwatch tuningRound;
-		private final Stopwatch cfgManagerNewcfg;
-		private final Stopwatch prognosticate;
-		private final Stopwatch serialcfg;
+		Map<String, Event> events;
+		final Ticker ticker = new NanoTicker();
 
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
@@ -194,165 +204,175 @@ public interface EventTimeLogger {
 
 		public EventTimeLoggerImpl(OutputStreamWriter osWriter) {
 			this.osWriter = osWriter;
-			this.startTuner = Stopwatch.createUnstarted();
-			this.handleTermination = Stopwatch.createUnstarted();
-			this.newCfg = Stopwatch.createUnstarted();
-			this.reconfigure = Stopwatch.createUnstarted();
-			this.tuningFinished = Stopwatch.createUnstarted();
-			this.terminate = Stopwatch.createUnstarted();
-			this.intermediateDraining = Stopwatch.createUnstarted();
-			this.managerReconfigure = Stopwatch.createUnstarted();
-			this.getFixedOutputTime = Stopwatch.createUnstarted();
-			this.tuningRound = Stopwatch.createUnstarted();
-			this.cfgManagerNewcfg = Stopwatch.createUnstarted();
-			this.prognosticate = Stopwatch.createUnstarted();
-			this.serialcfg = Stopwatch.createUnstarted();
+			this.events = new HashMap<>();
 			write("Method\t\t\tUptime\t\telapsedtime\n");
 			write("====================================================\n");
 		}
 
 		@Override
+		public void bEvent(String eventName) {
+			long time = ticker.time();
+			if (events.containsKey(eventName)) {
+				throw new IllegalStateException(String.format(
+						"Event %s has already started", eventName));
+			}
+			Event e = new Event(eventName);
+			e.startTime = time;
+			events.put(eventName, e);
+		}
+
+		@Override
+		public void eEvent(String eventName) {
+			long time = ticker.time();
+			Event e = events.get(eventName);
+			if (e == null) {
+				String.format("Event %s has not started yet", eventName);
+			}
+			e.endTime = time;
+			log(e);
+			events.remove(eventName);
+		}
+
+		@Override
 		public void bStartTuner() {
-			begin(startTuner);
+			bEvent("startTuner");
 		}
 
 		@Override
 		public void eStartTuner() {
-			end(startTuner, "startTuner");
+			eEvent("startTuner");
 		}
 
 		@Override
 		public void bHandleTermination() {
-			begin(handleTermination);
+			bEvent("handleTermination");
 		}
 
 		@Override
 		public void eHandleTermination() {
-			end(handleTermination, "handleTermination");
+			eEvent("handleTermination");
 		}
 
 		@Override
 		public void bNewCfg() {
-			begin(newCfg);
+			bEvent("newCfg");
 		}
 
 		@Override
-		public void eNewCfg(int round) {
-			end(newCfg, String.format("newCfg-%d", round));
+		public void eNewCfg() {
+			eEvent("newCfg");
 		}
 
 		@Override
 		public void bReconfigure() {
-			begin(reconfigure);
+			bEvent("reconfigure");
 		}
 
 		@Override
 		public void eReconfigure() {
-			end(reconfigure, "reconfigure");
+			eEvent("reconfigure");
 		}
 
 		@Override
 		public void bTuningFinished() {
-			begin(tuningFinished);
+			bEvent("tuningFinished");
 		}
 
 		@Override
 		public void eTuningFinished() {
-			end(tuningFinished, "tuningFinished");
+			eEvent("tuningFinished");
 		}
 
 		@Override
 		public void bTerminate() {
-			begin(terminate);
+			bEvent("terminate");
 		}
 
 		@Override
 		public void eTerminate() {
-			end(terminate, "terminate");
+			eEvent("terminate");
 		}
 
 		@Override
 		public void bIntermediateDraining() {
-			begin(intermediateDraining);
+			bEvent("intermediateDraining");
 		}
 
 		@Override
 		public void eIntermediateDraining() {
-			end(intermediateDraining, "intermediateDraining");
+			eEvent("intermediateDraining");
 		}
 
 		@Override
 		public void bManagerReconfigure() {
-			begin(managerReconfigure);
+			bEvent("managerReconfigure");
 		}
 
 		@Override
 		public void eManagerReconfigure() {
-			end(managerReconfigure, "managerReconfigure");
+			eEvent("managerReconfigure");
 		}
 
 		@Override
 		public void bGetFixedOutputTime() {
-			begin(getFixedOutputTime);
+			bEvent("getFixedOutputTime");
 		}
 
 		@Override
 		public void eGetFixedOutputTime() {
-			end(getFixedOutputTime, "getFixedOutputTime");
+			eEvent("getFixedOutputTime");
 		}
 
 		@Override
-		public void bTuningRound() {
-			begin(tuningRound);
+		public void bTuningRound(int round) {
+			bEvent("tuningRound");
+			write(String
+					.format("----------------------------%d----------------------------\n",
+							round));
 		}
 
 		@Override
 		public void eTuningRound() {
-			end(tuningRound, "tuningRound");
-			write("--------------------------------------------------\n");
+			eEvent("tuningRound");
+
 		}
 
 		@Override
 		public void bCfgManagerNewcfg() {
-			begin(cfgManagerNewcfg);
+			bEvent("cfgManagerNewcfg");
 		}
 
 		@Override
 		public void eCfgManagerNewcfg() {
-			end(cfgManagerNewcfg, "CfgManagerNewcfg");
+			eEvent("cfgManagerNewcfg");
 		}
 
 		@Override
 		public void bPrognosticate() {
-			begin(prognosticate);
+			bEvent("prognosticate");
 		}
 
 		@Override
 		public void ePrognosticate() {
-			end(prognosticate, "prognosticate");
+			eEvent("prognosticate");
 		}
 
 		@Override
 		public void bSerialCfg() {
-			begin(serialcfg);
+			bEvent("serialcfg");
 		}
 
 		@Override
 		public void eSerialCfg() {
-			end(serialcfg, "SerialConfig");
+			eEvent("serialcfg");
 		}
 
-		private void begin(Stopwatch sw) {
-			sw.reset();
-			sw.start();
-		}
-
-		private void end(Stopwatch sw, String methodName) {
-			sw.stop();
+		private void log(Event e) {
 			long uptime = rb.getUptime();
-			long elapsedtime = sw.elapsed(TimeUnit.MILLISECONDS);
-			write(String.format("%-22s\t%-12d\t%d\n", methodName, uptime,
-					elapsedtime));
+			long elapsedMills = TimeUnit.MILLISECONDS.convert(e.endTime
+					- e.startTime, ticker.timeUnit);
+			write(String.format("%-22s\t%-12d\t%d\n", e.name, uptime,
+					elapsedMills));
 		}
 
 		private void write(String msg) {
@@ -387,6 +407,52 @@ public interface EventTimeLogger {
 	public static class PrintEventTimeLogger extends EventTimeLoggerImpl {
 		public PrintEventTimeLogger() {
 			super(System.out);
+		}
+	}
+
+	static class Event {
+
+		private final String name;
+
+		long startTime;
+
+		long endTime;
+
+		Event(String name) {
+			this.name = name;
+		}
+	}
+
+	abstract class Ticker {
+		final TimeUnit timeUnit;
+		Ticker(TimeUnit timeUnit) {
+			this.timeUnit = timeUnit;
+		}
+
+		abstract long time();
+	}
+
+	final class MilliTicker extends Ticker {
+
+		MilliTicker() {
+			super(TimeUnit.MILLISECONDS);
+		}
+
+		@Override
+		long time() {
+			return System.currentTimeMillis();
+		}
+	}
+
+	final class NanoTicker extends Ticker {
+
+		NanoTicker() {
+			super(TimeUnit.NANOSECONDS);
+		}
+
+		@Override
+		long time() {
+			return System.nanoTime();
 		}
 	}
 }
