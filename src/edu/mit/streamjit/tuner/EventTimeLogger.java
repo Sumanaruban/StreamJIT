@@ -93,8 +93,9 @@ public interface EventTimeLogger {
 		public void bEvent(String eventName) {
 			long time = ticker.time();
 			if (events.containsKey(eventName)) {
-				throw new IllegalStateException(String.format(
-						"Event %s has already started", eventName));
+				// new IllegalStateException(String.format(
+				// "Event %s has already been started", eventName))
+				// .printStackTrace();
 			}
 			Event e = new Event(eventName);
 			e.startTime = time;
@@ -104,13 +105,15 @@ public interface EventTimeLogger {
 		@Override
 		public void eEvent(String eventName) {
 			long time = ticker.time();
-			Event e = events.get(eventName);
+			Event e = events.remove(eventName);
 			if (e == null) {
-				String.format("Event %s has not started yet", eventName);
+				new IllegalStateException(String.format(
+						"Event %s has not started yet", eventName))
+						.printStackTrace();
+				return;
 			}
 			e.endTime = time;
 			log(e);
-			events.remove(eventName);
 		}
 
 		@Override
