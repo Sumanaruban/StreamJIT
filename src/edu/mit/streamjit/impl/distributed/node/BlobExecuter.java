@@ -500,7 +500,7 @@ class BlobExecuter {
 				long avgMills = time / meassureCount;
 				long uptime = rb.getUptime();
 				blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
-						"%-22s\t%-12d\t%d\n", "coreCodeFiring", uptime,
+						"%-22s\t%-12d\t%d\n", blobID + "-firing", uptime,
 						avgMills));
 			}
 		}
@@ -523,9 +523,10 @@ class BlobExecuter {
 		public void run() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			if (blobExec.debug)
-				System.out.println("Time taken to drain " + blobExec.blobID
-						+ " is " + time + " ms");
+			RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
+			long uptime = rb.getUptime();
+			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
+					"%-22s\t%-12d\t%d\n", blobID + "-draining", uptime, time));
 			try {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNTimeInfo.DrainingTime(

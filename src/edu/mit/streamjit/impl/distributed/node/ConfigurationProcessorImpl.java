@@ -30,6 +30,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter.BlobSpecifier;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
@@ -120,7 +121,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			}
 			System.out.println("Couldn't get the blobset....");
 		}
-		newTuningRound();
+		newTuningRound(blobSet);
 	}
 
 	private ImmutableSet<Blob> getBlobs(Configuration dyncfg,
@@ -391,7 +392,18 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	// most of the time string version of this round value. Unify everything and
 	// make everything consistent.
 	int round = 0;
-	void newTuningRound() {
+	void newTuningRound(ImmutableSet<Blob> blobSet) {
 		streamNode.eventTimeLogger.bTuningRound(++round);
+		for (Blob b : blobSet) {
+			StringBuilder sb = new StringBuilder("Blob-");
+			sb.append(Utils.getBlobID(b));
+			sb.append("-");
+			for (Worker<?, ?> w : b.getWorkers()) {
+				sb.append(Workers.getIdentifier(w));
+				sb.append(",");
+			}
+			sb.append('\n');
+			streamNode.eventTimeLogger.log(sb.toString());
+		}
 	}
 }
