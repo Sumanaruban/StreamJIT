@@ -80,8 +80,6 @@ class BlobExecuter {
 
 	private DrainType drainType;
 
-	private final boolean debug = false;
-
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels) {
