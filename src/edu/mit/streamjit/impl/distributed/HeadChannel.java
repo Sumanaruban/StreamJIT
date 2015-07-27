@@ -30,6 +30,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
 import edu.mit.streamjit.impl.distributed.node.BlockingOutputChannel;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
  * Head Channel is just a wrapper to TCPOutputChannel that skips
@@ -57,12 +58,15 @@ public class HeadChannel {
 		final Buffer readBuffer;
 		private volatile boolean stopCalled;
 		private volatile boolean isFinal;
+		private final EventTimeLogger eLogger;
 
 		public AsyncHeadChannel(Buffer buffer, ConnectionProvider conProvider,
-				ConnectionInfo conInfo, String bufferTokenName, int debugLevel) {
+				ConnectionInfo conInfo, String bufferTokenName, int debugLevel,
+				EventTimeLogger eLogger) {
 			super(conProvider, conInfo, bufferTokenName, debugLevel);
 			readBuffer = buffer;
 			stopCalled = false;
+			this.eLogger = eLogger;
 		}
 
 		@Override
@@ -71,6 +75,7 @@ public class HeadChannel {
 			return new Runnable() {
 				@Override
 				public void run() {
+					eLogger.bEvent("initialization");
 					supperRunnable.run();
 					final Buffer writeBuffer = getBuffer();
 					final int dataLength = 10000;

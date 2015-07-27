@@ -348,7 +348,8 @@ public class StreamJitAppManager {
 		else if (headconInfo instanceof AsyncTCPConnectionInfo)
 			headChannel = new HeadChannel.AsyncHeadChannel(
 					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0);
+					headconInfo, "headChannel - " + headToken.toString(), 0,
+					app.eLogger);
 		else
 			throw new IllegalStateException("Head ConnectionInfo doesn't match");
 
@@ -380,15 +381,15 @@ public class StreamJitAppManager {
 			case 1 :
 				return new TailChannels.BlockingTailChannel1(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix);
+						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
 			case 3 :
 				return new TailChannels.BlockingTailChannel3(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix);
+						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
 			default :
 				return new TailChannels.BlockingTailChannel2(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix);
+						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
 		}
 	}
 

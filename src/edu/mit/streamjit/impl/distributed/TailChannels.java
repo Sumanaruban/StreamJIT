@@ -20,6 +20,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BlockingInputChannel;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 
 public class TailChannels {
 
@@ -202,6 +203,8 @@ public class TailChannels {
 
 		private final String cfgPrefix;
 
+		protected final EventTimeLogger eLogger;
+
 		protected abstract void releaseAndInitilize();
 
 		/**
@@ -223,7 +226,8 @@ public class TailChannels {
 		public AbstractBlockingTailChannel(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
-				int steadyCount, String appName, String cfgPrefix) {
+				int steadyCount, String appName, String cfgPrefix,
+				EventTimeLogger eLogger) {
 			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel);
 			this.skipCount = skipCount;
 			this.totalCount = steadyCount + skipCount;
@@ -237,6 +241,7 @@ public class TailChannels {
 			}
 			if (Options.printOutputCountPeriod > 0)
 				outputCountPrinter = new OutputCountPrinter(this, appName);
+			this.eLogger = eLogger;
 		}
 
 		@Override
@@ -318,9 +323,10 @@ public class TailChannels {
 		public BlockingTailChannel1(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
-				int steadyCount, String appName, String cfgPrefix) {
+				int steadyCount, String appName, String cfgPrefix,
+				EventTimeLogger eLogger) {
 			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
-					skipCount, steadyCount, appName, cfgPrefix);
+					skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			steadyLatch = new CountDownLatch(1);
 			skipLatch = new CountDownLatch(1);
 			this.skipLatchUp = true;
@@ -330,6 +336,8 @@ public class TailChannels {
 		@Override
 		public void receiveData() {
 			super.receiveData();
+			if (count == 0)
+				eLogger.eEvent("initialization");
 			count++;
 
 			if (skipLatchUp && count > skipCount) {
@@ -437,9 +445,10 @@ public class TailChannels {
 		public BlockingTailChannel2(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
-				int steadyCount, String appName, String cfgPrefix) {
+				int steadyCount, String appName, String cfgPrefix,
+				EventTimeLogger eLogger) {
 			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
-					skipCount, steadyCount, appName, cfgPrefix);
+					skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			stopWatch = Stopwatch.createUnstarted();
 			skipLatch = new CountDownLatch(1);
 			this.skipLatchUp = true;
@@ -448,6 +457,8 @@ public class TailChannels {
 		@Override
 		public void receiveData() {
 			super.receiveData();
+			if (count == 0)
+				eLogger.eEvent("initialization");
 			count++;
 
 			if (skipLatchUp && count > skipCount) {
@@ -538,15 +549,18 @@ public class TailChannels {
 		public BlockingTailChannel3(Buffer buffer,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
-				int steadyCount, String appName, String cfgPrefix) {
+				int steadyCount, String appName, String cfgPrefix,
+				EventTimeLogger eLogger) {
 			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
-					skipCount, steadyCount, appName, cfgPrefix);
+					skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			stopWatch = Stopwatch.createUnstarted();
 		}
 
 		@Override
 		public void receiveData() {
 			super.receiveData();
+			if (count == 0)
+				eLogger.eEvent("initialization");
 			count++;
 		}
 
