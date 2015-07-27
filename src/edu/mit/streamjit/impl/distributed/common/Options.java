@@ -193,6 +193,8 @@ public final class Options {
 	public static final int steadyMills;
 	public static final int noOutputTimeLimit;
 
+	public static final boolean logEventTime;
+
 	static {
 		Properties prop = loadProperties();
 		printOutputCountPeriod = Integer.parseInt(prop
@@ -234,6 +236,7 @@ public final class Options {
 		steadyMills = Integer.parseInt(prop.getProperty("steadyMills"));
 		noOutputTimeLimit = Integer.parseInt(prop
 				.getProperty("noOutputTimeLimit"));
+		logEventTime = Boolean.parseBoolean(prop.getProperty("logEventTime"));
 	}
 
 	public static Properties getProperties() {
@@ -266,6 +269,7 @@ public final class Options {
 		setProperty(prop, "skipMills", skipMills);
 		setProperty(prop, "steadyMills", steadyMills);
 		setProperty(prop, "noOutputTimeLimit", noOutputTimeLimit);
+		setProperty(prop, "logEventTime", logEventTime);
 		return prop;
 	}
 

@@ -32,10 +32,10 @@ import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.ConnectionFactory;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Ipv4Validator;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.EventTimeLogger;
-import edu.mit.streamjit.tuner.EventTimeLogger.FileEventTimeLogger;
 
 /**
  * In StreamJit's jargon "Stream node" means a computing node that runs part or
@@ -261,7 +261,10 @@ public class StreamNode extends Thread {
 	void createEventTimeLogger(String appName) {
 		if (eventTimeLogger != null)
 			return;
-		this.eventTimeLogger = new FileEventTimeLogger(appName,
-				this.tostString());
+		if (Options.logEventTime)
+			this.eventTimeLogger = new EventTimeLogger.FileEventTimeLogger(
+					appName, this.tostString());
+		else
+			this.eventTimeLogger = new EventTimeLogger.NoEventTimeLogger();
 	}
 }
