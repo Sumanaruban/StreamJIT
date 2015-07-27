@@ -152,6 +152,12 @@ public class StreamNode extends Thread {
 		this.run = false;
 	}
 
+	/**
+	 * {@link Object#toString()} is not overridden in this class because this
+	 * class's super class, {@link Thread}, overrides that method.
+	 * 
+	 * @return
+	 */
 	public String tostString() {
 		return "StreamNode-" + myNodeID;
 	}
