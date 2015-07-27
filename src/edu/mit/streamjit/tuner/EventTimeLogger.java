@@ -33,7 +33,7 @@ public interface EventTimeLogger {
 	 */
 	void eEvent(String eventName);
 
-	void bTuningRound(int round);
+	void bTuningRound(String cfgPrefix);
 	void eTuningRound();
 
 	/**
@@ -58,7 +58,7 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void bTuningRound(int round) {
+		public void bTuningRound(String cfgPrefix) {
 		}
 
 		@Override
@@ -117,11 +117,11 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void bTuningRound(int round) {
+		public void bTuningRound(String cfgPrefix) {
 			bEvent("tuningRound");
 			write(String
-					.format("----------------------------%d----------------------------\n",
-							round));
+					.format("----------------------------%s----------------------------\n",
+							cfgPrefix));
 		}
 
 		@Override

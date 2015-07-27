@@ -30,10 +30,10 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
-import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter.BlobSpecifier;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
+import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
@@ -43,6 +43,7 @@ import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.NetworkInfo;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.CompilationTime;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.json.Jsonifiers;
 
 /**
@@ -121,7 +122,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			}
 			System.out.println("Couldn't get the blobset....");
 		}
-		newTuningRound(blobSet);
+		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg));
 	}
 
 	private ImmutableSet<Blob> getBlobs(Configuration dyncfg,
@@ -388,12 +389,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		}
 	}
 
-	// TODO: Get this round from Controller. Configuration has cfgPrefix that is
-	// most of the time string version of this round value. Unify everything and
-	// make everything consistent.
-	int round = 0;
-	void newTuningRound(ImmutableSet<Blob> blobSet) {
-		streamNode.eventTimeLogger.bTuningRound(++round);
+	void newTuningRound(ImmutableSet<Blob> blobSet, String cfgPrefix) {
+		streamNode.eventTimeLogger.bTuningRound(cfgPrefix);
 		for (Blob b : blobSet) {
 			StringBuilder sb = new StringBuilder("Blob-");
 			sb.append(Utils.getBlobID(b));
