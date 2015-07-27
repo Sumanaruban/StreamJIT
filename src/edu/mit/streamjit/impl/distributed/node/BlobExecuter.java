@@ -1,6 +1,8 @@
 package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -456,7 +458,7 @@ class BlobExecuter {
 			if (cores != null && cores.size() > 0)
 				Affinity.setThreadAffinity(cores);
 			try {
-				// logFiringTime();
+				logFiringTime();
 				while (!stopping) {
 					if (be.debug)
 						System.out.println(Thread.currentThread().getName()
@@ -491,9 +493,13 @@ class BlobExecuter {
 				coreCode.run();
 			}
 			if (!stopping) {
+				RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 				long time = sw.elapsed(TimeUnit.MILLISECONDS);
-				System.out.println("Average Firing Time =" + time
-						/ meassureCount + "ms");
+				long avgMills = time / meassureCount;
+				long uptime = rb.getUptime();
+				blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
+						"%-22s\t%-12d\t%d\n", "coreCodeFiring", uptime,
+						avgMills));
 			}
 		}
 	}
