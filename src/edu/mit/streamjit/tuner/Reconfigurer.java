@@ -39,7 +39,7 @@ public class Reconfigurer {
 		this.cfgManager = cfgManager;
 		this.logger = logger;
 		this.prognosticator = prognosticator(app);
-		this.mLogger = new FileEventTimeLogger(app.name);
+		this.mLogger = new FileEventTimeLogger(app.name, "controller");
 	}
 
 	private ConfigurationPrognosticator prognosticator(StreamJitApp<?, ?> app) {
