@@ -82,6 +82,9 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 			this.conProvider = new ConnectionProvider(streamNode.getNodeID(),
 					networkInfo);
+			String appName = (String) staticConfig
+					.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
+			streamNode.createEventTimeLogger(appName);
 		} else
 			System.err
 					.println("New static configuration received...But Ignored...");
@@ -115,9 +118,9 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
 			System.out.println("Couldn't get the blobset....");
 		}
+		newTuningRound();
 	}
 
 	private ImmutableSet<Blob> getBlobs(Configuration dyncfg,
@@ -382,5 +385,13 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			// workIdentifiers.toString()));
 			return b;
 		}
+	}
+
+	// TODO: Get this round from Controller. Configuration has cfgPrefix that is
+	// most of the time string version of this round value. Unify everything and
+	// make everything consistent.
+	int round = 0;
+	void newTuningRound() {
+		streamNode.eventTimeLogger.bTuningRound(++round);
 	}
 }

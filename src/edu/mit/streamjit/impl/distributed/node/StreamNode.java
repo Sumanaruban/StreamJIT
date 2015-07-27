@@ -34,6 +34,8 @@ import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Ipv4Validator;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.tuner.EventTimeLogger.FileEventTimeLogger;
 
 /**
  * In StreamJit's jargon "Stream node" means a computing node that runs part or
@@ -61,6 +63,8 @@ public class StreamNode extends Thread {
 	private volatile BlobsManager blobsManager;
 
 	Profiler profiler;
+
+	public EventTimeLogger eventTimeLogger;
 
 	private boolean run; // As we assume that all controller communication and
 							// the MessageElement processing is managed by
@@ -243,5 +247,15 @@ public class StreamNode extends Thread {
 			System.out
 					.println("Creating connection with the controller failed.");
 		}
+	}
+
+	/**
+	 * @param appName
+	 */
+	void createEventTimeLogger(String appName) {
+		if (eventTimeLogger != null)
+			return;
+		this.eventTimeLogger = new FileEventTimeLogger(appName,
+				this.tostString());
 	}
 }

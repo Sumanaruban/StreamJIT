@@ -273,6 +273,7 @@ class BlobExecuter {
 			if (this.blobsManagerImpl.bufferCleaner != null)
 				this.blobsManagerImpl.bufferCleaner.stopit();
 
+			this.blobsManagerImpl.streamNode.eventTimeLogger.eTuningRound();
 		}
 		// printDrainedStatus();
 	}
