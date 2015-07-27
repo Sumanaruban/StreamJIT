@@ -45,7 +45,7 @@ public class OnlineTuner implements Runnable {
 		this.needTermination = needTermination;
 		this.logger = configurer.logger;
 		this.prognosticator = configurer.prognosticator;
-		this.mLogger = configurer.mLogger;
+		this.mLogger = app.eLogger;
 		this.currentBestTime = Integer.MAX_VALUE;
 	}
 

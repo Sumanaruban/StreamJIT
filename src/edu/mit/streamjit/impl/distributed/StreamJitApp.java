@@ -65,6 +65,8 @@ import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.impl.interp.ChannelFactory;
 import edu.mit.streamjit.impl.interp.Interpreter;
+import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.tuner.EventTimeLogger.FileEventTimeLogger;
 import edu.mit.streamjit.tuner.OnlineTuner;
 import edu.mit.streamjit.util.Pair;
 
@@ -111,6 +113,8 @@ public class StreamJitApp<I, O> {
 
 	public final Visualizer visualizer;
 
+	public final EventTimeLogger eLogger;
+
 	/**
 	 * Keeps track of assigned machine Ids of each blob. This information is
 	 * need for draining. TODO: If possible use a better solution.
@@ -136,6 +140,14 @@ public class StreamJitApp<I, O> {
 		this.constraints = getConstrains();
 		Utils.newApp(name);
 		visualizer = new Visualizer.DotVisualizer(streamGraph);
+		eLogger = eventTimeLogger();
+	}
+
+	private EventTimeLogger eventTimeLogger() {
+		if (Options.logEventTime)
+			return new FileEventTimeLogger(name, "controller");
+		else
+			return new EventTimeLogger.NoEventTimeLogger();
 	}
 
 	/**
