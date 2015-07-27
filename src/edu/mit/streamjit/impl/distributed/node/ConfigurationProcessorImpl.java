@@ -107,10 +107,10 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
 
-			String appName = (String) staticConfig
+			String topLevelClass = (String) staticConfig
 					.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
 			streamNode.setBlobsManager(new BlobsManagerImpl(blobSet,
-					conInfoMap, streamNode, conProvider, appName));
+					conInfoMap, streamNode, conProvider, topLevelClass));
 		} else {
 			try {
 				streamNode.controllerConnection
