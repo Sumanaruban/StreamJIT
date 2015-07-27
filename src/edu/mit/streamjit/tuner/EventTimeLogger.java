@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 
 /**
- * Logs the opentuner's method call times for debugging purpose.
+ * Logs the time taken for each event for debugging and documentation purpose.
  * 
  * @author sumanan
  * @since 6 Mar, 2015
@@ -73,7 +73,7 @@ public interface EventTimeLogger {
 		public EventTimeLoggerImpl(OutputStreamWriter osWriter) {
 			this.osWriter = osWriter;
 			this.events = new HashMap<>();
-			write("Method\t\t\tUptime\t\telapsedtime\n");
+			write("Event\t\t\tUptime\t\telapsedtime\n");
 			write("====================================================\n");
 		}
 
@@ -141,16 +141,19 @@ public interface EventTimeLogger {
 	}
 
 	/**
-	 * Writes the method call time info to appName/onlineTuner.txt file.
+	 * Writes the event time info in to appName/eventTime_[fileNameSuffix].txt
+	 * file, where appName and fileNameSuffix are constructor arguments.
+	 * 
 	 */
 	public static class FileEventTimeLogger extends EventTimeLoggerImpl {
-		public FileEventTimeLogger(String appName) {
-			super(Utils.fileWriter(appName, "onlineTuner.txt"));
+		public FileEventTimeLogger(String appName, String fileNameSuffix) {
+			super(Utils.fileWriter(appName,
+					String.format("eventTime_%s.txt", fileNameSuffix)));
 		}
 	}
 
 	/**
-	 * Prints the method call time info to the standard out.
+	 * Prints the event time info to the standard out.
 	 */
 	public static class PrintEventTimeLogger extends EventTimeLoggerImpl {
 		public PrintEventTimeLogger() {
