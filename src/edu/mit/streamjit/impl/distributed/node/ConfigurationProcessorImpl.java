@@ -83,7 +83,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			this.conProvider = new ConnectionProvider(streamNode.getNodeID(),
 					networkInfo);
 			String appName = (String) staticConfig
-					.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
+					.getExtraData(GlobalConstants.APP_NAME);
 			streamNode.createEventTimeLogger(appName);
 		} else
 			System.err

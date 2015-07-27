@@ -385,6 +385,7 @@ public class StreamJitApp<I, O> {
 		builder.putExtraData(GlobalConstants.JARFILE_PATH, jarFilePath)
 				.putExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME,
 						topLevelClass);
+		builder.putExtraData(GlobalConstants.APP_NAME, name);
 		return builder.build();
 	}
 
@@ -417,8 +418,7 @@ public class StreamJitApp<I, O> {
 		partParam.addBlobFactory(comp2Factory);
 		blobtoMachineMap = new HashMap<>();
 
-		BlobFactory bf = Options.useCompilerBlob ? comp2Factory
-				: intFactory;
+		BlobFactory bf = Options.useCompilerBlob ? comp2Factory : intFactory;
 		for (Integer machineID : partitionsMachineMap.keySet()) {
 			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
 					.get(machineID);

@@ -43,6 +43,8 @@ public final class GlobalConstants {
 
 	public static final String JARFILE_PATH = "JARFILE_PATH";
 
+	public static final String APP_NAME = "APP_NAME";
+
 	/**
 	 * nodeID to {@link NodeInfo} map is stored in the configuration in this
 	 * name.
