@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableTable;
 
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.blob.Blob.ExecutionStatistics;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.Buffers;
@@ -577,8 +578,25 @@ class BlobExecuter {
 			}
 		}
 
+		private void logBlobExecutionStatistics() {
+			ExecutionStatistics es = blob.getExecutionStatistics();
+			blobsManagerImpl.streamNode.eventTimeLogger
+					.log(String.format("%-22s\t%-12d\t%d\n", blobID
+							+ "-initTime", 0, es.initTime));
+			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
+					"%-22s\t%-12d\t%d\n", blobID + "-adjustTime", 0,
+					es.adjustTime));
+			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
+					"%-22s\t%-12d\t%d\n", blobID + "-adjustCount", 0,
+					es.adjustCount));
+			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
+					"%-22s\t%-12d\t%d\n", blobID + "-drainTime", 0,
+					es.drainTime));
+		}
+
 		@Override
 		public void run() {
+			logBlobExecutionStatistics();
 			updateDrainTime();
 			blobExec.drained();
 		}

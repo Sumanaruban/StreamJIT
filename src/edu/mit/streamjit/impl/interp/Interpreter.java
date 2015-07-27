@@ -584,4 +584,9 @@ public class Interpreter implements Blob {
 					+ ", Execution count-" + Workers.getExecutions(w));
 		}
 	}
+
+	@Override
+	public ExecutionStatistics getExecutionStatistics() {
+		return new ExecutionStatistics.ExecutionStatisticsBuilder().build();
+	}
 }

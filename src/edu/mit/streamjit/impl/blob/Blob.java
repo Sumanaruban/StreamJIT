@@ -22,9 +22,12 @@
 package edu.mit.streamjit.impl.blob;
 
 import static com.google.common.base.Preconditions.*;
+
 import com.google.common.collect.ComparisonChain;
+
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.common.Workers;
+
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
@@ -151,6 +154,14 @@ public interface Blob {
 	//TODO: getConfig()
 
 	/**
+	 * Returns {@link ExecutionStatistics} of this blob. This method may only be
+	 * called after the callback passed to drain() has been called.
+	 * 
+	 * @return {@link ExecutionStatistics} of this blob.
+	 */
+	public ExecutionStatistics getExecutionStatistics();
+
+	/**
 	 * A Token represents an edge between two workers, suitable for identifying
 	 * inputs and outputs of Blobs.  Tokens are serializable, but their meaning
 	 * depends on the identifiers in Worker objects, so they're only useful when
@@ -261,6 +272,68 @@ public interface Blob {
 			String up = upstreamIdentifier == -1 ? "input" : Integer.toString(upstreamIdentifier);
 			String down = downstreamIdentifier == -1 ? "output" : Integer.toString(downstreamIdentifier);
 			return String.format("Token(%s, %s)", up, down);
+		}
+	}
+
+	/**
+	 * Blob's execution timings.
+	 * 
+	 * @author sumanan
+	 * @since 27 Jul, 2015
+	 */
+	public static class ExecutionStatistics {
+		public final long initTime;
+
+		public final long adjustTime;
+
+		public final int adjustCount;
+
+		public final long drainTime;
+
+		private ExecutionStatistics(long initTime, long adjustTime,
+				int adjustCount, long drainTime) {
+			this.initTime = initTime;
+			this.adjustTime = adjustTime;
+			this.adjustCount = adjustCount;
+			this.drainTime = drainTime;
+		}
+
+		public void print()
+		{
+			System.out.println("init time: "+ initTime + "ms");
+			System.out.println("total adjust time: "+adjustTime+"ms over "+adjustCount+" adjusts");
+			System.out.println("drain time: "+drainTime + "ms");
+		}
+
+		public static class ExecutionStatisticsBuilder {
+			private long initTime = 0;
+
+			private long adjustTime = 0;
+
+			private int adjustCount = 0;
+
+			private long drainTime = 0;
+
+			public void initTime(long initTime) {
+				this.initTime = initTime;
+			}
+
+			public void adjustTime(long adjustTime) {
+				this.adjustTime = adjustTime;
+			}
+
+			public void adjustCount(int adjustCount) {
+				this.adjustCount = adjustCount;
+			}
+
+			public void drainTime(long drainTime) {
+				this.drainTime = drainTime;
+			}
+
+			public ExecutionStatistics build() {
+				return new ExecutionStatistics(initTime, adjustTime,
+						adjustCount, drainTime);
+			}
 		}
 	}
 }
