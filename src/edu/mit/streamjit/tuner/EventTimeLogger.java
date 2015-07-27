@@ -37,6 +37,13 @@ public interface EventTimeLogger {
 	void eTuningRound();
 
 	/**
+	 * This method can be used to log extra messages.
+	 * 
+	 * @param message
+	 */
+	void log(String message);
+
+	/**
 	 * Logs nothing.
 	 */
 	public static class NoEventTimeLogger implements EventTimeLogger {
@@ -55,6 +62,10 @@ public interface EventTimeLogger {
 
 		@Override
 		public void eTuningRound() {
+		}
+
+		@Override
+		public void log(String message) {
 		}
 	}
 
@@ -137,6 +148,11 @@ public interface EventTimeLogger {
 			if (os == null)
 				return null;
 			return new OutputStreamWriter(os);
+		}
+
+		@Override
+		public void log(String message) {
+			write(message + "\n");
 		}
 	}
 
