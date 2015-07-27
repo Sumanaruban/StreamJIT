@@ -32,11 +32,14 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
+import edu.mit.streamjit.impl.blob.Blob.ExecutionStatistics.ExecutionStatisticsBuilder;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.interp.Interpreter;
 import edu.mit.streamjit.util.CollectionUtils;
 import edu.mit.streamjit.util.bytecode.methodhandles.Combinators;
@@ -46,6 +49,7 @@ import edu.mit.streamjit.util.NothrowCallable;
 import edu.mit.streamjit.util.bytecode.Module;
 import edu.mit.streamjit.util.bytecode.ModuleClassLoader;
 import edu.mit.streamjit.util.bytecode.methodhandles.ProxyFactory;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -59,6 +63,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -127,6 +132,8 @@ public class Compiler2BlobHost implements Blob {
 	private final Phaser barrier;
 	private volatile Runnable drainCallback;
 	private volatile DrainData drainData;
+	private final ExecutionStatisticsBuilder esBuilder = new ExecutionStatisticsBuilder();
+	private final boolean logTimings;
 
 	public Compiler2BlobHost(ImmutableSet<Worker<?, ?>> workers,
 			Configuration configuration,
@@ -158,6 +165,7 @@ public class Compiler2BlobHost implements Blob {
 		this.precreatedBuffers = precreatedBuffers;
 
 		this.collectTimings = config.getExtraData("timings") != null ? (Boolean)config.getExtraData("timings") : false;
+		this.logTimings = this.collectTimings || Options.logEventTime;
 
 		this.minimumBufferCapacity = getMinCapacity(Iterables.concat(this.initReadInstructions, this.readInstructions), Iterables.concat(this.initWriteInstructions, this.writeInstructions));
 		this.minimumSteadyBufferCapacity = getMinCapacity(this.readInstructions, this.writeInstructions);
@@ -291,7 +299,7 @@ public class Compiler2BlobHost implements Blob {
 
 	private void doInit() throws Throwable {
 		Stopwatch initTime = null;
-		if (collectTimings)
+		if (logTimings)
 			initTime = Stopwatch.createStarted();
 
 		for (int i = 0; i < initReadInstructions.size(); ++i) {
@@ -319,14 +327,16 @@ public class Compiler2BlobHost implements Blob {
 
 		SwitchPoint.invalidateAll(new SwitchPoint[]{sp1});
 
-		if (collectTimings)
-			System.out.println("init time: "+initTime.stop());
+		if (logTimings){
+			initTime.stop();
+			esBuilder.initTime(initTime.elapsed(TimeUnit.MILLISECONDS));
+		}
 	}
 
 	private final Stopwatch adjustTime = Stopwatch.createUnstarted();
 	private int adjustCount;
 	private void doAdjust() throws Throwable {
-		if (collectTimings) {
+		if (logTimings) {
 			adjustTime.start();
 			++adjustCount;
 		}
@@ -338,7 +348,7 @@ public class Compiler2BlobHost implements Blob {
 
 		readOrDrain();
 
-		if (collectTimings)
+		if (logTimings)
 			adjustTime.stop();
 	}
 
@@ -378,7 +388,7 @@ public class Compiler2BlobHost implements Blob {
 	 */
 	private void doDrain(List<ReadInstruction> reads, List<DrainInstruction> drains) {
 		Stopwatch drainTime = null;
-		if (collectTimings)
+		if (logTimings)
 			drainTime = Stopwatch.createStarted();
 
 		List<Map<Token, Object[]>> data = new ArrayList<>(reads.size() + drains.size());
@@ -422,13 +432,16 @@ public class Compiler2BlobHost implements Blob {
 		this.drainData = interp.getDrainData();
 
 		SwitchPoint.invalidateAll(new SwitchPoint[]{sp1, sp2});
-		drainCallback.run();
 
-		if (collectTimings) {
+		if (logTimings) {
 			drainTime.stop();
-			System.out.println("total adjust time: "+adjustTime+" over "+adjustCount+" adjusts");
-			System.out.println("drain time: "+drainTime);
+			esBuilder.drainTime(drainTime.elapsed(TimeUnit.MILLISECONDS));
+			esBuilder.adjustTime(adjustTime.elapsed(TimeUnit.MILLISECONDS));
+			esBuilder.adjustCount(adjustCount);
 		}
+		drainCallback.run();
+		if (collectTimings)
+			esBuilder.build().print();
 	}
 
 	private boolean isDraining() {
@@ -471,5 +484,10 @@ public class Compiler2BlobHost implements Blob {
 	public static interface DrainInstruction extends NothrowCallable<Map<Token, Object[]>> {
 		@Override
 		public Map<Token, Object[]> call();
+	}
+
+	@Override
+	public ExecutionStatistics getExecutionStatistics() {
+		return esBuilder.build();
 	}
 }
