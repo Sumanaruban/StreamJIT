@@ -508,8 +508,6 @@ class BlobExecuter {
 
 		private final BlobExecuter blobExec;
 
-		// TODO: [2014-03-17] Just to added for checking the drain time. Remove
-		// it later.
 		private final Stopwatch sw;
 
 		DrainCallback(BlobExecuter be) {
@@ -517,8 +515,7 @@ class BlobExecuter {
 			sw = Stopwatch.createStarted();
 		}
 
-		@Override
-		public void run() {
+		private void updateDrainTime() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
 			RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
@@ -532,6 +529,11 @@ class BlobExecuter {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public void run() {
+			updateDrainTime();
 			blobExec.drained();
 		}
 	}
