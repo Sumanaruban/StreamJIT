@@ -37,7 +37,8 @@ public interface EventTimeLogger {
 	void eTuningRound();
 
 	/**
-	 * This method can be used to log extra messages.
+	 * This method can be used to log extra messages. A newline must be added at
+	 * the end of the @param message.
 	 * 
 	 * @param message
 	 */
@@ -152,7 +153,7 @@ public interface EventTimeLogger {
 
 		@Override
 		public void log(String message) {
-			write(message + "\n");
+			write(message);
 		}
 	}
 
