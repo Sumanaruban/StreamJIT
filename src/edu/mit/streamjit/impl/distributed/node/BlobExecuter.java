@@ -98,7 +98,8 @@ class BlobExecuter {
 		for (int i = 0; i < blob.getCoreCount(); i++) {
 			String name = String.format("%s - %d", baseName, i);
 			blobThreads.add(new BlobThread2(blob.getCoreCode(i), this, name,
-					blobsManagerImpl.affinityManager.getAffinity(blob, i)));
+					blobsManagerImpl.affinityManager.getAffinity(blob, i),
+					i == 0));
 		}
 
 		if (blobThreads.size() < 1)
@@ -441,12 +442,15 @@ class BlobExecuter {
 
 		private volatile boolean stopping = false;
 
+		private final boolean logTime;
+
 		BlobThread2(Runnable coreCode, BlobExecuter be, String name,
-				Set<Integer> cores) {
+				Set<Integer> cores, boolean logTime) {
 			super(name);
 			this.coreCode = coreCode;
 			this.be = be;
 			this.cores = cores;
+			this.logTime = logTime;
 		}
 
 		public void requestStop() {
@@ -458,11 +462,9 @@ class BlobExecuter {
 			if (cores != null && cores.size() > 0)
 				Affinity.setThreadAffinity(cores);
 			try {
-				logFiringTime();
+				if (logTime)
+					logFiringTime();
 				while (!stopping) {
-					if (be.debug)
-						System.out.println(Thread.currentThread().getName()
-								+ " :new run....");
 					coreCode.run();
 				}
 			} catch (Error | Exception e) {
