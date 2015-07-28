@@ -170,12 +170,12 @@ public class ConfigurationUtils {
 	 * Gets configuration's prefix name from the configuration and returns.
 	 * 
 	 * @param config
-	 * @return prefix name of the configuration if exists. <code>null</code>
+	 * @return prefix name of the configuration if exists; empty string
 	 *         otherwise.
 	 */
 	public static String getConfigPrefix(Configuration config) {
 		if (config == null)
-			return null;
+			return "";
 		String prefix = (String) config.getExtraData("configPrefix");
 		return prefix == null ? "" : prefix;
 	}
