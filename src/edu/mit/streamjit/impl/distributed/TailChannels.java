@@ -121,7 +121,7 @@ public class TailChannels {
 		 * in not guaranteed to scheduled at fixed rate. We have to use the last
 		 * called time for more accurate throughput calculation.
 		 */
-		private long lastUpTime;
+		private long lastNano;
 
 		private boolean isPrevNoOutput;
 		private long noOutputStartTime;
@@ -145,8 +145,8 @@ public class TailChannels {
 				return;
 			writer = Utils.fileWriter(appName, "throughput.txt", true);
 			lastCount = 0;
-			lastUpTime = System.nanoTime();
-			noOutputStartTime = lastUpTime;
+			lastNano = System.nanoTime();
+			noOutputStartTime = lastNano;
 			isPrevNoOutput = false;
 			scheduledExecutorService = Executors
 					.newSingleThreadScheduledExecutor();
@@ -155,30 +155,30 @@ public class TailChannels {
 						@Override
 						public void run() {
 							int currentCount = tailChannel.count();
-							long uptime = System.nanoTime();
+							long currentNano = System.nanoTime();
 							int newOutputs = currentCount - lastCount;
 							double throughput;
 							if (newOutputs == 0) {
 								throughput = 0;
 								if (!isPrevNoOutput) {
-									noOutputStartTime = uptime;
+									noOutputStartTime = currentNano;
 									isPrevNoOutput = true;
 								}
 							} else {
-								long duration = uptime - lastUpTime;
+								long duration = currentNano - lastNano;
 								throughput = (newOutputs * 1e9) / duration;
 								if (isPrevNoOutput) {
 									isPrevNoOutput = false;
 									eLogger.logEvent("noOutput",
 											TimeUnit.MILLISECONDS.convert(
-													uptime - noOutputStartTime,
+													currentNano - noOutputStartTime,
 													TimeUnit.NANOSECONDS));
 								}
 							}
 							lastCount = currentCount;
-							lastUpTime = uptime;
+							lastNano = currentNano;
 							String msg = String.format(
-									"%d\t\t%d\t\t%f items/s\n", uptime,
+									"%d\t\t%d\t\t%f items/s\n", currentNano,
 									currentCount, throughput);
 							try {
 								writer.write(msg);
