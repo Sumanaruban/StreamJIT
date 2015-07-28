@@ -202,7 +202,7 @@ public class TailChannels {
 
 		private final PerformanceLogger pLogger;
 
-		private ThroughputPrinter throughputPrinter = null;
+		private final ThroughputPrinter throughputPrinter;
 
 		private final String cfgPrefix;
 
@@ -245,6 +245,8 @@ public class TailChannels {
 				pLogger = null;
 			if (Options.throughputMeasurementPeriod > 0)
 				throughputPrinter = new ThroughputPrinter(this, appName);
+			else
+				throughputPrinter = null;
 			this.eLogger = eLogger;
 		}
 
