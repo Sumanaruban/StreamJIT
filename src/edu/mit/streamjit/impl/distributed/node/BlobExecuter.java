@@ -174,12 +174,16 @@ class BlobExecuter {
 		this.drainType = drainType;
 		drainState = 1;
 
+		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
+				+ "inChnlManager.waitToStop");
 		inChnlManager.stop(drainType);
 		// TODO: [2014-03-14] I commented following line to avoid one dead
 		// lock case when draining. Deadlock 5 and 6.
 		// [2014-09-17] Lets waitToStop() if drain data is required.
 		if (drainType != DrainType.DISCARD)
 			inChnlManager.waitToStop();
+		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
+				+ "inChnlManager.waitToStop");
 
 		for (LocalBuffer buf : outputLocalBuffers.values()) {
 			buf.drainingStarted(drainType);
@@ -223,8 +227,12 @@ class BlobExecuter {
 			bt.requestStop();
 		}
 
+		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
+				+ "outChnlManager.waitToStop");
 		outChnlManager.stop(drainType == DrainType.FINAL);
 		outChnlManager.waitToStop();
+		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
+				+ "outChnlManager.waitToStop");
 
 		if (drainState > 3)
 			return;
@@ -293,10 +301,14 @@ class BlobExecuter {
 		ImmutableMap<Token, BoundaryInputChannel> inputChannels = inChnlManager
 				.inputChannelsMap();
 
+		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
+				+ "inChnlManager.waitToStop");
 		// In a proper system the following line should be called inside
 		// doDrain(), just after inChnlManager.stop(). Read the comment
 		// in doDrain().
 		inChnlManager.waitToStop();
+		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
+				+ "inChnlManager.waitToStop");
 
 		for (Token t : blob.getInputs()) {
 			if (inputChannels.containsKey(t)) {
@@ -423,8 +435,16 @@ class BlobExecuter {
 			}
 		}
 
+		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
+				+ "inChnlManager.waitToStop");
 		inChnlManager.waitToStop();
+		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
+				+ "inChnlManager.waitToStop");
+		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
+				+ "outChnlManager.waitToStop");
 		outChnlManager.waitToStop();
+		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
+				+ "outChnlManager.waitToStop");
 
 		if (this.blobsManagerImpl.monBufs != null)
 			this.blobsManagerImpl.monBufs.stopMonitoring();
