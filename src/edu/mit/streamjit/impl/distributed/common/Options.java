@@ -55,11 +55,11 @@ public final class Options {
 	public static final int outputCount;
 
 	/**
-	 * Period to print output count periodically. This printing feature get
-	 * turned off if this value is less than 1. Time unit is ms. See
+	 * Period to measure and print the throughput. This throughput measurement
+	 * feature get turned off if this value is less than 1. Time unit is ms. See
 	 * {@link TailChannels}.
 	 */
-	public static final int printOutputCountPeriod;
+	public static final int throughputMeasurementPeriod;
 
 	/**
 	 * Save all configurations tired by open tuner in to
@@ -196,8 +196,8 @@ public final class Options {
 
 	static {
 		Properties prop = loadProperties();
-		printOutputCountPeriod = Integer.parseInt(prop
-				.getProperty("printOutputCountPeriod"));;
+		throughputMeasurementPeriod = Integer.parseInt(prop
+				.getProperty("throughputMeasurementPeriod"));;
 		maxNumCores = Integer.parseInt(prop.getProperty("maxNumCores"));
 		useCompilerBlob = Boolean.parseBoolean(prop
 				.getProperty("useCompilerBlob"));
@@ -247,7 +247,8 @@ public final class Options {
 		setProperty(prop, "saveAllConfigurations", saveAllConfigurations);
 		setProperty(prop, "outputCount", outputCount);
 		setProperty(prop, "useCompilerBlob", useCompilerBlob);
-		setProperty(prop, "printOutputCountPeriod", printOutputCountPeriod);
+		setProperty(prop, "throughputMeasurementPeriod",
+				throughputMeasurementPeriod);
 		setProperty(prop, "singleNodeOnline", singleNodeOnline);
 		setProperty(prop, "maxNumCores", maxNumCores);
 		setProperty(prop, "needProfiler", needProfiler);

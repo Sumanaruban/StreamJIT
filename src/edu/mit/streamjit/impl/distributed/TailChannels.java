@@ -107,7 +107,7 @@ public class TailChannels {
 	 * Periodically prints the number of outputs received by a
 	 * {@link TailChannel}.
 	 */
-	private static class OutputCountPrinter {
+	private static class ThroughputPrinter {
 
 		private final String appName;
 
@@ -124,16 +124,16 @@ public class TailChannels {
 
 		private ScheduledExecutorService scheduledExecutorService;
 
-		OutputCountPrinter(TailChannel tailChannel, String appName) {
+		ThroughputPrinter(TailChannel tailChannel, String appName) {
 			this.tailChannel = tailChannel;
 			this.appName = appName;
-			printOutputCount();
+			printThroughput();
 		}
 
-		private void printOutputCount() {
-			if (Options.printOutputCountPeriod < 1)
+		private void printThroughput() {
+			if (Options.throughputMeasurementPeriod < 1)
 				return;
-			writer = Utils.fileWriter(appName, "outputCount.txt", true);
+			writer = Utils.fileWriter(appName, "throughput.txt", true);
 			lastCount = 0;
 			scheduledExecutorService = Executors
 					.newSingleThreadScheduledExecutor();
@@ -153,8 +153,8 @@ public class TailChannels {
 								e.printStackTrace();
 							}
 						}
-					}, Options.printOutputCountPeriod,
-					Options.printOutputCountPeriod,
+					}, Options.throughputMeasurementPeriod,
+					Options.throughputMeasurementPeriod,
 					TimeUnit.MILLISECONDS);
 		}
 
@@ -199,7 +199,7 @@ public class TailChannels {
 
 		private final PerformanceLogger pLogger;
 
-		private OutputCountPrinter outputCountPrinter = null;
+		private ThroughputPrinter throughputPrinter = null;
 
 		private final String cfgPrefix;
 
@@ -240,8 +240,8 @@ public class TailChannels {
 				pLogger.start();
 			} else
 				pLogger = null;
-			if (Options.printOutputCountPeriod > 0)
-				outputCountPrinter = new OutputCountPrinter(this, appName);
+			if (Options.throughputMeasurementPeriod > 0)
+				throughputPrinter = new ThroughputPrinter(this, appName);
 			this.eLogger = eLogger;
 		}
 
@@ -252,8 +252,8 @@ public class TailChannels {
 				releaseAndInitilize();
 				pLogger.stopLogging();
 			}
-			if (outputCountPrinter != null)
-				outputCountPrinter.stop();
+			if (throughputPrinter != null)
+				throughputPrinter.stop();
 		}
 
 		@Override
@@ -282,11 +282,11 @@ public class TailChannels {
 		 * and its usage later.
 		 */
 		protected void reportingTime(long time) {
-			if (outputCountPrinter != null) {
+			if (throughputPrinter != null) {
 				String msg = String.format(
 						"Reporting-%s.cfg,time=%d,TotalCount=%d\n", cfgPrefix,
 						time, count);
-				outputCountPrinter.write(msg);
+				throughputPrinter.write(msg);
 			}
 		}
 	}
