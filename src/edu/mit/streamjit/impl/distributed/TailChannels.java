@@ -158,12 +158,8 @@ public class TailChannels {
 							if (newOutputs == 0)
 								noOutputCount++;
 							else if (noOutputCount > 0) {
-								eLogger.log(String
-										.format("%-22s\t%-12d\t%d\n",
-												"noOutput",
-												uptime,
-												noOutputCount
-														* Options.throughputMeasurementPeriod));
+								eLogger.logEvent("noOutput", noOutputCount
+										* Options.throughputMeasurementPeriod);
 								noOutputCount = 0;
 							}
 

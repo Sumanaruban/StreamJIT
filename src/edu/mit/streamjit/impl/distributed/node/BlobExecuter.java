@@ -493,13 +493,10 @@ class BlobExecuter {
 				coreCode.run();
 			}
 			if (!stopping) {
-				RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 				long time = sw.elapsed(TimeUnit.MILLISECONDS);
 				long avgMills = time / meassureCount;
-				long uptime = rb.getUptime();
-				blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
-						"%-22s\t%-12d\t%d\n", blobID + "-firing", uptime,
-						avgMills));
+				blobsManagerImpl.streamNode.eventTimeLogger.logEvent(blobID
+						+ "-firing", avgMills);
 			}
 		}
 	}
@@ -518,10 +515,8 @@ class BlobExecuter {
 		private void updateDrainTime() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
-			long uptime = rb.getUptime();
-			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
-					"%-22s\t%-12d\t%d\n", blobID + "-draining", uptime, time));
+			blobsManagerImpl.streamNode.eventTimeLogger.logEvent(blobID
+					+ "-draining", time);
 			try {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNTimeInfo.DrainingTime(
