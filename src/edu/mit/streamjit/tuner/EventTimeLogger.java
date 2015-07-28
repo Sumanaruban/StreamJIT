@@ -45,6 +45,15 @@ public interface EventTimeLogger {
 	void log(String message);
 
 	/**
+	 * Classes which measure the timings themselves may use this method to log
+	 * the event time.
+	 * 
+	 * @param eventName
+	 * @param elapsedMills
+	 */
+	void logEvent(String eventName, long elapsedMills);
+
+	/**
 	 * Logs nothing.
 	 */
 	public static class NoEventTimeLogger implements EventTimeLogger {
@@ -67,6 +76,10 @@ public interface EventTimeLogger {
 
 		@Override
 		public void log(String message) {
+		}
+
+		@Override
+		public void logEvent(String eventName, long elapsedMills) {
 		}
 	}
 
@@ -127,14 +140,17 @@ public interface EventTimeLogger {
 		@Override
 		public void eTuningRound() {
 			eEvent("tuningRound");
-
 		}
 
 		private void log(Event e) {
 			long uptime = rb.getUptime();
 			long elapsedMills = TimeUnit.MILLISECONDS.convert(e.endTime
 					- e.startTime, ticker.timeUnit);
-			write(String.format("%-22s\t%-12d\t%d\n", e.name, uptime,
+			write(e.name, uptime, elapsedMills);
+		}
+
+		private void write(String eventName, long uptime, long elapsedMills) {
+			write(String.format("%-22s\t%-12d\t%d\n", eventName, uptime,
 					elapsedMills));
 		}
 
@@ -157,6 +173,11 @@ public interface EventTimeLogger {
 		@Override
 		public void log(String message) {
 			write(message);
+		}
+
+		@Override
+		public void logEvent(String eventName, long elapsedMills) {
+			write(eventName, rb.getUptime(), elapsedMills);
 		}
 	}
 
