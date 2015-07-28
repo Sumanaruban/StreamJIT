@@ -267,6 +267,7 @@ public class StreamJitAppManager {
 		ImmutableMap<Integer, DrainData> drainDataMap = app.getDrainData();
 
 		logger.compilationStarted();
+		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString(jsonStirng,
 					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
@@ -276,6 +277,7 @@ public class StreamJitAppManager {
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier);
 
 		boolean isCompiled = apStsPro.waitForCompilation();
+		app.eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
 
 		if (isCompiled) {
