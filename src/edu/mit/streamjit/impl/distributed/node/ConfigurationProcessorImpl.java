@@ -122,7 +122,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			}
 			System.out.println("Couldn't get the blobset....");
 		}
-		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg));
+		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
+				.getSubconfiguration("blobConfigs")));
 	}
 
 	private ImmutableSet<Blob> getBlobs(Configuration dyncfg,
