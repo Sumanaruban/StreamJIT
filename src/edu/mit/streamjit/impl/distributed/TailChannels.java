@@ -197,7 +197,7 @@ public class TailChannels {
 
 		protected int count;
 
-		private PerformanceLogger pLogger = null;
+		private final PerformanceLogger pLogger;
 
 		private OutputCountPrinter outputCountPrinter = null;
 
@@ -238,7 +238,8 @@ public class TailChannels {
 				// subtle bugs. Re-factor it.
 				pLogger = new PerformanceLogger(this, appName);
 				pLogger.start();
-			}
+			} else
+				pLogger = null;
 			if (Options.printOutputCountPeriod > 0)
 				outputCountPrinter = new OutputCountPrinter(this, appName);
 			this.eLogger = eLogger;
