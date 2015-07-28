@@ -118,15 +118,25 @@ public class TailChannels {
 		 */
 		private int lastCount;
 
+		/**
+		 * During reconfiguration, output of the application goes to 0. This
+		 * counter is to measure the no output time.
+		 */
+		private int noOutputCount;
+
+		private final EventTimeLogger eLogger;
+
 		private FileWriter writer;
 
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
 		private ScheduledExecutorService scheduledExecutorService;
 
-		ThroughputPrinter(TailChannel tailChannel, String appName) {
+		ThroughputPrinter(TailChannel tailChannel, String appName,
+				EventTimeLogger eLogger) {
 			this.tailChannel = tailChannel;
 			this.appName = appName;
+			this.eLogger = eLogger;
 			printThroughput();
 		}
 
@@ -135,6 +145,7 @@ public class TailChannels {
 				return;
 			writer = Utils.fileWriter(appName, "throughput.txt", true);
 			lastCount = 0;
+			noOutputCount = 0;
 			scheduledExecutorService = Executors
 					.newSingleThreadScheduledExecutor();
 			scheduledExecutorService.scheduleAtFixedRate(
@@ -142,12 +153,25 @@ public class TailChannels {
 						@Override
 						public void run() {
 							int currentCount = tailChannel.count();
+							long uptime = rb.getUptime();
 							int newOutputs = currentCount - lastCount;
+							if (newOutputs == 0)
+								noOutputCount++;
+							else if (noOutputCount > 0) {
+								eLogger.log(String
+										.format("%-22s\t%-12d\t%d\n",
+												"noOutput",
+												uptime,
+												noOutputCount
+														* Options.throughputMeasurementPeriod));
+								noOutputCount = 0;
+							}
+
 							float throughput = (newOutputs * 1000)
 									/ Options.throughputMeasurementPeriod;
 							lastCount = currentCount;
 							String msg = String.format(
-									"%d\t\t%d\t\t%f items/s\n", rb.getUptime(),
+									"%d\t\t%d\t\t%f items/s\n", uptime,
 									currentCount, throughput);
 							try {
 								writer.write(msg);
@@ -244,7 +268,8 @@ public class TailChannels {
 			} else
 				pLogger = null;
 			if (Options.throughputMeasurementPeriod > 0)
-				throughputPrinter = new ThroughputPrinter(this, appName);
+				throughputPrinter = new ThroughputPrinter(this, appName,
+						eLogger);
 			else
 				throughputPrinter = null;
 			this.eLogger = eLogger;
