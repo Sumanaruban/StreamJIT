@@ -3,6 +3,8 @@ package edu.mit.streamjit.impl.distributed;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -132,6 +134,8 @@ public class TailChannels {
 
 		private ScheduledExecutorService scheduledExecutorService;
 
+		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
+
 		ThroughputPrinter(TailChannel tailChannel, String appName,
 				EventTimeLogger eLogger) {
 			this.tailChannel = tailChannel;
@@ -178,7 +182,7 @@ public class TailChannels {
 							lastCount = currentCount;
 							lastNano = currentNano;
 							String msg = String.format(
-									"%d\t\t%d\t\t%f items/s\n", currentNano,
+									"%d\t\t%d\t\t%f items/s\n", rb.getUptime(),
 									currentCount, throughput);
 							try {
 								writer.write(msg);
