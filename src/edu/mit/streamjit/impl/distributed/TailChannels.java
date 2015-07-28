@@ -151,7 +151,7 @@ public class TailChannels {
 									currentCount, throughput);
 							try {
 								writer.write(msg);
-								writer.flush();
+								// writer.flush();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -165,6 +165,7 @@ public class TailChannels {
 				scheduledExecutorService.shutdown();
 			if (writer != null)
 				try {
+					writer.flush();
 					writer.close();
 				} catch (IOException e) {
 					e.printStackTrace();
