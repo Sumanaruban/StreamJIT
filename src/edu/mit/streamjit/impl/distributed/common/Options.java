@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
+import sun.misc.PerformanceLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.AllConnectionParams;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.AsyncTCPNoParams;
@@ -73,16 +74,14 @@ public final class Options {
 	public static final boolean singleNodeOnline;
 
 	/**
-	 * Enables tuning. Tuner will be started iff this flag is set true.
-	 * Otherwise, just use the fixed configuration file to run the program. No
-	 * tuning, no intermediate draining. In this mode (tune = false), time taken
-	 * to pass fixed number of input will be measured for 30 rounds and logged
-	 * into FixedOutPut.txt. See {@link TailChannels} for the file logging
-	 * details.
+	 * Enables or disables tuning.
 	 * <ol>
-	 * 0 - No tuning, uses configuration file to run.
+	 * 0 - No tuning. Uses an existing configuration file to run. In this case,
+	 * {@link PerformanceLogger} will measure the the time taken to generate
+	 * fixed number of outputs and log into FixedOutPut.txt. See
+	 * {@link TailChannels} for the file logging details.
 	 * <ol>
-	 * 1 - Tuning.
+	 * 1 - Tuning. OpenTuner will be started in this case.
 	 * <ol>
 	 * 2 - Evaluate configuration files. ( compares final cfg with hand tuned
 	 * cfg. Both file should be presented in the running directory.
