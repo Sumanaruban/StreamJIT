@@ -143,9 +143,12 @@ public class TailChannels {
 						public void run() {
 							int currentCount = tailChannel.count();
 							int newOutputs = currentCount - lastCount;
+							float throughput = (newOutputs * 1000)
+									/ Options.throughputMeasurementPeriod;
 							lastCount = currentCount;
-							String msg = String.format("%d\t\t%d\t\t%d\n",
-									rb.getUptime(), currentCount, newOutputs);
+							String msg = String.format(
+									"%d\t\t%d\t\t%f items/s\n", rb.getUptime(),
+									currentCount, throughput);
 							try {
 								writer.write(msg);
 								writer.flush();
@@ -154,8 +157,7 @@ public class TailChannels {
 							}
 						}
 					}, Options.throughputMeasurementPeriod,
-					Options.throughputMeasurementPeriod,
-					TimeUnit.MILLISECONDS);
+					Options.throughputMeasurementPeriod, TimeUnit.MILLISECONDS);
 		}
 
 		private void stop() {
