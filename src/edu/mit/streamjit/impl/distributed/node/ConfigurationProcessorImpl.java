@@ -392,16 +392,17 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 	void newTuningRound(ImmutableSet<Blob> blobSet, String cfgPrefix) {
 		streamNode.eventTimeLogger.bTuningRound(cfgPrefix);
-		for (Blob b : blobSet) {
-			StringBuilder sb = new StringBuilder("Blob-");
-			sb.append(Utils.getBlobID(b));
-			sb.append("-");
-			for (Worker<?, ?> w : b.getWorkers()) {
-				sb.append(Workers.getIdentifier(w));
-				sb.append(",");
+		if (blobSet != null)
+			for (Blob b : blobSet) {
+				StringBuilder sb = new StringBuilder("Blob-");
+				sb.append(Utils.getBlobID(b));
+				sb.append("-");
+				for (Worker<?, ?> w : b.getWorkers()) {
+					sb.append(Workers.getIdentifier(w));
+					sb.append(",");
+				}
+				sb.append('\n');
+				streamNode.eventTimeLogger.log(sb.toString());
 			}
-			sb.append('\n');
-			streamNode.eventTimeLogger.log(sb.toString());
-		}
 	}
 }
