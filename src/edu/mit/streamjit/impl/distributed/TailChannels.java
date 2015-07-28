@@ -3,8 +3,6 @@ package edu.mit.streamjit.impl.distributed;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -119,16 +117,18 @@ public class TailChannels {
 		private int lastCount;
 
 		/**
-		 * During reconfiguration, output of the application goes to 0. This
-		 * counter is to measure the no output time.
+		 * {@link ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)}
+		 * in not guaranteed to scheduled at fixed rate. We have to use the last
+		 * called time for more accurate throughput calculation.
 		 */
-		private int noOutputCount;
+		private long lastUpTime;
+
+		private boolean isPrevNoOutput;
+		private long noOutputStartTime;
 
 		private final EventTimeLogger eLogger;
 
 		private FileWriter writer;
-
-		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
 		private ScheduledExecutorService scheduledExecutorService;
 
@@ -145,7 +145,9 @@ public class TailChannels {
 				return;
 			writer = Utils.fileWriter(appName, "throughput.txt", true);
 			lastCount = 0;
-			noOutputCount = 0;
+			lastUpTime = System.nanoTime();
+			noOutputStartTime = lastUpTime;
+			isPrevNoOutput = false;
 			scheduledExecutorService = Executors
 					.newSingleThreadScheduledExecutor();
 			scheduledExecutorService.scheduleAtFixedRate(
@@ -153,19 +155,28 @@ public class TailChannels {
 						@Override
 						public void run() {
 							int currentCount = tailChannel.count();
-							long uptime = rb.getUptime();
+							long uptime = System.nanoTime();
 							int newOutputs = currentCount - lastCount;
-							if (newOutputs == 0)
-								noOutputCount++;
-							else if (noOutputCount > 0) {
-								eLogger.logEvent("noOutput", noOutputCount
-										* Options.throughputMeasurementPeriod);
-								noOutputCount = 0;
+							double throughput;
+							if (newOutputs == 0) {
+								throughput = 0;
+								if (!isPrevNoOutput) {
+									noOutputStartTime = uptime;
+									isPrevNoOutput = true;
+								}
+							} else {
+								long duration = uptime - lastUpTime;
+								throughput = (newOutputs * 1e9) / duration;
+								if (isPrevNoOutput) {
+									isPrevNoOutput = false;
+									eLogger.logEvent("noOutput",
+											TimeUnit.MILLISECONDS.convert(
+													uptime - noOutputStartTime,
+													TimeUnit.NANOSECONDS));
+								}
 							}
-
-							float throughput = (newOutputs * 1000)
-									/ Options.throughputMeasurementPeriod;
 							lastCount = currentCount;
+							lastUpTime = uptime;
 							String msg = String.format(
 									"%d\t\t%d\t\t%f items/s\n", uptime,
 									currentCount, throughput);
@@ -179,7 +190,6 @@ public class TailChannels {
 					}, Options.throughputMeasurementPeriod,
 					Options.throughputMeasurementPeriod, TimeUnit.MILLISECONDS);
 		}
-
 		private void stop() {
 			if (scheduledExecutorService != null)
 				scheduledExecutorService.shutdown();
