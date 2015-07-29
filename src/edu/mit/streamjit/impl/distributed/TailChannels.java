@@ -178,6 +178,7 @@ public class TailChannels {
 								}
 							} else {
 								long duration = currentNano - lastNano;
+								// number of items per second.
 								throughput = (newOutputs * 1e9) / duration;
 								if (isPrevNoOutput) {
 									isPrevNoOutput = false;
@@ -192,9 +193,8 @@ public class TailChannels {
 							}
 							lastCount = currentCount;
 							lastNano = currentNano;
-							String msg = String.format(
-									"%d\t\t%d\t\t%f items/s\n", rb.getUptime(),
-									currentCount, throughput);
+							String msg = String.format("%d\t\t%d\t\t%.2f\n",
+									rb.getUptime(), currentCount, throughput);
 							try {
 								writer.write(msg);
 								// writer.flush();
@@ -218,8 +218,22 @@ public class TailChannels {
 				}
 		}
 
+		/**
+		 * Creates/open a file with append == true. If the file created for the
+		 * first time, writes the column headers.
+		 * 
+		 * @param cfgPrefix
+		 */
 		private void initWriter(String cfgPrefix) {
-			writer = Utils.fileWriter(appName, "throughput.txt", true);
+			String fileName = "throughput.txt";
+			File f = new File(String.format("%s%s%s", appName, File.separator,
+					fileName));
+			boolean alreadyExists = f.exists();
+			writer = Utils.fileWriter(appName, fileName, true);
+			if (!alreadyExists) {
+				String colHeader = "upTime\t\tcurrentCount\t\tthroughput(items/s)\n";
+				write(colHeader);
+			}
 			write(String
 					.format("----------------------------%s----------------------------",
 							cfgPrefix));
