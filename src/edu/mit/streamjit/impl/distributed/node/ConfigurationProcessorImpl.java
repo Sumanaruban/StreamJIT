@@ -392,7 +392,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 	void newTuningRound(ImmutableSet<Blob> blobSet, String cfgPrefix) {
 		streamNode.eventTimeLogger.bTuningRound(cfgPrefix);
-		if (blobSet != null)
+		final boolean printPartionsToEventLogger = false;
+		if (printPartionsToEventLogger && blobSet != null)
 			for (Blob b : blobSet) {
 				StringBuilder sb = new StringBuilder("Blob-");
 				sb.append(Utils.getBlobID(b));
