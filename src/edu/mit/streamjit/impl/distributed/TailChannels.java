@@ -170,7 +170,7 @@ public class TailChannels {
 							long currentNano = System.nanoTime();
 							int newOutputs = currentCount - lastCount;
 							double throughput;
-							if (newOutputs == 0) {
+							if (newOutputs < 1) {
 								throughput = 0;
 								if (!isPrevNoOutput) {
 									noOutputStartTime = lastNano;
@@ -231,11 +231,11 @@ public class TailChannels {
 			boolean alreadyExists = f.exists();
 			writer = Utils.fileWriter(appName, fileName, true);
 			if (!alreadyExists) {
-				String colHeader = "upTime\t\tcurrentCount\t\tthroughput(items/s)\n";
+				String colHeader = "Time(ms)\t\tCurrentCount\t\tThroughput(items/s)\n";
 				write(colHeader);
 			}
 			write(String
-					.format("----------------------------%s----------------------------",
+					.format("----------------------------%s----------------------------\n",
 							cfgPrefix));
 		}
 
