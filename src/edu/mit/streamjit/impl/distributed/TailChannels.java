@@ -145,17 +145,17 @@ public class TailChannels {
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
 		ThroughputPrinter(TailChannel tailChannel, String appName,
-				EventTimeLogger eLogger) {
+				EventTimeLogger eLogger, String cfgPrefix) {
 			this.tailChannel = tailChannel;
 			this.appName = appName;
 			this.eLogger = eLogger;
-			printThroughput();
+			printThroughput(cfgPrefix);
 		}
 
-		private void printThroughput() {
+		private void printThroughput(String cfgPrefix) {
 			if (Options.throughputMeasurementPeriod < 1)
 				return;
-			writer = Utils.fileWriter(appName, "throughput.txt", true);
+			initWriter(cfgPrefix);
 			lastCount = 0;
 			lastNano = System.nanoTime();
 			noOutputStartTime = lastNano;
@@ -205,6 +205,7 @@ public class TailChannels {
 					}, Options.throughputMeasurementPeriod,
 					Options.throughputMeasurementPeriod, TimeUnit.MILLISECONDS);
 		}
+
 		private void stop() {
 			if (scheduledExecutorService != null)
 				scheduledExecutorService.shutdown();
@@ -215,6 +216,13 @@ public class TailChannels {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+		}
+
+		private void initWriter(String cfgPrefix) {
+			writer = Utils.fileWriter(appName, "throughput.txt", true);
+			write(String
+					.format("----------------------------%s----------------------------",
+							cfgPrefix));
 		}
 
 		/**
@@ -290,7 +298,7 @@ public class TailChannels {
 				pLogger = null;
 			if (Options.throughputMeasurementPeriod > 0)
 				throughputPrinter = new ThroughputPrinter(this, appName,
-						eLogger);
+						eLogger, cfgPrefix);
 			else
 				throughputPrinter = null;
 			this.eLogger = eLogger;
