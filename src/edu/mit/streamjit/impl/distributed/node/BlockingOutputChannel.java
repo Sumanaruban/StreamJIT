@@ -111,7 +111,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 	}
 
 	@Override
-	public final Runnable getRunnable() {
+	public Runnable getRunnable() {
 		return new Runnable() {
 			@Override
 			public void run() {

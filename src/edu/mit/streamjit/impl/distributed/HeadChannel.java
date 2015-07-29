@@ -43,9 +43,25 @@ public class HeadChannel {
 
 	public static class TCPHeadChannel extends BlockingOutputChannel {
 
+		private final EventTimeLogger eLogger;
+
 		public TCPHeadChannel(Buffer buffer, ConnectionProvider conProvider,
-				ConnectionInfo conInfo, String bufferTokenName, int debugLevel) {
+				ConnectionInfo conInfo, String bufferTokenName, int debugLevel,
+				EventTimeLogger eLogger) {
 			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel);
+			this.eLogger = eLogger;
+		}
+
+		@Override
+		public Runnable getRunnable() {
+			final Runnable supperRunnable = super.getRunnable();
+			return new Runnable() {
+				@Override
+				public void run() {
+					eLogger.bEvent("initialization");
+					supperRunnable.run();
+				}
+			};
 		}
 
 		protected void fillUnprocessedData() {

@@ -346,7 +346,8 @@ public class StreamJitAppManager {
 		if (headconInfo instanceof TCPConnectionInfo)
 			headChannel = new HeadChannel.TCPHeadChannel(
 					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0);
+					headconInfo, "headChannel - " + headToken.toString(), 0,
+					app.eLogger);
 		else if (headconInfo instanceof AsyncTCPConnectionInfo)
 			headChannel = new HeadChannel.AsyncHeadChannel(
 					bufferMap.get(headToken), controller.getConProvider(),
