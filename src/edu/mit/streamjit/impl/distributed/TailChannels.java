@@ -128,6 +128,14 @@ public class TailChannels {
 		private boolean isPrevNoOutput;
 		private long noOutputStartTime;
 
+		/**
+		 * If noOutput period is lesser than this value, the event won't get
+		 * logged to {@link #eLogger}. Without this, {@link #eLogger} gets
+		 * filled with several but tiny noOutput logs. This value is in
+		 * milliseconds.
+		 */
+		private final int tolerablenoOutputPeriod = 500;
+
 		private final EventTimeLogger eLogger;
 
 		private FileWriter writer;
@@ -165,7 +173,7 @@ public class TailChannels {
 							if (newOutputs == 0) {
 								throughput = 0;
 								if (!isPrevNoOutput) {
-									noOutputStartTime = currentNano;
+									noOutputStartTime = lastNano;
 									isPrevNoOutput = true;
 								}
 							} else {
@@ -173,10 +181,13 @@ public class TailChannels {
 								throughput = (newOutputs * 1e9) / duration;
 								if (isPrevNoOutput) {
 									isPrevNoOutput = false;
-									eLogger.logEvent("noOutput",
-											TimeUnit.MILLISECONDS.convert(
-													currentNano - noOutputStartTime,
-													TimeUnit.NANOSECONDS));
+									long noOutputPeriod = TimeUnit.MILLISECONDS
+											.convert(currentNano
+													- noOutputStartTime,
+													TimeUnit.NANOSECONDS);
+									if (noOutputPeriod > tolerablenoOutputPeriod)
+										eLogger.logEvent("noOutput",
+												noOutputPeriod);
 								}
 							}
 							lastCount = currentCount;
