@@ -50,6 +50,7 @@ import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.interp.Interpreter;
