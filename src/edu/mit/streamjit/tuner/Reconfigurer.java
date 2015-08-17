@@ -107,15 +107,15 @@ public class Reconfigurer {
 	}
 
 	public NewConfiguration newConfiguration(Configuration config) {
-		mLogger.bCfgManagerNewcfg();
+		mLogger.bEvent("CfgManagerNewcfg");
 		NewConfiguration newConfiguration = cfgManager.newConfiguration(config);
-		mLogger.eCfgManagerNewcfg();
+		mLogger.eEvent("CfgManagerNewcfg");
 
 		boolean prog = false;
 		if (newConfiguration.verificationPassed) {
-			mLogger.bPrognosticate();
+			mLogger.bEvent("Prognosticate");
 			prog = prognosticator.prognosticate(newConfiguration);
-			mLogger.ePrognosticate();
+			mLogger.eEvent("Prognosticate");
 		}
 		newConfiguration.setPrognosticationPassed(prog);
 		return newConfiguration;
