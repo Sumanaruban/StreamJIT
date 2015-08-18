@@ -5,6 +5,10 @@ import java.util.concurrent.CountDownLatch;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
+import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.common.SNDrainElement.Drained;
+import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
+import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.impl.distributed.runtimer.DistributedDrainer;
 
@@ -18,9 +22,10 @@ import edu.mit.streamjit.impl.distributed.runtimer.DistributedDrainer;
 public class AppInstanceManager {
 
 	private final AppInstance appInst;
-	private final AbstractDrainer drainer;
+	final AbstractDrainer drainer;
 	private final StreamJitAppManager appManager;
 	AppStatusProcessorImpl apStsPro;
+	SNDrainProcessorImpl dp;
 
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
@@ -31,10 +36,15 @@ public class AppInstanceManager {
 		this.drainer = new DistributedDrainer(appInst, logger, this);
 		this.appManager = appManager;
 		this.apStsPro = new AppStatusProcessorImpl(appManager.noOfnodes);
+		this.dp = new SNDrainProcessorImpl(drainer);
 	}
 
 	public AppStatusProcessor appStatusProcessor() {
 		return apStsPro;
+	}
+
+	public SNDrainProcessor drainProcessor() {
+		return dp;
 	}
 
 	/**
@@ -106,6 +116,32 @@ public class AppInstanceManager {
 				e.printStackTrace();
 			}
 			return !this.compilationError;
+		}
+	}
+
+	/**
+	 * {@link DrainProcessor} at {@link Controller} side.
+	 * 
+	 * @author Sumanan sumanan@mit.edu
+	 * @since Aug 11, 2013
+	 */
+	class SNDrainProcessorImpl implements SNDrainProcessor {
+
+		AbstractDrainer drainer;
+
+		public SNDrainProcessorImpl(AbstractDrainer drainer) {
+			this.drainer = drainer;
+		}
+
+		@Override
+		public void process(Drained drained) {
+			drainer.drained(drained.blobID);
+		}
+
+		@Override
+		public void process(SNDrainedData snDrainedData) {
+			if (Options.useDrainData)
+				drainer.newSNDrainData(snDrainedData);
 		}
 	}
 }

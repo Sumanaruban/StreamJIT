@@ -41,7 +41,6 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
-import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
@@ -65,9 +64,6 @@ import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
 import edu.mit.streamjit.impl.distributed.common.Options;
-import edu.mit.streamjit.impl.distributed.common.SNDrainElement.Drained;
-import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
-import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNException;
 import edu.mit.streamjit.impl.distributed.common.SNException.AddressBindException;
 import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcessor;
@@ -95,8 +91,6 @@ public class StreamJitAppManager {
 	private final Controller controller;
 
 	private CompilationInfoProcessorImpl ciP = null;
-
-	private SNDrainProcessorImpl dp = null;
 
 	private ErrorProcessor ep = null;
 
@@ -234,10 +228,6 @@ public class StreamJitAppManager {
 		}
 	}
 
-	public SNDrainProcessor drainProcessor() {
-		return dp;
-	}
-
 	public ErrorProcessor errorProcessor() {
 		return ep;
 	}
@@ -337,16 +327,19 @@ public class StreamJitAppManager {
 		}
 	}
 
-	public void setDrainer(AbstractDrainer drainer) {
-		assert dp == null : "SNDrainProcessor has already been set";
-		this.dp = new SNDrainProcessorImpl(drainer);
-	}
+	// TODO:seamless.
+	/*
+	 * public void setDrainer(AbstractDrainer drainer) { assert dp == null :
+	 * "SNDrainProcessor has already been set"; this.dp = new
+	 * SNDrainProcessorImpl(drainer); }
+	 */
 
 	public void stop() {
 		this.status = AppStatus.STOPPED;
 		tailChannel.reset();
 		controller.closeAll();
-		dp.drainer.stop();
+		// dp.drainer.stop();
+		appDrainer.stop();
 	}
 
 	private void reset() {
@@ -492,32 +485,6 @@ public class StreamJitAppManager {
 			System.err
 					.println("No top level class in the jar file. Terminating...");
 			stop();
-		}
-	}
-
-	/**
-	 * {@link DrainProcessor} at {@link Controller} side.
-	 * 
-	 * @author Sumanan sumanan@mit.edu
-	 * @since Aug 11, 2013
-	 */
-	private class SNDrainProcessorImpl implements SNDrainProcessor {
-
-		AbstractDrainer drainer;
-
-		public SNDrainProcessorImpl(AbstractDrainer drainer) {
-			this.drainer = drainer;
-		}
-
-		@Override
-		public void process(Drained drained) {
-			drainer.drained(drained.blobID);
-		}
-
-		@Override
-		public void process(SNDrainedData snDrainedData) {
-			if (Options.useDrainData)
-				drainer.newSNDrainData(snDrainedData);
 		}
 	}
 
