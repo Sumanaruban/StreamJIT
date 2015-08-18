@@ -21,7 +21,6 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +44,6 @@ import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
-import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
@@ -90,8 +88,6 @@ public class StreamJitAppManager {
 
 	private final StreamJitApp<?, ?> app;
 
-	private AppStatusProcessorImpl apStsPro = null;
-
 	private Map<Token, ConnectionInfo> conInfoMap;
 
 	private final ConnectionManager conManager;
@@ -132,7 +128,7 @@ public class StreamJitAppManager {
 	 * we need to pull the sink's output in to the {@link Controller} in order
 	 * to make {@link CompiledStream} .pull() to work.
 	 */
-	private TailChannel tailChannel;
+	TailChannel tailChannel;
 
 	private Thread tailThread;
 
@@ -147,6 +143,8 @@ public class StreamJitAppManager {
 
 	private final SNTimeInfoProcessor timeInfoProcessor;
 
+	AppInstanceManager appInstManager;
+
 	final int noOfnodes;
 
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
@@ -160,7 +158,6 @@ public class StreamJitAppManager {
 		this.status = AppStatus.NOT_STARTED;
 		this.exP = new SNExceptionProcessorImpl();
 		this.ep = new ErrorProcessorImpl();
-		this.apStsPro = new AppStatusProcessorImpl(noOfnodes);
 		this.ciP = new CompilationInfoProcessorImpl(noOfnodes);
 		controller.registerManager(this);
 		controller.newApp(app.getStaticConfiguration()); // TODO: Find a
@@ -171,10 +168,6 @@ public class StreamJitAppManager {
 		headToken = Token.createOverallInputToken(app.source);
 		tailToken = Token.createOverallOutputToken(app.sink);
 		profiler = setupProfiler();
-	}
-
-	public AppStatusProcessor appStatusProcessor() {
-		return apStsPro;
 	}
 
 	public void drain(Token blobID, DrainType drainType, AppInstance appinst) {
@@ -263,7 +256,7 @@ public class StreamJitAppManager {
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
 		long time = tailChannel.getFixedOutputTime(timeout);
-		if (apStsPro.error) {
+		if (appInstManager.apStsPro.error) {
 			return -1l;
 		}
 		return time;
@@ -305,10 +298,10 @@ public class StreamJitAppManager {
 		sendDeadlockfreeBufSizes(appinst);
 
 		boolean isCompiled;
-		if (apStsPro.compilationError)
+		if (appInstManager.apStsPro.compilationError)
 			isCompiled = false;
 		else
-			isCompiled = apStsPro.waitForCompilation();
+			isCompiled = appInstManager.apStsPro.waitForCompilation();
 		app.eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
 
@@ -334,7 +327,7 @@ public class StreamJitAppManager {
 	GraphSchedule graphSchedule;
 	private void sendDeadlockfreeBufSizes(AppInstance appinst) {
 		ciP.waitforBufSizes();
-		if (!apStsPro.compilationError) {
+		if (!appInstManager.apStsPro.compilationError) {
 			graphSchedule = BufferSizeCalc
 					.finalInputBufSizes(ciP.bufSizes, appinst);
 			ImmutableMap<Token, Integer> finalInputBuf = graphSchedule.bufferSizes;
@@ -358,7 +351,7 @@ public class StreamJitAppManager {
 
 	private void reset() {
 		exP.exConInfos = new HashSet<>();
-		apStsPro.reset();
+		appInstManager.apStsPro.reset();
 		ciP.reset();
 	}
 
@@ -477,78 +470,6 @@ public class StreamJitAppManager {
 
 	public MasterProfiler getProfiler() {
 		return profiler;
-	}
-
-	/**
-	 * {@link AppStatusProcessor} at {@link Controller} side.
-	 * 
-	 * @author Sumanan sumanan@mit.edu
-	 * @since Aug 11, 2013
-	 */
-	private class AppStatusProcessorImpl implements AppStatusProcessor {
-
-		private boolean compilationError;
-
-		private CountDownLatch compileLatch;
-
-		private volatile boolean error;
-
-		private final int noOfnodes;
-
-		private AppStatusProcessorImpl(int noOfnodes) {
-			this.noOfnodes = noOfnodes;
-		}
-
-		@Override
-		public void processCOMPILATION_ERROR() {
-			System.err.println("Compilation error");
-			this.compilationError = true;
-			compileLatch.countDown();
-		}
-
-		@Override
-		public void processCOMPILED() {
-			compileLatch.countDown();
-		}
-
-		@Override
-		public void processERROR() {
-			this.error = true;
-			// This will release the OpenTuner thread which is waiting for fixed
-			// output.
-			tailChannel.reset();
-		}
-
-		@Override
-		public void processNO_APP() {
-		}
-
-		@Override
-		public void processNOT_STARTED() {
-		}
-
-		@Override
-		public void processRUNNING() {
-		}
-
-		@Override
-		public void processSTOPPED() {
-		}
-
-		private void reset() {
-			compileLatch = new CountDownLatch(noOfnodes);
-			this.compilationError = false;
-			this.error = false;
-		}
-
-		private boolean waitForCompilation() {
-			try {
-				compileLatch.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			return !this.compilationError;
-		}
 	}
 
 	/**

@@ -24,8 +24,8 @@ package edu.mit.streamjit.impl.distributed.runtimer;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
-import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
+import edu.mit.streamjit.impl.distributed.AppInstance;
+import edu.mit.streamjit.impl.distributed.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 
 /**
@@ -34,16 +34,12 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
  */
 public class DistributedDrainer extends AbstractDrainer {
 
-	StreamJitAppManager manager;
+	AppInstanceManager manager;
 
-	public DistributedDrainer(StreamJitApp app, TimeLogger logger,
-			StreamJitAppManager manager) {
-		super(app, logger);
+	public DistributedDrainer(AppInstance appInst, TimeLogger logger,
+			AppInstanceManager manager) {
+		super(appInst, logger);
 		this.manager = manager;
-		// TODO:
-		// Read this. Don't let the "this" reference escape during construction
-		// http://www.ibm.com/developerworks/java/library/j-jtp0618/
-		manager.setDrainer(this);
 	}
 
 	@Override
