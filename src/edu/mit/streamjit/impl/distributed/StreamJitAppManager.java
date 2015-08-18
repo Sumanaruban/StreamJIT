@@ -144,9 +144,11 @@ public class StreamJitAppManager {
 
 	private final SNTimeInfoProcessor timeInfoProcessor;
 
+	final int noOfnodes;
+
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
 			ConnectionManager conManager, TimeLogger logger) {
-		int noOfnodes = controller.getAllNodeIDs().size();
+		noOfnodes = controller.getAllNodeIDs().size();
 		this.controller = controller;
 		this.app = app;
 		this.conManager = conManager;
