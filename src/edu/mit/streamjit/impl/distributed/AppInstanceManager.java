@@ -1,10 +1,15 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.Drained;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
@@ -26,6 +31,7 @@ public class AppInstanceManager {
 	private final StreamJitAppManager appManager;
 	AppStatusProcessorImpl apStsPro;
 	SNDrainProcessorImpl dp;
+	CompilationInfoProcessorImpl ciP;
 
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
@@ -37,6 +43,7 @@ public class AppInstanceManager {
 		this.appManager = appManager;
 		this.apStsPro = new AppStatusProcessorImpl(appManager.noOfnodes);
 		this.dp = new SNDrainProcessorImpl(drainer);
+		this.ciP = new CompilationInfoProcessorImpl(appManager.noOfnodes);
 	}
 
 	public AppStatusProcessor appStatusProcessor() {
@@ -45,6 +52,10 @@ public class AppInstanceManager {
 
 	public SNDrainProcessor drainProcessor() {
 		return dp;
+	}
+
+	public CompilationInfoProcessor compilationInfoProcessor() {
+		return ciP;
 	}
 
 	/**
@@ -142,6 +153,67 @@ public class AppInstanceManager {
 		public void process(SNDrainedData snDrainedData) {
 			if (Options.useDrainData)
 				drainer.newSNDrainData(snDrainedData);
+		}
+	}
+
+	/**
+	 * Added on [2014-03-01]
+	 * 
+	 * @author sumanan
+	 * 
+	 */
+	class CompilationInfoProcessorImpl implements CompilationInfoProcessor {
+
+		private Map<Integer, BufferSizes> bufSizes;
+
+		private final int noOfnodes;
+		private CountDownLatch bufSizeLatch;
+
+		@Override
+		public void process(BufferSizes bufferSizes) {
+			bufSizes.put(bufferSizes.machineID, bufferSizes);
+			bufSizeLatch.countDown();
+		}
+
+		private CompilationInfoProcessorImpl(int noOfnodes) {
+			this.noOfnodes = noOfnodes;
+		}
+
+		void reset() {
+			bufSizes = new ConcurrentHashMap<>();
+			bufSizeLatch = new CountDownLatch(noOfnodes);
+		}
+
+		private void waitforBufSizes() {
+			try {
+				bufSizeLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			for (Integer nodeID : appManager.controller.getAllNodeIDs()) {
+				if (!bufSizes.containsKey(nodeID)) {
+					throw new AssertionError(
+							"Not all Stream nodes have sent the buffer size info");
+				}
+			}
+		}
+
+		private volatile CountDownLatch initScheduleLatch;
+		@Override
+		public void process(InitScheduleCompleted initScheduleCompleted) {
+			appInst.app.eLogger.logEvent(String.format("InitSchedule-%s",
+					initScheduleCompleted.blobID),
+					initScheduleCompleted.timeMills);
+			initScheduleLatch.countDown();
+		}
+
+		private void waitforInitSchedule() {
+			try {
+				initScheduleLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
