@@ -85,9 +85,7 @@ public class StreamJitAppManager {
 
 	private final ConnectionManager conManager;
 
-	private final Controller controller;
-
-	private CompilationInfoProcessorImpl ciP = null;
+	final Controller controller;
 
 	private ErrorProcessor ep = null;
 
@@ -149,7 +147,6 @@ public class StreamJitAppManager {
 		this.status = AppStatus.NOT_STARTED;
 		this.exP = new SNExceptionProcessorImpl();
 		this.ep = new ErrorProcessorImpl();
-		this.ciP = new CompilationInfoProcessorImpl(noOfnodes);
 		controller.registerManager(this);
 		controller.newApp(app.getStaticConfiguration()); // TODO: Find a
 															// good calling
@@ -235,10 +232,6 @@ public class StreamJitAppManager {
 
 	public SNTimeInfoProcessor timeInfoProcessor() {
 		return timeInfoProcessor;
-	}
-
-	public CompilationInfoProcessor compilationInfoProcessor() {
-		return ciP;
 	}
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
@@ -340,7 +333,7 @@ public class StreamJitAppManager {
 	private void reset() {
 		exP.exConInfos = new HashSet<>();
 		appInstManager.apStsPro.reset();
-		ciP.reset();
+		appInstManager.ciP.reset();
 	}
 
 	private MasterProfiler setupProfiler() {
@@ -524,51 +517,6 @@ public class StreamJitAppManager {
 
 		@Override
 		public void process(SNException ex) {
-		}
-	}
-
-	/**
-	 * Added on [2014-03-01]
-	 * 
-	 * @author sumanan
-	 * 
-	 */
-	private class CompilationInfoProcessorImpl implements
-			CompilationInfoProcessor {
-
-		private Map<Integer, BufferSizes> bufSizes;
-
-		private final int noOfnodes;
-		private CountDownLatch bufSizeLatch;
-
-		@Override
-		public void process(BufferSizes bufferSizes) {
-			bufSizes.put(bufferSizes.machineID, bufferSizes);
-			bufSizeLatch.countDown();
-		}
-
-		private CompilationInfoProcessorImpl(int noOfnodes) {
-			this.noOfnodes = noOfnodes;
-		}
-
-		private void reset() {
-			bufSizes = new ConcurrentHashMap<>();
-			bufSizeLatch = new CountDownLatch(noOfnodes);
-		}
-
-		private void waitforBufSizes() {
-			try {
-				bufSizeLatch.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			for (Integer nodeID : controller.getAllNodeIDs()) {
-				if (!bufSizes.containsKey(nodeID)) {
-					throw new AssertionError(
-							"Not all Stream nodes have sent the buffer size info");
-				}
-			}
 		}
 	}
 
