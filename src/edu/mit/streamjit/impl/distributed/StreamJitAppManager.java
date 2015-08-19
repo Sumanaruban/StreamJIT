@@ -238,6 +238,7 @@ public class StreamJitAppManager {
 	}
 
 	public boolean reconfigure(int multiplier, AppInstance appinst) {
+		appInstManager = new AppInstanceManager(appinst, logger, this);
 		reset();
 		Configuration.Builder builder = Configuration.builder(appinst
 				.getDynamicConfiguration());
