@@ -149,7 +149,7 @@ public class StreamJitAppManager {
 															// good calling
 															// place.
 		isRunning = false;
-
+		appDrainer = new AppDrainer();
 		headToken = Token.createOverallInputToken(app.source);
 		tailToken = Token.createOverallOutputToken(app.sink);
 		profiler = setupProfiler();
@@ -565,10 +565,7 @@ public class StreamJitAppManager {
 		}
 
 		public boolean drainFinal(Boolean isSemeFinal) {
-			for (AppInstanceManager aim : appInstManagers.values()) {
-
-			}
-			return true;
+			return appInstManager.drainer.drainFinal(isSemeFinal);
 		}
 	}
 }
