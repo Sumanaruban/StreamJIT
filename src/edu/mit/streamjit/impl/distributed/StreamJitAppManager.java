@@ -186,29 +186,8 @@ public class StreamJitAppManager {
 	public boolean reconfigure(int multiplier, AppInstance appinst) {
 		appInstManager = new AppInstanceManager(appinst, logger, this);
 		reset();
-		Configuration.Builder builder = Configuration.builder(appinst
-				.getDynamicConfiguration());
-
-		conInfoMap = conManager.conInfoMap(appinst.getConfiguration(),
-				appinst.partitionsMachineMap, app.source, app.sink);
-
-		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
-
-		Configuration cfg = builder.build();
-		String jsonStirng = cfg.toJson();
-
-		ImmutableMap<Integer, DrainData> drainDataMap = appinst.getDrainData();
-
-		logger.compilationStarted();
-		app.eLogger.bEvent("compilation");
-		for (int nodeID : controller.getAllNodeIDs()) {
-			ConfigurationString json = new ConfigurationString.ConfigurationString1(
-					jsonStirng, ConfigType.DYNAMIC, drainDataMap.get(nodeID));
-			controller.send(nodeID, new CTRLRMessageElementHolder(json, 1));
-		}
-
+		preCompilation(appinst);
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
-
 		appInstManager.sendDeadlockfreeBufSizes();
 
 		boolean isCompiled;
@@ -455,6 +434,31 @@ public class StreamJitAppManager {
 		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
 		controller.sendToAll(new InitSchedule(steadyRunCount));
 		ciP.waitforInitSchedule();
+	}
+
+	/**
+	 * Performs the steps that need to be done in order to create new blobs at
+	 * stream nodes side. Specifically, sends new configuration along with drain
+	 * data to stream nodes for compilation.
+	 * 
+	 * @param appinst
+	 */
+	private void preCompilation(AppInstance appinst) {
+		Configuration.Builder builder = Configuration.builder(appinst
+				.getDynamicConfiguration());
+		conInfoMap = conManager.conInfoMap(appinst.getConfiguration(),
+				appinst.partitionsMachineMap, app.source, app.sink);
+		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
+		Configuration cfg = builder.build();
+		String jsonStirng = cfg.toJson();
+		ImmutableMap<Integer, DrainData> drainDataMap = appinst.getDrainData();
+		logger.compilationStarted();
+		app.eLogger.bEvent("compilation");
+		for (int nodeID : controller.getAllNodeIDs()) {
+			ConfigurationString json = new ConfigurationString1(jsonStirng,
+					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
+			controller.send(nodeID, new CTRLRMessageElementHolder(json, 1));
+		}
 	}
 
 	/**
