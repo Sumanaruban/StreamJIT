@@ -448,6 +448,10 @@ public class StreamJitAppManager {
 			return true;
 	}
 
+	public AppInstanceManager getAppInstManager() {
+		return appInstManager;
+	}
+
 	public MasterProfiler getProfiler() {
 		return profiler;
 	}
