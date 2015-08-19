@@ -19,13 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.mit.streamjit.impl.distributed.runtimer;
+package edu.mit.streamjit.impl.distributed;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
-import edu.mit.streamjit.impl.distributed.AppInstance;
-import edu.mit.streamjit.impl.distributed.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 
 /**
