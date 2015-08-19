@@ -174,14 +174,6 @@ public class StreamJitAppManager {
 		return profiler;
 	}
 
-	public long getFixedOutputTime(long timeout) throws InterruptedException {
-		long time = tailChannel.getFixedOutputTime(timeout);
-		if (appInstManager.apStsPro.error) {
-			return -1l;
-		}
-		return time;
-	}
-
 	public AppStatus getStatus() {
 		return status;
 	}
@@ -258,6 +250,14 @@ public class StreamJitAppManager {
 		controller.closeAll();
 		// dp.drainer.stop();
 		appDrainer.stop();
+	}
+
+	public long getFixedOutputTime(long timeout) throws InterruptedException {
+		long time = tailChannel.getFixedOutputTime(timeout);
+		if (appInstManager.apStsPro.error) {
+			return -1l;
+		}
+		return time;
 	}
 
 	private void reset() {
