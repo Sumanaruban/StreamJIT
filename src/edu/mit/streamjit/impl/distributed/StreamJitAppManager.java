@@ -188,15 +188,7 @@ public class StreamJitAppManager {
 		reset();
 		preCompilation(appinst);
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
-		appInstManager.sendDeadlockfreeBufSizes();
-
-		boolean isCompiled;
-		if (appInstManager.apStsPro.compilationError)
-			isCompiled = false;
-		else
-			isCompiled = appInstManager.apStsPro.waitForCompilation();
-		app.eLogger.eEvent("compilation");
-		logger.compilationFinished(isCompiled, "");
+		boolean isCompiled = postCompilation();
 
 		if (isCompiled) {
 			start();
@@ -459,6 +451,24 @@ public class StreamJitAppManager {
 					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
 			controller.send(nodeID, new CTRLRMessageElementHolder(json, 1));
 		}
+	}
+
+	/**
+	 * Performs the steps that need to be done after the blobs are created.
+	 * Specifically, sends deadlock free buffer sizes.
+	 * 
+	 * @return <code>true</code> iff the compilation process is success.
+	 */
+	private boolean postCompilation() {
+		appInstManager.sendDeadlockfreeBufSizes();
+		boolean isCompiled;
+		if (appInstManager.apStsPro.compilationError)
+			isCompiled = false;
+		else
+			isCompiled = appInstManager.apStsPro.waitForCompilation();
+		app.eLogger.eEvent("compilation");
+		logger.compilationFinished(isCompiled, "");
+		return isCompiled;
 	}
 
 	/**
