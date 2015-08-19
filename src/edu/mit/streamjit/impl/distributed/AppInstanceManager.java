@@ -4,9 +4,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
+import com.google.common.collect.ImmutableMap;
+
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -55,6 +61,18 @@ public class AppInstanceManager {
 
 	public CompilationInfoProcessor compilationInfoProcessor() {
 		return ciP;
+	}
+
+	void sendDeadlockfreeBufSizes() {
+		ciP.waitforBufSizes();
+		if (!apStsPro.compilationError) {
+			ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
+					.finalInputBufSizes(ciP.bufSizes, appInst);
+			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
+					finalInputBuf);
+			appManager.controller
+					.sendToAll(new CTRLRMessageElementHolder(me, 1));
+		}
 	}
 
 	/**

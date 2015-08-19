@@ -24,7 +24,6 @@ package edu.mit.streamjit.impl.distributed;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,14 +44,11 @@ import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
-import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Command;
-import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
-import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
@@ -275,7 +271,7 @@ public class StreamJitAppManager {
 
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
 
-		sendDeadlockfreeBufSizes(appinst);
+		appInstManager.sendDeadlockfreeBufSizes();
 
 		boolean isCompiled;
 		if (appInstManager.apStsPro.compilationError)
@@ -302,17 +298,6 @@ public class StreamJitAppManager {
 		System.out.println("StraemJit app is running...");
 		Utils.printMemoryStatus();
 		return isRunning;
-	}
-
-	private void sendDeadlockfreeBufSizes(AppInstance appinst) {
-		ciP.waitforBufSizes();
-		if (!appInstManager.apStsPro.compilationError) {
-			ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-					.finalInputBufSizes(ciP.bufSizes, appinst);
-			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
-					finalInputBuf);
-			controller.sendToAll(new CTRLRMessageElementHolder(me, 1));
-		}
 	}
 
 	// TODO:seamless.
