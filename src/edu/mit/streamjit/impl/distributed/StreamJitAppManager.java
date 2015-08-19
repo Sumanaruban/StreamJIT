@@ -261,6 +261,81 @@ public class StreamJitAppManager {
 		return time;
 	}
 
+	/**
+	 * Performs intermediate draining.
+	 * 
+	 * @return <code>true</code> iff the draining is success or the application
+	 *         is not running currently.
+	 * @throws InterruptedException
+	 */
+	public boolean intermediateDraining() throws InterruptedException {
+		if (isRunning()) {
+			boolean ret = appInstManager.drainer.drainIntermediate();
+			if (Options.useDrainData && Options.dumpDrainData) {
+				String cfgPrefix = ConfigurationUtils
+						.getConfigPrefix(appInstManager.appInst.configuration);
+				DrainData dd = appInstManager.appInst.drainData;
+				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
+			}
+			return ret;
+		} else
+			return true;
+	}
+
+	public void drainingFinished(boolean isFinal) {
+		System.out.println("App Manager : Draining Finished...");
+
+		if (headChannel != null) {
+			try {
+				headThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (tailChannel != null) {
+			if (Options.useDrainData)
+				if (isFinal)
+					tailChannel.stop(DrainType.FINAL);
+				else
+					tailChannel.stop(DrainType.INTERMEDIATE);
+			else
+				tailChannel.stop(DrainType.DISCARD);
+
+			try {
+				tailThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (isFinal)
+			stop();
+
+		isRunning = false;
+
+		Stopwatch sw = stopwatchRef.get();
+		if (sw != null && sw.isRunning()) {
+			sw.stop();
+			long time = sw.elapsed(TimeUnit.MILLISECONDS);
+			System.out.println("Draining time is " + time + " milli seconds");
+		}
+	}
+
+	public void drainingStarted(boolean isFinal) {
+		stopwatchRef.set(Stopwatch.createStarted());
+		if (headChannel != null) {
+			headChannel.stop(isFinal);
+			// [2014-03-16] Moved to drainingFinished. In any case if headThread
+			// blocked at tcp write, draining will also blocked.
+			// try {
+			// headThread.join();
+			// } catch (InterruptedException e) {
+			// e.printStackTrace();
+			// }
+		}
+	}
+
 	private void reset() {
 		exP.exConInfos = new HashSet<>();
 		// No need to do the following resets as we create new appInstManager at
@@ -380,81 +455,6 @@ public class StreamJitAppManager {
 		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
 		controller.sendToAll(new InitSchedule(steadyRunCount));
 		ciP.waitforInitSchedule();
-	}
-
-	/**
-	 * Performs intermediate draining.
-	 * 
-	 * @return <code>true</code> iff the draining is success or the application
-	 *         is not running currently.
-	 * @throws InterruptedException
-	 */
-	public boolean intermediateDraining() throws InterruptedException {
-		if (isRunning()) {
-			boolean ret = appInstManager.drainer.drainIntermediate();
-			if (Options.useDrainData && Options.dumpDrainData) {
-				String cfgPrefix = ConfigurationUtils
-						.getConfigPrefix(appInstManager.appInst.configuration);
-				DrainData dd = appInstManager.appInst.drainData;
-				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
-			}
-			return ret;
-		} else
-			return true;
-	}
-
-	public void drainingFinished(boolean isFinal) {
-		System.out.println("App Manager : Draining Finished...");
-
-		if (headChannel != null) {
-			try {
-				headThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (tailChannel != null) {
-			if (Options.useDrainData)
-				if (isFinal)
-					tailChannel.stop(DrainType.FINAL);
-				else
-					tailChannel.stop(DrainType.INTERMEDIATE);
-			else
-				tailChannel.stop(DrainType.DISCARD);
-
-			try {
-				tailThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (isFinal)
-			stop();
-
-		isRunning = false;
-
-		Stopwatch sw = stopwatchRef.get();
-		if (sw != null && sw.isRunning()) {
-			sw.stop();
-			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			System.out.println("Draining time is " + time + " milli seconds");
-		}
-	}
-
-	public void drainingStarted(boolean isFinal) {
-		stopwatchRef.set(Stopwatch.createStarted());
-		if (headChannel != null) {
-			headChannel.stop(isFinal);
-			// [2014-03-16] Moved to drainingFinished. In any case if headThread
-			// blocked at tcp write, draining will also blocked.
-			// try {
-			// headThread.join();
-			// } catch (InterruptedException e) {
-			// e.printStackTrace();
-			// }
-		}
 	}
 
 	/**
