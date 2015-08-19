@@ -32,22 +32,22 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
  */
 public class DistributedDrainer extends AbstractDrainer {
 
-	AppInstanceManager manager;
+	AppInstanceManager appInstManager;
 
 	public DistributedDrainer(AppInstance appInst, TimeLogger logger,
-			AppInstanceManager manager) {
+			AppInstanceManager appInstManager) {
 		super(appInst, logger);
-		this.manager = manager;
+		this.appInstManager = appInstManager;
 	}
 
 	@Override
 	protected void drainingDone(boolean isFinal) {
-		manager.drainingFinished(isFinal);
+		appInstManager.drainingFinished(isFinal);
 	}
 
 	@Override
 	protected void drain(Token blobID, DrainType drainType) {
-		manager.drain(blobID, drainType, appinst);
+		appInstManager.drain(blobID, drainType, appinst);
 	}
 
 	@Override
@@ -57,6 +57,6 @@ public class DistributedDrainer extends AbstractDrainer {
 
 	@Override
 	protected void prepareDraining(boolean isFinal) {
-		manager.drainingStarted(isFinal);
+		appInstManager.drainingStarted(isFinal);
 	}
 }
