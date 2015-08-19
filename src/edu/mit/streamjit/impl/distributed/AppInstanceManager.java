@@ -32,7 +32,7 @@ import edu.mit.streamjit.impl.distributed.runtimer.Controller;
  */
 public class AppInstanceManager {
 
-	private final AppInstance appInst;
+	final AppInstance appInst;
 	final AbstractDrainer drainer;
 	final StreamJitAppManager appManager;
 	AppStatusProcessorImpl apStsPro;

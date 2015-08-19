@@ -68,6 +68,7 @@ import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.DrainDataUtils;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -424,6 +425,27 @@ public class StreamJitAppManager {
 		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
 		controller.sendToAll(new InitSchedule(steadyRunCount));
 		ciP.waitforInitSchedule();
+	}
+
+	/**
+	 * Performs intermediate draining.
+	 * 
+	 * @return <code>true</code> iff the draining is success or the application
+	 *         is not running currently.
+	 * @throws InterruptedException
+	 */
+	public boolean intermediateDraining() throws InterruptedException {
+		if (isRunning()) {
+			boolean ret = appInstManager.drainer.drainIntermediate();
+			if (Options.useDrainData && Options.dumpDrainData) {
+				String cfgPrefix = ConfigurationUtils
+						.getConfigPrefix(appInstManager.appInst.configuration);
+				DrainData dd = appInstManager.appInst.drainData;
+				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
+			}
+			return ret;
+		} else
+			return true;
 	}
 
 	public MasterProfiler getProfiler() {
