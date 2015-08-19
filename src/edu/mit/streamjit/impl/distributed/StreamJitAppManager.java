@@ -318,8 +318,10 @@ public class StreamJitAppManager {
 
 	private void reset() {
 		exP.exConInfos = new HashSet<>();
-		appInstManager.apStsPro.reset();
-		appInstManager.ciP.reset();
+		// No need to do the following resets as we create new appInstManager at
+		// every reconfiguration.
+		// appInstManager.apStsPro.reset();
+		// appInstManager.ciP.reset();
 	}
 
 	private MasterProfiler setupProfiler() {
