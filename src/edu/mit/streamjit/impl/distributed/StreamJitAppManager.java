@@ -84,9 +84,11 @@ public class StreamJitAppManager {
 
 	final Controller controller;
 
-	private ErrorProcessor ep = null;
+	private final ErrorProcessor ep;
 
-	private SNExceptionProcessorImpl exP = null;
+	private final SNExceptionProcessorImpl exP;
+
+	private final SNTimeInfoProcessor timeInfoProcessor;
 
 	private final MasterProfiler profiler;
 
@@ -104,10 +106,6 @@ public class StreamJitAppManager {
 
 	private final Token headToken;
 
-	private boolean isRunning;
-
-	private volatile AppStatus status;
-
 	/**
 	 * A {@link BoundaryInputChannel} for the tail of the whole stream graph. If
 	 * the sink {@link Worker} happened to fall outside the {@link Controller},
@@ -120,14 +118,16 @@ public class StreamJitAppManager {
 
 	private final Token tailToken;
 
+	private boolean isRunning;
+
+	private volatile AppStatus status;
+
 	/**
 	 * [2014-03-15] Just to measure the draining time
 	 */
 	AtomicReference<Stopwatch> stopwatchRef = new AtomicReference<>();
 
 	private final TimeLogger logger;
-
-	private final SNTimeInfoProcessor timeInfoProcessor;
 
 	AppInstanceManager appInstManager;
 
