@@ -22,7 +22,6 @@ import edu.mit.streamjit.impl.distributed.common.SNDrainElement.Drained;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.impl.distributed.runtimer.DistributedDrainer;
 
 /**
  * This class is responsible to manage an {@link AppInstance} including
