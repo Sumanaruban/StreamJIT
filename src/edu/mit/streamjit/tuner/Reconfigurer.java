@@ -84,8 +84,7 @@ public class Reconfigurer {
 		mLogger.eEvent("serialcfg");
 		try {
 			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = intermediateDraining(ConfigurationUtils
-					.getConfigPrefix(config));
+			boolean intermediateDraining = manager.intermediateDraining();
 			mLogger.eEvent("intermediateDraining");
 			if (!intermediateDraining)
 				return new Pair<Boolean, Integer>(false, -5);
@@ -119,25 +118,6 @@ public class Reconfigurer {
 		}
 		newConfiguration.setPrognosticationPassed(prog);
 		return newConfiguration;
-	}
-
-	/**
-	 * Performs intermediate draining.
-	 * 
-	 * @return <code>true</code> iff the draining is success or the application
-	 *         is not running currently.
-	 * @throws InterruptedException
-	 */
-	private boolean intermediateDraining(String namePrefix)
-			throws InterruptedException {
-		if (manager.isRunning()) {
-			boolean ret = drainer.drainIntermediate();
-			if (Options.useDrainData && Options.dumpDrainData)
-				DrainDataUtils.dumpDrainData(app.drainData, app.name,
-						namePrefix);
-			return ret;
-		} else
-			return true;
 	}
 
 	private int getMultiplier(Configuration config) {
