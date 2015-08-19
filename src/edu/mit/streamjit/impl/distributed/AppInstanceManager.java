@@ -42,11 +42,11 @@ public class AppInstanceManager {
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
 		this.appInst = appInst;
+		this.appManager = appManager;
 		// TODO:
 		// Read this. Don't let the "this" reference escape during construction
 		// http://www.ibm.com/developerworks/java/library/j-jtp0618/
 		this.drainer = new DistributedDrainer(appInst, logger, this);
-		this.appManager = appManager;
 		this.apStsPro = new AppStatusProcessorImpl(appManager.noOfnodes);
 		this.dp = new SNDrainProcessorImpl(drainer);
 		this.ciP = new CompilationInfoProcessorImpl(appManager.noOfnodes);
@@ -92,10 +92,10 @@ public class AppInstanceManager {
 
 		volatile boolean error;
 
-		private final int noOfnodes;
-
 		private AppStatusProcessorImpl(int noOfnodes) {
-			this.noOfnodes = noOfnodes;
+			compileLatch = new CountDownLatch(noOfnodes);
+			this.compilationError = false;
+			this.error = false;
 		}
 
 		@Override
@@ -132,12 +132,6 @@ public class AppInstanceManager {
 
 		@Override
 		public void processSTOPPED() {
-		}
-
-		void reset() {
-			compileLatch = new CountDownLatch(noOfnodes);
-			this.compilationError = false;
-			this.error = false;
 		}
 
 		boolean waitForCompilation() {
@@ -186,7 +180,6 @@ public class AppInstanceManager {
 
 		private Map<Integer, BufferSizes> bufSizes;
 
-		private final int noOfnodes;
 		private CountDownLatch bufSizeLatch;
 
 		@Override
@@ -196,10 +189,6 @@ public class AppInstanceManager {
 		}
 
 		private CompilationInfoProcessorImpl(int noOfnodes) {
-			this.noOfnodes = noOfnodes;
-		}
-
-		void reset() {
 			bufSizes = new ConcurrentHashMap<>();
 			bufSizeLatch = new CountDownLatch(noOfnodes);
 		}
