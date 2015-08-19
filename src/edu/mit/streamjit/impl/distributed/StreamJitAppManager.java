@@ -166,6 +166,14 @@ public class StreamJitAppManager {
 		return timeInfoProcessor;
 	}
 
+	public AppInstanceManager getAppInstManager() {
+		return appInstManager;
+	}
+
+	public MasterProfiler getProfiler() {
+		return profiler;
+	}
+
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
 		long time = tailChannel.getFixedOutputTime(timeout);
 		if (appInstManager.apStsPro.error) {
@@ -384,14 +392,6 @@ public class StreamJitAppManager {
 			return ret;
 		} else
 			return true;
-	}
-
-	public AppInstanceManager getAppInstManager() {
-		return appInstManager;
-	}
-
-	public MasterProfiler getProfiler() {
-		return profiler;
 	}
 
 	public void drainingFinished(boolean isFinal) {
