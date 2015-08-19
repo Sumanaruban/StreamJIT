@@ -24,7 +24,9 @@ package edu.mit.streamjit.impl.distributed;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -42,12 +44,19 @@ public class DistributedDrainer extends AbstractDrainer {
 
 	@Override
 	protected void drainingDone(boolean isFinal) {
-		appInstManager.drainingFinished(isFinal);
+		appInstManager.appManager.drainingFinished(isFinal);
 	}
 
 	@Override
 	protected void drain(Token blobID, DrainType drainType) {
-		appInstManager.drain(blobID, drainType, appinst);
+		// System.out.println("Drain requested to blob " + blobID);
+		if (!appinst.blobtoMachineMap.containsKey(blobID))
+			throw new IllegalArgumentException(blobID
+					+ " not found in the blobtoMachineMap");
+		int nodeID = appinst.blobtoMachineMap.get(blobID);
+		appInstManager.appManager.controller.send(nodeID,
+				new CTRLRMessageElementHolder(new CTRLRDrainElement.DoDrain(
+						blobID, drainType), 1));
 	}
 
 	@Override
@@ -57,6 +66,6 @@ public class DistributedDrainer extends AbstractDrainer {
 
 	@Override
 	protected void prepareDraining(boolean isFinal) {
-		appInstManager.drainingStarted(isFinal);
+		appInstManager.appManager.drainingStarted(isFinal);
 	}
 }
