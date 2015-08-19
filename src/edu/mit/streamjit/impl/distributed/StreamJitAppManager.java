@@ -155,60 +155,6 @@ public class StreamJitAppManager {
 		profiler = setupProfiler();
 	}
 
-	public void drainingFinished(boolean isFinal) {
-		System.out.println("App Manager : Draining Finished...");
-
-		if (headChannel != null) {
-			try {
-				headThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (tailChannel != null) {
-			if (Options.useDrainData)
-				if (isFinal)
-					tailChannel.stop(DrainType.FINAL);
-				else
-					tailChannel.stop(DrainType.INTERMEDIATE);
-			else
-				tailChannel.stop(DrainType.DISCARD);
-
-			try {
-				tailThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (isFinal)
-			stop();
-
-		isRunning = false;
-
-		Stopwatch sw = stopwatchRef.get();
-		if (sw != null && sw.isRunning()) {
-			sw.stop();
-			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			System.out.println("Draining time is " + time + " milli seconds");
-		}
-	}
-
-	public void drainingStarted(boolean isFinal) {
-		stopwatchRef.set(Stopwatch.createStarted());
-		if (headChannel != null) {
-			headChannel.stop(isFinal);
-			// [2014-03-16] Moved to drainingFinished. In any case if headThread
-			// blocked at tcp write, draining will also blocked.
-			// try {
-			// headThread.join();
-			// } catch (InterruptedException e) {
-			// e.printStackTrace();
-			// }
-		}
-	}
-
 	public ErrorProcessor errorProcessor() {
 		return ep;
 	}
@@ -455,6 +401,60 @@ public class StreamJitAppManager {
 
 	public MasterProfiler getProfiler() {
 		return profiler;
+	}
+
+	public void drainingFinished(boolean isFinal) {
+		System.out.println("App Manager : Draining Finished...");
+
+		if (headChannel != null) {
+			try {
+				headThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (tailChannel != null) {
+			if (Options.useDrainData)
+				if (isFinal)
+					tailChannel.stop(DrainType.FINAL);
+				else
+					tailChannel.stop(DrainType.INTERMEDIATE);
+			else
+				tailChannel.stop(DrainType.DISCARD);
+
+			try {
+				tailThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (isFinal)
+			stop();
+
+		isRunning = false;
+
+		Stopwatch sw = stopwatchRef.get();
+		if (sw != null && sw.isRunning()) {
+			sw.stop();
+			long time = sw.elapsed(TimeUnit.MILLISECONDS);
+			System.out.println("Draining time is " + time + " milli seconds");
+		}
+	}
+
+	public void drainingStarted(boolean isFinal) {
+		stopwatchRef.set(Stopwatch.createStarted());
+		if (headChannel != null) {
+			headChannel.stop(isFinal);
+			// [2014-03-16] Moved to drainingFinished. In any case if headThread
+			// blocked at tcp write, draining will also blocked.
+			// try {
+			// headThread.join();
+			// } catch (InterruptedException e) {
+			// e.printStackTrace();
+			// }
+		}
 	}
 
 	/**
