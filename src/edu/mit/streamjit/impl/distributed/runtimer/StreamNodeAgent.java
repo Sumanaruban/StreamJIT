@@ -29,8 +29,8 @@ import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
-import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
@@ -285,7 +285,8 @@ public abstract class StreamNodeAgent {
 		@Override
 		public void visit(AppStatus appStatus) {
 			assert manager != null : "StreamJitAppManager has not been set";
-			AppStatusProcessor ap = manager.appStatusProcessor();
+			AppStatusProcessor ap = manager.getAppInstManager()
+					.appStatusProcessor();
 			if (ap == null) {
 				System.err.println("No AppStatusProcessor processor.");
 				return;
@@ -301,7 +302,7 @@ public abstract class StreamNodeAgent {
 		@Override
 		public void visit(SNDrainElement snDrainElement) {
 			assert manager != null : "StreamJitAppManager has not been set";
-			SNDrainProcessor dp = manager.drainProcessor();
+			SNDrainProcessor dp = manager.getAppInstManager().drainProcessor();
 			if (dp == null) {
 				System.err.println("No drainer processor.");
 				return;
@@ -326,7 +327,8 @@ public abstract class StreamNodeAgent {
 		@Override
 		public void visit(CompilationInfo compilationInfo) {
 			assert manager != null : "StreamJitAppManager has not been set";
-			CompilationInfoProcessor cip = manager.compilationInfoProcessor();
+			CompilationInfoProcessor cip = manager.getAppInstManager()
+					.compilationInfoProcessor();
 			compilationInfo.process(cip);
 		}
 
