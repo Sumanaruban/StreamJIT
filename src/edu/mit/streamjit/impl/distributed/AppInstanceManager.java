@@ -34,7 +34,7 @@ public class AppInstanceManager {
 
 	private final AppInstance appInst;
 	final AbstractDrainer drainer;
-	private final StreamJitAppManager appManager;
+	final StreamJitAppManager appManager;
 	AppStatusProcessorImpl apStsPro;
 	SNDrainProcessorImpl dp;
 	CompilationInfoProcessorImpl ciP;
