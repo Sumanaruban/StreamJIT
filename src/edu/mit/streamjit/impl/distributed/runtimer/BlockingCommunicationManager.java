@@ -216,7 +216,7 @@ public class BlockingCommunicationManager implements CommunicationManager {
 			while (!SNAgent.isStopRequested() && connection.isStillConnected()) {
 				try {
 					SNMessageElementHolder meHolder = connection.readObject();
-					meHolder.me.accept(SNAgent.getMv());
+					meHolder.me.accept(SNAgent.getMv(meHolder.appInstId));
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
