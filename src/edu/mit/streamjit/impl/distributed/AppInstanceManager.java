@@ -162,7 +162,7 @@ public class AppInstanceManager {
 		@Override
 		public void process(SNDrainedData snDrainedData) {
 			if (Options.useDrainData)
-				drainer.newSNDrainData(snDrainedData);
+				drainer.drainDataHandler.newSNDrainData(snDrainedData);
 		}
 	}
 
