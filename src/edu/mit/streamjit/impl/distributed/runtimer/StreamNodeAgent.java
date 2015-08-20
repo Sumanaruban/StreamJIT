@@ -25,29 +25,23 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import edu.mit.streamjit.impl.distributed.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
-import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
-import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Error;
-import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo.NodeInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.Request;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
-import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNException;
-import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
-import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.SNTimeInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.SystemInfo;
 import edu.mit.streamjit.impl.distributed.common.SystemInfo.SystemInfoProcessor;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
-import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNProfileElementProcessor;
 
 /**
  * StreamNodeAgent represents a {@link StreamNode} at {@link Controller} side.
@@ -224,10 +218,20 @@ public abstract class StreamNodeAgent {
 	public abstract InetAddress getAddress();
 
 	/**
-	 * @return the mv
+	 * @return appropriate message visitor based on appInstID.
 	 */
-	public SNMessageVisitor getMv() {
-		return mv;
+	public SNMessageVisitor getMv(int appInstId) {
+		if (appInstId < 1)
+			return mv;
+		else if (manager != null)
+			throw new IllegalStateException(
+					"StreamJitAppManager has not been set");
+		AppInstanceManager appInstManager = manager
+				.getAppInstManager(appInstId);
+		if (appInstManager == null)
+			return mv;
+		else
+			return appInstManager.mv;
 	}
 
 	public void registerManager(StreamJitAppManager manager) {
@@ -273,28 +277,8 @@ public abstract class StreamNodeAgent {
 		}
 
 		@Override
-		public void visit(Error error) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			System.err.println("Node " + nodeID + ": Error.");
-			ErrorProcessor ep = manager.errorProcessor();
-			error.process(ep);
-		}
-
-		@Override
 		public void visit(SystemInfo systemInfo) {
 			sp.process(systemInfo);
-		}
-
-		@Override
-		public void visit(AppStatus appStatus) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			AppStatusProcessor ap = manager.getAppInstManager()
-					.appStatusProcessor();
-			if (ap == null) {
-				System.err.println("No AppStatusProcessor processor.");
-				return;
-			}
-			appStatus.process(ap);
 		}
 
 		@Override
@@ -303,43 +287,31 @@ public abstract class StreamNodeAgent {
 		}
 
 		@Override
+		public void visit(Error error) {
+		}
+
+		@Override
+		public void visit(AppStatus appStatus) {
+		}
+
+		@Override
 		public void visit(SNDrainElement snDrainElement) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			SNDrainProcessor dp = manager.getAppInstManager().drainProcessor();
-			if (dp == null) {
-				System.err.println("No drainer processor.");
-				return;
-			}
-			snDrainElement.process(dp);
 		}
 
 		@Override
 		public void visit(SNException snException) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			SNExceptionProcessor snExP = manager.exceptionProcessor();
-			snException.process(snExP);
 		}
 
 		@Override
 		public void visit(SNTimeInfo timeInfo) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			SNTimeInfoProcessor snTimeP = manager.timeInfoProcessor();
-			timeInfo.process(snTimeP);
 		}
 
 		@Override
 		public void visit(CompilationInfo compilationInfo) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			CompilationInfoProcessor cip = manager.getAppInstManager()
-					.compilationInfoProcessor();
-			compilationInfo.process(cip);
 		}
 
 		@Override
 		public void visit(SNProfileElement snProfileElement) {
-			assert manager != null : "StreamJitAppManager has not been set";
-			SNProfileElementProcessor snProfileP = manager.getProfiler();
-			snProfileElement.process(snProfileP);
 		}
 	}
 }

@@ -10,17 +10,27 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
+import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
+import edu.mit.streamjit.impl.distributed.common.Error;
+import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.Drained;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
+import edu.mit.streamjit.impl.distributed.common.SNException;
+import edu.mit.streamjit.impl.distributed.common.SNMessageVisitor;
+import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
+import edu.mit.streamjit.impl.distributed.common.SystemInfo;
+import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 
 /**
@@ -38,6 +48,7 @@ public class AppInstanceManager {
 	AppStatusProcessorImpl apStsPro;
 	SNDrainProcessorImpl dp;
 	CompilationInfoProcessorImpl ciP;
+	public final SNMessageVisitor mv;
 
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
@@ -50,6 +61,7 @@ public class AppInstanceManager {
 		this.apStsPro = new AppStatusProcessorImpl(appManager.noOfnodes);
 		this.dp = new SNDrainProcessorImpl(drainer);
 		this.ciP = new CompilationInfoProcessorImpl(appManager.noOfnodes);
+		this.mv = new SNMessageVisitorImpl();
 	}
 
 	public AppStatusProcessor appStatusProcessor() {
@@ -223,6 +235,57 @@ public class AppInstanceManager {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+
+	/**
+	 * @author Sumanan sumanan@mit.edu
+	 * @since May 20, 2013
+	 */
+	private class SNMessageVisitorImpl implements SNMessageVisitor {
+
+		@Override
+		public void visit(SystemInfo systemInfo) {
+
+		}
+
+		@Override
+		public void visit(Error error) {
+			error.process(appManager.errorProcessor());
+		}
+
+		@Override
+		public void visit(AppStatus appStatus) {
+			appStatus.process(apStsPro);
+		}
+
+		@Override
+		public void visit(NodeInfo nodeInfo) {
+		}
+
+		@Override
+		public void visit(SNDrainElement snDrainElement) {
+			snDrainElement.process(dp);
+		}
+
+		@Override
+		public void visit(SNException snException) {
+			snException.process(appManager.exceptionProcessor());
+		}
+
+		@Override
+		public void visit(SNTimeInfo timeInfo) {
+			timeInfo.process(appManager.timeInfoProcessor());
+		}
+
+		@Override
+		public void visit(CompilationInfo compilationInfo) {
+			compilationInfo.process(ciP);
+		}
+
+		@Override
+		public void visit(SNProfileElement snProfileElement) {
+			snProfileElement.process(appManager.getProfiler());
 		}
 	}
 }

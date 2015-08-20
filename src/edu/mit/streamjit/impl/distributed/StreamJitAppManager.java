@@ -167,7 +167,7 @@ public class StreamJitAppManager {
 		return timeInfoProcessor;
 	}
 
-	public AppInstanceManager getAppInstManager() {
+	public AppInstanceManager getAppInstManager(int appInstId) {
 		return appInstManager;
 	}
 
