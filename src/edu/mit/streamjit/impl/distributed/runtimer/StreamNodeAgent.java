@@ -72,10 +72,6 @@ public abstract class StreamNodeAgent {
 	 */
 	private final SNMessageVisitor mv;
 
-	private final NodeInfoProcessor np;
-
-	private final SystemInfoProcessor sp;
-
 	// TODO: How to avoid the volatileness here. Because we set only once and
 	// read forever later. So if it is a volatile, every read will need to
 	// access the memory. Is there any way to avoid this?
@@ -116,8 +112,6 @@ public abstract class StreamNodeAgent {
 	public StreamNodeAgent(int nodeID) {
 		this.nodeID = nodeID;
 		stopFlag = new AtomicBoolean(false);
-		np = new NodeInfoProcessorImpl();
-		sp = new SystemInfoProcessorImpl();
 		mv = new SNMessageVisitorImpl();
 	}
 
@@ -268,6 +262,15 @@ public abstract class StreamNodeAgent {
 	 * @since May 20, 2013
 	 */
 	private class SNMessageVisitorImpl implements SNMessageVisitor {
+
+		private final NodeInfoProcessor np;
+
+		private final SystemInfoProcessor sp;
+
+		private SNMessageVisitorImpl() {
+			np = new NodeInfoProcessorImpl();
+			sp = new SystemInfoProcessorImpl();
+		}
 
 		@Override
 		public void visit(Error error) {
