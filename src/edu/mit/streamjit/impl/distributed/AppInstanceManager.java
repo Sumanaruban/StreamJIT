@@ -246,7 +246,9 @@ public class AppInstanceManager {
 
 		@Override
 		public void visit(SystemInfo systemInfo) {
-
+			throw new UnsupportedOperationException(
+					"AppInstanceManager's SNMessageVisitor does not process SystemInfo."
+							+ " StreamNodeAgent's SNMessageVisitor must be called.");
 		}
 
 		@Override
@@ -261,6 +263,9 @@ public class AppInstanceManager {
 
 		@Override
 		public void visit(NodeInfo nodeInfo) {
+			throw new UnsupportedOperationException(
+					"AppInstanceManager's SNMessageVisitor does not process NodeInfo."
+							+ " StreamNodeAgent's SNMessageVisitor must be called.");
 		}
 
 		@Override
