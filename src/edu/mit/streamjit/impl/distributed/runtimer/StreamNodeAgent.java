@@ -288,30 +288,51 @@ public abstract class StreamNodeAgent {
 
 		@Override
 		public void visit(Error error) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process Error."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 
 		@Override
 		public void visit(AppStatus appStatus) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process AppStatus."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 
 		@Override
 		public void visit(SNDrainElement snDrainElement) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process SNDrainElement."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 
 		@Override
 		public void visit(SNException snException) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process SNException."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 
 		@Override
 		public void visit(SNTimeInfo timeInfo) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process SNTimeInfo."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 
 		@Override
 		public void visit(CompilationInfo compilationInfo) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process CompilationInfo."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 
 		@Override
 		public void visit(SNProfileElement snProfileElement) {
+			throw new UnsupportedOperationException(
+					"StreamNodeAgent's SNMessageVisitor does not process SNProfileElement."
+							+ " AppInstanceManager's SNMessageVisitor must be called.");
 		}
 	}
 }
