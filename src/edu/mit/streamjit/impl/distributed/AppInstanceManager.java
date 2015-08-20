@@ -62,18 +62,6 @@ public class AppInstanceManager {
 		this.mv = new SNMessageVisitorImpl();
 	}
 
-	public AppStatusProcessor appStatusProcessor() {
-		return apStsPro;
-	}
-
-	public SNDrainProcessor drainProcessor() {
-		return dp;
-	}
-
-	public CompilationInfoProcessor compilationInfoProcessor() {
-		return ciP;
-	}
-
 	void sendDeadlockfreeBufSizes() {
 		ciP.waitforBufSizes();
 		if (!apStsPro.compilationError) {
