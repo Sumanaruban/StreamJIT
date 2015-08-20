@@ -245,13 +245,6 @@ public class AppInstanceManager {
 	private class SNMessageVisitorImpl implements SNMessageVisitor {
 
 		@Override
-		public void visit(SystemInfo systemInfo) {
-			throw new UnsupportedOperationException(
-					"AppInstanceManager's SNMessageVisitor does not process SystemInfo."
-							+ " StreamNodeAgent's SNMessageVisitor must be called.");
-		}
-
-		@Override
 		public void visit(Error error) {
 			error.process(appManager.errorProcessor());
 		}
@@ -259,13 +252,6 @@ public class AppInstanceManager {
 		@Override
 		public void visit(AppStatus appStatus) {
 			appStatus.process(apStsPro);
-		}
-
-		@Override
-		public void visit(NodeInfo nodeInfo) {
-			throw new UnsupportedOperationException(
-					"AppInstanceManager's SNMessageVisitor does not process NodeInfo."
-							+ " StreamNodeAgent's SNMessageVisitor must be called.");
 		}
 
 		@Override
@@ -291,6 +277,20 @@ public class AppInstanceManager {
 		@Override
 		public void visit(SNProfileElement snProfileElement) {
 			snProfileElement.process(appManager.getProfiler());
+		}
+
+		@Override
+		public void visit(SystemInfo systemInfo) {
+			throw new UnsupportedOperationException(
+					"AppInstanceManager's SNMessageVisitor does not process SystemInfo."
+							+ " StreamNodeAgent's SNMessageVisitor must be called.");
+		}
+
+		@Override
+		public void visit(NodeInfo nodeInfo) {
+			throw new UnsupportedOperationException(
+					"AppInstanceManager's SNMessageVisitor does not process NodeInfo."
+							+ " StreamNodeAgent's SNMessageVisitor must be called.");
 		}
 	}
 }
