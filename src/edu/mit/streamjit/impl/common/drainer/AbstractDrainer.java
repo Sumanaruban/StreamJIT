@@ -82,27 +82,11 @@ import edu.mit.streamjit.tuner.OnlineTuner;
 public abstract class AbstractDrainer {
 
 	/**
-	 * This is added for debugging purpose. Just logs the size of the drain data
-	 * on each channel for every draining. Calling
-	 * AbstractDrainer#dumpDraindataStatistics() will write down the statistics
-	 * into a file. This map and all related lines may be removed after system
-	 * got stable.
-	 */
-	private Map<Token, List<Integer>> drainDataStatistics = null;
-
-	/**
 	 * Blob graph of the stream application that needs to be drained.
 	 */
 	protected final BlobGraph blobGraph;
 
 	protected final AppInstance appinst;
-
-	/**
-	 * Blocks the online tuner thread until drainer gets all drained data.
-	 */
-	private CountDownLatch drainDataLatch;
-
-	private AtomicInteger noOfDrainData;
 
 	/**
 	 * Latch to block online tuner thread until intermediate draining is
@@ -123,12 +107,15 @@ public abstract class AbstractDrainer {
 
 	private final StreamJitApp<?, ?> app;
 
+	public final DrainDataHandler drainDataHandler;
+
 	public AbstractDrainer(AppInstance appinst, TimeLogger logger) {
 		state = DrainerState.NODRAINING;
 		this.appinst = appinst;
 		this.app = appinst.app;
 		this.blobGraph = appinst.blobGraph;
 		this.logger = logger;
+		this.drainDataHandler = new DrainDataHandler();
 		initialize();
 	}
 
@@ -142,7 +129,6 @@ public abstract class AbstractDrainer {
 	private final void initialize() {
 		if (state == DrainerState.NODRAINING) {
 			unDrainedNodes = new AtomicInteger(blobGraph.getBlobIds().size());
-			noOfDrainData = new AtomicInteger(blobGraph.getBlobIds().size());
 			blobGraph.setDrainer(this);
 		} else {
 			throw new RuntimeException("Drainer is in draing mode.");
@@ -192,7 +178,7 @@ public abstract class AbstractDrainer {
 			}
 
 			this.blobGraph.clearDrainData();
-			drainDataLatch = new CountDownLatch(1);
+			drainDataHandler.drainDataLatch = new CountDownLatch(1);
 			intermediateLatch = new CountDownLatch(1);
 
 			try {
@@ -238,7 +224,7 @@ public abstract class AbstractDrainer {
 		logger.drainingFinished("Intermediate");
 		logger.drainDataCollectionStarted();
 		try {
-			awaitDrainData();
+			drainDataHandler.awaitDrainData();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -265,7 +251,7 @@ public abstract class AbstractDrainer {
 		logger.drainingFinished("Intermediate");
 		logger.drainDataCollectionStarted();
 		try {
-			awaitDrainData();
+			drainDataHandler.awaitDrainData();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -274,9 +260,9 @@ public abstract class AbstractDrainer {
 		// intermediate data by running an Interpreter blob.
 		// StreamJitApp.minimizeDrainData() does this job. Uncomment the
 		// following lines later.
-		// app.drainData = app.minimizeDrainData(app.drainData);
-		// printDrainDataStats(app.drainData);
-		// dumpDrainData(app.drainData);
+		// appinst.drainData = app.minimizeDrainData(appinst.drainData);
+		// drainDataHandler.printDrainDataStats(appinst.drainData);
+		// drainDataHandler.dumpDrainData(appinst.drainData);
 		drainingDone(true);
 		// TODO: seamless
 		// stop();
@@ -289,112 +275,6 @@ public abstract class AbstractDrainer {
 	 */
 	public final void drained(Token blobID) {
 		blobGraph.getBlobNode(blobID).drained();
-	}
-
-	/**
-	 * Awaits for {@link DrainData} from all {@link StreamNode}s, combines the
-	 * all received DrainData and set the combined DrainData to
-	 * {@link StreamJitApp#drainData}.
-	 * 
-	 * @throws InterruptedException
-	 */
-	public final void awaitDrainData() throws InterruptedException {
-		if (Options.useDrainData) {
-			drainDataLatch.await();
-			appinst.drainData = getDrainData();
-		}
-	}
-
-	public final void newSNDrainData(SNDrainedData snDrainedData) {
-		blobGraph.getBlobNode(snDrainedData.blobID).setDrainData(snDrainedData);
-		if (noOfDrainData.decrementAndGet() == 0) {
-			assert state == DrainerState.NODRAINING;
-			drainDataLatch.countDown();
-		}
-	}
-
-	// TODO: Too many unnecessary data copies are taking place at here, inside
-	// the DrainData constructor and DrainData.merge(). Need to optimise these
-	// all.
-	/**
-	 * @return Aggregated DrainData after the draining.
-	 */
-	private final DrainData getDrainData() {
-		if (!Options.useDrainData)
-			return null;
-		DrainData drainData = null;
-		Map<Token, ImmutableList<Object>> boundaryInputData = new HashMap<>();
-		Map<Token, ImmutableList<Object>> boundaryOutputData = new HashMap<>();
-
-		for (BlobNode node : blobGraph.blobNodes.values()) {
-			boundaryInputData.putAll(node.snDrainData.inputData);
-			boundaryOutputData.putAll(node.snDrainData.outputData);
-			if (drainData == null)
-				drainData = node.snDrainData.drainData;
-			else
-				drainData = drainData.merge(node.snDrainData.drainData);
-		}
-
-		ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
-				.builder();
-		for (Token t : Sets.union(boundaryInputData.keySet(),
-				boundaryOutputData.keySet())) {
-			ImmutableList<Object> in = boundaryInputData.get(t) != null
-					? boundaryInputData.get(t) : ImmutableList.of();
-			ImmutableList<Object> out = boundaryOutputData.get(t) != null
-					? boundaryOutputData.get(t) : ImmutableList.of();
-			dataBuilder.put(t, ImmutableList.builder().addAll(in).addAll(out)
-					.build());
-		}
-
-		ImmutableTable<Integer, String, Object> state = ImmutableTable.of();
-		DrainData draindata1 = new DrainData(dataBuilder.build(), state);
-		drainData = drainData.merge(draindata1);
-		updateDrainDataStatistics(drainData);
-		// printDrainDataStats(drainData);
-		// dumpDrainData(drainData);
-		return drainData;
-	}
-
-	private void updateDrainDataStatistics(DrainData drainData) {
-		if (drainDataStatistics == null) {
-			drainDataStatistics = new HashMap<>();
-			for (Token t : drainData.getData().keySet()) {
-				drainDataStatistics.put(t, new ArrayList<Integer>());
-			}
-		}
-		for (Token t : drainData.getData().keySet()) {
-			int size = drainData.getData().get(t).size();
-			drainDataStatistics.get(t).add(size);
-
-		}
-	}
-
-	/**
-	 * logs the size of the drain data on each channel for every draining and
-	 * writes down the statistics into a file.
-	 * 
-	 * @throws IOException
-	 */
-	public void dumpDraindataStatistics() throws IOException {
-		if (drainDataStatistics == null) {
-			System.err.println("drainDataStatistics is null");
-			return;
-		}
-
-		String fileName = String.format("%s%sDrainDataStatistics.txt",
-				app.name, File.separator);
-		FileWriter writer = new FileWriter(fileName);
-		for (Token t : drainDataStatistics.keySet()) {
-			writer.write(t.toString());
-			writer.write(" - ");
-			for (Integer i : drainDataStatistics.get(t)) {
-				writer.write(i.toString() + '\n');
-			}
-			writer.write('\n');
-		}
-		writer.flush();
-		writer.close();
 	}
 
 	public final void awaitDrainedIntrmdiate() throws InterruptedException {
@@ -495,6 +375,145 @@ public abstract class AbstractDrainer {
 
 			if (Options.needDrainDeadlockHandler)
 				schExecutorService.shutdownNow();
+		}
+	}
+
+	/**
+	 * Drain data related methods from {@link AbstractDrainer} have been moved
+	 * to this inner class.
+	 * 
+	 * @author sumanan
+	 * @since 20 Aug, 2015
+	 */
+	public class DrainDataHandler {
+
+		/**
+		 * This is added for debugging purpose. Just logs the size of the drain
+		 * data on each channel for every draining. Calling
+		 * AbstractDrainer#dumpDraindataStatistics() will write down the
+		 * statistics into a file. This map and all related lines may be removed
+		 * after system got stable.
+		 */
+		private Map<Token, List<Integer>> drainDataStatistics = null;
+
+		/**
+		 * Blocks the online tuner thread until drainer gets all drained data.
+		 */
+		private CountDownLatch drainDataLatch;
+
+		private AtomicInteger noOfDrainData;
+
+		private DrainDataHandler() {
+			noOfDrainData = new AtomicInteger(blobGraph.getBlobIds().size());
+		}
+
+		// TODO: Too many unnecessary data copies are taking place at here,
+		// inside
+		// the DrainData constructor and DrainData.merge(). Need to optimise
+		// these
+		// all.
+		/**
+		 * @return Aggregated DrainData after the draining.
+		 */
+		private final DrainData getDrainData() {
+			if (!Options.useDrainData)
+				return null;
+			DrainData drainData = null;
+			Map<Token, ImmutableList<Object>> boundaryInputData = new HashMap<>();
+			Map<Token, ImmutableList<Object>> boundaryOutputData = new HashMap<>();
+
+			for (BlobNode node : blobGraph.blobNodes.values()) {
+				boundaryInputData.putAll(node.snDrainData.inputData);
+				boundaryOutputData.putAll(node.snDrainData.outputData);
+				if (drainData == null)
+					drainData = node.snDrainData.drainData;
+				else
+					drainData = drainData.merge(node.snDrainData.drainData);
+			}
+
+			ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
+					.builder();
+			for (Token t : Sets.union(boundaryInputData.keySet(),
+					boundaryOutputData.keySet())) {
+				ImmutableList<Object> in = boundaryInputData.get(t) != null
+						? boundaryInputData.get(t) : ImmutableList.of();
+				ImmutableList<Object> out = boundaryOutputData.get(t) != null
+						? boundaryOutputData.get(t) : ImmutableList.of();
+				dataBuilder.put(t,
+						ImmutableList.builder().addAll(in).addAll(out).build());
+			}
+
+			ImmutableTable<Integer, String, Object> state = ImmutableTable.of();
+			DrainData draindata1 = new DrainData(dataBuilder.build(), state);
+			drainData = drainData.merge(draindata1);
+			updateDrainDataStatistics(drainData);
+			// printDrainDataStats(drainData);
+			// dumpDrainData(drainData);
+			return drainData;
+		}
+
+		private void updateDrainDataStatistics(DrainData drainData) {
+			if (drainDataStatistics == null) {
+				drainDataStatistics = new HashMap<>();
+				for (Token t : drainData.getData().keySet()) {
+					drainDataStatistics.put(t, new ArrayList<Integer>());
+				}
+			}
+			for (Token t : drainData.getData().keySet()) {
+				int size = drainData.getData().get(t).size();
+				drainDataStatistics.get(t).add(size);
+
+			}
+		}
+
+		/**
+		 * logs the size of the drain data on each channel for every draining
+		 * and writes down the statistics into a file.
+		 * 
+		 * @throws IOException
+		 */
+		public void dumpDraindataStatistics() throws IOException {
+			if (drainDataStatistics == null) {
+				System.err.println("drainDataStatistics is null");
+				return;
+			}
+
+			String fileName = String.format("%s%sDrainDataStatistics.txt",
+					app.name, File.separator);
+			FileWriter writer = new FileWriter(fileName);
+			for (Token t : drainDataStatistics.keySet()) {
+				writer.write(t.toString());
+				writer.write(" - ");
+				for (Integer i : drainDataStatistics.get(t)) {
+					writer.write(i.toString() + '\n');
+				}
+				writer.write('\n');
+			}
+			writer.flush();
+			writer.close();
+		}
+
+		/**
+		 * Awaits for {@link DrainData} from all {@link StreamNode}s, combines
+		 * the all received DrainData and set the combined DrainData to
+		 * {@link StreamJitApp#drainData}.
+		 * 
+		 * @throws InterruptedException
+		 */
+		public final void awaitDrainData() throws InterruptedException {
+			if (Options.useDrainData) {
+				drainDataLatch.await();
+				appinst.drainData = drainDataHandler.getDrainData();
+			}
+		}
+
+		public final void newSNDrainData(SNDrainedData snDrainedData) {
+			blobGraph.getBlobNode(snDrainedData.blobID).setDrainData(
+					snDrainedData);
+			if (noOfDrainData.decrementAndGet() == 0) {
+				assert state == DrainerState.NODRAINING;
+				drainDataLatch.countDown();
+			}
 		}
 	}
 
