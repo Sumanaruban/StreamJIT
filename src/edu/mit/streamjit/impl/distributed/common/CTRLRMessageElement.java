@@ -23,6 +23,7 @@ package edu.mit.streamjit.impl.distributed.common;
 
 import java.io.Serializable;
 
+import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 
@@ -48,6 +49,15 @@ public interface CTRLRMessageElement extends Serializable {
 
 		public final int appInstId;
 
+		/**
+		 * Use -1 for appInstId to send non {@link AppInstance} related messages
+		 * to {@link StreamNode}. {@link StreamNode} also uses -1 to send non
+		 * app related messages. But, in addition to that, it uses 0 to send app
+		 * but appInsance related messages such as profiling info.
+		 * 
+		 * @param me
+		 * @param appInstId
+		 */
 		public CTRLRMessageElementHolder(CTRLRMessageElement me, int appInstId) {
 			this.appInstId = appInstId;
 			this.me = me;
