@@ -163,7 +163,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 			NodeInfo myInfo = NodeInfo.getMyinfo();
 			try {
 				streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(myInfo, 1));
+						.writeObject(new SNMessageElementHolder(myInfo, -1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

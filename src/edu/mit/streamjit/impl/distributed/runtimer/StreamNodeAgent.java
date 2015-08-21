@@ -221,7 +221,7 @@ public abstract class StreamNodeAgent {
 	 * @return appropriate message visitor based on appInstId.
 	 */
 	public SNMessageVisitor getMv(int appInstId) {
-		if (appInstId < 1)
+		if (appInstId < 0)
 			return mv;
 		else if (manager != null)
 			throw new IllegalStateException(
@@ -262,6 +262,10 @@ public abstract class StreamNodeAgent {
 	}
 
 	/**
+	 * Use this {@link SNMessageVisitor} to transfer system information. (-1)
+	 * will be used for SNMessageElementHolder.appInstId when transferring
+	 * system information.
+	 * 
 	 * @author Sumanan sumanan@mit.edu
 	 * @since May 20, 2013
 	 */
