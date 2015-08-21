@@ -25,7 +25,9 @@ import edu.mit.streamjit.impl.common.drainer.BlobGraph;
 import edu.mit.streamjit.impl.compiler2.Compiler2BlobFactory;
 import edu.mit.streamjit.impl.concurrent.ConcurrentChannelFactory;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
+import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.common.SystemInfo;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.interp.ChannelFactory;
@@ -46,6 +48,19 @@ import edu.mit.streamjit.impl.interp.Interpreter;
  */
 public class AppInstance {
 
+	/**
+	 * Identifier to identify different {@link AppInstance}s.
+	 * <ol>
+	 * <li>
+	 * (-1) is allocated to transfer system information such as {@link NodeInfo}
+	 * and {@link SystemInfo}.
+	 * <li>
+	 * 0 is for the very first AppInstance that comes from the default
+	 * configuration.
+	 * <li>
+	 * 1 and above are for the configurations that are received from OpenTuner.
+	 * </ol>
+	 */
 	public final int id;
 
 	public final StreamJitApp<?, ?> app;
