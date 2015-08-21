@@ -223,7 +223,7 @@ public abstract class StreamNodeAgent {
 	public SNMessageVisitor getMv(int appInstId) {
 		if (appInstId < 0)
 			return mv;
-		else if (manager != null)
+		else if (manager == null)
 			throw new IllegalStateException(
 					"StreamJitAppManager has not been set");
 		AppInstanceManager appInstManager = manager
