@@ -47,7 +47,7 @@ public class BlobCreator {
 	}
 
 	public ImmutableSet<Blob> getBlobs(Configuration dyncfg,
-			CreationLogic creationLogic) {
+			CreationLogic creationLogic, int appInstId) {
 
 		PartitionParameter partParam = dyncfg.getParameter(
 				GlobalConstants.PARTITION, PartitionParameter.class);
@@ -64,7 +64,8 @@ public class BlobCreator {
 			if (blobList == null)
 				return blobSet.build();
 
-			return blobset1(blobSet, blobList, creationLogic, app.source);
+			return blobset1(blobSet, blobList, creationLogic, app.source,
+					appInstId);
 
 		} else
 			return null;
@@ -75,13 +76,13 @@ public class BlobCreator {
 	 */
 	private ImmutableSet<Blob> blobset1(ImmutableSet.Builder<Blob> blobSet,
 			List<BlobSpecifier> blobList, CreationLogic creationLogic,
-			Worker<?, ?> source) {
+			Worker<?, ?> source, int appInstId) {
 		Set<Future<Blob>> futures = new HashSet<>();
 		ExecutorService executerSevce = Executors.newFixedThreadPool(blobList
 				.size());
 
 		for (BlobSpecifier bs : blobList) {
-			MakeBlob mb = new MakeBlob(bs, source, creationLogic);
+			MakeBlob mb = new MakeBlob(bs, source, creationLogic, appInstId);
 			Future<Blob> f = executerSevce.submit(mb);
 			futures.add(f);
 		}
@@ -112,13 +113,13 @@ public class BlobCreator {
 		return blobSet.build();
 	}
 
-	private void sendCompilationTime(Stopwatch sw, Token blobID) {
+	private void sendCompilationTime(Stopwatch sw, Token blobID, int appInstId) {
 		sw.stop();
 		CompilationTime ct = new CompilationTime(blobID,
 				sw.elapsed(TimeUnit.MILLISECONDS));
 		try {
 			streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(ct, 1));
+					.writeObject(new SNMessageElementHolder(ct, appInstId));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -129,7 +130,7 @@ public class BlobCreator {
 	 */
 	private ImmutableSet<Blob> blobset(ImmutableSet.Builder<Blob> blobSet,
 			List<BlobSpecifier> blobList, DrainData drainData,
-			Configuration blobConfigs, Worker<?, ?> source) {
+			Configuration blobConfigs, Worker<?, ?> source, int appInstId) {
 		for (BlobSpecifier bs : blobList) {
 			Set<Integer> workIdentifiers = bs.getWorkerIdentifiers();
 			ImmutableSet<Worker<?, ?>> workerset = bs.getWorkers(source);
@@ -140,7 +141,7 @@ public class BlobCreator {
 				DrainData dd = drainData == null ? null : drainData
 						.subset(workIdentifiers);
 				Blob b = bf.makeBlob(workerset, blobConfigs, maxCores, dd);
-				sendCompilationTime(sw, Utils.getblobID(workerset));
+				sendCompilationTime(sw, Utils.getblobID(workerset), appInstId);
 				blobSet.add(b);
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -163,12 +164,14 @@ public class BlobCreator {
 		private final BlobSpecifier bs;
 		private final CreationLogic creationLogic;
 		private final Worker<?, ?> source;
+		private final int appInstId;
 
 		private MakeBlob(BlobSpecifier bs, Worker<?, ?> source,
-				CreationLogic creationLogic) {
+				CreationLogic creationLogic, int appInstId) {
 			this.bs = bs;
 			this.source = source;
 			this.creationLogic = creationLogic;
+			this.appInstId = appInstId;
 		}
 
 		@Override
@@ -182,7 +185,7 @@ public class BlobCreator {
 				Stopwatch sw = Stopwatch.createStarted();
 				b = creationLogic.create(bf, workerset, maxCores,
 						workIdentifiers);
-				sendCompilationTime(sw, Utils.getblobID(workerset));
+				sendCompilationTime(sw, Utils.getblobID(workerset), appInstId);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			} catch (OutOfMemoryError er) {

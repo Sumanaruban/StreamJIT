@@ -88,7 +88,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	 * this, Controller would be waiting forever at
 	 * CompilationInfoProcessorImpl.waitforBufSizes().
 	 */
-	private void sendEmptyBuffersizes() {
+	private void sendEmptyBuffersizes(int appInstId) {
 		ImmutableMap.Builder<Token, Integer> minInitInputBufCapaciyBuilder = new ImmutableMap.Builder<>();
 		ImmutableMap.Builder<Token, Integer> minInitOutputBufCapaciyBuilder = new ImmutableMap.Builder<>();
 		ImmutableMap.Builder<Token, Integer> minSteadyInputBufCapacityBuilder = new ImmutableMap.Builder<>();
@@ -102,7 +102,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 		try {
 			streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(bufSizes, 1));
+					.writeObject(new SNMessageElementHolder(bufSizes, appInstId));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -130,23 +130,24 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				.println("------------------------------------------------------------");
 		System.out.println("New Configuration.....");
 		// streamNode.releaseOldBM();
-
-		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic);
+		int appInstId = (int) cfg.getExtraData("appInstId");
+		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic,
+				appInstId);
 		if (blobSet != null) {
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
 
 			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
-					streamNode, app.conProvider, app.topLevelClass);
+					streamNode, app.conProvider, app.topLevelClass, appInstId);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
-					streamNode, bm, 1);
-			streamNode.registerMessageVisitor(1, mv);;
+					streamNode, bm, appInstId);
+			streamNode.registerMessageVisitor(mv);;
 		} else {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								AppStatus.COMPILATION_ERROR, 1));
-				sendEmptyBuffersizes();
+								AppStatus.COMPILATION_ERROR, appInstId));
+				sendEmptyBuffersizes(appInstId);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

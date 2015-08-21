@@ -282,7 +282,8 @@ class BlobExecuter {
 		SNMessageElement drained = new SNDrainElement.Drained(blobID);
 		try {
 			this.blobsManagerImpl.streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(drained, 1));
+					.writeObject(new SNMessageElementHolder(drained,
+							blobsManagerImpl.appInstId));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -297,7 +298,8 @@ class BlobExecuter {
 
 			try {
 				this.blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(me, 1));
+						.writeObject(new SNMessageElementHolder(me,
+								blobsManagerImpl.appInstId));
 				// System.out.println(blobID + " DrainData has been sent");
 				drainState = 6;
 
@@ -534,7 +536,8 @@ class BlobExecuter {
 						try {
 							blobsManagerImpl.streamNode.controllerConnection
 									.writeObject(new SNMessageElementHolder(
-											AppStatus.ERROR, 1));
+											AppStatus.ERROR,
+											be.blobsManagerImpl.appInstId));
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
@@ -613,7 +616,7 @@ class BlobExecuter {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
 								new SNTimeInfo.DrainingTime(blobExec.blobID,
-										time), 1));
+										time), blobsManagerImpl.appInstId));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

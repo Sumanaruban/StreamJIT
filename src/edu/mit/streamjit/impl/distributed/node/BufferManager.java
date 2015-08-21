@@ -257,9 +257,13 @@ public interface BufferManager {
 
 		private final StreamNode streamNode;
 
-		public GlobalBufferManager(Set<Blob> blobSet, StreamNode streamNode) {
+		private final int appInstId;
+
+		public GlobalBufferManager(Set<Blob> blobSet, StreamNode streamNode,
+				int appInstId) {
 			super(blobSet);
 			this.streamNode = streamNode;
+			this.appInstId = appInstId;
 		}
 
 		@Override
@@ -310,12 +314,11 @@ public interface BufferManager {
 
 			try {
 				streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(bufSizes, 1));
+						.writeObject(new SNMessageElementHolder(bufSizes, appInstId));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-
 		// TODO: Buffer sizes, including head and tail buffers, must be
 		// optimized. Consider adding some tuning factor.
 		//

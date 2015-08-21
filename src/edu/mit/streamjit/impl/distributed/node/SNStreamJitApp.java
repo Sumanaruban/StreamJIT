@@ -113,7 +113,7 @@ public class SNStreamJitApp {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								Error.WORKER_NOT_FOUND, 1));
+								Error.WORKER_NOT_FOUND, 0));
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -148,7 +148,7 @@ public class SNStreamJitApp {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								Error.FILE_NOT_FOUND, 1));
+								Error.FILE_NOT_FOUND, 0));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -168,7 +168,7 @@ public class SNStreamJitApp {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								Error.WORKER_NOT_FOUND, 1));
+								Error.WORKER_NOT_FOUND, 0));
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();

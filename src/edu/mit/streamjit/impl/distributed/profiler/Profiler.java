@@ -46,7 +46,7 @@ public final class Profiler extends Thread {
 				try {
 					controllerConnection
 							.writeObject(new SNMessageElementHolder(
-									p.profile(), 1));
+									p.profile(), 0));
 				} catch (IOException e) {
 					stopFlag.set(true);
 				}
