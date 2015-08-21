@@ -66,7 +66,7 @@ public class StreamNode extends Thread {
 	Profiler profiler;
 
 	/**
-	 * <appInstID, CTRLRMessageVisitor>
+	 * <appInstId, CTRLRMessageVisitor>
 	 */
 	private Map<Integer, CTRLRMessageVisitorImpl> messageVisitors;
 

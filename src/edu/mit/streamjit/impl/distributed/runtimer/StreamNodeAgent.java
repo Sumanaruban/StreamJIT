@@ -218,7 +218,7 @@ public abstract class StreamNodeAgent {
 	public abstract InetAddress getAddress();
 
 	/**
-	 * @return appropriate message visitor based on appInstID.
+	 * @return appropriate message visitor based on appInstId.
 	 */
 	public SNMessageVisitor getMv(int appInstId) {
 		if (appInstId < 1)
