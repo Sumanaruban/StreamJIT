@@ -154,7 +154,8 @@ public class StreamNode extends Thread {
 	 *            profiler.addAll(blobsManager.profilers()); }
 	 */
 
-	public void registerMessageVisitor(int appInstId, CTRLRMessageVisitorImpl mv) {
+	public void registerMessageVisitor(CTRLRMessageVisitorImpl mv) {
+		int appInstId = mv.appInstId;
 		if (messageVisitors.containsKey(appInstId))
 			throw new IllegalStateException(
 					String.format(

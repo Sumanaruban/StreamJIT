@@ -432,6 +432,7 @@ public class StreamJitAppManager {
 		conInfoMap = conManager.conInfoMap(appinst.getConfiguration(),
 				appinst.partitionsMachineMap, app.source, app.sink);
 		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
+		builder.putExtraData("appInstId", appinst.id);
 		Configuration cfg = builder.build();
 		String jsonStirng = cfg.toJson();
 		ImmutableMap<Integer, DrainData> drainDataMap = appinst.getDrainData();

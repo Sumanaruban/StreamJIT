@@ -102,7 +102,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		System.out.println("New Configuration.....");
 		// streamNode.releaseOldBM();
 		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
-		ImmutableSet<Blob> blobSet = getBlobs(cfg, drainData);
+		int appInstId = (int) cfg.getExtraData("appInstId");
+		ImmutableSet<Blob> blobSet = getBlobs(cfg, drainData, appInstId);
 		if (blobSet != null) {
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
@@ -110,16 +111,16 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			String topLevelClass = (String) staticConfig
 					.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
 			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
-					streamNode, conProvider, topLevelClass);
+					streamNode, conProvider, topLevelClass, appInstId);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
-					streamNode, bm, 1);
-			streamNode.registerMessageVisitor(1, mv);
+					streamNode, bm, appInstId);
+			streamNode.registerMessageVisitor(mv);
 		} else {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								AppStatus.COMPILATION_ERROR, 1));
-				sendEmptyBuffersizes();
+								AppStatus.COMPILATION_ERROR, appInstId));
+				sendEmptyBuffersizes(appInstId);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -128,8 +129,9 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
 				.getSubconfiguration("blobConfigs")));
 	}
+
 	private ImmutableSet<Blob> getBlobs(Configuration dyncfg,
-			DrainData drainData) {
+			DrainData drainData, int appInstId) {
 
 		PartitionParameter partParam = dyncfg.getParameter(
 				GlobalConstants.PARTITION, PartitionParameter.class);
@@ -137,7 +139,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			throw new IllegalArgumentException(
 					"Partition parameter is not available in the received configuraion");
 
-		OneToOneElement<?, ?> streamGraph = getStreamGraph();
+		OneToOneElement<?, ?> streamGraph = getStreamGraph(appInstId);
 		if (streamGraph != null) {
 			ConnectWorkersVisitor primitiveConnector = new ConnectWorkersVisitor();
 			streamGraph.visit(primitiveConnector);
@@ -153,19 +155,20 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 			Configuration blobConfigs = dyncfg
 					.getSubconfiguration("blobConfigs");
-			return blobset1(blobSet, blobList, drainData, blobConfigs, source);
+			return blobset1(blobSet, blobList, drainData, blobConfigs, source,
+					appInstId);
 
 		} else
 			return null;
 	}
 
-	private void sendCompilationTime(Stopwatch sw, Token blobID) {
+	private void sendCompilationTime(Stopwatch sw, Token blobID, int appInstId) {
 		sw.stop();
 		CompilationTime ct = new CompilationTime(blobID,
 				sw.elapsed(TimeUnit.MILLISECONDS));
 		try {
 			streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(ct, 1));
+					.writeObject(new SNMessageElementHolder(ct, appInstId));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -176,7 +179,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	 * 
 	 * @return : StreamGraph
 	 */
-	private OneToOneElement<?, ?> getStreamGraph() {
+	private OneToOneElement<?, ?> getStreamGraph(int appInstId) {
 		String topStreamClassName = (String) staticConfig
 				.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
 		String jarFilePath = (String) staticConfig
@@ -192,7 +195,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								Error.FILE_NOT_FOUND, 1));
+								Error.FILE_NOT_FOUND, appInstId));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -283,7 +286,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	 */
 	private ImmutableSet<Blob> blobset(ImmutableSet.Builder<Blob> blobSet,
 			List<BlobSpecifier> blobList, DrainData drainData,
-			Configuration blobConfigs, Worker<?, ?> source) {
+			Configuration blobConfigs, Worker<?, ?> source, int appInstId) {
 		for (BlobSpecifier bs : blobList) {
 			Set<Integer> workIdentifiers = bs.getWorkerIdentifiers();
 			ImmutableSet<Worker<?, ?>> workerset = bs.getWorkers(source);
@@ -294,7 +297,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				DrainData dd = drainData == null ? null : drainData
 						.subset(workIdentifiers);
 				Blob b = bf.makeBlob(workerset, blobConfigs, maxCores, dd);
-				sendCompilationTime(sw, Utils.getblobID(workerset));
+				sendCompilationTime(sw, Utils.getblobID(workerset), appInstId);
 				blobSet.add(b);
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -318,13 +321,14 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	 */
 	private ImmutableSet<Blob> blobset1(ImmutableSet.Builder<Blob> blobSet,
 			List<BlobSpecifier> blobList, DrainData drainData,
-			Configuration blobConfigs, Worker<?, ?> source) {
+			Configuration blobConfigs, Worker<?, ?> source, int appInstId) {
 		Set<Future<Blob>> futures = new HashSet<>();
 		ExecutorService executerSevce = Executors.newFixedThreadPool(blobList
 				.size());
 
 		for (BlobSpecifier bs : blobList) {
-			MakeBlob mb = new MakeBlob(bs, drainData, blobConfigs, source);
+			MakeBlob mb = new MakeBlob(bs, drainData, blobConfigs, source,
+					appInstId);
 			Future<Blob> f = executerSevce.submit(mb);
 			futures.add(f);
 		}
@@ -360,7 +364,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	 * this, Controller would be waiting forever at
 	 * CompilationInfoProcessorImpl.waitforBufSizes().
 	 */
-	private void sendEmptyBuffersizes() {
+	private void sendEmptyBuffersizes(int appInstId) {
 		ImmutableMap.Builder<Token, Integer> minInitInputBufCapaciyBuilder = new ImmutableMap.Builder<>();
 		ImmutableMap.Builder<Token, Integer> minInitOutputBufCapaciyBuilder = new ImmutableMap.Builder<>();
 		ImmutableMap.Builder<Token, Integer> minSteadyInputBufCapacityBuilder = new ImmutableMap.Builder<>();
@@ -374,7 +378,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 		try {
 			streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(bufSizes, 1));
+					.writeObject(new SNMessageElementHolder(bufSizes, appInstId));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -385,13 +389,15 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		private final DrainData drainData;
 		private final Configuration blobConfigs;
 		private final Worker<?, ?> source;
+		private final int appInstId;
 
 		private MakeBlob(BlobSpecifier bs, DrainData drainData,
-				Configuration blobConfigs, Worker<?, ?> source) {
+				Configuration blobConfigs, Worker<?, ?> source, int appInstId) {
 			this.bs = bs;
 			this.drainData = drainData;
 			this.blobConfigs = blobConfigs;
 			this.source = source;
+			this.appInstId = appInstId;
 		}
 
 		@Override
@@ -406,7 +412,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				DrainData dd = drainData == null ? null : drainData
 						.subset(workIdentifiers);
 				b = bf.makeBlob(workerset, blobConfigs, maxCores, dd);
-				sendCompilationTime(sw, Utils.getblobID(workerset));
+				sendCompilationTime(sw, Utils.getblobID(workerset), appInstId);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			} catch (OutOfMemoryError er) {

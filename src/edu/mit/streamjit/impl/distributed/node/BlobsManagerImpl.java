@@ -109,17 +109,21 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	final AffinityManager affinityManager;
 
+	public final int appInstId;
+
 	public BlobsManagerImpl(ImmutableSet<Blob> blobSet,
 			Map<Token, ConnectionInfo> conInfoMap, StreamNode streamNode,
-			ConnectionProvider conProvider, String appName) {
+			ConnectionProvider conProvider, String appName, int appInstId) {
 		this.conInfoMap = conInfoMap;
 		this.streamNode = streamNode;
 		this.conProvider = conProvider;
+		this.appInstId = appInstId;
 
 		this.cmdProcessor = new CommandProcessorImpl();
 		this.drainProcessor = new CTRLRDrainProcessorImpl();
 		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl(blobSet);
-		this.bufferManager = new GlobalBufferManager(blobSet, streamNode);
+		this.bufferManager = new GlobalBufferManager(blobSet, streamNode,
+				appInstId);
 		this.affinityManager = new AffinityManagers.EmptyAffinityManager();
 
 		this.appName = appName;
@@ -336,7 +340,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								AppStatus.STOPPED, 1));
+								AppStatus.STOPPED, appInstId));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -558,7 +562,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			try {
 				streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
-								AppStatus.COMPILED, 1));
+								AppStatus.COMPILED, appInstId));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
