@@ -73,8 +73,8 @@ public class AppInstanceManager {
 			ImmutableMap<Token, Integer> finalInputBuf = graphSchedule.bufferSizes;
 			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 					finalInputBuf);
-			appManager.controller
-					.sendToAll(new CTRLRMessageElementHolder(me, 1));
+			appManager.controller.sendToAll(new CTRLRMessageElementHolder(me,
+					appInst.id));
 		}
 	}
 

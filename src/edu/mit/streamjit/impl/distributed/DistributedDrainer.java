@@ -56,7 +56,7 @@ public class DistributedDrainer extends AbstractDrainer {
 		int nodeID = appinst.blobtoMachineMap.get(blobID);
 		appInstManager.appManager.controller.send(nodeID,
 				new CTRLRMessageElementHolder(new CTRLRDrainElement.DoDrain(
-						blobID, drainType), 1));
+						blobID, drainType), appInstManager.appInst.id));
 	}
 
 	@Override

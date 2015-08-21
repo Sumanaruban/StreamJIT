@@ -347,7 +347,7 @@ public class BufferSizeCalc {
 
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 				finalInputBuf);
-		controller.sendToAll(new CTRLRMessageElementHolder(me, 1));
+		controller.sendToAll(new CTRLRMessageElementHolder(me, app.id));
 	}
 
 	/**

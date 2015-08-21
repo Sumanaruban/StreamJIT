@@ -97,7 +97,7 @@ public class Controller {
 
 		setMachineIds();
 		sendToAll(new CTRLRMessageElementHolder(
-				Request.NodeInfo, 1));
+				Request.NodeInfo, -1));
 	}
 
 	private void setMachineIds() {
@@ -105,7 +105,7 @@ public class Controller {
 			try {
 				// TODO: Need to send in a single object.
 				agent.writeObject(new CTRLRMessageElementHolder(
-						Request.machineID, 1));
+						Request.machineID, -1));
 				agent.writeObject(new Integer(agent.getNodeID()));
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -143,7 +143,7 @@ public class Controller {
 		ConfigurationString json = new ConfigurationString1(builder.build()
 				.toJson(), ConfigType.STATIC, null);
 		sendToAll(new CTRLRMessageElementHolder(
-				json, 1));
+				json, -1));
 	}
 
 	public Set<Integer> getAllNodeIDs() {
