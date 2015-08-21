@@ -23,6 +23,8 @@ package edu.mit.streamjit.impl.distributed.common;
 
 import java.io.Serializable;
 
+import edu.mit.streamjit.impl.distributed.AppInstance;
+
 public interface SNMessageElement extends Serializable {
 
 	public void accept(SNMessageVisitor visitor);
@@ -35,6 +37,14 @@ public interface SNMessageElement extends Serializable {
 
 		public final int appInstId;
 
+		/**
+		 * Use -1 for appInstId to send non {@link AppInstance} related messages
+		 * to controller. Controller also uses -1 to send non app related
+		 * messages.
+		 * 
+		 * @param me
+		 * @param appInstId
+		 */
 		public SNMessageElementHolder(SNMessageElement me, int appInstId) {
 			this.appInstId = appInstId;
 			this.me = me;
