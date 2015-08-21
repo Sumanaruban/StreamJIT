@@ -137,7 +137,7 @@ public abstract class StreamNodeAgent {
 	public NodeInfo getNodeInfo() {
 		if (nodeInfo == null) {
 			try {
-				writeObject(new CTRLRMessageElementHolder(Request.NodeInfo, 1));
+				writeObject(new CTRLRMessageElementHolder(Request.NodeInfo, -1));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

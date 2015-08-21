@@ -190,7 +190,7 @@ public class StreamJitAppManager {
 		boolean isCompiled = postCompilation();
 
 		if (isCompiled) {
-			start();
+			start(appinst.id);
 			isRunning = true;
 		} else {
 			drainingFinished(false);
@@ -319,7 +319,7 @@ public class StreamJitAppManager {
 		if (Options.needProfiler) {
 			p = new MasterProfiler(app.name);
 			controller.sendToAll(new CTRLRMessageElementHolder(
-					ProfilerCommand.START, 1));
+					ProfilerCommand.START, -1));
 		}
 		return p;
 	}
@@ -400,7 +400,7 @@ public class StreamJitAppManager {
 	/**
 	 * Start the execution of the StreamJit application.
 	 */
-	private void start() {
+	private void start(int appInstId) {
 		if (isRunning)
 			throw new IllegalStateException("Application is already running.");
 
@@ -410,7 +410,8 @@ public class StreamJitAppManager {
 			headThread.start();
 		}
 
-		controller.sendToAll(new CTRLRMessageElementHolder(Command.START, 1));
+		controller.sendToAll(new CTRLRMessageElementHolder(Command.START,
+				appInstId));
 
 		if (tailChannel != null) {
 			tailThread = new Thread(tailChannel.getRunnable(),
@@ -441,7 +442,8 @@ public class StreamJitAppManager {
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString(jsonStirng,
 					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
-			controller.send(nodeID, new CTRLRMessageElementHolder(json, 1));
+			controller.send(nodeID, new CTRLRMessageElementHolder(json,
+					appinst.id));
 		}
 	}
 
@@ -526,6 +528,7 @@ public class StreamJitAppManager {
 
 				CTRLRMessageElement msg = new NewConInfo(coninfo, t);
 
+				// TODO: seamless. correct appInstId must be passed.
 				controller.send(coninfo.getSrcID(),
 						new CTRLRMessageElementHolder(msg, 1));
 				controller.send(coninfo.getDstID(),
