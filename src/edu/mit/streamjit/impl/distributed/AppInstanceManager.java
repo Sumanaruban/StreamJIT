@@ -89,6 +89,10 @@ public class AppInstanceManager {
 		}
 	}
 
+	public String toString() {
+		return String.format("AppInstanceManager-%d", appInst.id);
+	}
+
 	/**
 	 * {@link AppStatusProcessor} at {@link Controller} side.
 	 * 
