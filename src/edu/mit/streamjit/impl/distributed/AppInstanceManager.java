@@ -17,6 +17,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessag
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -47,6 +48,7 @@ public class AppInstanceManager {
 	SNDrainProcessorImpl dp;
 	CompilationInfoProcessorImpl ciP;
 	public final SNMessageVisitor mv;
+	boolean isRunning = false;
 
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
@@ -64,6 +66,15 @@ public class AppInstanceManager {
 
 	public int appInstId() {
 		return appInst.id;
+	}
+
+	void start() {
+		if (isRunning)
+			throw new IllegalStateException(String.format(
+					"AppInstance %d is already running.", appInst.id));
+		appManager.controller.sendToAll(new CTRLRMessageElementHolder(
+				Command.START, appInstId()));
+		isRunning = true;
 	}
 
 	void sendDeadlockfreeBufSizes() {
