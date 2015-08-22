@@ -400,18 +400,14 @@ public class StreamJitAppManager {
 	/**
 	 * Start the execution of the StreamJit application.
 	 */
-	private void start(int appInstId) {
-		if (isRunning)
-			throw new IllegalStateException("Application is already running.");
-
+	private void start(AppInstanceManager aim) {
 		if (headChannel != null) {
 			headThread = new Thread(headChannel.getRunnable(),
 					headChannel.name());
 			headThread.start();
 		}
 
-		controller.sendToAll(new CTRLRMessageElementHolder(Command.START,
-				appInstId));
+		aim.start();
 
 		if (tailChannel != null) {
 			tailThread = new Thread(tailChannel.getRunnable(),
