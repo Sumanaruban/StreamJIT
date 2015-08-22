@@ -186,16 +186,16 @@ public class StreamJitAppManager {
 	}
 
 	public boolean reconfigure(int multiplier, AppInstance appinst) {
-		createNewAIM(appinst);
+		AppInstanceManager aim = createNewAIM(appinst);
 		reset();
 		preCompilation(appinst);
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
-		boolean isCompiled = postCompilation(newAIM);
+		boolean isCompiled = postCompilation(aim);
 
 		if (isCompiled) {
-			start(newAIM);
+			start(aim);
 		} else {
-			newAIM.drainingFinished(false);
+			aim.drainingFinished(false);
 		}
 
 		if (profiler != null) {
@@ -204,14 +204,20 @@ public class StreamJitAppManager {
 			profiler.logger().newConfiguration(cfgPrefix);
 		}
 		Utils.printMemoryStatus();
-		return newAIM.isRunning;
+		return aim.isRunning;
 	}
 
-	private void createNewAIM(AppInstance appinst) {
+	private AppInstanceManager createNewAIM(AppInstance appinst) {
 		if (newAIM != null)
 			throw new IllegalStateException(
 					"Couldn't create newAIM as it already exists. Drain the current app instance first.");
-		newAIM = new AppInstanceManager(appinst, logger, this);
+		AppInstanceManager aim = new AppInstanceManager(appinst, logger, this);
+		// Handles the very first case.
+		if (curAIM == null)
+			curAIM = aim;
+		else
+			newAIM = aim;
+		return aim;
 	}
 
 	// TODO:seamless.
