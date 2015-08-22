@@ -270,13 +270,11 @@ public class StreamJitAppManager {
 	}
 
 	public void drainingFinished(boolean isFinal) {
-		System.out.println("App Manager : Draining Finished...");
 		stopHead();
 		stopTail(isFinal);
 		if (isFinal)
 			stop();
 
-		isRunning = false;
 		Stopwatch sw = stopwatchRef.get();
 		if (sw != null && sw.isRunning()) {
 			sw.stop();
