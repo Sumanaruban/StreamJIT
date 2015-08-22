@@ -42,7 +42,7 @@ import edu.mit.streamjit.impl.distributed.runtimer.Controller;
  */
 public class AppInstanceManager {
 
-	final AppInstance appInst;
+	private final AppInstance appInst;
 	final AbstractDrainer drainer;
 	final StreamJitAppManager appManager;
 	AppStatusProcessorImpl apStsPro;
@@ -62,6 +62,10 @@ public class AppInstanceManager {
 		this.dp = new SNDrainProcessorImpl(drainer);
 		this.ciP = new CompilationInfoProcessorImpl(appManager.noOfnodes);
 		this.mv = new SNMessageVisitorImpl();
+	}
+
+	public int appInstId() {
+		return appInst.id;
 	}
 
 	GraphSchedule graphSchedule;
