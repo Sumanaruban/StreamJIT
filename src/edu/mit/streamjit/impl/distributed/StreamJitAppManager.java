@@ -47,7 +47,6 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputC
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
-import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
@@ -128,7 +127,8 @@ public class StreamJitAppManager {
 
 	private final TimeLogger logger;
 
-	AppInstanceManager appInstManager;
+	private volatile AppInstanceManager curAIM = null;
+	private volatile AppInstanceManager newAIM = null;
 
 	final int noOfnodes;
 
@@ -167,7 +167,13 @@ public class StreamJitAppManager {
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {
-		return appInstManager;
+		if (curAIM.appInstId() == appInstId)
+			return curAIM;
+		else if (newAIM != null && newAIM.appInstId() == appInstId)
+			return newAIM;
+		else
+			throw new IllegalStateException(String.format(
+					"No AppInstanceManager with ID=%d exists", appInstId));
 	}
 
 	public MasterProfiler getProfiler() {
@@ -183,14 +189,14 @@ public class StreamJitAppManager {
 	}
 
 	public boolean reconfigure(int multiplier, AppInstance appinst) {
-		appInstManager = new AppInstanceManager(appinst, logger, this);
+		createNewAIM(appinst);
 		reset();
 		preCompilation(appinst);
 		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
-		boolean isCompiled = postCompilation();
+		boolean isCompiled = postCompilation(newAIM);
 
 		if (isCompiled) {
-			start(appinst.id);
+			start(newAIM);
 			isRunning = true;
 		} else {
 			drainingFinished(false);
@@ -206,6 +212,13 @@ public class StreamJitAppManager {
 		System.out.println("StraemJit app is running...");
 		Utils.printMemoryStatus();
 		return isRunning;
+	}
+
+	private void createNewAIM(AppInstance appinst) {
+		if (newAIM != null)
+			throw new IllegalStateException(
+					"Couldn't create newAIM as it already exists. Drain the current app instance first.");
+		newAIM = new AppInstanceManager(appinst, logger, this);
 	}
 
 	// TODO:seamless.
@@ -225,7 +238,7 @@ public class StreamJitAppManager {
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
 		long time = tailChannel.getFixedOutputTime(timeout);
-		if (appInstManager.apStsPro.error) {
+		if (curAIM.apStsPro.error) {
 			return -1l;
 		}
 		return time;
@@ -239,12 +252,15 @@ public class StreamJitAppManager {
 	 * @throws InterruptedException
 	 */
 	public boolean intermediateDraining() throws InterruptedException {
-		if (isRunning()) {
-			boolean ret = appInstManager.drainer.drainIntermediate();
+		if (curAIM == null)
+			return true;
+
+		if (curAIM.isRunning) {
+			boolean ret = curAIM.drainer.drainIntermediate();
 			if (Options.useDrainData && Options.dumpDrainData) {
 				String cfgPrefix = ConfigurationUtils
-						.getConfigPrefix(appInstManager.appInst.configuration);
-				DrainData dd = appInstManager.appInst.drainData;
+						.getConfigPrefix(curAIM.appInst.configuration);
+				DrainData dd = curAIM.appInst.drainData;
 				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
 			}
 			return ret;
@@ -449,7 +465,7 @@ public class StreamJitAppManager {
 	 * 
 	 * @return <code>true</code> iff the compilation process is success.
 	 */
-	private boolean postCompilation() {
+	private boolean postCompilation(AppInstanceManager appInstManager) {
 		appInstManager.sendDeadlockfreeBufSizes();
 		boolean isCompiled;
 		if (appInstManager.apStsPro.compilationError)
@@ -586,7 +602,10 @@ public class StreamJitAppManager {
 		}
 
 		public boolean drainFinal(Boolean isSemeFinal) {
-			return appInstManager.drainer.drainFinal(isSemeFinal);
+			// TODO: seamless
+			// Need to drain newAIM also. drainer.drainFinal() method is
+			// blocking. Need to to make this unblocking.
+			return curAIM.drainer.drainFinal(isSemeFinal);
 		}
 	}
 }
