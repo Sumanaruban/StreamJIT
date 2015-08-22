@@ -270,36 +270,12 @@ public class StreamJitAppManager {
 
 	public void drainingFinished(boolean isFinal) {
 		System.out.println("App Manager : Draining Finished...");
-
-		if (headChannel != null) {
-			try {
-				headThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (tailChannel != null) {
-			if (Options.useDrainData)
-				if (isFinal)
-					tailChannel.stop(DrainType.FINAL);
-				else
-					tailChannel.stop(DrainType.INTERMEDIATE);
-			else
-				tailChannel.stop(DrainType.DISCARD);
-
-			try {
-				tailThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
+		stopHead();
+		stopTail(isFinal);
 		if (isFinal)
 			stop();
 
 		isRunning = false;
-
 		Stopwatch sw = stopwatchRef.get();
 		if (sw != null && sw.isRunning()) {
 			sw.stop();
@@ -475,11 +451,39 @@ public class StreamJitAppManager {
 		}
 	}
 
+	private void stopHead() {
+		if (headChannel != null) {
+			try {
+				headThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	private void startTail() {
 		if (tailChannel != null) {
 			tailThread = new Thread(tailChannel.getRunnable(),
 					tailChannel.name());
 			tailThread.start();
+		}
+	}
+
+	private void stopTail(boolean isFinal) {
+		if (tailChannel != null) {
+			if (Options.useDrainData)
+				if (isFinal)
+					tailChannel.stop(DrainType.FINAL);
+				else
+					tailChannel.stop(DrainType.INTERMEDIATE);
+			else
+				tailChannel.stop(DrainType.DISCARD);
+
+			try {
+				tailThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
