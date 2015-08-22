@@ -125,8 +125,8 @@ public class StreamJitAppManager {
 
 	private final TimeLogger logger;
 
+	private volatile AppInstanceManager prevAIM = null;
 	private volatile AppInstanceManager curAIM = null;
-	private volatile AppInstanceManager newAIM = null;
 
 	final int noOfnodes;
 
@@ -166,8 +166,8 @@ public class StreamJitAppManager {
 	public AppInstanceManager getAppInstManager(int appInstId) {
 		if (curAIM.appInstId() == appInstId)
 			return curAIM;
-		else if (newAIM != null && newAIM.appInstId() == appInstId)
-			return newAIM;
+		else if (prevAIM != null && prevAIM.appInstId() == appInstId)
+			return prevAIM;
 		else
 			throw new IllegalStateException(String.format(
 					"No AppInstanceManager with ID=%d exists", appInstId));
@@ -208,16 +208,13 @@ public class StreamJitAppManager {
 	}
 
 	private AppInstanceManager createNewAIM(AppInstance appinst) {
-		if (newAIM != null)
+		if (prevAIM != null && prevAIM.isRunning)
 			throw new IllegalStateException(
-					"Couldn't create newAIM as it already exists. Drain the current app instance first.");
-		AppInstanceManager aim = new AppInstanceManager(appinst, logger, this);
-		// Handles the very first case.
-		if (curAIM == null)
-			curAIM = aim;
-		else
-			newAIM = aim;
-		return aim;
+					"Couldn't create a new AIM as already two AppInstances are running. Drain the current AppInstance first.");
+
+		prevAIM = curAIM;
+		curAIM = new AppInstanceManager(appinst, logger, this);
+		return curAIM;
 	}
 
 	// TODO:seamless.
