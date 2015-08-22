@@ -82,6 +82,8 @@ public class AppInstanceManager {
 		appManager.controller.sendToAll(new CTRLRMessageElementHolder(
 				Command.START, appInstId()));
 		isRunning = true;
+		System.out
+				.println(String.format("%s has started to run..", toString()));
 	}
 
 	void sendDeadlockfreeBufSizes() {
