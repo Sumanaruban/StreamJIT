@@ -117,8 +117,6 @@ public class StreamJitAppManager {
 
 	private final Token tailToken;
 
-	private boolean isRunning;
-
 	private volatile AppStatus status;
 
 	/**
@@ -148,7 +146,6 @@ public class StreamJitAppManager {
 		controller.newApp(app.getStaticConfiguration()); // TODO: Find a
 															// good calling
 															// place.
-		isRunning = false;
 		appDrainer = new AppDrainer();
 		headToken = Token.createOverallInputToken(app.source);
 		tailToken = Token.createOverallOutputToken(app.sink);
@@ -186,7 +183,7 @@ public class StreamJitAppManager {
 	}
 
 	public boolean isRunning() {
-		return isRunning;
+		return curAIM.isRunning;
 	}
 
 	public boolean reconfigure(int multiplier, AppInstance appinst) {
@@ -198,10 +195,8 @@ public class StreamJitAppManager {
 
 		if (isCompiled) {
 			start(newAIM);
-			isRunning = true;
 		} else {
-			drainingFinished(false);
-			isRunning = false;
+			newAIM.drainingFinished(false);
 		}
 
 		if (profiler != null) {
@@ -209,10 +204,8 @@ public class StreamJitAppManager {
 					.getConfiguration());
 			profiler.logger().newConfiguration(cfgPrefix);
 		}
-
-		System.out.println("StraemJit app is running...");
 		Utils.printMemoryStatus();
-		return isRunning;
+		return newAIM.isRunning;
 	}
 
 	private void createNewAIM(AppInstance appinst) {
