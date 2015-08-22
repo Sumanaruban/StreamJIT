@@ -417,19 +417,9 @@ public class StreamJitAppManager {
 	 * Start the execution of the StreamJit application.
 	 */
 	private void start(AppInstanceManager aim) {
-		if (headChannel != null) {
-			headThread = new Thread(headChannel.getRunnable(),
-					headChannel.name());
-			headThread.start();
-		}
-
+		startHead();
 		aim.start();
-
-		if (tailChannel != null) {
-			tailThread = new Thread(tailChannel.getRunnable(),
-					tailChannel.name());
-			tailThread.start();
-		}
+		startTail();
 	}
 
 	/**
@@ -475,6 +465,22 @@ public class StreamJitAppManager {
 		app.eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
 		return isCompiled;
+	}
+
+	private void startHead() {
+		if (headChannel != null) {
+			headThread = new Thread(headChannel.getRunnable(),
+					headChannel.name());
+			headThread.start();
+		}
+	}
+
+	private void startTail() {
+		if (tailChannel != null) {
+			tailThread = new Thread(tailChannel.getRunnable(),
+					tailChannel.name());
+			tailThread.start();
+		}
 	}
 
 	/**
