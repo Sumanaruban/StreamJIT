@@ -68,6 +68,13 @@ public class AppInstanceManager {
 		return appInst.id;
 	}
 
+	public void drainingFinished(boolean isFinal) {
+		System.out.println(String
+				.format("%s: Draining Finished...", toString()));
+		isRunning = false;
+		appManager.drainingFinished(isFinal);
+	}
+
 	void start() {
 		if (isRunning)
 			throw new IllegalStateException(String.format(

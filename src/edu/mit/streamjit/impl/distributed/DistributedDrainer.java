@@ -44,7 +44,7 @@ public class DistributedDrainer extends AbstractDrainer {
 
 	@Override
 	protected void drainingDone(boolean isFinal) {
-		appInstManager.appManager.drainingFinished(isFinal);
+		appInstManager.drainingFinished(isFinal);
 	}
 
 	@Override
