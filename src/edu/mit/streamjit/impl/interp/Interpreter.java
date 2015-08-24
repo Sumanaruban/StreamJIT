@@ -178,24 +178,7 @@ public class Interpreter implements Blob {
 					channel.push(o);
 			}
 		}
-
-		if (initialState != null) {
-			for (Worker<?, ?> w : workers) {
-				int id = Workers.getIdentifier(w);
-				ImmutableSet<Field> fields = ReflectionUtils.getAllFields(w.getClass());
-				for (Map.Entry<String, Object> e : initialState.getWorkerState(id).entrySet())
-					for (Field f : fields)
-						if (!Modifier.isFinal(f.getModifiers()) && !Modifier.isStatic(f.getModifiers())
-								&& f.getName().equals(e.getKey())) {
-							f.setAccessible(true);
-							try {
-								f.set(w, e.getValue());
-							} catch (IllegalAccessException ex) {
-								throw new AssertionError(ex);
-							}
-						}
-			}
-		}
+		setInitialState(initialState);
 
 		this.inputs = inputTokens.build();
 		this.outputs = outputTokens.build();
@@ -591,6 +574,26 @@ public class Interpreter implements Blob {
 		for (Worker<?, ?> w : workers) {
 			System.out.println("Worker-" + Workers.getIdentifier(w)
 					+ ", Execution count-" + Workers.getExecutions(w));
+		}
+	}
+
+	private void setInitialState(DrainData initialState) throws AssertionError {
+		if (initialState != null) {
+			for (Worker<?, ?> w : workers) {
+				int id = Workers.getIdentifier(w);
+				ImmutableSet<Field> fields = ReflectionUtils.getAllFields(w.getClass());
+				for (Map.Entry<String, Object> e : initialState.getWorkerState(id).entrySet())
+					for (Field f : fields)
+						if (!Modifier.isFinal(f.getModifiers()) && !Modifier.isStatic(f.getModifiers())
+								&& f.getName().equals(e.getKey())) {
+							f.setAccessible(true);
+							try {
+								f.set(w, e.getValue());
+							} catch (IllegalAccessException ex) {
+								throw new AssertionError(ex);
+							}
+						}
+			}
 		}
 	}
 }
