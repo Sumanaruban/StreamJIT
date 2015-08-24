@@ -142,6 +142,18 @@ public interface Blob {
 	public void drain(Runnable callback);
 
 	/**
+	 * Use this method to insert drain data to the blob that is created using
+	 * {@link BlobFactory#makeBlob(Set<Worker<?, ?>> workers, Configuration config,
+	 * int maxNumCores, ImmutableMap<Token, Integer> initialDrainDataBufferSizes)}.
+	 * The sizes passed by the parameter initialDrainDataBufferSizes when making the blob
+	 * and the actual sizes of the @param initialState must match. Otherwise,
+	 * @link {@link IllegalStateException} will be thrown.
+	 * @param initialState
+	 * @throws IllegalStateException
+	 */
+	public void insertDrainData(DrainData initialState) throws IllegalStateException;
+
+	/**
 	 * Gets a DrainData representing the state of this Blob after draining. This
 	 * method may only be called after the callback passed to drain() has been
 	 * called.

@@ -21,8 +21,12 @@
  */
 package edu.mit.streamjit.impl.blob;
 
+import com.google.common.collect.ImmutableMap;
+
 import edu.mit.streamjit.api.Worker;
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.Configuration;
+
 import java.util.Set;
 
 /**
@@ -60,6 +64,28 @@ public interface BlobFactory {
 	 * @return a Blob responsible for the given workers
 	 */
 	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores, DrainData initialState);
+
+	/**
+	 * Creates a new Blob with the initialDrainDataBufferSizes. If a blob is
+	 * created using this interface method, the actual drain data must be
+	 * inserted into the blob using {@link Blob#insertDrainData(DrainData)}
+	 * before start running the blob.
+	 * <p>
+	 * The sizes passed by the parameter initialDrainDataBufferSizes and the actual
+	 * sizes of the DrainData in {@link Blob#insertDrainData(DrainData)} must match.
+	 * <p>
+	 * This method with {@link Blob#insertDrainData(DrainData)} is an alternative
+	 * to {@link BlobFactory#makeBlob(Set, Configuration, int, DrainData)}
+	 * to create a blob.
+	 *
+	 * @param workers
+	 * @param config
+	 * @param maxNumCores
+	 * @param initialDrainDataBufferSizes
+	 * @return
+	 */
+	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes);
 
 	/**
 	 * Creates a new Configuration with parameters and default values suitable
