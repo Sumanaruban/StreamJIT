@@ -134,14 +134,7 @@ public class Interpreter implements Blob {
 			Channel channel = factory.makeChannel((Worker)info.upstream(), (Worker)info.downstream());
 			Workers.getOutputChannels(info.upstream()).set(info.getUpstreamChannelIndex(), channel);
 			Workers.getInputChannels(info.downstream()).set(info.getDownstreamChannelIndex(), channel);
-			if (initialState != null) {
-				ImmutableList<Object> data = initialState.getData(info.token());
-//				System.out.println(String.format(
-//						"Internal edge: InitialData of %s is %d", info.token(),
-//						data.size()));
-				for (Object o : data != null ? data : ImmutableList.of())
-					channel.push(o);
-			}
+			pushInitialData(initialState, info.token(), channel);
 		}
 		ImmutableSet.Builder<Token> inputTokens = ImmutableSet.builder(), outputTokens = ImmutableSet.builder();
 		ImmutableMap.Builder<Token, Integer> minimumBufferSize = ImmutableMap.builder();
@@ -168,15 +161,7 @@ public class Interpreter implements Blob {
 				int rate = Math.max(w.getPeekRates().get(chanIdx).max(), w.getPopRates().get(chanIdx).max());
 				minimumBufferSize.put(info.token(), rate);
 			}
-
-			if (initialState != null) {
-				ImmutableList<Object> data = initialState.getData(info.token());
-//				System.out.println(String.format(
-//						"External edge: InitialData of %s is %d",
-//						info.token(), data.size()));
-				for (Object o : data != null ? data : ImmutableList.of())
-					channel.push(o);
-			}
+			pushInitialData(initialState, info.token(), channel);
 		}
 		setInitialState(initialState);
 
@@ -594,6 +579,18 @@ public class Interpreter implements Blob {
 							}
 						}
 			}
+		}
+	}
+
+	private void pushInitialData(DrainData initialState, Token t,
+			Channel channel) {
+		if (initialState != null) {
+			ImmutableList<Object> data = initialState.getData(t);
+//				System.out.println(String.format(
+//						"Internal edge: InitialData of %s is %d", info.token(),
+//						data.size()));
+			for (Object o : data != null ? data : ImmutableList.of())
+				channel.push(o);
 		}
 	}
 }
