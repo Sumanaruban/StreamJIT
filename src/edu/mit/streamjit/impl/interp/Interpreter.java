@@ -22,11 +22,13 @@
 package edu.mit.streamjit.impl.interp;
 
 import static com.google.common.base.Preconditions.*;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Iterables;
+
 import edu.mit.streamjit.api.IllegalStreamGraphException;
 import edu.mit.streamjit.api.Rate;
 import edu.mit.streamjit.api.StatefulFilter;
@@ -41,6 +43,7 @@ import edu.mit.streamjit.impl.common.IOInfo;
 import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.util.ReflectionUtils;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
@@ -309,6 +312,12 @@ public class Interpreter implements Blob {
 		}
 
 		return new DrainData(dataBuilder.build(), stateBuilder.build());
+	}
+
+	@Override
+	public ExecutionStatistics getExecutionStatistics() {
+		//TODO: Need to return actual ExecutionStatistics.
+		return new ExecutionStatistics.ExecutionStatisticsBuilder().build();
 	}
 
 	public static class InterpreterBlobFactory implements BlobFactory {
@@ -583,10 +592,5 @@ public class Interpreter implements Blob {
 			System.out.println("Worker-" + Workers.getIdentifier(w)
 					+ ", Execution count-" + Workers.getExecutions(w));
 		}
-	}
-
-	@Override
-	public ExecutionStatistics getExecutionStatistics() {
-		return new ExecutionStatistics.ExecutionStatisticsBuilder().build();
 	}
 }
