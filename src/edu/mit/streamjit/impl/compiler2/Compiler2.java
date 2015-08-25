@@ -151,6 +151,7 @@ public class Compiler2 {
 	private final String packageName = "compiler"+PACKAGE_NUMBER.getAndIncrement();
 	private ImmutableMap<ActorGroup, Integer> initSchedule;
 	private boolean needDrainData = false;
+	List<SplitJoinRemovalReplayer> SplitJoinRemovalList = new ArrayList<>();
 	/**
 	 * For each token in the blob, the number of items live on that edge after
 	 * the init schedule, without regard to removals.  (We could recover this
@@ -517,9 +518,13 @@ public class Compiler2 {
 					}
 				}
 
+				int survivorIntDataIdx = survivor.initialData().size();
 				for (Pair<ImmutableList<Object>, IndexFunction> item : victim.initialData())
 					survivor.initialData().add(new Pair<>(item.first, item.second.andThen(t)));
 				storage.remove(victim);
+				SplitJoinRemovalReplayer s = new SplitJoinRemovalReplayer(victim,
+						victim.initialData().size(), survivor, survivorIntDataIdx);
+				SplitJoinRemovalList.add(s);
 			}
 
 			removeActor(splitter);
@@ -572,9 +577,13 @@ public class Compiler2 {
 						}
 				}
 
+				int survivorIntDataIdx = survivor.initialData().size();
 				for (Pair<ImmutableList<Object>, IndexFunction> item : victim.initialData())
 					survivor.initialData().add(new Pair<>(item.first,item.second.andThen(t2)));
 				storage.remove(victim);
+				SplitJoinRemovalReplayer s = new SplitJoinRemovalReplayer(victim,
+						victim.initialData().size(), survivor, survivorIntDataIdx);
+				SplitJoinRemovalList.add(s);
 			}
 
 			//Linearize drain info from the joiner's inputs.
@@ -1778,5 +1787,45 @@ public class Compiler2 {
 		WorkerActor wa = (WorkerActor)a;
 		String workerClassName = wa.worker().getClass().getSimpleName();
 		return workerClassName.replaceAll("[a-z]", "") + "@" + Integer.toString(wa.id()).replace('-', '_');
+	}
+
+	/**
+	 * Keeps the Splitter Joiner removal details and replays when the actual
+	 * drain data is received.
+	 * 
+	 * @author sumanan
+	 * @since 25 Aug, 2015
+	 */
+	public class SplitJoinRemovalReplayer {
+		public final Storage victim;
+		public final Storage survivor;
+		public final int survivorIntDataIdx;
+		public final int victimInitDataPairCount;
+		private SplitJoinRemovalReplayer(Storage victim,
+				int victimInitDataPairCount, Storage survivor,
+				int survivorIntDataIdx) {
+			this.victim = victim;
+			this.survivor = survivor;
+			this.survivorIntDataIdx = survivorIntDataIdx;
+			this.victimInitDataPairCount = victimInitDataPairCount;
+		}
+
+		public void replay() {
+			if (victim.initialData().size() != victimInitDataPairCount)
+				throw new IllegalStateException(
+						"victim.initialData().size() != victimInitDataPairCount");
+			if (survivor.initialData().size() < survivorIntDataIdx
+					+ victimInitDataPairCount)
+				throw new IllegalStateException();
+			for (int i = 0; i < victimInitDataPairCount; i++) {
+				Pair<ImmutableList<Object>, IndexFunction> victimPair = victim
+						.initialData().get(i);
+				Pair<ImmutableList<Object>, IndexFunction> survivorPair = victim
+						.initialData().get(i);
+				Pair<ImmutableList<Object>, IndexFunction> newPair = new Pair<>(
+						victimPair.first, survivorPair.second);
+				survivor.initialData().add(survivorIntDataIdx + i, newPair);
+			}
+		}
 	}
 }
