@@ -81,6 +81,7 @@ import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.ReflectionUtils;
 import edu.mit.streamjit.util.bytecode.Module;
 import edu.mit.streamjit.util.bytecode.ModuleClassLoader;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -149,6 +150,7 @@ public class Compiler2 {
 	private final ModuleClassLoader classloader = new ModuleClassLoader(module);
 	private final String packageName = "compiler"+PACKAGE_NUMBER.getAndIncrement();
 	private ImmutableMap<ActorGroup, Integer> initSchedule;
+	private boolean needDrainData = false;
 	/**
 	 * For each token in the blob, the number of items live on that edge after
 	 * the init schedule, without regard to removals.  (We could recover this
@@ -231,6 +233,30 @@ public class Compiler2 {
 		this.initialStateDataMap = initialStateDataMapBuilder.build();
 		this.overallInput = input;
 		this.overallOutput = output;
+	}
+
+	public Compiler2(Set<Worker<?, ?>> workers, Configuration config,
+			int maxNumCores,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes,
+			Input<?> input, Output<?> output) {
+		this(workers, config, maxNumCores,
+				createDummyDrainData(initialDrainDataBufferSizes), input,
+				output);
+		needDrainData = true;
+	}
+
+	private static DrainData createDummyDrainData(
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
+				.builder();
+		for (Map.Entry<Token, Integer> en : initialDrainDataBufferSizes
+				.entrySet()) {
+			Object[] bufArray = new Object[en.getValue()];
+			for (int i = 0; i < bufArray.length; i++)
+				bufArray[i] = new Object();
+			dataBuilder.put(en.getKey(), ImmutableList.copyOf(bufArray));
+		}
+		return new DrainData(dataBuilder.build(), ImmutableTable.of());
 	}
 
 	public Blob compile() {
