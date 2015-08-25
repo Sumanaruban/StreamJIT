@@ -114,19 +114,7 @@ public class Interpreter implements Blob {
 		this.sinks = Workers.getBottommostWorkers(workers);
 		this.config = config;
 
-		//Validate constraints.
-		for (MessageConstraint mc : constraintsIter)
-			if (this.workers.contains(mc.getSender()) != this.workers.contains(mc.getRecipient()))
-				throw new IllegalArgumentException("Constraint crosses interpreter boundary: "+mc);
-		for (MessageConstraint constraint : constraintsIter) {
-			Worker<?, ?> recipient = constraint.getRecipient();
-			List<MessageConstraint> constraintList = constraintsForRecipient.get(recipient);
-			if (constraintList == null) {
-				constraintList = new ArrayList<>();
-				constraintsForRecipient.put(recipient, constraintList);
-			}
-			constraintList.add(constraint);
-		}
+		validateConstraints(constraintsIter);
 		//Create channels.
 		SwitchParameter<ChannelFactory> parameter = this.config.getParameter("channelFactory", SwitchParameter.class, ChannelFactory.class);
 		ChannelFactory factory = parameter.getValue();
@@ -591,6 +579,22 @@ public class Interpreter implements Blob {
 //						data.size()));
 			for (Object o : data != null ? data : ImmutableList.of())
 				channel.push(o);
+		}
+	}
+
+	private void validateConstraints(Iterable<MessageConstraint> constraintsIter) {
+		//Validate constraints.
+		for (MessageConstraint mc : constraintsIter)
+			if (this.workers.contains(mc.getSender()) != this.workers.contains(mc.getRecipient()))
+				throw new IllegalArgumentException("Constraint crosses interpreter boundary: "+mc);
+		for (MessageConstraint constraint : constraintsIter) {
+			Worker<?, ?> recipient = constraint.getRecipient();
+			List<MessageConstraint> constraintList = constraintsForRecipient.get(recipient);
+			if (constraintList == null) {
+				constraintList = new ArrayList<>();
+				constraintsForRecipient.put(recipient, constraintList);
+			}
+			constraintList.add(constraint);
 		}
 	}
 }
