@@ -21,18 +21,18 @@
  */
 package edu.mit.streamjit.impl.compiler2;
 
+import java.util.Set;
+
+import com.google.common.collect.ImmutableMap;
+
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.Options;
-import edu.mit.streamjit.util.affinity.Affinity;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * TODO: describe the restrictions on the worker set
@@ -45,6 +45,12 @@ public final class Compiler2BlobFactory implements BlobFactory {
 	@Override
 	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores, DrainData initialState) {
 		return new Compiler2(workers, config, maxNumCores, initialState, null, null).compile();
+	}
+
+	@Override
+	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

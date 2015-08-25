@@ -23,8 +23,11 @@ package edu.mit.streamjit.impl.distributed;
 
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
+
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
@@ -82,6 +85,13 @@ public class DistributedBlobFactory implements BlobFactory {
 			int maxNumCores, DrainData initialState) {
 		return new Compiler2BlobFactory().makeBlob(workers, config,
 				maxNumCores, initialState);
+	}
+
+	@Override
+	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		return new Compiler2BlobFactory().makeBlob(workers, config,
+				maxNumCores, initialDrainDataBufferSizes);
 	}
 
 	@Override

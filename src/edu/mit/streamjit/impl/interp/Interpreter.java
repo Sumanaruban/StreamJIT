@@ -21,7 +21,22 @@
  */
 package edu.mit.streamjit.impl.interp;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkElementIndex;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -43,20 +58,6 @@ import edu.mit.streamjit.impl.common.IOInfo;
 import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.util.ReflectionUtils;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An Interpreter interprets a section of a stream graph.  An Interpreter's
@@ -249,12 +250,24 @@ public class Interpreter implements Blob {
 		return new ExecutionStatistics.ExecutionStatisticsBuilder().build();
 	}
 
+	@Override
+	public void insertDrainData(DrainData initialState)
+			throws IllegalStateException {
+		throw new UnsupportedOperationException();
+	}
+
 	public static class InterpreterBlobFactory implements BlobFactory {
 		public InterpreterBlobFactory() {}
 		@Override
 		public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores, DrainData initialState) {
 			//TODO: get the constraints!
 			return new Interpreter(workers, Collections.<MessageConstraint>emptyList(), config, initialState);
+		}
+		@Override
+		public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config,
+				int maxNumCores,
+				ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		    throw new UnsupportedOperationException();
 		}
 		@Override
 		public Configuration getDefaultConfiguration(Set<Worker<?, ?>> workers) {
