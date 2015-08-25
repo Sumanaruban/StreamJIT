@@ -119,33 +119,11 @@ public class Interpreter implements Blob {
 		SwitchParameter<ChannelFactory> parameter = this.config.getParameter("channelFactory", SwitchParameter.class, ChannelFactory.class);
 		ChannelFactory factory = parameter.getValue();
 		createInternalChannels(initialState, factory);
+
 		ImmutableSet.Builder<Token> inputTokens = ImmutableSet.builder(), outputTokens = ImmutableSet.builder();
 		ImmutableMap.Builder<Token, Integer> minimumBufferSize = ImmutableMap.builder();
-		for (IOInfo info : IOInfo.externalEdges(workers)) {
-			Channel channel = factory.makeChannel((Worker)info.upstream(), (Worker)info.downstream());
-			List channelList;
-			int index;
-			if (info.isInput()) {
-				channelList = Workers.getInputChannels(info.downstream());
-				index = info.getDownstreamChannelIndex();
-			} else {
-				channelList = Workers.getOutputChannels(info.upstream());
-				index = info.getUpstreamChannelIndex();
-			}
-			if (channelList.isEmpty())
-				channelList.add(channel);
-			else
-				channelList.set(index, channel);
+		createExternalChannels(initialState, factory, inputTokens, outputTokens, minimumBufferSize);
 
-			(info.isInput() ? inputTokens : outputTokens).add(info.token());
-			if (info.isInput()) {
-				Worker<?, ?> w = info.downstream();
-				int chanIdx = info.getDownstreamChannelIndex();
-				int rate = Math.max(w.getPeekRates().get(chanIdx).max(), w.getPopRates().get(chanIdx).max());
-				minimumBufferSize.put(info.token(), rate);
-			}
-			pushInitialData(initialState, info.token(), channel);
-		}
 		setInitialState(initialState);
 
 		this.inputs = inputTokens.build();
@@ -574,6 +552,40 @@ public class Interpreter implements Blob {
 //						data.size()));
 			for (Object o : data != null ? data : ImmutableList.of())
 				channel.push(o);
+		}
+	}
+
+	/**
+	 * Actually this method should set {@link #inputs}, {@link #outputs}, and {@link #minimumBufferSizes}. But, as those
+	 * variables are final, this method indirectly returns the values by modifying the method arguments.
+	 */
+	private void createExternalChannels(DrainData initialState, ChannelFactory factory,
+			ImmutableSet.Builder<Token> inputTokens, ImmutableSet.Builder<Token> outputTokens,
+			ImmutableMap.Builder<Token, Integer> minimumBufferSize) {
+		for (IOInfo info : IOInfo.externalEdges(workers)) {
+			Channel channel = factory.makeChannel((Worker)info.upstream(), (Worker)info.downstream());
+			List channelList;
+			int index;
+			if (info.isInput()) {
+				channelList = Workers.getInputChannels(info.downstream());
+				index = info.getDownstreamChannelIndex();
+			} else {
+				channelList = Workers.getOutputChannels(info.upstream());
+				index = info.getUpstreamChannelIndex();
+			}
+			if (channelList.isEmpty())
+				channelList.add(channel);
+			else
+				channelList.set(index, channel);
+
+			(info.isInput() ? inputTokens : outputTokens).add(info.token());
+			if (info.isInput()) {
+				Worker<?, ?> w = info.downstream();
+				int chanIdx = info.getDownstreamChannelIndex();
+				int rate = Math.max(w.getPeekRates().get(chanIdx).max(), w.getPopRates().get(chanIdx).max());
+				minimumBufferSize.put(info.token(), rate);
+			}
+			pushInitialData(initialState, info.token(), channel);
 		}
 	}
 
