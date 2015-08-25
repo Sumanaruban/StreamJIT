@@ -22,15 +22,19 @@
 package edu.mit.streamjit.impl.compiler2;
 
 import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.ImmutableSet;
+
 import edu.mit.streamjit.api.Input;
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.BlobHostStreamCompiler;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.test.Datasets;
+
 import java.nio.file.Path;
 import java.util.Random;
 import java.util.Set;
@@ -123,7 +127,7 @@ public final class Compiler2StreamCompiler extends BlobHostStreamCompiler {
 		Boolean reportThroughput = (Boolean)configuration.getExtraData("reportThroughput");
 		if (reportThroughput != null && reportThroughput)
 			input = Datasets.cycle(input);
-		return new Compiler2(workers, configuration, getMaxNumCores(), null, input, output).compile();
+		return new Compiler2(workers, configuration, getMaxNumCores(), (DrainData)null, input, output).compile();
 	}
 
 	@Override
