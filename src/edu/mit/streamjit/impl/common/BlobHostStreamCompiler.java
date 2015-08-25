@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Input;
 import edu.mit.streamjit.api.Input.ManualInput;
@@ -37,7 +38,9 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.Buffers;
+import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.util.affinity.Affinity;
+
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -110,7 +113,7 @@ public class BlobHostStreamCompiler implements StreamCompiler {
 	}
 
 	protected Blob makeBlob(ImmutableSet<Worker<?, ?>> workers, Configuration configuration, Input<?> input, Output<?> output) {
-		return blobFactory.makeBlob(workers, configuration, getMaxNumCores(), null);
+		return blobFactory.makeBlob(workers, configuration, getMaxNumCores(), (DrainData)null);
 	}
 
 	/**
