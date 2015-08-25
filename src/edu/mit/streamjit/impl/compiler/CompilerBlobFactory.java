@@ -21,13 +21,17 @@
  */
 package edu.mit.streamjit.impl.compiler;
 
+import java.util.Set;
+
+import com.google.common.collect.ImmutableMap;
+
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Workers;
-import java.util.Set;
 
 /**
  * TODO: describe the restrictions on the worker set
@@ -40,6 +44,12 @@ public final class CompilerBlobFactory implements BlobFactory {
 	@Override
 	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores, DrainData initialState) {
 		return new Compiler(workers, config, maxNumCores, initialState).compile();
+	}
+
+	@Override
+	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		return null;
 	}
 
 	/**
