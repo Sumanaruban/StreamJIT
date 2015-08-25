@@ -118,12 +118,7 @@ public class Interpreter implements Blob {
 		//Create channels.
 		SwitchParameter<ChannelFactory> parameter = this.config.getParameter("channelFactory", SwitchParameter.class, ChannelFactory.class);
 		ChannelFactory factory = parameter.getValue();
-		for (IOInfo info : IOInfo.internalEdges(workers)) {
-			Channel channel = factory.makeChannel((Worker)info.upstream(), (Worker)info.downstream());
-			Workers.getOutputChannels(info.upstream()).set(info.getUpstreamChannelIndex(), channel);
-			Workers.getInputChannels(info.downstream()).set(info.getDownstreamChannelIndex(), channel);
-			pushInitialData(initialState, info.token(), channel);
-		}
+		createInternalChannels(initialState, factory);
 		ImmutableSet.Builder<Token> inputTokens = ImmutableSet.builder(), outputTokens = ImmutableSet.builder();
 		ImmutableMap.Builder<Token, Integer> minimumBufferSize = ImmutableMap.builder();
 		for (IOInfo info : IOInfo.externalEdges(workers)) {
@@ -579,6 +574,16 @@ public class Interpreter implements Blob {
 //						data.size()));
 			for (Object o : data != null ? data : ImmutableList.of())
 				channel.push(o);
+		}
+	}
+
+	private void createInternalChannels(DrainData initialState,
+			ChannelFactory factory) {
+		for (IOInfo info : IOInfo.internalEdges(workers)) {
+			Channel channel = factory.makeChannel((Worker)info.upstream(), (Worker)info.downstream());
+			Workers.getOutputChannels(info.upstream()).set(info.getUpstreamChannelIndex(), channel);
+			Workers.getInputChannels(info.downstream()).set(info.getDownstreamChannelIndex(), channel);
+			pushInitialData(initialState, info.token(), channel);
 		}
 	}
 
