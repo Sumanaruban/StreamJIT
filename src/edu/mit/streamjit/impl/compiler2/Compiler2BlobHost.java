@@ -39,9 +39,12 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.blob.Blob.ExecutionStatistics.ExecutionStatisticsBuilder;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.compiler2.Compiler2.InitDataReadInstruction;
+import edu.mit.streamjit.impl.compiler2.Compiler2.SplitJoinRemovalReplayer;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.interp.Interpreter;
 import edu.mit.streamjit.util.CollectionUtils;
+import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.bytecode.methodhandles.Combinators;
 import static edu.mit.streamjit.util.bytecode.methodhandles.LookupUtils.findConstructor;
 import static edu.mit.streamjit.util.bytecode.methodhandles.LookupUtils.findVirtual;
@@ -57,6 +60,7 @@ import java.lang.invoke.SwitchPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -134,6 +138,12 @@ public class Compiler2BlobHost implements Blob {
 	private volatile DrainData drainData;
 	private final ExecutionStatisticsBuilder esBuilder = new ExecutionStatisticsBuilder();
 	private final boolean logTimings;
+
+	// To insert drain data
+	private volatile boolean needDrainData = false;
+	private List<SplitJoinRemovalReplayer> SplitJoinRemovalList = new ArrayList<>();
+	private Map<Token, Storage> drainDataStorages = new HashMap<>();
+	private ImmutableMap<Storage, ConcreteStorage> initStorage;
 
 	public Compiler2BlobHost(ImmutableSet<Worker<?, ?>> workers,
 			Configuration configuration,
@@ -489,5 +499,81 @@ public class Compiler2BlobHost implements Blob {
 	@Override
 	public ExecutionStatistics getExecutionStatistics() {
 		return esBuilder.build();
+	}
+
+	void setDrainDataVariables(boolean needDrainData,
+			List<SplitJoinRemovalReplayer> SplitJoinRemovalList,
+			Map<Token, Storage> drainDataStorages,
+			ImmutableMap<Storage, ConcreteStorage> initStorage) {
+		this.needDrainData = needDrainData;
+		this.SplitJoinRemovalList = SplitJoinRemovalList;
+		this.drainDataStorages = drainDataStorages;
+		this.initStorage = initStorage;
+	}
+
+	@Override
+	public void insertDrainData(DrainData initialState)
+			throws IllegalStateException {
+		if (!needDrainData)
+			throw new IllegalStateException("Can not insert drain data.");
+		ImmutableMap<Token, ImmutableList<Object>> initialStateDataMap = replaceDummyData(initialState);
+		for (SplitJoinRemovalReplayer replayer : SplitJoinRemovalList)
+			replayer.replay();
+		ReadInstruction ri = new InitDataReadInstruction(initStorage,
+				initialStateDataMap);
+		updateInitReadInstructions(ri);
+		releaseDrainDataVariables();
+	}
+
+	private ImmutableMap<Token, ImmutableList<Object>> replaceDummyData(
+			DrainData initialState) {
+		if (initialState.getData().size() != drainDataStorages.size())
+			throw new IllegalStateException(
+					String.format(
+							"Miss match between initialDrainDataBufferSizes(%d) and the actual drain data(%d)",
+							initialState.getData().size(),
+							drainDataStorages.size()));
+		ImmutableMap.Builder<Token, ImmutableList<Object>> initialStateDataMapBuilder = ImmutableMap
+				.builder();
+		for (Map.Entry<Token, Storage> en : drainDataStorages.entrySet()) {
+			Storage s = en.getValue();
+			Token t = en.getKey();
+			ImmutableList<Object> data = initialState.getData(t);
+			int storageDataSize = s.initialData().get(0).first.size();
+			if (data == null)
+				throw new IllegalStateException(String.format(
+						"Actual drain data of %s is null", t));
+			if (storageDataSize != data.size())
+				throw new IllegalStateException(
+						String.format(
+								"%s:Initial drain data size = %d, Actual drain data size = %d",
+								t, storageDataSize, data.size()));
+			Pair<ImmutableList<Object>, IndexFunction> newPair = new Pair<>(
+					data, s.initialData().get(0).second);
+			s.initialData().add(0, newPair);
+			initialStateDataMapBuilder.put(t, data);
+		}
+		return initialStateDataMapBuilder.build();
+	}
+
+
+	private void updateInitReadInstructions(ReadInstruction firstRI) {
+		List<ReadInstruction> initRIs = new ArrayList<>();
+		initRIs.add(firstRI);
+		for (int i = 1; i < initReadInstructions.size(); i++) {
+			initRIs.add(initReadInstructions.get(i));
+		}
+		this.initReadInstructions = ImmutableList.copyOf(initRIs);
+	}
+
+
+	/**
+	 * Set to null so that GC will clean these variable.
+	 */
+	private void releaseDrainDataVariables() {
+		this.needDrainData = false;
+		this.SplitJoinRemovalList = null;
+		this.drainDataStorages = null;
+		this.initStorage = null;
 	}
 }
