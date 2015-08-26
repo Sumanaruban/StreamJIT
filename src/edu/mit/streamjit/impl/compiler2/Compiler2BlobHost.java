@@ -312,6 +312,9 @@ public class Compiler2BlobHost implements Blob {
 		if (logTimings)
 			initTime = Stopwatch.createStarted();
 
+		if(needDrainData)
+			throw new IllegalStateException("Expecting drain data. insertDrainData first.");
+
 		for (int i = 0; i < initReadInstructions.size(); ++i) {
 			ReadInstruction inst = initReadInstructions.get(i);
 			while (!inst.load())
