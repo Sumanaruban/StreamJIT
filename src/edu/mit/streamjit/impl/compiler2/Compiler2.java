@@ -1616,10 +1616,10 @@ public class Compiler2 {
 	 * There's only one of these per blob because it returns all the data, and
 	 * it should be the first initReadInstruction.
 	 */
-	private static final class InitDataReadInstruction implements ReadInstruction {
+	static final class InitDataReadInstruction implements ReadInstruction {
 		private final ImmutableMap<ConcreteStorage, ImmutableList<Pair<ImmutableList<Object>, IndexFunction>>> toWrite;
 		private final ImmutableMap<Token, ImmutableList<Object>> initialStateDataMap;
-		private InitDataReadInstruction(Map<Storage, ConcreteStorage> initStorage, ImmutableMap<Token, ImmutableList<Object>> initialStateDataMap) {
+		InitDataReadInstruction(Map<Storage, ConcreteStorage> initStorage, ImmutableMap<Token, ImmutableList<Object>> initialStateDataMap) {
 			ImmutableMap.Builder<ConcreteStorage, ImmutableList<Pair<ImmutableList<Object>, IndexFunction>>> toWriteBuilder = ImmutableMap.builder();
 			for (Map.Entry<Storage, ConcreteStorage> e : initStorage.entrySet()) {
 				Storage s = e.getKey();
