@@ -281,7 +281,10 @@ public class Compiler2 {
 		createBuffers();
 		createInitCode();
 		createSteadyStateCode();
-		return instantiateBlob();
+		Compiler2BlobHost b = instantiateBlob();
+		b.setDrainDataVariables(needDrainData, SplitJoinRemovalList,
+				drainDataStorages, initStorage);
+		return b;
 	}
 
 	private void findRemovals() {
@@ -1721,7 +1724,7 @@ public class Compiler2 {
 	 * form the blob host wants.
 	 * @return the blob
 	 */
-	public Blob instantiateBlob() {
+	public Compiler2BlobHost instantiateBlob() {
 		ImmutableSortedSet.Builder<Token> inputTokens = ImmutableSortedSet.naturalOrder(),
 				outputTokens = ImmutableSortedSet.naturalOrder();
 		for (TokenActor ta : Iterables.filter(actors, TokenActor.class))
