@@ -139,7 +139,8 @@ public class Compiler2BlobHost implements Blob {
 	private final ExecutionStatisticsBuilder esBuilder = new ExecutionStatisticsBuilder();
 	private final boolean logTimings;
 
-	// To insert drain data
+	// The next 4 variables are to compile with drain data sizes and then insert
+	// the actual drain data later.
 	private volatile boolean needDrainData = false;
 	private List<SplitJoinRemovalReplayer> SplitJoinRemovalList = null;
 	private Map<Token, Storage> drainDataStorages = null;

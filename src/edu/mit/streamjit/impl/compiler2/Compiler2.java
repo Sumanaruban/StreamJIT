@@ -150,12 +150,16 @@ public class Compiler2 {
 	private final ModuleClassLoader classloader = new ModuleClassLoader(module);
 	private final String packageName = "compiler"+PACKAGE_NUMBER.getAndIncrement();
 	private ImmutableMap<ActorGroup, Integer> initSchedule;
+
+	// The next 3 variables are to compile with drain data sizes and then insert
+	// the actual drain data later.
 	private boolean needDrainData = false;
 	private final List<SplitJoinRemovalReplayer> SplitJoinRemovalList = new ArrayList<>();
 	/**
 	 * This variable keeps track of the storages that received drain data.
 	 */
 	private final Map<Token, Storage> drainDataStorages = new HashMap<>();
+
 	/**
 	 * For each token in the blob, the number of items live on that edge after
 	 * the init schedule, without regard to removals.  (We could recover this
