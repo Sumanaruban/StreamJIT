@@ -286,8 +286,9 @@ public class Compiler2 {
 		createInitCode();
 		createSteadyStateCode();
 		Compiler2BlobHost b = instantiateBlob();
-		b.setDrainDataVariables(needDrainData, SplitJoinRemovalList,
-				drainDataStorages, initStorage);
+		if (needDrainData)
+			b.setDrainDataVariables(needDrainData, SplitJoinRemovalList,
+					drainDataStorages, initStorage);
 		return b;
 	}
 
