@@ -50,7 +50,7 @@ public final class Compiler2BlobFactory implements BlobFactory {
 	@Override
 	public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores,
 			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
-		throw new UnsupportedOperationException();
+		return new Compiler2(workers, config, maxNumCores, initialDrainDataBufferSizes, null, null).compile();
 	}
 
 	@Override
