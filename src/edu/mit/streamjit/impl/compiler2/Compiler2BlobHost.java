@@ -141,9 +141,9 @@ public class Compiler2BlobHost implements Blob {
 
 	// To insert drain data
 	private volatile boolean needDrainData = false;
-	private List<SplitJoinRemovalReplayer> SplitJoinRemovalList = new ArrayList<>();
-	private Map<Token, Storage> drainDataStorages = new HashMap<>();
-	private ImmutableMap<Storage, ConcreteStorage> initStorage;
+	private List<SplitJoinRemovalReplayer> SplitJoinRemovalList = null;
+	private Map<Token, Storage> drainDataStorages = null;
+	private ImmutableMap<Storage, ConcreteStorage> initStorage = null;
 
 	public Compiler2BlobHost(ImmutableSet<Worker<?, ?>> workers,
 			Configuration configuration,
