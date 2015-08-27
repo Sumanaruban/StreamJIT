@@ -35,19 +35,26 @@ import edu.mit.streamjit.impl.distributed.runtimer.Controller;
  * @author Sumanan sumanan@mit.edu
  * @since May 27, 2013
  */
-public class ConfigurationString implements CTRLRMessageElement {
+public abstract class ConfigurationString implements CTRLRMessageElement {
 
 	private static final long serialVersionUID = -5900812807902330853L;
 
-	private final String jsonString;
-	private final ConfigType type;
-	private final DrainData drainData;
+	public static final class ConfigurationString1 extends ConfigurationString {
+		private static final long serialVersionUID = 1L;
+		private final String jsonString;
+		private final ConfigType type;
+		private final DrainData drainData;
 
-	public ConfigurationString(String jsonString, ConfigType type,
-			DrainData drainData) {
-		this.jsonString = jsonString;
-		this.type = type;
-		this.drainData = drainData;
+		public ConfigurationString1(String jsonString, ConfigType type,
+				DrainData drainData) {
+			this.jsonString = jsonString;
+			this.type = type;
+			this.drainData = drainData;
+		}
+
+		public void process(ConfigurationProcessor jp) {
+			jp.process(jsonString, type, drainData);
+		}
 	}
 
 	@Override
@@ -55,9 +62,7 @@ public class ConfigurationString implements CTRLRMessageElement {
 		visitor.visit(this);
 	}
 
-	public void process(ConfigurationProcessor jp) {
-		jp.process(jsonString, type, drainData);
-	}
+	public abstract void process(ConfigurationProcessor jp);
 
 	/**
 	 * Processes configuration string of a {@link Configuration} that is sent by

@@ -284,8 +284,8 @@ public class StreamJitAppManager {
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
-			ConfigurationString json = new ConfigurationString(jsonStirng,
-					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
+			ConfigurationString json = new ConfigurationString.ConfigurationString1(
+					jsonStirng, ConfigType.DYNAMIC, drainDataMap.get(nodeID));
 			controller.send(nodeID, json);
 		}
 
