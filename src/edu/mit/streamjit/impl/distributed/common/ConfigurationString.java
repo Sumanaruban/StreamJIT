@@ -21,6 +21,9 @@
  */
 package edu.mit.streamjit.impl.distributed.common;
 
+import com.google.common.collect.ImmutableMap;
+
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
@@ -64,6 +67,45 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 		}
 	}
 
+	public static final class ConfigurationString2 extends ConfigurationString {
+		private static final long serialVersionUID = 1L;
+		private final String jsonString;
+		private final ConfigType type;
+		private final ImmutableMap<Token, Integer> initialDrainDataBufferSizes;
+
+		public ConfigurationString2(String jsonString, ConfigType type,
+				ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+			this.jsonString = jsonString;
+			this.type = type;
+			this.initialDrainDataBufferSizes = initialDrainDataBufferSizes;
+		}
+
+		public void process(ConfigurationProcessor jp) {
+			jp.process(jsonString, type, initialDrainDataBufferSizes);
+		}
+	}
+
+	/**
+	 * ConfigurationString2-DrainData
+	 * 
+	 * @author sumanan
+	 * @since 27 Aug, 2015
+	 */
+	public static final class ConfigurationString2DD
+			extends
+				ConfigurationString {
+		private static final long serialVersionUID = 1L;
+		private final DrainData drainData;
+
+		public ConfigurationString2DD(DrainData drainData) {
+			this.drainData = drainData;
+		}
+
+		public void process(ConfigurationProcessor jp) {
+			jp.process(drainData);
+		}
+	}
+
 	/**
 	 * Processes configuration string of a {@link Configuration} that is sent by
 	 * {@link Controller}.
@@ -74,6 +116,11 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 	public interface ConfigurationProcessor {
 
 		public void process(String cfg, ConfigType type, DrainData drainData);
+
+		public void process(String cfg, ConfigType type,
+				ImmutableMap<Token, Integer> initialDrainDataBufferSizes);
+
+		public void process(DrainData drainData);
 
 		/**
 		 * Indicates the type of the configuration.

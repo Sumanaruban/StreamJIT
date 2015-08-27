@@ -141,4 +141,17 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
 				.getSubconfiguration("blobConfigs")));
 	}
+
+	@Override
+	public void process(String cfg, ConfigType type,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void process(DrainData drainData) {
+		// TODO Auto-generated method stub
+
+	}
 }
