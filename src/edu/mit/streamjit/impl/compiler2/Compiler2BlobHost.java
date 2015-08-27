@@ -60,12 +60,10 @@ import java.lang.invoke.SwitchPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -518,6 +516,8 @@ public class Compiler2BlobHost implements Blob {
 	@Override
 	public void insertDrainData(DrainData initialState)
 			throws IllegalStateException {
+		if (initialState == null && !needDrainData)
+			return;
 		if (!needDrainData)
 			throw new IllegalStateException("Can not insert drain data.");
 		ImmutableMap<Token, ImmutableList<Object>> initialStateDataMap = replaceDummyData(initialState);
