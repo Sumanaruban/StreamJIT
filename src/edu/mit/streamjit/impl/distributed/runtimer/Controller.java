@@ -137,10 +137,9 @@ public class Controller {
 		inetMap.put(controllerNodeID, comManager.getLocalAddress());
 		builder.putExtraData(GlobalConstants.INETADDRESS_MAP, inetMap);
 		NetworkInfo networkinfo = new NetworkInfo(inetMap);
-		this.conProvider = new ConnectionProvider(controllerNodeID,
-				networkinfo);
-		ConfigurationString json = new ConfigurationString(builder.build()
-				.toJson(), ConfigType.STATIC, null);
+		this.conProvider = new ConnectionProvider(controllerNodeID, networkinfo);
+		ConfigurationString json = new ConfigurationString.ConfigurationString1(
+				builder.build().toJson(), ConfigType.STATIC, null);
 		sendToAll(json);
 	}
 
