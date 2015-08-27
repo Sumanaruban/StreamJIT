@@ -39,6 +39,13 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 
 	private static final long serialVersionUID = -5900812807902330853L;
 
+	@Override
+	public void accept(CTRLRMessageVisitor visitor) {
+		visitor.visit(this);
+	}
+
+	public abstract void process(ConfigurationProcessor jp);
+
 	public static final class ConfigurationString1 extends ConfigurationString {
 		private static final long serialVersionUID = 1L;
 		private final String jsonString;
@@ -56,13 +63,6 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 			jp.process(jsonString, type, drainData);
 		}
 	}
-
-	@Override
-	public void accept(CTRLRMessageVisitor visitor) {
-		visitor.visit(this);
-	}
-
-	public abstract void process(ConfigurationProcessor jp);
 
 	/**
 	 * Processes configuration string of a {@link Configuration} that is sent by
