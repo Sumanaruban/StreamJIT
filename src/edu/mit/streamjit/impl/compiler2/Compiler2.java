@@ -252,11 +252,14 @@ public class Compiler2 {
 		this(workers, config, maxNumCores,
 				createDummyDrainData(initialDrainDataBufferSizes), input,
 				output);
-		needDrainData = true;
+		if (initialDrainDataBufferSizes != null)
+			needDrainData = true;
 	}
 
 	private static DrainData createDummyDrainData(
 			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		if (initialDrainDataBufferSizes == null)
+			return null;
 		ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
 				.builder();
 		for (Map.Entry<Token, Integer> en : initialDrainDataBufferSizes
