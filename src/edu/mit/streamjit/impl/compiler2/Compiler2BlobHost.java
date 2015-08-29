@@ -554,12 +554,11 @@ public class Compiler2BlobHost implements Blob {
 								t, storageDataSize, data.size()));
 			Pair<ImmutableList<Object>, IndexFunction> newPair = new Pair<>(
 					data, s.initialData().get(0).second);
-			s.initialData().add(0, newPair);
+			s.initialData().set(0, newPair);
 			initialStateDataMapBuilder.put(t, data);
 		}
 		return initialStateDataMapBuilder.build();
 	}
-
 
 	private void updateInitReadInstructions(ReadInstruction firstRI) {
 		List<ReadInstruction> initRIs = new ArrayList<>();

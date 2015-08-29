@@ -1840,7 +1840,7 @@ public class Compiler2 {
 						.initialData().get(i);
 				Pair<ImmutableList<Object>, IndexFunction> newPair = new Pair<>(
 						victimPair.first, survivorPair.second);
-				survivor.initialData().add(survivorInitDataIdx + i, newPair);
+				survivor.initialData().set(survivorInitDataIdx + i, newPair);
 			}
 		}
 	}
