@@ -531,12 +531,14 @@ public class Compiler2BlobHost implements Blob {
 
 	private ImmutableMap<Token, ImmutableList<Object>> replaceDummyData(
 			DrainData initialState) {
-		if (initialState.getData().size() != drainDataStorages.size())
-			throw new IllegalStateException(
-					String.format(
-							"Miss match between initialDrainDataBufferSizes(%d) and the actual drain data(%d)",
-							initialState.getData().size(),
-							drainDataStorages.size()));
+		// TODO: [29-8-2015] - Send drain data that belongs to this blob and
+		// then enable the following check.
+		// if (initialState.getData().size() != drainDataStorages.size())
+		// throw new IllegalStateException(
+		// String.format(
+		// "Miss match between initialDrainDataBufferSizes(%d) and the actual drain data(%d)",
+		// initialState.getData().size(),
+		// drainDataStorages.size()));
 		ImmutableMap.Builder<Token, ImmutableList<Object>> initialStateDataMapBuilder = ImmutableMap
 				.builder();
 		for (Map.Entry<Token, Storage> en : drainDataStorages.entrySet()) {
