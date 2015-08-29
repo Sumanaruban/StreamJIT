@@ -593,12 +593,12 @@ public class Compiler2 {
 						}
 				}
 
-				int survivorIntDataIdx = survivor.initialData().size();
+				int survivorInitDataIdx = survivor.initialData().size();
 				for (Pair<ImmutableList<Object>, IndexFunction> item : victim.initialData())
 					survivor.initialData().add(new Pair<>(item.first,item.second.andThen(t2)));
 				storage.remove(victim);
 				SplitJoinRemovalReplayer s = new SplitJoinRemovalReplayer(victim,
-						victim.initialData().size(), survivor, survivorIntDataIdx);
+						victim.initialData().size(), survivor, survivorInitDataIdx);
 				SplitJoinRemovalList.add(s);
 			}
 
@@ -1815,14 +1815,14 @@ public class Compiler2 {
 	public class SplitJoinRemovalReplayer {
 		public final Storage victim;
 		public final Storage survivor;
-		public final int survivorIntDataIdx;
+		public final int survivorInitDataIdx;
 		public final int victimInitDataPairCount;
 		private SplitJoinRemovalReplayer(Storage victim,
 				int victimInitDataPairCount, Storage survivor,
-				int survivorIntDataIdx) {
+				int survivorInitDataIdx) {
 			this.victim = victim;
 			this.survivor = survivor;
-			this.survivorIntDataIdx = survivorIntDataIdx;
+			this.survivorInitDataIdx = survivorInitDataIdx;
 			this.victimInitDataPairCount = victimInitDataPairCount;
 		}
 
@@ -1830,7 +1830,7 @@ public class Compiler2 {
 			if (victim.initialData().size() != victimInitDataPairCount)
 				throw new IllegalStateException(
 						"victim.initialData().size() != victimInitDataPairCount");
-			if (survivor.initialData().size() < survivorIntDataIdx
+			if (survivor.initialData().size() < survivorInitDataIdx
 					+ victimInitDataPairCount)
 				throw new IllegalStateException();
 			for (int i = 0; i < victimInitDataPairCount; i++) {
@@ -1840,7 +1840,7 @@ public class Compiler2 {
 						.initialData().get(i);
 				Pair<ImmutableList<Object>, IndexFunction> newPair = new Pair<>(
 						victimPair.first, survivorPair.second);
-				survivor.initialData().add(survivorIntDataIdx + i, newPair);
+				survivor.initialData().add(survivorInitDataIdx + i, newPair);
 			}
 		}
 	}
