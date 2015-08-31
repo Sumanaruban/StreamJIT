@@ -86,30 +86,39 @@ import edu.mit.streamjit.util.ReflectionUtils;
  * @since 3/22/2013
  */
 public class Interpreter implements Blob {
+
 	private final ImmutableSet<Worker<?, ?>> workers, sinks;
+
 	private final Configuration config;
+
 	private final ImmutableSet<Token> inputs, outputs;
+
 	private final ImmutableMap<Token, Integer> minimumBufferSizes;
 	/**
 	 * Maps workers to all constraints of which they are recipients.
 	 */
 	private final Map<Worker<?, ?>, List<MessageConstraint>> constraintsForRecipient = new IdentityHashMap<>();
+
 	/**
 	 * When running normally, null.  After drain() has been called, contains the
 	 * callback we should execute.  After the callback is executed, becomes an
 	 * empty Runnable that we execute in place of interpret().
 	 */
 	private final AtomicReference<Runnable> callback = new AtomicReference<>();
+
 	private final ImmutableSet<IOInfo> ioinfo;
+
 	/**
 	 * Maps Channels to the buffers they correspond to.  Output channels are
 	 * flushed to output buffers; input channels are checked for data when we
 	 * can't fire a source.
 	 */
 	private ImmutableMap<Channel<?>, Buffer> inputBuffers, outputBuffers;
+
 	public Interpreter(Iterable<Worker<?, ?>> workersIter, Iterable<MessageConstraint> constraintsIter, Configuration config) {
 		this(workersIter, constraintsIter, config, null);
 	}
+
 	public Interpreter(Iterable<Worker<?, ?>> workersIter, Iterable<MessageConstraint> constraintsIter, Configuration config, DrainData initialState) {
 		this.workers = ImmutableSet.copyOf(workersIter);
 		this.sinks = Workers.getBottommostWorkers(workers);
