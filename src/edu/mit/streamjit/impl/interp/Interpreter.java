@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -115,8 +116,13 @@ public class Interpreter implements Blob {
 	 */
 	private ImmutableMap<Channel<?>, Buffer> inputBuffers, outputBuffers;
 
+	// The next 2 variables are to create the interpreter with drain data sizes and then insert
+	// the actual drain data later.
+	private volatile boolean needDrainData = false;
+	private Map<Token, Channel<?>> tokenChannelMap = new HashMap<>();
+
 	public Interpreter(Iterable<Worker<?, ?>> workersIter, Iterable<MessageConstraint> constraintsIter, Configuration config) {
-		this(workersIter, constraintsIter, config, null);
+		this(workersIter, constraintsIter, config, (DrainData)null);
 	}
 
 	public Interpreter(Iterable<Worker<?, ?>> workersIter, Iterable<MessageConstraint> constraintsIter, Configuration config, DrainData initialState) {
@@ -140,6 +146,14 @@ public class Interpreter implements Blob {
 		this.outputs = outputTokens.build();
 		this.minimumBufferSizes = minimumBufferSize.build();
 		this.ioinfo = IOInfo.externalEdges(workers);
+	}
+
+	public Interpreter(Iterable<Worker<?, ?>> workersIter,
+			Iterable<MessageConstraint> constraintsIter, Configuration config,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		this(workersIter, constraintsIter, config);
+		if (initialDrainDataBufferSizes != null)
+			needDrainData = true;
 	}
 
 	@Override
@@ -262,7 +276,20 @@ public class Interpreter implements Blob {
 	@Override
 	public void insertDrainData(DrainData initialState)
 			throws IllegalStateException {
-		throw new UnsupportedOperationException();
+		if (initialState == null) {
+			if (needDrainData)
+				throw new IllegalStateException(
+						"Valid drain data is expected. initialState == null");
+			else
+				return;
+		}
+		if (!needDrainData) {
+			throw new IllegalStateException("Can not insert drain data.");
+		}
+		needDrainData = false;
+		for (Map.Entry<Token, Channel<?>> en : tokenChannelMap.entrySet())
+			pushInitialData(initialState, en.getKey(), en.getValue());
+		setInitialState(initialState);
 	}
 
 	public static class InterpreterBlobFactory implements BlobFactory {
@@ -276,7 +303,7 @@ public class Interpreter implements Blob {
 		public Blob makeBlob(Set<Worker<?, ?>> workers, Configuration config,
 				int maxNumCores,
 				ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
-		    throw new UnsupportedOperationException();
+			return new Interpreter(workers, Collections.<MessageConstraint>emptyList(), config, initialDrainDataBufferSizes);
 		}
 		@Override
 		public Configuration getDefaultConfiguration(Set<Worker<?, ?>> workers) {
@@ -569,12 +596,20 @@ public class Interpreter implements Blob {
 			Channel channel) {
 		if (initialState != null) {
 			ImmutableList<Object> data = initialState.getData(t);
-//				System.out.println(String.format(
-//						"Internal edge: InitialData of %s is %d", info.token(),
-//						data.size()));
+			// System.out.println(String.format(
+			// "Internal edge: InitialData of %s is %d", info.token(),
+			// data.size()));
 			for (Object o : data != null ? data : ImmutableList.of())
 				channel.push(o);
-		}
+		} else if (needDrainData)
+			putToTokenChannelMap(t, channel);
+	}
+
+	void putToTokenChannelMap(Token t, Channel channel) {
+		if (tokenChannelMap.containsKey(t))
+			throw new IllegalArgumentException(String.format(
+					"%s has already been added to tokenChannelMap", t));
+		tokenChannelMap.put(t, channel);
 	}
 
 	/**
