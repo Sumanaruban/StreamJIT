@@ -126,6 +126,7 @@ public class Interpreter implements Blob {
 	}
 
 	public Interpreter(Iterable<Worker<?, ?>> workersIter, Iterable<MessageConstraint> constraintsIter, Configuration config, DrainData initialState) {
+		System.out.println("Interpreter...Interpreter...Interpreter...");
 		this.workers = ImmutableSet.copyOf(workersIter);
 		this.sinks = Workers.getBottommostWorkers(workers);
 		this.config = config;
@@ -287,6 +288,7 @@ public class Interpreter implements Blob {
 			throw new IllegalStateException("Can not insert drain data.");
 		}
 		needDrainData = false;
+		System.out.println("insertDrainData..insertDrainData..insertDrainData..");
 		for (Map.Entry<Token, Channel<?>> en : tokenChannelMap.entrySet())
 			pushInitialData(initialState, en.getKey(), en.getValue());
 		setInitialState(initialState);

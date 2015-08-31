@@ -527,6 +527,7 @@ public class Compiler2BlobHost implements Blob {
 			return;
 		if (!needDrainData)
 			throw new IllegalStateException("Can not insert drain data.");
+		System.out.println("insertDrainData..insertDrainData..insertDrainData..");
 		ImmutableMap<Token, ImmutableList<Object>> initialStateDataMap = replaceDummyData(initialState);
 		for (SplitJoinRemovalReplayer replayer : SplitJoinRemovalList)
 			replayer.replay();

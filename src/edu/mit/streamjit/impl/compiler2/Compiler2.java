@@ -195,6 +195,7 @@ public class Compiler2 {
 	private final List<WriteInstruction> writeInstructions = new ArrayList<>();
 	private final List<DrainInstruction> drainInstructions = new ArrayList<>();
 	public Compiler2(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores, DrainData initialState, Input<?> input, Output<?> output) {
+		System.out.println("Compiler2...Compiler2...Compiler2...");
 		this.workers = ImmutableSet.copyOf(workers);
 		Map<Class<?>, ActorArchetype> archetypesBuilder = new HashMap<>();
 		Map<Worker<?, ?>, WorkerActor> workerActors = new HashMap<>();
@@ -234,6 +235,7 @@ public class Compiler2 {
 							((WorkerActor)cell.getColumnKey()).worker());
 				ImmutableList<Object> data = initialState.getData(tok);
 				if (data != null && !data.isEmpty()) {
+					System.out.println(String.format("Draindata %s - %d", tok, data.size()));
 					initialStateDataMapBuilder.put(tok, data);
 					cell.getValue().initialData().add(Pair.make(data, IndexFunction.identity()));
 					drainDataStorages.put(tok, cell.getValue());
