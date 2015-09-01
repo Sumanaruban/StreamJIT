@@ -80,9 +80,9 @@ class DynamicBuffer implements Buffer {
 	 */
 	private volatile Buffer buffer;
 
-	public DynamicBuffer(DynamicBufferManager dynamicBufferManager,
-			String name, Class<? extends Buffer> bufferClass,
-			List<?> initialArguments, int initialCapacity, int capacityPos) {
+	DynamicBuffer(DynamicBufferManager dynamicBufferManager, String name,
+			Class<? extends Buffer> bufferClass, List<?> initialArguments,
+			int initialCapacity, int capacityPos) {
 		this.dynamicBufferManager = dynamicBufferManager;
 		this.name = name;
 		this.initialArguments = initialArguments;
