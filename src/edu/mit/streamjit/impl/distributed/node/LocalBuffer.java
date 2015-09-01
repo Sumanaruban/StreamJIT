@@ -267,7 +267,8 @@ public interface LocalBuffer extends Buffer {
 					.println(String
 							.format("%s : Creating drain buffer: defaultBufferCapacity - %d, drainBufferCapacity - %d",
 									name, initialCapacity, newCapacity));
-			drainBuffer = getNewBuffer(newCapacity);
+			drainBuffer = new DynamicBuffer(name, cons, initialArguments,
+					newCapacity, capacityPos);
 			this.writeBuffer = drainBuffer;
 		}
 
