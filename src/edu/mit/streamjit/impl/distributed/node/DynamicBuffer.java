@@ -80,6 +80,14 @@ class DynamicBuffer implements Buffer {
 	 */
 	private volatile Buffer buffer;
 
+	/**
+	 * If this buffer used as drain buffer and if the down blob is drained due
+	 * to the DrainDeadlockHandler's call, we might get a deadlock situation
+	 * when expandable become false and the buffer is full. Throws exception if
+	 * that case occurred.
+	 */
+	private final boolean isDrainBuffer;
+
 	DynamicBuffer(DynamicBufferManager dynamicBufferManager, String name,
 			Class<? extends Buffer> bufferClass, List<?> initialArguments,
 			int initialCapacity, int capacityPos) {
@@ -88,6 +96,7 @@ class DynamicBuffer implements Buffer {
 		this.initialArguments = initialArguments;
 		this.initialCapacity = initialCapacity;
 		this.capacityPos = capacityPos;
+		this.isDrainBuffer = (dynamicBufferManager == null);
 		Constructor<? extends Buffer> con = null;
 		try {
 			con = ReflectionUtils
@@ -195,8 +204,16 @@ class DynamicBuffer implements Buffer {
 	}
 
 	private void writeFailed() {
-		if (areAllFull() || !expandable)
+		if (areAllFull())
 			return;
+
+		if (!expandable) {
+			if (isDrainBuffer)
+				throw new IllegalStateException(String.format(
+						"writeFailed, but the buffer cannot be expanded. Buffer size is %d. "
+								+ "possible deadlock.", size()));
+			return;
+		}
 
 		if (lastWrittenTime == 0) {
 			lastWrittenTime = System.nanoTime();
@@ -207,7 +224,6 @@ class DynamicBuffer implements Buffer {
 			doubleBuffer();
 		}
 	}
-
 	private boolean areAllFull() {
 		if (dynamicBufferManager == null)
 			return false;
