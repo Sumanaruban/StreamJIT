@@ -24,6 +24,7 @@ package edu.mit.streamjit.impl.distributed.node;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.ImmutableList;
@@ -236,11 +237,26 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 	// TODO: Huge data copying is happening in this code twice. Need to optimise
 	// this.
 	protected void fillUnprocessedData() {
-		Object[] obArray = new Object[buffer.size()];
-		buffer.readAll(obArray);
-		assert buffer.size() == 0 : String.format(
-				"buffer size is %d. But 0 is expected", buffer.size());
-		this.unProcessedData = ImmutableList.copyOf(obArray);
+		int size = buffer.size();
+		int arrayIdx = 0;
+		Object[] obArray = new Object[size];
+
+		for (int i = 0; i < size; i++) {
+			Object o = buffer.read();
+			if (o != null)
+				obArray[arrayIdx++] = o;
+			else
+				System.err
+						.println(String
+								.format("fillUnprocessedData: Null object read at index %d.",
+										i));
+		}
+		if (buffer.size() != 0) {
+			throw new IllegalStateException(String.format(
+					"buffer size is %d. But 0 is expected", buffer.size()));
+		}
+		this.unProcessedData = ImmutableList.copyOf(Arrays.copyOfRange(obArray,
+				0, arrayIdx));
 	}
 
 	@Override
