@@ -103,6 +103,12 @@ class DynamicBuffer implements Buffer {
 		lastWrittenTime = 0;
 	}
 
+	public DynamicBuffer(String name, Class<? extends Buffer> bufferClass,
+			List<?> initialArguments, int initialCapacity, int capacityPos) {
+		this(null, name, bufferClass, initialArguments, initialCapacity,
+				capacityPos);
+	}
+
 	private List<?> getArguments(int newCapacity) {
 		List<Object> newArgs = new ArrayList<>(initialArguments.size());
 		for (int i = 0; i < initialArguments.size(); i++) {
@@ -203,6 +209,8 @@ class DynamicBuffer implements Buffer {
 	}
 
 	private boolean areAllFull() {
+		if (dynamicBufferManager == null)
+			return false;
 		for (Buffer b : this.dynamicBufferManager.buffers) {
 			if (b.size() != b.capacity())
 				return false;
