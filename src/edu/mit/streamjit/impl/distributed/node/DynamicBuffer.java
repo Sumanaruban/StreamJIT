@@ -91,24 +91,37 @@ class DynamicBuffer implements Buffer {
 	DynamicBuffer(DynamicBufferManager dynamicBufferManager, String name,
 			Class<? extends Buffer> bufferClass, List<?> initialArguments,
 			int initialCapacity, int capacityPos) {
-		this.dynamicBufferManager = dynamicBufferManager;
-		this.name = name;
-		this.initialArguments = initialArguments;
-		this.initialCapacity = initialCapacity;
-		this.capacityPos = capacityPos;
-		this.isDrainBuffer = (dynamicBufferManager == null);
-		this.cons = constructor(bufferClass, initialArguments);
-		this.buffer = getNewBuffer(initialCapacity);
-		this.gap = 2_000_000_000; // 2s
-		expandable = true;
-		rwlock = new ReentrantReadWriteLock();
-		lastWrittenTime = 0;
+		this(dynamicBufferManager, name, constructor(bufferClass,
+				initialArguments), initialArguments, initialCapacity,
+				capacityPos);
 	}
 
 	public DynamicBuffer(String name, Class<? extends Buffer> bufferClass,
 			List<?> initialArguments, int initialCapacity, int capacityPos) {
 		this(null, name, bufferClass, initialArguments, initialCapacity,
 				capacityPos);
+	}
+
+	public DynamicBuffer(String name, Constructor<? extends Buffer> cons,
+			List<?> initialArguments, int initialCapacity, int capacityPos) {
+		this(null, name, cons, initialArguments, initialCapacity, capacityPos);
+	}
+
+	DynamicBuffer(DynamicBufferManager dynamicBufferManager, String name,
+			Constructor<? extends Buffer> cons, List<?> initialArguments,
+			int initialCapacity, int capacityPos) {
+		this.dynamicBufferManager = dynamicBufferManager;
+		this.name = name;
+		this.initialArguments = initialArguments;
+		this.initialCapacity = initialCapacity;
+		this.capacityPos = capacityPos;
+		this.isDrainBuffer = (dynamicBufferManager == null);
+		this.cons = cons;
+		this.buffer = getNewBuffer(initialCapacity);
+		this.gap = 2_000_000_000; // 2s
+		expandable = true;
+		rwlock = new ReentrantReadWriteLock();
+		lastWrittenTime = 0;
 	}
 
 	private List<?> getArguments(int newCapacity) {
