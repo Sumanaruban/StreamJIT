@@ -262,7 +262,7 @@ public interface LocalBuffer extends Buffer {
 
 		private void createDrainBuffer() {
 			assert drainBuffer == null : "drainBuffer has already been created.";
-			int newCapacity = 4 * defaultBuffer.capacity();
+			int newCapacity = 16 * defaultBuffer.capacity();
 			System.out
 					.println(String
 							.format("%s : Creating drain buffer: defaultBufferCapacity - %d, drainBufferCapacity - %d",
