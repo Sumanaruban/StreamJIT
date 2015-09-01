@@ -97,7 +97,7 @@ class DynamicBuffer implements Buffer {
 		}
 		this.cons = con;
 		this.buffer = getNewBuffer(initialCapacity);
-		this.gap = 200000000; // 200ms
+		this.gap = 2_000_000_000; // 2s
 		expandable = true;
 		rwlock = new ReentrantReadWriteLock();
 		lastWrittenTime = 0;
