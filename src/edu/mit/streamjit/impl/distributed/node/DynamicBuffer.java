@@ -97,14 +97,7 @@ class DynamicBuffer implements Buffer {
 		this.initialCapacity = initialCapacity;
 		this.capacityPos = capacityPos;
 		this.isDrainBuffer = (dynamicBufferManager == null);
-		Constructor<? extends Buffer> con = null;
-		try {
-			con = ReflectionUtils
-					.findConstructor(bufferClass, initialArguments);
-		} catch (NoSuchMethodException e1) {
-			e1.printStackTrace();
-		}
-		this.cons = con;
+		this.cons = constructor(bufferClass, initialArguments);
 		this.buffer = getNewBuffer(initialCapacity);
 		this.gap = 2_000_000_000; // 2s
 		expandable = true;
@@ -259,5 +252,17 @@ class DynamicBuffer implements Buffer {
 		this.buffer = newBuf;
 		lastWrittenTime = 0;
 		rwlock.writeLock().unlock();
+	}
+
+	private static Constructor<? extends Buffer> constructor(
+			Class<? extends Buffer> bufferClass, List<?> initialArguments) {
+		Constructor<? extends Buffer> con = null;
+		try {
+			con = ReflectionUtils
+					.findConstructor(bufferClass, initialArguments);
+		} catch (NoSuchMethodException e1) {
+			e1.printStackTrace();
+		}
+		return con;
 	}
 }
