@@ -245,7 +245,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 	 */
 	private void finalReceive() {
 		assert stopType.get() == 1 || stopType.get() == 2 : "Illegal stopType state";
-		boolean hasData;
+		boolean hasData = true;
 		int bufFullCount;
 		Buffer buffer;
 		if (this.extraBuffer == null)
@@ -256,6 +256,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 			bufFullCount = 0;
 			try {
 				Object obj = connection.readObject();
+				if (obj == null) // [2015-09-1] Sometimes null is received.
+					continue;
 				if (debugLevel > 0)
 					count++;
 
