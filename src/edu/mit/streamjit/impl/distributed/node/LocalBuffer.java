@@ -217,7 +217,9 @@ public interface LocalBuffer extends Buffer {
 				ret = true;
 				if (read != need)
 					throw new IllegalStateException(
-							"data buffer is not full. Check the logic");
+							String.format(
+									"data buffer is not full. Check the logic. read=%d, need=%d",
+									read, need));
 			}
 			return ret;
 		}
