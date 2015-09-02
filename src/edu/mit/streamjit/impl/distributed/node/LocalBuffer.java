@@ -117,22 +117,11 @@ public interface LocalBuffer extends Buffer {
 
 		private volatile Buffer drainBuffer;
 
-		/**
-		 * Minimum time gap between the last successful write and the current
-		 * time in order to consider the option of doubling the buffer
-		 */
-		private final long gap;
-
 		private volatile boolean hasDrainingStarted;
 
 		private final List<?> initialArguments;
 
 		private final int initialCapacity;
-
-		/**
-		 * Every successful write operation should update this time.
-		 */
-		private long lastWrittenTime;
 
 		private final String name;
 
@@ -154,7 +143,6 @@ public interface LocalBuffer extends Buffer {
 			this.cons = con;
 			this.defaultBuffer = getNewBuffer(initialCapacity);
 			this.writeBuffer = defaultBuffer;
-			this.gap = 10_000_000_000l; // 10s
 			hasDrainingStarted = false;
 		}
 
