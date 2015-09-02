@@ -172,8 +172,20 @@ class BlobExecuter {
 	void doDrain(DrainType drainType) {
 		// System.out.println("Blob " + blobID + "is doDrain");
 		this.drainType = drainType;
-		drainState = 1;
 
+		/*
+		 * [2-9-2015] If this blob crashed during steady run, BlobThread sends
+		 * Appstatus.Error message to the controller. However, if the the
+		 * intermediate draining has already been started at the controller
+		 * level and some other upper blobs are draining, the error message has
+		 * no effect. In that case, this blob will also receive doDrain()
+		 * command. So lets call drained(). If we do not call the drained(), the
+		 * controller will wait at awaitDrainedIntrmdiate() forever.
+		 */
+		if (crashed.get() && drainState == 0)
+			drained();
+
+		drainState = 1;
 		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
 				+ "inChnlManager.waitToStop");
 		inChnlManager.stop(drainType);
