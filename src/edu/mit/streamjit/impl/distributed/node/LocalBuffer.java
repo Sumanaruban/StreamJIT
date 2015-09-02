@@ -127,6 +127,11 @@ public interface LocalBuffer extends Buffer {
 
 		private Buffer writeBuffer;
 
+		/**
+		 * Decides whether to use {@link DynamicBuffer} for drainBuffer or not.
+		 */
+		private final boolean useDynamicBuffer = true;
+
 		public LocalBuffer1(String name, Class<? extends Buffer> bufferClass,
 				List<?> initialArguments, int initialCapacity, int capacityPos) {
 			this.name = name;
@@ -257,8 +262,11 @@ public interface LocalBuffer extends Buffer {
 					.println(String
 							.format("%s : Creating drain buffer: defaultBufferCapacity - %d, drainBufferCapacity - %d",
 									name, initialCapacity, newCapacity));
-			drainBuffer = new DynamicBuffer(name, cons, initialArguments,
-					newCapacity, capacityPos);
+			if (useDynamicBuffer)
+				drainBuffer = new DynamicBuffer(name, cons, initialArguments,
+						newCapacity, capacityPos);
+			else
+				drainBuffer = getNewBuffer(newCapacity);
 			this.writeBuffer = drainBuffer;
 		}
 
@@ -288,13 +296,17 @@ public interface LocalBuffer extends Buffer {
 		private void writeFailed() {
 			if (!hasDrainingStarted)
 				return;
+			if (drainBuffer != null) {
+				if (useDynamicBuffer)
+					return;
+				else
+					throw new IllegalStateException(
+							String.format(
+									"drainBuffer is full "
+											+ "drainBuffer.size() = %d, defaultBuffer.size() = %d  ",
+									drainBuffer.size(), defaultBuffer.size()));
 
-			if (drainBuffer != null)
-				throw new IllegalStateException(
-						String.format(
-								"drainBuffer is full "
-										+ "drainBuffer.size() = %d, defaultBuffer.size() = %d  ",
-								drainBuffer.size(), defaultBuffer.size()));
+			}
 			createDrainBuffer();
 		}
 	}
