@@ -5,6 +5,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -79,6 +81,11 @@ class BlobExecuter {
 	final BoundaryOutputChannelManager outChnlManager;
 
 	private DrainType drainType;
+
+	/**
+	 * ExecutorService to call doDrain in a new thread.
+	 */
+	private ExecutorService executorService = null;
 
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
@@ -167,6 +174,25 @@ class BlobExecuter {
 		}
 		outputLocalBuffers = outputLocalBufferBuilder.build();
 		return bufferMapBuilder.build();
+	}
+
+	/**
+	 * The actual {@link #doDrain(DrainType)} method calls
+	 * {@link InputChannelManager#waitToStop()}, which is a blocking call. This
+	 * may cause deadlock situation in some cases if the main {@link StreamNode}
+	 * thread calls {@link #doDrain(DrainType)} method. Calling
+	 * {@link #doDrain(DrainType)} in a new thread is always safer.
+	 * 
+	 * @param drainType
+	 * @param inNewThread
+	 */
+	void doDrain(DrainType drainType, boolean inNewThread) {
+		if (inNewThread) {
+			executorService = Executors.newSingleThreadExecutor();
+			executorService.submit(() -> doDrain(drainType));
+			executorService.shutdown();
+		} else
+			doDrain(drainType);
 	}
 
 	void doDrain(DrainType drainType) {
@@ -460,6 +486,8 @@ class BlobExecuter {
 
 		if (this.blobsManagerImpl.monBufs != null)
 			this.blobsManagerImpl.monBufs.stopMonitoring();
+		if (executorService != null && !executorService.isTerminated())
+			executorService.shutdownNow();
 	}
 
 	final class BlobThread2 extends Thread {

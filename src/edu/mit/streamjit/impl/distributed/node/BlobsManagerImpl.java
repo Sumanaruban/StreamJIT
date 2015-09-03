@@ -127,7 +127,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void drain(Token blobID, DrainType drainType) {
 		for (BlobExecuter be : blobExecuters.values()) {
 			if (be.getBlobID().equals(blobID)) {
-				be.doDrain(drainType);
+				be.doDrain(drainType, drainType != DrainType.DISCARD);
 				return;
 			}
 		}
