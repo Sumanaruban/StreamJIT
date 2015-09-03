@@ -145,7 +145,7 @@ public class StreamJitApp<I, O> {
 
 	private EventTimeLogger eventTimeLogger() {
 		if (Options.logEventTime)
-			return new FileEventTimeLogger(name, "controller");
+			return new FileEventTimeLogger(name, "controller", false);
 		else
 			return new EventTimeLogger.NoEventTimeLogger();
 	}

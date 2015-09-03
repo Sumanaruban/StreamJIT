@@ -7,6 +7,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import edu.mit.streamjit.impl.distributed.common.Utils;
@@ -86,18 +87,39 @@ public interface EventTimeLogger {
 	public static class EventTimeLoggerImpl implements EventTimeLogger {
 
 		private final OutputStreamWriter osWriter;
-		Map<String, Event> events;
+		private final Map<String, Event> events;
 		final Ticker ticker = new NanoTicker();
 
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
-		public EventTimeLoggerImpl(OutputStream os) {
-			this(getOSWriter(os));
+		/**
+		 * @param os
+		 * @param needSynchronized
+		 *            - Pass true if this EventTimeLoggerImpl object is going to
+		 *            be used by multiple threads. EventTimeLoggerImpl use
+		 *            {@link ConcurrentHashMap} to store events in true case;
+		 *            uses {@link HashMap} otherwise.
+		 */
+		public EventTimeLoggerImpl(OutputStream os, boolean needSynchronized) {
+			this(getOSWriter(os), needSynchronized);
 		}
 
-		public EventTimeLoggerImpl(OutputStreamWriter osWriter) {
+		/**
+		 * 
+		 * @param osWriter
+		 * @param needSynchronized
+		 *            - Pass true if this EventTimeLoggerImpl object is going to
+		 *            be used by multiple threads. EventTimeLoggerImpl use
+		 *            {@link ConcurrentHashMap} to store events in true case;
+		 *            uses {@link HashMap} otherwise.
+		 */
+		public EventTimeLoggerImpl(OutputStreamWriter osWriter,
+				boolean needSynchronized) {
 			this.osWriter = osWriter;
-			this.events = new HashMap<>();
+			if (needSynchronized)
+				this.events = new ConcurrentHashMap<>();
+			else
+				this.events = new HashMap<>();
 			write("Event\t\t\tUptime\t\telapsedtime\n");
 			write("====================================================\n");
 		}
@@ -187,9 +209,20 @@ public interface EventTimeLogger {
 	 * 
 	 */
 	public static class FileEventTimeLogger extends EventTimeLoggerImpl {
-		public FileEventTimeLogger(String appName, String fileNameSuffix) {
+		/**
+		 * @param appName
+		 * @param fileNameSuffix
+		 * @param needSynchronized
+		 *            - Pass true if this EventTimeLoggerImpl object is going to
+		 *            be used by multiple threads. EventTimeLoggerImpl use
+		 *            {@link ConcurrentHashMap} to store events in true case;
+		 *            uses {@link HashMap} otherwise.
+		 */
+		public FileEventTimeLogger(String appName, String fileNameSuffix,
+				boolean needSynchronized) {
 			super(Utils.fileWriter(appName,
-					String.format("eventTime_%s.txt", fileNameSuffix)));
+					String.format("eventTime_%s.txt", fileNameSuffix)),
+					needSynchronized);
 		}
 	}
 
@@ -197,8 +230,15 @@ public interface EventTimeLogger {
 	 * Prints the event time info to the standard out.
 	 */
 	public static class PrintEventTimeLogger extends EventTimeLoggerImpl {
-		public PrintEventTimeLogger() {
-			super(System.out);
+		/**
+		 * @param needSynchronized
+		 *            - Pass true if this EventTimeLoggerImpl object is going to
+		 *            be used by multiple threads. EventTimeLoggerImpl use
+		 *            {@link ConcurrentHashMap} to store events in true case;
+		 *            uses {@link HashMap} otherwise.
+		 */
+		public PrintEventTimeLogger(boolean needSynchronized) {
+			super(System.out, needSynchronized);
 		}
 	}
 
