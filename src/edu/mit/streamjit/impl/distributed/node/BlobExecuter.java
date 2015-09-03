@@ -1,8 +1,6 @@
 package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;

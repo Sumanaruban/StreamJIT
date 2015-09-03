@@ -16,6 +16,7 @@ import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.TailChannels;
 import edu.mit.streamjit.impl.distributed.TailChannels.BlockingTailChannel1;
 import edu.mit.streamjit.impl.distributed.TailChannels.BlockingTailChannel2;
+import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.tuner.OnlineTuner;
 import edu.mit.streamjit.tuner.TCPTuner;
 
@@ -194,6 +195,14 @@ public final class Options {
 
 	public static final boolean logEventTime;
 
+	/**
+	 * If the {@link StreamNode} thread calls BlobExecuer.doDrain(), sometimes
+	 * it causes deadlock. So it is always better to call BlobExecuer.doDrain()
+	 * in a new thread. So make this flag on always. This flag is added for
+	 * experimentation purpose.
+	 */
+	public static final boolean doDraininNewThread;
+
 	static {
 		Properties prop = loadProperties();
 		throughputMeasurementPeriod = Integer.parseInt(prop
@@ -236,6 +245,8 @@ public final class Options {
 		noOutputTimeLimit = Integer.parseInt(prop
 				.getProperty("noOutputTimeLimit"));
 		logEventTime = Boolean.parseBoolean(prop.getProperty("logEventTime"));
+		doDraininNewThread = Boolean.parseBoolean(prop
+				.getProperty("doDraininNewThread"));
 	}
 
 	public static Properties getProperties() {
@@ -270,6 +281,7 @@ public final class Options {
 		setProperty(prop, "steadyMills", steadyMills);
 		setProperty(prop, "noOutputTimeLimit", noOutputTimeLimit);
 		setProperty(prop, "logEventTime", logEventTime);
+		setProperty(prop, "doDraininNewThread", doDraininNewThread);
 		return prop;
 	}
 

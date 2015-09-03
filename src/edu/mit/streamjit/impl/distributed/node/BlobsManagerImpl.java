@@ -40,6 +40,7 @@ import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
@@ -127,7 +128,10 @@ public class BlobsManagerImpl implements BlobsManager {
 	public void drain(Token blobID, DrainType drainType) {
 		for (BlobExecuter be : blobExecuters.values()) {
 			if (be.getBlobID().equals(blobID)) {
-				be.doDrain(drainType, drainType != DrainType.DISCARD);
+				if (Options.doDraininNewThread)
+					be.doDrain(drainType, drainType != DrainType.DISCARD);
+				else
+					be.doDrain(drainType);
 				return;
 			}
 		}
