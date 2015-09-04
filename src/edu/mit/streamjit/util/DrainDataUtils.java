@@ -67,6 +67,8 @@ public class DrainDataUtils {
 	 */
 	public static void dumpDrainData(DrainData drainData, String appName,
 			String namePrefix) {
+		if (drainData == null)
+			return;
 		try {
 			File dir = new File(String.format("%s%s%s", appName,
 					File.separator, ConfigurationUtils.configDir));
@@ -105,14 +107,20 @@ public class DrainDataUtils {
 							namePrefix);
 			writer.write(header);
 			// System.out.println(header);
-			for (Token t : drainData.getData().keySet()) {
-				int size = drainData.getData().get(t).size();
-				if (size != 0) {
-					String msg = String.format("%s - %d\n", t.toString(), size);
-					// System.out.print(msg);
-					writer.write(msg);
+			if (drainData == null) {
+				String msg = "drain data is null";
+				// System.out.print(msg);
+				writer.write(msg);
+			} else
+				for (Token t : drainData.getData().keySet()) {
+					int size = drainData.getData().get(t).size();
+					if (size != 0) {
+						String msg = String.format("%s - %d\n", t.toString(),
+								size);
+						// System.out.print(msg);
+						writer.write(msg);
+					}
 				}
-			}
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
