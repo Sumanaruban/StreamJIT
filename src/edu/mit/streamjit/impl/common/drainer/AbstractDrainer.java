@@ -22,12 +22,8 @@
 package edu.mit.streamjit.impl.common.drainer;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -378,57 +374,6 @@ public abstract class AbstractDrainer {
 			drainDataStatistics.get(t).add(size);
 
 		}
-	}
-
-	private void printDrainDataStats(DrainData drainData) {
-		try {
-			String fileName = String.format("%s%sdraindatasize.txt", app.name,
-					File.separator);
-			FileWriter writer = new FileWriter(fileName, true);
-			writer.write("-----------------------------------------------------------\n");
-			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-
-			for (Token t : drainData.getData().keySet()) {
-				int size = drainData.getData().get(t).size();
-				if (size != 0) {
-					String msg = String.format("%s - %d\n", t.toString(), size);
-					System.out.print(msg);
-					writer.write(msg);
-				}
-			}
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void dumpDrainData(DrainData drainData) {
-		try {
-			String fileName = String.format("%s%sDrainData", app.name,
-					File.separator);
-			FileOutputStream fout = new FileOutputStream(fileName);
-			ObjectOutputStream oos = new ObjectOutputStream(fout);
-			oos.writeObject(drainData);
-			oos.close();
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-	}
-
-	private DrainData readDrainData() {
-		DrainData dd = null;
-		try {
-			String fileName = String.format("%s%sDrainData", app.name,
-					File.separator);
-			FileInputStream fin = new FileInputStream(fileName);
-			ObjectInputStream ois = new ObjectInputStream(fin);
-			dd = (DrainData) ois.readObject();
-			ois.close();
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		return dd;
 	}
 
 	/**
