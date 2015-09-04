@@ -10,6 +10,8 @@ import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
+import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.DrainDataUtils;
 import edu.mit.streamjit.util.Pair;
 
 /**
@@ -89,7 +91,8 @@ public class Reconfigurer {
 		mLogger.eEvent("serialcfg");
 		try {
 			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = intermediateDraining();
+			boolean intermediateDraining = intermediateDraining(ConfigurationUtils
+					.getConfigPrefix(config));
 			mLogger.eEvent("intermediateDraining");
 			if (!intermediateDraining)
 				return new Pair<Boolean, Integer>(false, -5);
@@ -117,9 +120,14 @@ public class Reconfigurer {
 	 *         is not running currently.
 	 * @throws InterruptedException
 	 */
-	private boolean intermediateDraining() throws InterruptedException {
+	private boolean intermediateDraining(String namePrefix)
+			throws InterruptedException {
 		if (manager.isRunning()) {
-			return drainer.drainIntermediate();
+			boolean ret = drainer.drainIntermediate();
+			if (Options.useDrainData && Options.dumpDrainData)
+				DrainDataUtils.dumpDrainData(app.drainData, app.name,
+						namePrefix);
+			return ret;
 		} else
 			return true;
 	}

@@ -195,6 +195,7 @@ public final class Options {
 
 	public static final boolean logEventTime;
 
+	// Draining and DrainData management options.
 	/**
 	 * If the {@link StreamNode} thread calls BlobExecuer.doDrain(), sometimes
 	 * it causes deadlock. So it is always better to call BlobExecuer.doDrain()
@@ -202,6 +203,13 @@ public final class Options {
 	 * experimentation purpose.
 	 */
 	public static final boolean doDraininNewThread;
+
+	/**
+	 * Stores draindata in to the app directory. Read the draindata from disk
+	 * and reconfigure the app with the drain data when running in verifying
+	 * mode.
+	 */
+	public static final boolean dumpDrainData;
 
 	static {
 		Properties prop = loadProperties();
@@ -247,6 +255,7 @@ public final class Options {
 		logEventTime = Boolean.parseBoolean(prop.getProperty("logEventTime"));
 		doDraininNewThread = Boolean.parseBoolean(prop
 				.getProperty("doDraininNewThread"));
+		dumpDrainData = Boolean.parseBoolean(prop.getProperty("dumpDrainData"));
 	}
 
 	public static Properties getProperties() {
@@ -282,6 +291,7 @@ public final class Options {
 		setProperty(prop, "noOutputTimeLimit", noOutputTimeLimit);
 		setProperty(prop, "logEventTime", logEventTime);
 		setProperty(prop, "doDraininNewThread", doDraininNewThread);
+		setProperty(prop, "dumpDrainData", dumpDrainData);
 		return prop;
 	}
 
