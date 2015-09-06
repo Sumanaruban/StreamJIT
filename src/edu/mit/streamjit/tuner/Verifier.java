@@ -14,7 +14,6 @@ import java.util.Properties;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.util.ConfigurationUtils;
-import edu.mit.streamjit.util.DrainDataUtils;
 import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.TimeLogProcessor;
 
@@ -165,7 +164,6 @@ public class Verifier implements Runnable {
 	 */
 	private List<Long> evaluateConfig(Configuration cfg) {
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(cfg);
-		getDrainData(cfgPrefix);
 		System.out.println("Evaluating " + cfgPrefix);
 		int count = Options.evaluationCount;
 		List<Long> runningTime = new ArrayList<>(count);
@@ -190,12 +188,6 @@ public class Verifier implements Runnable {
 			System.err.println("Null configuration\n");
 		}
 		return runningTime;
-	}
-
-	private void getDrainData(String cfgPrefix) {
-		if (Options.useDrainData && Options.dumpDrainData)
-			configurer.app.drainData = DrainDataUtils.readDrainData(appName,
-					cfgPrefix);
 	}
 
 	@Override
