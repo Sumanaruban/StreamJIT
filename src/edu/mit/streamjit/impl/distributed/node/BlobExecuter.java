@@ -303,23 +303,7 @@ class BlobExecuter {
 		}
 
 		this.blob = null;
-		boolean isLastBlob = true;
-		for (BlobExecuter be : this.blobsManagerImpl.blobExecuters.values()) {
-			if (be.drainState < 4) {
-				isLastBlob = false;
-				break;
-			}
-		}
-
-		if (isLastBlob) {
-			if (this.blobsManagerImpl.monBufs != null)
-				this.blobsManagerImpl.monBufs.stopMonitoring();
-
-			if (this.blobsManagerImpl.bufferCleaner != null)
-				this.blobsManagerImpl.bufferCleaner.stopit();
-
-			this.blobsManagerImpl.streamNode.eventTimeLogger.eTuningRound();
-		}
+		lastBlobActions();
 		// printDrainedStatus();
 	}
 
@@ -427,6 +411,26 @@ class BlobExecuter {
 				break;
 		}
 		return sb.toString();
+	}
+
+	private void lastBlobActions() {
+		boolean isLastBlob = true;
+		for (BlobExecuter be : this.blobsManagerImpl.blobExecuters.values()) {
+			if (be.drainState < 4) {
+				isLastBlob = false;
+				break;
+			}
+		}
+
+		if (isLastBlob) {
+			if (this.blobsManagerImpl.monBufs != null)
+				this.blobsManagerImpl.monBufs.stopMonitoring();
+
+			if (this.blobsManagerImpl.bufferCleaner != null)
+				this.blobsManagerImpl.bufferCleaner.stopit();
+
+			this.blobsManagerImpl.streamNode.eventTimeLogger.eTuningRound();
+		}
 	}
 
 	private void printDrainDataStats(DrainData dd) {
