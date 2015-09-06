@@ -152,16 +152,24 @@ public class BlobsManagerImpl implements BlobsManager {
 				"Method reqDrainedData not implemented");
 	}
 
+	private final Object lastBlobLock = new Object();
+	boolean lastBlobActionsDone = false;
+	/**
+	 * Multiple blobs in #blobExecuters may call this method at the same time
+	 * and claim themselves as last blob. In order to avoid that situation, we
+	 * need to do the last blob actions in a synchronized block.
+	 */
 	void lastBlobActions() {
-		boolean isLastBlob = true;
 		for (BlobExecuter be : this.blobExecuters.values()) {
 			if (be.drainState < 4) {
-				isLastBlob = false;
-				break;
+				return;
 			}
 		}
 
-		if (isLastBlob) {
+		synchronized (lastBlobLock) {
+			if (lastBlobActionsDone)
+				return;
+
 			if (this.monBufs != null)
 				this.monBufs.stopMonitoring();
 
@@ -169,6 +177,7 @@ public class BlobsManagerImpl implements BlobsManager {
 				this.bufferCleaner.stopit();
 
 			this.streamNode.eventTimeLogger.eTuningRound();
+			lastBlobActionsDone = true;
 		}
 	}
 
