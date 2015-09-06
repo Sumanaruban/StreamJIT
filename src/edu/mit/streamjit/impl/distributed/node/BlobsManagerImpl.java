@@ -152,6 +152,26 @@ public class BlobsManagerImpl implements BlobsManager {
 				"Method reqDrainedData not implemented");
 	}
 
+	void lastBlobActions() {
+		boolean isLastBlob = true;
+		for (BlobExecuter be : this.blobExecuters.values()) {
+			if (be.drainState < 4) {
+				isLastBlob = false;
+				break;
+			}
+		}
+
+		if (isLastBlob) {
+			if (this.monBufs != null)
+				this.monBufs.stopMonitoring();
+
+			if (this.bufferCleaner != null)
+				this.bufferCleaner.stopit();
+
+			this.streamNode.eventTimeLogger.eTuningRound();
+		}
+	}
+
 	/**
 	 * Start and execute the blobs. This function should be responsible to
 	 * manage all CPU and I/O threads those are related to the {@link Blob}s.
