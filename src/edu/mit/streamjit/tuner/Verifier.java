@@ -171,6 +171,7 @@ public class Verifier implements Runnable {
 		if (cfg != null) {
 			for (int i = 0; i < count; i++) {
 				long time;
+				configurer.mLogger.bTuningRound(cfgPrefix);
 				configurer.mLogger.bEvent("serialcfg");
 				configurer.logger.newConfiguration(cfgPrefix);
 				ret = configurer.reconfigure(cfg);
@@ -183,6 +184,7 @@ public class Verifier implements Runnable {
 				}
 				configurer.logger.logRunTime(time);
 				configurer.prognosticator.time(time);
+				configurer.mLogger.eTuningRound();
 				runningTime.add(time);
 			}
 		} else {
