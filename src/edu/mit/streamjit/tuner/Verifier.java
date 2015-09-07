@@ -171,9 +171,7 @@ public class Verifier implements Runnable {
 		if (cfg != null) {
 			for (int i = 0; i < count; i++) {
 				long time;
-				configurer.mLogger.bTuningRound(cfgPrefix);
-				configurer.mLogger.bEvent("serialcfg");
-				configurer.logger.newConfiguration(cfgPrefix);
+				logBegining(cfgPrefix);
 				ret = configurer.reconfigure(cfg);
 				if (ret.second > 0)
 					time = configurer.getFixedOutputTime(0);
@@ -182,9 +180,7 @@ public class Verifier implements Runnable {
 					System.err.println("Evaluation failed.ret.second="
 							+ ret.second);
 				}
-				configurer.logger.logRunTime(time);
-				configurer.prognosticator.time(time);
-				configurer.mLogger.eTuningRound();
+				logEnding(time);
 				runningTime.add(time);
 			}
 		} else {
@@ -200,5 +196,17 @@ public class Verifier implements Runnable {
 			configurer.terminate();
 		} else
 			System.err.println("Options.tune is not in the verify mode");
+	}
+
+	private void logBegining(String cfgPrefix) {
+		configurer.mLogger.bTuningRound(cfgPrefix);
+		configurer.mLogger.bEvent("serialcfg");
+		configurer.logger.newConfiguration(cfgPrefix);
+	}
+
+	private void logEnding(long time) {
+		configurer.logger.logRunTime(time);
+		configurer.prognosticator.time(time);
+		configurer.mLogger.eTuningRound();
 	}
 }
