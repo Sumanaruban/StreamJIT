@@ -528,6 +528,16 @@ class BlobExecuter {
 
 		private void logFiringTime() {
 			int meassureCount = 5;
+			// The very first coreCode.run() executes initCode which is single
+			// threaded and very much slower than steadyCode. With initCode,
+			// lets skip another few steadyCode executions before begin the
+			// measurement.
+			for (int i = 0; i < 10; i++) {
+				if (stopping)
+					break;
+				coreCode.run();
+			}
+
 			Stopwatch sw = Stopwatch.createStarted();
 			for (int i = 0; i < meassureCount; i++) {
 				if (stopping)
