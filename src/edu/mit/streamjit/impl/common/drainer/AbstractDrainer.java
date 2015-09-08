@@ -268,7 +268,6 @@ public abstract class AbstractDrainer {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		drainingDone(false);
 		logger.drainingFinished("Intermediate");
 		logger.drainDataCollectionStarted();
 		try {
