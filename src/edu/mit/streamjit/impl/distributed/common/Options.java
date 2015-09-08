@@ -195,6 +195,11 @@ public final class Options {
 
 	public static final boolean logEventTime;
 
+	/**
+	 * Temporary flag.
+	 */
+	public static final boolean generateDrainDataAtBoundaries;
+
 	// Draining and DrainData management options.
 	/**
 	 * If the {@link StreamNode} thread calls BlobExecuer.doDrain(), sometimes
@@ -256,6 +261,8 @@ public final class Options {
 		doDraininNewThread = Boolean.parseBoolean(prop
 				.getProperty("doDraininNewThread"));
 		dumpDrainData = Boolean.parseBoolean(prop.getProperty("dumpDrainData"));
+		generateDrainDataAtBoundaries = Boolean.parseBoolean(prop
+				.getProperty("generateDrainDataAtBoundaries"));
 	}
 
 	public static Properties getProperties() {
@@ -292,6 +299,8 @@ public final class Options {
 		setProperty(prop, "logEventTime", logEventTime);
 		setProperty(prop, "doDraininNewThread", doDraininNewThread);
 		setProperty(prop, "dumpDrainData", dumpDrainData);
+		setProperty(prop, "generateDrainDataAtBoundaries",
+				generateDrainDataAtBoundaries);
 		return prop;
 	}
 

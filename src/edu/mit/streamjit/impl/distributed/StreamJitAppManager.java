@@ -21,7 +21,10 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +35,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableTable;
 
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Worker;
@@ -269,6 +274,7 @@ public class StreamJitAppManager {
 
 	public boolean reconfigure(int multiplier) {
 		reset();
+		generateDrainDataAtBoundaries();
 		Configuration.Builder builder = Configuration.builder(app
 				.getDynamicConfiguration());
 
@@ -324,6 +330,12 @@ public class StreamJitAppManager {
 		return isRunning;
 	}
 
+	/**
+	 * This method returns the drain data sizes of
+	 * {@link StreamJitApp#drainData}.
+	 * 
+	 * @return
+	 */
 	ImmutableMap<Token, Integer> drainDataSize() {
 		if (app.drainData == null)
 			return null;
@@ -335,6 +347,28 @@ public class StreamJitAppManager {
 			sizeBuilder.put(en.getKey(), en.getValue().size());
 		}
 		return sizeBuilder.build();
+	}
+
+	private void generateDrainDataAtBoundaries() {
+		if (!Options.generateDrainDataAtBoundaries || !Options.useDrainData)
+			return;
+		final int size = 10000;
+		ImmutableSet<Token> blobIds = app.blobGraph.getBlobIds();
+		Map<Token, List<Object>> dataBuilder = new HashMap<>(blobIds.size());
+		for (Token blobID : blobIds) {
+			for (Token t : app.blobGraph.getInputs(blobID)) {
+				dataBuilder.put(t, mockFloat(size));
+			}
+		}
+		app.drainData = new DrainData(dataBuilder, ImmutableTable.of());
+	}
+
+	List<Object> mockFloat(int size) {
+		List<Object> list = new ArrayList<>(size);
+		for (int i = 0; i < size; i++) {
+			list.add(new Float(i));
+		}
+		return list;
 	}
 
 	private void sendDeadlockfreeBufSizes() {
