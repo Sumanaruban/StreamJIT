@@ -430,12 +430,30 @@ class BlobExecuter {
 		inChnlManager.waitToStart();
 
 		bufferMap = buildBufferMap();
+		if (blobsManagerImpl.initialState != null)
+			insertDD();
 		blob.installBuffers(bufferMap);
 
 		for (Thread t : blobThreads)
 			t.start();
 
 		// System.out.println(blobID + " started");
+	}
+
+	private void insertDD() {
+		for (Token t : blob.getInputs()) {
+			Buffer b = bufferMap.get(t);
+			ImmutableList<Object> data = blobsManagerImpl.initialState
+					.getData(t);
+			copy(b, data, t);
+		}
+	}
+
+	private void copy(Buffer b, ImmutableList<Object> data, Token t) {
+		System.out.println(String.format("Copying %d items to buffer %s",
+				data.size(), t));
+		for (Object o : data)
+			b.write(o);
 	}
 
 	void startChannels() {

@@ -805,8 +805,14 @@ public class BlobsManagerImpl implements BlobsManager {
 		}
 	}
 
+	DrainData initialState;
+
 	public void insertDrainData(DrainData initialState) {
-		for (BlobExecuter be : blobExecuters.values())
-			be.blob.insertDrainData(initialState);
+		if (Options.useDrainData && Options.generateDrainDataAtBoundaries
+				&& Options.putDDinBuffers)
+			this.initialState = initialState;
+		else
+			for (BlobExecuter be : blobExecuters.values())
+				be.blob.insertDrainData(initialState);
 	}
 }

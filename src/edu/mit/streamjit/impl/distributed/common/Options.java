@@ -13,6 +13,7 @@ import edu.mit.streamjit.impl.distributed.ConnectionManager.AllConnectionParams;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.AsyncTCPNoParams;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.BlockingTCPNoParams;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.TailChannels;
 import edu.mit.streamjit.impl.distributed.TailChannels.BlockingTailChannel1;
 import edu.mit.streamjit.impl.distributed.TailChannels.BlockingTailChannel2;
@@ -196,9 +197,20 @@ public final class Options {
 	public static final boolean logEventTime;
 
 	/**
-	 * Temporary flag.
+	 * Temporary flag. If this flag is true, {@link StreamJitAppManager} will
+	 * generate mock drain drain data for each blob's input edges. The original
+	 * drain data will be discarded. So a blob will get drain data only at the
+	 * boundary channels.
 	 */
 	public static final boolean generateDrainDataAtBoundaries;
+
+	/**
+	 * This flag is a continuation of {@link #generateDrainDataAtBoundaries}. If
+	 * this is true, the generated mock drain data will be placed at the buffers
+	 * that is created by the runtime system (BufferManager). Blobs will get
+	 * null drain data.
+	 */
+	public static final boolean putDDinBuffers;
 
 	// Draining and DrainData management options.
 	/**
@@ -263,6 +275,8 @@ public final class Options {
 		dumpDrainData = Boolean.parseBoolean(prop.getProperty("dumpDrainData"));
 		generateDrainDataAtBoundaries = Boolean.parseBoolean(prop
 				.getProperty("generateDrainDataAtBoundaries"));
+		putDDinBuffers = Boolean.parseBoolean(prop
+				.getProperty("putDDinBuffers"));
 	}
 
 	public static Properties getProperties() {
@@ -301,6 +315,7 @@ public final class Options {
 		setProperty(prop, "dumpDrainData", dumpDrainData);
 		setProperty(prop, "generateDrainDataAtBoundaries",
 				generateDrainDataAtBoundaries);
+		setProperty(prop, "putDDinBuffers", putDDinBuffers);
 		return prop;
 	}
 

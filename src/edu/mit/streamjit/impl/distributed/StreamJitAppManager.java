@@ -337,6 +337,9 @@ public class StreamJitAppManager {
 	 * @return
 	 */
 	ImmutableMap<Token, Integer> drainDataSize() {
+		if (Options.useDrainData && Options.generateDrainDataAtBoundaries
+				&& Options.putDDinBuffers)
+			return null;
 		if (app.drainData == null)
 			return null;
 		ImmutableMap.Builder<Token, Integer> sizeBuilder = ImmutableMap
@@ -349,10 +352,10 @@ public class StreamJitAppManager {
 		return sizeBuilder.build();
 	}
 
+	final int size = 10000;
 	private void generateDrainDataAtBoundaries() {
 		if (!Options.generateDrainDataAtBoundaries || !Options.useDrainData)
 			return;
-		final int size = 10000;
 		ImmutableSet<Token> blobIds = app.blobGraph.getBlobIds();
 		Map<Token, List<Object>> dataBuilder = new HashMap<>(blobIds.size());
 		for (Token blobID : blobIds) {
@@ -371,11 +374,26 @@ public class StreamJitAppManager {
 		return list;
 	}
 
+	ImmutableMap<Token, Integer> finalInputBuf(
+			ImmutableMap<Token, Integer> finalInputBuf) {
+		if (Options.useDrainData && Options.generateDrainDataAtBoundaries
+				&& Options.putDDinBuffers) {
+			ImmutableMap.Builder<Token, Integer> builder = ImmutableMap
+					.builder();
+			for (Map.Entry<Token, Integer> en : finalInputBuf.entrySet()) {
+				int s = Math.max(size + 100, en.getValue());
+				builder.put(en.getKey(), s);
+			}
+			return builder.build();
+		} else
+			return finalInputBuf;
+	}
+
 	private void sendDeadlockfreeBufSizes() {
 		ciP.waitforBufSizes();
 		if (!apStsPro.compilationError) {
-			ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-					.finalInputBufSizes(ciP.bufSizes, app);
+			ImmutableMap<Token, Integer> finalInputBuf = finalInputBuf(BufferSizeCalc
+					.finalInputBufSizes(ciP.bufSizes, app));
 			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 					finalInputBuf);
 			controller.sendToAll(me);
