@@ -30,11 +30,13 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.Boundary
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
+import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.affinity.Affinity;
 
 /**
@@ -566,16 +568,22 @@ class BlobExecuter {
 		}
 
 		private void initScheduleRun(int steadyRunCount)
-				throws InterruptedException {
-			blobsManagerImpl.streamNode.eventTimeLogger
-					.bEvent("initScheduleRun");
+				throws InterruptedException, IOException {
+			String s = String.format("%s - initScheduleRun", blobID);
+			if (logTime)
+				blobsManagerImpl.streamNode.eventTimeLogger.bEvent(s);
 			for (int i = 0; i < steadyRunCount + 1; i++) {
 				if (stopping)
 					break;
 				coreCode.run();
 			}
-			blobsManagerImpl.streamNode.eventTimeLogger
-					.eEvent("initScheduleRun");
+			if (logTime) {
+				long time = blobsManagerImpl.streamNode.eventTimeLogger
+						.eEvent(s);
+				SNMessageElement me = new InitScheduleCompleted(blobID, time);
+				blobsManagerImpl.streamNode.controllerConnection
+						.writeObject(me);
+			}
 
 			synchronized (initScheduleRunMonitor) {
 				initScheduleRunMonitor.wait();

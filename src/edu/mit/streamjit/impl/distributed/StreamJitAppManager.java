@@ -54,6 +54,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
@@ -459,7 +460,9 @@ public class StreamJitAppManager {
 
 	private void runInitSchedule() {
 		ImmutableMap<Token, Integer> steadyRunCount = graphSchedule.steadyRunCount;
+		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
 		controller.sendToAll(new InitSchedule(steadyRunCount));
+		ciP.waitforInitSchedule();
 	}
 
 	public MasterProfiler getProfiler() {
@@ -677,6 +680,23 @@ public class StreamJitAppManager {
 					throw new AssertionError(
 							"Not all Stream nodes have sent the buffer size info");
 				}
+			}
+		}
+
+		private volatile CountDownLatch initScheduleLatch;
+		@Override
+		public void process(InitScheduleCompleted initScheduleCompleted) {
+			app.eLogger.logEvent(String.format("InitSchedule-%s",
+					initScheduleCompleted.blobID),
+					initScheduleCompleted.timeMills);
+			initScheduleLatch.countDown();
+		}
+
+		private void waitforInitSchedule() {
+			try {
+				initScheduleLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}

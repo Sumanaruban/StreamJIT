@@ -48,7 +48,25 @@ public abstract class CompilationInfo implements SNMessageElement {
 		}
 	}
 
+	public static final class InitScheduleCompleted extends CompilationInfo {
+		private static final long serialVersionUID = 1L;
+
+		public final Token blobID;
+		public final long timeMills;
+
+		public InitScheduleCompleted(Token blobID, long timeMills) {
+			this.blobID = blobID;
+			this.timeMills = timeMills;
+		}
+
+		@Override
+		public void process(CompilationInfoProcessor cip) {
+			cip.process(this);
+		}
+	}
+
 	public interface CompilationInfoProcessor {
 		public void process(BufferSizes bufferSizes);
+		public void process(InitScheduleCompleted initScheduleCompleted);
 	}
 }
