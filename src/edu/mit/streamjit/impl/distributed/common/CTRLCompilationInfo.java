@@ -33,7 +33,23 @@ public abstract class CTRLCompilationInfo implements CTRLRMessageElement {
 		}
 	}
 
+	public static final class InitSchedule extends CTRLCompilationInfo {
+
+		private static final long serialVersionUID = 1L;
+		public final ImmutableMap<Token, Integer> steadyRunCount;
+
+		public InitSchedule(ImmutableMap<Token, Integer> steadyRunCount) {
+			this.steadyRunCount = steadyRunCount;
+		}
+
+		@Override
+		public void process(CTRLCompilationInfoProcessor cip) {
+			cip.process(this);
+		}
+	}
+
 	public interface CTRLCompilationInfoProcessor {
 		public void process(FinalBufferSizes finalBufferSizes);
+		public void process(InitSchedule InitSchedule);
 	}
 }

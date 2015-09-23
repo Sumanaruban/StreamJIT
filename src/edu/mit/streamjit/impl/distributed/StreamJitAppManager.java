@@ -47,6 +47,7 @@ import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConn
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
@@ -321,11 +322,12 @@ public class StreamJitAppManager {
 		return isRunning;
 	}
 
+	GraphSchedule graphSchedule;
 	private void sendDeadlockfreeBufSizes() {
 		ciP.waitforBufSizes();
 		if (!apStsPro.compilationError) {
-			GraphSchedule graphSchedule = BufferSizeCalc.finalInputBufSizes(
-					ciP.bufSizes, app);
+			graphSchedule = BufferSizeCalc
+					.finalInputBufSizes(ciP.bufSizes, app);
 			ImmutableMap<Token, Integer> finalInputBuf = graphSchedule.bufferSizes;
 			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 					finalInputBuf);
@@ -445,6 +447,7 @@ public class StreamJitAppManager {
 			headThread.start();
 		}
 
+		runInitSchedule();
 		controller.sendToAll(Command.START);
 
 		if (tailChannel != null) {
@@ -452,6 +455,11 @@ public class StreamJitAppManager {
 					tailChannel.name());
 			tailThread.start();
 		}
+	}
+
+	private void runInitSchedule() {
+		ImmutableMap<Token, Integer> steadyRunCount = graphSchedule.steadyRunCount;
+		controller.sendToAll(new InitSchedule(steadyRunCount));
 	}
 
 	public MasterProfiler getProfiler() {
