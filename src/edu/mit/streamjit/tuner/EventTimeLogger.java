@@ -28,11 +28,13 @@ public interface EventTimeLogger {
 	void bEvent(String eventName);
 
 	/**
-	 * Call this method at the end of an event.
+	 * Call this method at the end of an event. Measures and logs the elapsed
+	 * time between {@link #bEvent(String)} call and this method call.
 	 * 
 	 * @param eventName
+	 * @return elapsed time in milliseconds.
 	 */
-	void eEvent(String eventName);
+	long eEvent(String eventName);
 
 	void bTuningRound(String cfgPrefix);
 	void eTuningRound();
@@ -64,7 +66,8 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void eEvent(String eventName) {
+		public long eEvent(String eventName) {
+			return 0;
 		}
 
 		@Override
@@ -138,17 +141,17 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void eEvent(String eventName) {
+		public long eEvent(String eventName) {
 			long time = ticker.time();
 			Event e = events.remove(eventName);
 			if (e == null) {
 				new IllegalStateException(String.format(
 						"Event %s has not started yet", eventName))
 						.printStackTrace();
-				return;
+				return 0;
 			}
 			e.endTime = time;
-			log(e);
+			return log(e);
 		}
 
 		@Override
@@ -164,11 +167,12 @@ public interface EventTimeLogger {
 			eEvent("tuningRound");
 		}
 
-		private void log(Event e) {
+		private long log(Event e) {
 			long uptime = rb.getUptime();
 			long elapsedMills = TimeUnit.MILLISECONDS.convert(e.endTime
 					- e.startTime, ticker.timeUnit);
 			write(e.name, uptime, elapsedMills);
+			return elapsedMills;
 		}
 
 		private void write(String eventName, long uptime, long elapsedMills) {
