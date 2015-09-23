@@ -85,6 +85,8 @@ class BlobExecuter {
 	 */
 	private ExecutorService executorService = null;
 
+	private final Object initScheduleRunMonitor = new Object();
+
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels) {
@@ -426,14 +428,22 @@ class BlobExecuter {
 	}
 
 	void start() {
+		synchronized (initScheduleRunMonitor) {
+			initScheduleRunMonitor.notifyAll();
+		}
+	}
+
+	void runInitSchedule(int steadyRunCount) {
 		outChnlManager.waitToStart();
 		inChnlManager.waitToStart();
 
 		bufferMap = buildBufferMap();
 		blob.installBuffers(bufferMap);
 
-		for (Thread t : blobThreads)
+		for (BlobThread2 t : blobThreads) {
+			t.steadyRunCount = steadyRunCount;
 			t.start();
+		}
 
 		// System.out.println(blobID + " started");
 	}
@@ -484,6 +494,8 @@ class BlobExecuter {
 
 		private final boolean logTime;
 
+		volatile int steadyRunCount;
+
 		BlobThread2(Runnable coreCode, BlobExecuter be, String name,
 				Set<Integer> cores, boolean logTime) {
 			super(name);
@@ -502,6 +514,7 @@ class BlobExecuter {
 			if (cores != null && cores.size() > 0)
 				Affinity.setThreadAffinity(cores);
 			try {
+				initScheduleRun(steadyRunCount);
 				if (logTime)
 					logFiringTime();
 				while (!stopping) {
@@ -549,6 +562,23 @@ class BlobExecuter {
 				long avgMills = time / meassureCount;
 				blobsManagerImpl.streamNode.eventTimeLogger.logEvent(blobID
 						+ "-firing", avgMills);
+			}
+		}
+
+		private void initScheduleRun(int steadyRunCount)
+				throws InterruptedException {
+			blobsManagerImpl.streamNode.eventTimeLogger
+					.bEvent("initScheduleRun");
+			for (int i = 0; i < steadyRunCount + 1; i++) {
+				if (stopping)
+					break;
+				coreCode.run();
+			}
+			blobsManagerImpl.streamNode.eventTimeLogger
+					.eEvent("initScheduleRun");
+
+			synchronized (initScheduleRunMonitor) {
+				initScheduleRunMonitor.wait();
 			}
 		}
 	}

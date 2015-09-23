@@ -45,6 +45,7 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputCh
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.FinalBufferSizes;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
@@ -196,8 +197,8 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * manage all CPU and I/O threads those are related to the {@link Blob}s.
 	 */
 	public void start() {
-		for (BlobExecuter be : blobExecuters.values())
-			be.startChannels();
+		// for (BlobExecuter be : blobExecuters.values())
+		// be.startChannels();
 
 		for (BlobExecuter be : blobExecuters.values())
 			be.start();
@@ -206,6 +207,17 @@ public class BlobsManagerImpl implements BlobsManager {
 			// System.out.println("Creating new MonitorBuffers");
 			monBufs = new MonitorBuffers();
 			monBufs.start();
+		}
+	}
+
+	public void runInitSchedule(InitSchedule initSchedule) {
+		for (BlobExecuter be : blobExecuters.values())
+			be.startChannels();
+
+		for (BlobExecuter be : blobExecuters.values()) {
+			Token blobID = be.blobID;
+			int steadyRunCount = initSchedule.steadyRunCount.get(blobID);
+			be.runInitSchedule(steadyRunCount);
 		}
 	}
 
@@ -558,6 +570,11 @@ public class BlobsManagerImpl implements BlobsManager {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public void process(InitSchedule initSchedule) {
+			runInitSchedule(initSchedule);
 		}
 	}
 
