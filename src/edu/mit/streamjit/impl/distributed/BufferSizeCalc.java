@@ -56,7 +56,7 @@ public class BufferSizeCalc {
 	 * [2014-03-07]. Finds out the buffer sizes through ILP solving.
 	 * {@link #sendNewbufSizes()} doesn't guarantee deadlock freeness.
 	 */
-	public static ImmutableMap<Token, Integer> finalInputBufSizes(
+	public static GraphSchedule finalInputBufSizes(
 			Map<Integer, BufferSizes> bufSizes, StreamJitApp<?, ?> app) {
 
 		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
@@ -120,8 +120,11 @@ public class BufferSizeCalc {
 		solver.minimize(lf);
 		solver.solve();
 
+		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
+
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
+			steadyRunCount.put(blob, mul);
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			// System.out.println("Multiplication factor of blob "
 			// + blob.toString() + " is " + mul);
@@ -146,7 +149,7 @@ public class BufferSizeCalc {
 					minSteadyInputBufCapacity, minSteadyOutputBufCapacity,
 					finalInputBuf);
 
-		return finalInputBuf;
+		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
 	}
 
 	private static void printFinalSizes(
@@ -243,5 +246,32 @@ public class BufferSizeCalc {
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 				finalInputBuf);
 		controller.sendToAll(me);
+	}
+
+	/**
+	 * Contains the whole graph's init schedule, steady state schedule and
+	 * buffer sizes.
+	 * 
+	 * @author sumanan
+	 * @since 23 Sep, 2015
+	 */
+	public static class GraphSchedule {
+		/**
+		 * Buffer sizes of the blobs inputs that avoid deadlock in the system.
+		 */
+		public final ImmutableMap<Token, Integer> bufferSizes;
+
+		/**
+		 * During the whole graph initialization, upper blobs may need to run
+		 * few steady state runs in order to produce enough data for the down
+		 * blobs' init schedule.
+		 */
+		public final ImmutableMap<Token, Integer> steadyRunCount;
+
+		GraphSchedule(ImmutableMap<Token, Integer> bufferSizes,
+				ImmutableMap<Token, Integer> steadyRunCount) {
+			this.bufferSizes = bufferSizes;
+			this.steadyRunCount = steadyRunCount;
+		}
 	}
 }

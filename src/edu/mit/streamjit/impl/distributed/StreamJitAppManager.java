@@ -40,6 +40,7 @@ import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
+import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
@@ -323,8 +324,9 @@ public class StreamJitAppManager {
 	private void sendDeadlockfreeBufSizes() {
 		ciP.waitforBufSizes();
 		if (!apStsPro.compilationError) {
-			ImmutableMap<Token, Integer> finalInputBuf = BufferSizeCalc
-					.finalInputBufSizes(ciP.bufSizes, app);
+			GraphSchedule graphSchedule = BufferSizeCalc.finalInputBufSizes(
+					ciP.bufSizes, app);
+			ImmutableMap<Token, Integer> finalInputBuf = graphSchedule.bufferSizes;
 			CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 					finalInputBuf);
 			controller.sendToAll(me);
