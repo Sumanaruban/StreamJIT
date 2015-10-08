@@ -71,19 +71,26 @@ public interface BoundaryChannelManager {
 
 		private final Set<Thread> inputChannelThreads;
 
+		private boolean isStarted;
+
 		public InputChannelManager(
 				final ImmutableMap<Token, BoundaryInputChannel> inputChannels) {
 			this.inputChannels = inputChannels;
 			inputChannelThreads = new HashSet<>(inputChannels.values().size());
+			isStarted = false;
 		}
 
 		@Override
 		public void start() {
+			if (isStarted)
+				throw new IllegalStateException(
+						"inputChannels have already been started");
 			for (BoundaryInputChannel bc : inputChannels.values()) {
 				Thread t = new Thread(bc.getRunnable(), bc.name());
 				t.start();
 				inputChannelThreads.add(t);
 			}
+			isStarted = true;
 		}
 
 		@Override
@@ -121,19 +128,26 @@ public interface BoundaryChannelManager {
 		protected final ImmutableMap<Token, BoundaryOutputChannel> outputChannels;
 		protected final Map<BoundaryOutputChannel, Thread> outputChannelThreads;
 
+		private boolean isStarted;
+
 		public OutputChannelManager(
 				ImmutableMap<Token, BoundaryOutputChannel> outputChannels) {
 			this.outputChannels = outputChannels;
 			outputChannelThreads = new HashMap<>(outputChannels.values().size());
+			isStarted = false;
 		}
 
 		@Override
 		public void start() {
+			if (isStarted)
+				throw new IllegalStateException(
+						"outputChannels have already been started");
 			for (BoundaryOutputChannel bc : outputChannels.values()) {
 				Thread t = new Thread(bc.getRunnable(), bc.name());
 				t.start();
 				outputChannelThreads.put(bc, t);
 			}
+			isStarted = true;
 		}
 
 		@Override
