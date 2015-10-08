@@ -201,7 +201,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		// be.startChannels();
 
 		for (BlobExecuter be : blobExecuters.values())
-			be.start();
+			be.starter.start();
 
 		if (monitorBuffers && monBufs == null) {
 			// System.out.println("Creating new MonitorBuffers");
@@ -212,12 +212,12 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	public void runInitSchedule(InitSchedule initSchedule) {
 		for (BlobExecuter be : blobExecuters.values())
-			be.startChannels();
+			be.starter.startChannels();
 
 		for (BlobExecuter be : blobExecuters.values()) {
 			Token blobID = be.blobID;
 			int steadyRunCount = initSchedule.steadyRunCount.get(blobID);
-			be.runInitSchedule(steadyRunCount);
+			be.starter.runInitSchedule(steadyRunCount);
 		}
 	}
 
