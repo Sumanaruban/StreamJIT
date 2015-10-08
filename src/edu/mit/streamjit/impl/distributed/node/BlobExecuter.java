@@ -686,4 +686,43 @@ class BlobExecuter {
 			}
 		}
 	}
+
+	/**
+	 * {@link Starter} for stateful graphs.
+	 * 
+	 * @author sumanan
+	 * @since 8 Oct, 2015
+	 */
+	private final class StatefullStarter implements Starter {
+
+		@Override
+		public void start() {
+			outChnlManager.waitToStart();
+			inChnlManager.waitToStart();
+
+			bufferMap = buildBufferMap();
+			blob.installBuffers(bufferMap);
+
+			for (Thread t : blobThreads)
+				t.start();
+
+			// System.out.println(blobID + " started");
+		}
+
+		@Override
+		public void runInitSchedule(int steadyRunCount) {
+			throw new IllegalStateException(
+					"Can not run InitSchedule in advance for stateful graphs.");
+		}
+
+		@Override
+		public void initScheduleRun(BlobThread2 bt)
+				throws InterruptedException, IOException {
+		}
+
+		@Override
+		public void startChannels() {
+			BlobExecuter.this.startChannels();
+		}
+	}
 }
