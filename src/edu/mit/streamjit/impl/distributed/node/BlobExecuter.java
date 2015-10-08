@@ -645,4 +645,86 @@ class BlobExecuter {
 			blobExec.drained();
 		}
 	}
+
+	/**
+	 * In order to achieve seamless reconfiguration we need to start stateless
+	 * and stateful graphs differently. If the graph is stateless, we can run
+	 * the next app instance's initSchedule while the current app instance is
+	 * running and then join the outputs. If the graph is stateful, we need to
+	 * stop the current app instance before running the next app instance.
+	 * 
+	 * @author sumanan
+	 * @since 8 Oct, 2015
+	 */
+	interface Starter {
+		void start();
+		void runInitSchedule(int steadyRunCount);
+		void initScheduleRun(BlobThread2 bt) throws InterruptedException,
+				IOException;
+		void startChannels();
+	}
+
+	/**
+	 * {@link Starter} for stateless graphs.
+	 * 
+	 * @author sumanan
+	 * @since 8 Oct, 2015
+	 */
+	private final class StatelessStarter implements Starter {
+
+		volatile int steadyRunCount;
+		private final Object initScheduleRunMonitor = new Object();
+
+		@Override
+		public void start() {
+			synchronized (initScheduleRunMonitor) {
+				initScheduleRunMonitor.notifyAll();
+			}
+		}
+
+		@Override
+		public void runInitSchedule(int steadyRunCount) {
+			outChnlManager.waitToStart();
+			inChnlManager.waitToStart();
+
+			bufferMap = buildBufferMap();
+			blob.installBuffers(bufferMap);
+
+			for (BlobThread2 t : blobThreads) {
+				this.steadyRunCount = steadyRunCount;
+				t.start();
+			}
+			// System.out.println(blobID + " started");
+		}
+
+		@Override
+		public void initScheduleRun(BlobThread2 bt)
+				throws InterruptedException, IOException {
+			String s = String.format("%s - initScheduleRun", blobID);
+			if (bt.logTime)
+				blobsManagerImpl.streamNode.eventTimeLogger.bEvent(s);
+			for (int i = 0; i < steadyRunCount + 1; i++) {
+				if (bt.stopping)
+					break;
+				bt.coreCode.run();
+			}
+			if (bt.logTime) {
+				long time = blobsManagerImpl.streamNode.eventTimeLogger
+						.eEvent(s);
+				SNMessageElement me = new InitScheduleCompleted(blobID, time);
+				blobsManagerImpl.streamNode.controllerConnection
+						.writeObject(me);
+			}
+
+			synchronized (initScheduleRunMonitor) {
+				initScheduleRunMonitor.wait();
+			}
+		}
+
+		@Override
+		public void startChannels() {
+			outChnlManager.start();
+			inChnlManager.start();
+		}
+	}
 }
