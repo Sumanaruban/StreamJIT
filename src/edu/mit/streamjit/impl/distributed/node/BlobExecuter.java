@@ -88,7 +88,7 @@ class BlobExecuter {
 	 */
 	private ExecutorService executorService = null;
 
-	private final Object initScheduleRunMonitor = new Object();
+	final Starter starter;
 
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
@@ -115,6 +115,7 @@ class BlobExecuter {
 
 		drainState = 0;
 		this.blobID = t;
+		this.starter = new StatelessStarter();
 	}
 
 	public Token getBlobID() {
@@ -432,27 +433,6 @@ class BlobExecuter {
 		}
 	}
 
-	void start() {
-		synchronized (initScheduleRunMonitor) {
-			initScheduleRunMonitor.notifyAll();
-		}
-	}
-
-	void runInitSchedule(int steadyRunCount) {
-		outChnlManager.waitToStart();
-		inChnlManager.waitToStart();
-
-		bufferMap = buildBufferMap();
-		blob.installBuffers(bufferMap);
-
-		for (BlobThread2 t : blobThreads) {
-			t.steadyRunCount = steadyRunCount;
-			t.start();
-		}
-
-		// System.out.println(blobID + " started");
-	}
-
 	void startChannels() {
 		outChnlManager.start();
 		inChnlManager.start();
@@ -499,8 +479,6 @@ class BlobExecuter {
 
 		private final boolean logTime;
 
-		volatile int steadyRunCount;
-
 		BlobThread2(Runnable coreCode, BlobExecuter be, String name,
 				Set<Integer> cores, boolean logTime) {
 			super(name);
@@ -519,7 +497,7 @@ class BlobExecuter {
 			if (cores != null && cores.size() > 0)
 				Affinity.setThreadAffinity(cores);
 			try {
-				initScheduleRun(steadyRunCount);
+				starter.initScheduleRun(this);
 				if (logTime)
 					logFiringTime();
 				while (!stopping) {
@@ -572,28 +550,6 @@ class BlobExecuter {
 			}
 		}
 
-		private void initScheduleRun(int steadyRunCount)
-				throws InterruptedException, IOException {
-			String s = String.format("%s - initScheduleRun", blobID);
-			if (logTime)
-				blobsManagerImpl.streamNode.eventTimeLogger.bEvent(s);
-			for (int i = 0; i < steadyRunCount + 1; i++) {
-				if (stopping)
-					break;
-				coreCode.run();
-			}
-			if (logTime) {
-				long time = blobsManagerImpl.streamNode.eventTimeLogger
-						.eEvent(s);
-				SNMessageElement me = new InitScheduleCompleted(blobID, time);
-				blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(me);
-			}
-
-			synchronized (initScheduleRunMonitor) {
-				initScheduleRunMonitor.wait();
-			}
-		}
 	}
 
 	class DrainCallback implements Runnable {
@@ -674,6 +630,7 @@ class BlobExecuter {
 
 		volatile int steadyRunCount;
 		private final Object initScheduleRunMonitor = new Object();
+		private boolean isChannelsStarted = false;
 
 		@Override
 		public void start() {
@@ -723,8 +680,10 @@ class BlobExecuter {
 
 		@Override
 		public void startChannels() {
-			outChnlManager.start();
-			inChnlManager.start();
+			if (!isChannelsStarted) {
+				BlobExecuter.this.startChannels();
+				isChannelsStarted = true;
+			}
 		}
 	}
 }
