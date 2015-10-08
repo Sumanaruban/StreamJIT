@@ -202,8 +202,8 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * manage all CPU and I/O threads those are related to the {@link Blob}s.
 	 */
 	public void start() {
-		// for (BlobExecuter be : blobExecuters.values())
-		// be.startChannels();
+		for (BlobExecuter be : blobExecuters.values())
+			be.starter.startChannels();
 
 		for (BlobExecuter be : blobExecuters.values())
 			be.starter.start();
