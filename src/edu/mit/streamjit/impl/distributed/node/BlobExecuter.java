@@ -603,6 +603,12 @@ class BlobExecuter {
 	 * running and then join the outputs. If the graph is stateful, we need to
 	 * stop the current app instance before running the next app instance.
 	 * 
+	 * <p>
+	 * Alternatively, We can get rid of this interface, move the methods of
+	 * interface to {@link BlobExecuter} as abstract methods, and have two
+	 * different flavors of {@link BlobExecuter} implementations, one for
+	 * stateful graph and another for stateless graph.
+	 * 
 	 * @author sumanan
 	 * @since 8 Oct, 2015
 	 */
