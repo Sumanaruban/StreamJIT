@@ -220,14 +220,14 @@ class BlobExecuter {
 			drained();
 
 		drainState = 1;
-		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
+		bEvent("inChnlManager.waitToStop");
 		inChnlManager.stop(drainType);
 		// TODO: [2014-03-14] I commented following line to avoid one dead
 		// lock case when draining. Deadlock 5 and 6.
 		// [2014-09-17] Lets waitToStop() if drain data is required.
 		if (drainType != DrainType.DISCARD)
 			inChnlManager.waitToStop();
-		eventTimeLogger.eEvent(blobID + "inChnlManager.waitToStop");
+		eEvent("inChnlManager.waitToStop");
 
 		for (LocalBuffer buf : outputLocalBuffers.values()) {
 			buf.drainingStarted(drainType);
@@ -271,10 +271,10 @@ class BlobExecuter {
 			bt.requestStop();
 		}
 
-		eventTimeLogger.bEvent(blobID + "outChnlManager.waitToStop");
+		bEvent("outChnlManager.waitToStop");
 		outChnlManager.stop(drainType == DrainType.FINAL);
 		outChnlManager.waitToStop();
-		eventTimeLogger.eEvent(blobID + "outChnlManager.waitToStop");
+		eEvent("outChnlManager.waitToStop");
 
 		if (drainState > 3)
 			return;
@@ -329,12 +329,12 @@ class BlobExecuter {
 		ImmutableMap<Token, BoundaryInputChannel> inputChannels = inChnlManager
 				.inputChannelsMap();
 
-		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
+		bEvent("inChnlManager.waitToStop");
 		// In a proper system the following line should be called inside
 		// doDrain(), just after inChnlManager.stop(). Read the comment
 		// in doDrain().
 		inChnlManager.waitToStop();
-		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
+		eEvent("inChnlManager.waitToStop");
 
 		for (Token t : blob.getInputs()) {
 			if (inputChannels.containsKey(t)) {
@@ -448,17 +448,29 @@ class BlobExecuter {
 			}
 		}
 
-		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
+		bEvent("inChnlManager.waitToStop");
 		inChnlManager.waitToStop();
-		eventTimeLogger.eEvent(blobID + "inChnlManager.waitToStop");
-		eventTimeLogger.bEvent(blobID + "outChnlManager.waitToStop");
+		eEvent("inChnlManager.waitToStop");
+		bEvent("outChnlManager.waitToStop");
 		outChnlManager.waitToStop();
-		eventTimeLogger.eEvent(blobID + "outChnlManager.waitToStop");
+		eEvent("outChnlManager.waitToStop");
 
 		if (this.blobsManagerImpl.monBufs != null)
 			this.blobsManagerImpl.monBufs.stopMonitoring();
 		if (executorService != null && !executorService.isTerminated())
 			executorService.shutdownNow();
+	}
+
+	void bEvent(String eventName) {
+		eventTimeLogger.bEvent(blobID + eventName);
+	}
+
+	long eEvent(String eventName) {
+		return eventTimeLogger.eEvent(blobID + eventName);
+	}
+
+	void logEvent(String eventName, long elapsedMills) {
+		eventTimeLogger.logEvent(blobID + eventName, elapsedMills);
 	}
 
 	final class BlobThread2 extends Thread {
@@ -539,7 +551,7 @@ class BlobExecuter {
 			if (!stopping) {
 				long time = sw.elapsed(TimeUnit.MILLISECONDS);
 				long avgMills = time / meassureCount;
-				eventTimeLogger.logEvent(blobID + "-firing", avgMills);
+				logEvent("-firing", avgMills);
 			}
 		}
 
@@ -559,7 +571,7 @@ class BlobExecuter {
 		private void updateDrainTime() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			eventTimeLogger.logEvent(blobID + "-draining", time);
+			logEvent("-draining", time);
 			try {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
@@ -651,16 +663,15 @@ class BlobExecuter {
 		@Override
 		public void initScheduleRun(BlobThread2 bt)
 				throws InterruptedException, IOException {
-			String s = String.format("%s - initScheduleRun", blobID);
 			if (bt.logTime)
-				eventTimeLogger.bEvent(s);
+				bEvent("initScheduleRun");
 			for (int i = 0; i < steadyRunCount + 1; i++) {
 				if (bt.stopping)
 					break;
 				bt.coreCode.run();
 			}
 			if (bt.logTime) {
-				long time = eventTimeLogger.eEvent(s);
+				long time = eEvent("initScheduleRun");
 				SNMessageElement me = new InitScheduleCompleted(blobID, time);
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(me);
