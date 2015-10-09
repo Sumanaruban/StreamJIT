@@ -38,6 +38,7 @@ import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.affinity.Affinity;
 
 /**
@@ -90,10 +91,13 @@ class BlobExecuter {
 
 	final Starter starter;
 
+	final EventTimeLogger eventTimeLogger;
+
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels) {
 		this.blobsManagerImpl = blobsManagerImpl;
+		this.eventTimeLogger = blobsManagerImpl.streamNode.eventTimeLogger;
 		this.crashed = new AtomicBoolean(false);
 		this.blob = blob;
 		this.blobThreads = new HashSet<>();
@@ -216,16 +220,14 @@ class BlobExecuter {
 			drained();
 
 		drainState = 1;
-		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
-				+ "inChnlManager.waitToStop");
+		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
 		inChnlManager.stop(drainType);
 		// TODO: [2014-03-14] I commented following line to avoid one dead
 		// lock case when draining. Deadlock 5 and 6.
 		// [2014-09-17] Lets waitToStop() if drain data is required.
 		if (drainType != DrainType.DISCARD)
 			inChnlManager.waitToStop();
-		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
-				+ "inChnlManager.waitToStop");
+		eventTimeLogger.eEvent(blobID + "inChnlManager.waitToStop");
 
 		for (LocalBuffer buf : outputLocalBuffers.values()) {
 			buf.drainingStarted(drainType);
@@ -269,12 +271,10 @@ class BlobExecuter {
 			bt.requestStop();
 		}
 
-		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
-				+ "outChnlManager.waitToStop");
+		eventTimeLogger.bEvent(blobID + "outChnlManager.waitToStop");
 		outChnlManager.stop(drainType == DrainType.FINAL);
 		outChnlManager.waitToStop();
-		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
-				+ "outChnlManager.waitToStop");
+		eventTimeLogger.eEvent(blobID + "outChnlManager.waitToStop");
 
 		if (drainState > 3)
 			return;
@@ -329,14 +329,12 @@ class BlobExecuter {
 		ImmutableMap<Token, BoundaryInputChannel> inputChannels = inChnlManager
 				.inputChannelsMap();
 
-		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
-				+ "inChnlManager.waitToStop");
+		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
 		// In a proper system the following line should be called inside
 		// doDrain(), just after inChnlManager.stop(). Read the comment
 		// in doDrain().
 		inChnlManager.waitToStop();
-		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
-				+ "inChnlManager.waitToStop");
+		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
 
 		for (Token t : blob.getInputs()) {
 			if (inputChannels.containsKey(t)) {
@@ -450,16 +448,12 @@ class BlobExecuter {
 			}
 		}
 
-		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
-				+ "inChnlManager.waitToStop");
+		eventTimeLogger.bEvent(blobID + "inChnlManager.waitToStop");
 		inChnlManager.waitToStop();
-		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
-				+ "inChnlManager.waitToStop");
-		blobsManagerImpl.streamNode.eventTimeLogger.bEvent(blobID
-				+ "outChnlManager.waitToStop");
+		eventTimeLogger.eEvent(blobID + "inChnlManager.waitToStop");
+		eventTimeLogger.bEvent(blobID + "outChnlManager.waitToStop");
 		outChnlManager.waitToStop();
-		blobsManagerImpl.streamNode.eventTimeLogger.eEvent(blobID
-				+ "outChnlManager.waitToStop");
+		eventTimeLogger.eEvent(blobID + "outChnlManager.waitToStop");
 
 		if (this.blobsManagerImpl.monBufs != null)
 			this.blobsManagerImpl.monBufs.stopMonitoring();
@@ -545,8 +539,7 @@ class BlobExecuter {
 			if (!stopping) {
 				long time = sw.elapsed(TimeUnit.MILLISECONDS);
 				long avgMills = time / meassureCount;
-				blobsManagerImpl.streamNode.eventTimeLogger.logEvent(blobID
-						+ "-firing", avgMills);
+				eventTimeLogger.logEvent(blobID + "-firing", avgMills);
 			}
 		}
 
@@ -566,8 +559,7 @@ class BlobExecuter {
 		private void updateDrainTime() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			blobsManagerImpl.streamNode.eventTimeLogger.logEvent(blobID
-					+ "-draining", time);
+			eventTimeLogger.logEvent(blobID + "-draining", time);
 			try {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
@@ -580,18 +572,14 @@ class BlobExecuter {
 
 		private void logBlobExecutionStatistics() {
 			ExecutionStatistics es = blob.getExecutionStatistics();
-			blobsManagerImpl.streamNode.eventTimeLogger
-					.log(String.format("%-22s\t%-12d\t%d\n", blobID
-							+ "-initTime", 0, es.initTime));
-			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
-					"%-22s\t%-12d\t%d\n", blobID + "-adjustTime", 0,
-					es.adjustTime));
-			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
-					"%-22s\t%-12d\t%d\n", blobID + "-adjustCount", 0,
-					es.adjustCount));
-			blobsManagerImpl.streamNode.eventTimeLogger.log(String.format(
-					"%-22s\t%-12d\t%d\n", blobID + "-drainTime", 0,
-					es.drainTime));
+			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
+					+ "-initTime", 0, es.initTime));
+			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
+					+ "-adjustTime", 0, es.adjustTime));
+			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
+					+ "-adjustCount", 0, es.adjustCount));
+			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
+					+ "-drainTime", 0, es.drainTime));
 		}
 
 		@Override
@@ -665,15 +653,14 @@ class BlobExecuter {
 				throws InterruptedException, IOException {
 			String s = String.format("%s - initScheduleRun", blobID);
 			if (bt.logTime)
-				blobsManagerImpl.streamNode.eventTimeLogger.bEvent(s);
+				eventTimeLogger.bEvent(s);
 			for (int i = 0; i < steadyRunCount + 1; i++) {
 				if (bt.stopping)
 					break;
 				bt.coreCode.run();
 			}
 			if (bt.logTime) {
-				long time = blobsManagerImpl.streamNode.eventTimeLogger
-						.eEvent(s);
+				long time = eventTimeLogger.eEvent(s);
 				SNMessageElement me = new InitScheduleCompleted(blobID, time);
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(me);
