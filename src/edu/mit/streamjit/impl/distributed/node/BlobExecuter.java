@@ -24,9 +24,7 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.Boundary
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
-import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.Connection;
-import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.EventTimeLogger;
@@ -102,7 +100,7 @@ class BlobExecuter {
 			throw new IllegalStateException("No blobs to execute");
 
 		this.blobID = t;
-		this.starter = new StatelessStarter();
+		this.starter = new StatelessStarter(this);
 		this.drainer = new BlobDrainer(this);
 	}
 
@@ -125,7 +123,7 @@ class BlobExecuter {
 	 * @return Buffer map which contains {@link Buffers} for all input and
 	 *         output edges of the {@link #blob}.
 	 */
-	private ImmutableMap<Token, Buffer> buildBufferMap() {
+	ImmutableMap<Token, Buffer> buildBufferMap() {
 		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
 				.builder();
 		ImmutableMap.Builder<Token, LocalBuffer> outputLocalBufferBuilder = ImmutableMap
@@ -235,11 +233,11 @@ class BlobExecuter {
 
 		private final BlobExecuter be;
 
-		private final Runnable coreCode;
+		final Runnable coreCode;
 
-		private volatile boolean stopping = false;
+		volatile boolean stopping = false;
 
-		private final boolean logTime;
+		final boolean logTime;
 
 		BlobThread2(Runnable coreCode, BlobExecuter be, String name,
 				Set<Integer> cores, boolean logTime) {
@@ -309,134 +307,6 @@ class BlobExecuter {
 				long avgMills = time / meassureCount;
 				logEvent("-firing", avgMills);
 			}
-		}
-	}
-
-	/**
-	 * In order to achieve seamless reconfiguration we need to start stateless
-	 * and stateful graphs differently. If the graph is stateless, we can run
-	 * the next app instance's initSchedule while the current app instance is
-	 * running and then join the outputs. If the graph is stateful, we need to
-	 * stop the current app instance before running the next app instance.
-	 * 
-	 * <p>
-	 * Alternatively, We can get rid of this interface, move the methods of
-	 * interface to {@link BlobExecuter} as abstract methods, and have two
-	 * different flavors of {@link BlobExecuter} implementations, one for
-	 * stateful graph and another for stateless graph.
-	 * 
-	 * @author sumanan
-	 * @since 8 Oct, 2015
-	 */
-	interface Starter {
-		void start();
-		void runInitSchedule(int steadyRunCount);
-		void initScheduleRun(BlobThread2 bt) throws InterruptedException,
-				IOException;
-		void startChannels();
-	}
-
-	/**
-	 * {@link Starter} for stateless graphs.
-	 * 
-	 * @author sumanan
-	 * @since 8 Oct, 2015
-	 */
-	private final class StatelessStarter implements Starter {
-
-		volatile int steadyRunCount;
-		private final Object initScheduleRunMonitor = new Object();
-		private boolean isChannelsStarted = false;
-
-		@Override
-		public void start() {
-			synchronized (initScheduleRunMonitor) {
-				initScheduleRunMonitor.notifyAll();
-			}
-		}
-
-		@Override
-		public void runInitSchedule(int steadyRunCount) {
-			outChnlManager.waitToStart();
-			inChnlManager.waitToStart();
-
-			bufferMap = buildBufferMap();
-			blob.installBuffers(bufferMap);
-
-			for (BlobThread2 t : blobThreads) {
-				this.steadyRunCount = steadyRunCount;
-				t.start();
-			}
-			// System.out.println(blobID + " started");
-		}
-
-		@Override
-		public void initScheduleRun(BlobThread2 bt)
-				throws InterruptedException, IOException {
-			if (bt.logTime)
-				bEvent("initScheduleRun");
-			for (int i = 0; i < steadyRunCount + 1; i++) {
-				if (bt.stopping)
-					break;
-				bt.coreCode.run();
-			}
-			if (bt.logTime) {
-				long time = eEvent("initScheduleRun");
-				SNMessageElement me = new InitScheduleCompleted(blobID, time);
-				blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(me);
-			}
-
-			synchronized (initScheduleRunMonitor) {
-				initScheduleRunMonitor.wait();
-			}
-		}
-
-		@Override
-		public void startChannels() {
-			if (!isChannelsStarted) {
-				BlobExecuter.this.startChannels();
-				isChannelsStarted = true;
-			}
-		}
-	}
-
-	/**
-	 * {@link Starter} for stateful graphs.
-	 * 
-	 * @author sumanan
-	 * @since 8 Oct, 2015
-	 */
-	private final class StatefullStarter implements Starter {
-
-		@Override
-		public void start() {
-			outChnlManager.waitToStart();
-			inChnlManager.waitToStart();
-
-			bufferMap = buildBufferMap();
-			blob.installBuffers(bufferMap);
-
-			for (Thread t : blobThreads)
-				t.start();
-
-			// System.out.println(blobID + " started");
-		}
-
-		@Override
-		public void runInitSchedule(int steadyRunCount) {
-			throw new IllegalStateException(
-					"Can not run InitSchedule in advance for stateful graphs.");
-		}
-
-		@Override
-		public void initScheduleRun(BlobThread2 bt)
-				throws InterruptedException, IOException {
-		}
-
-		@Override
-		public void startChannels() {
-			BlobExecuter.this.startChannels();
 		}
 	}
 }
