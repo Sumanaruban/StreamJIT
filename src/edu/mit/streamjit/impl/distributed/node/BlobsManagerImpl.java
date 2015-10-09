@@ -41,7 +41,6 @@ import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
-import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
@@ -54,6 +53,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BufferManager.GlobalBufferManager;
@@ -141,9 +141,10 @@ public class BlobsManagerImpl implements BlobsManager {
 		for (BlobExecuter be : blobExecuters.values()) {
 			if (be.getBlobID().equals(blobID)) {
 				if (Options.doDraininNewThread)
-					be.doDrain(drainType, drainType != DrainType.DISCARD);
+					be.drainer.doDrain(drainType,
+							drainType != DrainType.DISCARD);
 				else
-					be.doDrain(drainType);
+					be.drainer.doDrain(drainType);
 				return;
 			}
 		}
@@ -177,7 +178,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	 */
 	void lastBlobActions() {
 		for (BlobExecuter be : this.blobExecuters.values()) {
-			if (be.drainState < 4) {
+			if (be.drainer.drainState < 4) {
 				return;
 			}
 		}
@@ -296,7 +297,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	synchronized void printDrainedStatus() {
 		System.out.println("****************************************");
 		for (BlobExecuter be : blobExecuters.values()) {
-			switch (be.drainState) {
+			switch (be.drainer.drainState) {
 				case 0 :
 					System.out.println(String.format("%s - No Drain Called",
 							be.blobID));
@@ -456,7 +457,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		private boolean cleanAllBuffers() {
 			boolean areAllDrained = true;
 			for (BlobExecuter be : blobExecuters.values()) {
-				if (be.drainState == 1 || be.drainState == 2) {
+				if (be.drainer.drainState == 1 || be.drainer.drainState == 2) {
 					// System.out.println(be.blobID + " is not drained");
 					areAllDrained = false;
 					for (Token t : be.blob.getOutputs()) {
@@ -494,7 +495,7 @@ public class BlobsManagerImpl implements BlobsManager {
 					.localBufferMap();
 			boolean areAllDrained = true;
 			for (BlobExecuter be : blobExecuters.values()) {
-				if (be.drainState == 1 || be.drainState == 2) {
+				if (be.drainer.drainState == 1 || be.drainer.drainState == 2) {
 					// System.out.println(be.blobID + " is not drained");
 					areAllDrained = false;
 					for (Token t : be.blob.getOutputs()) {

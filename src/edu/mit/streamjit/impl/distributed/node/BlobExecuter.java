@@ -3,23 +3,17 @@ package edu.mit.streamjit.impl.distributed.node;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableTable;
 
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
-import edu.mit.streamjit.impl.blob.Blob.ExecutionStatistics;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.Buffers;
-import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel;
@@ -32,11 +26,8 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputCh
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.Connection;
-import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
-import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
-import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.affinity.Affinity;
@@ -53,20 +44,20 @@ class BlobExecuter {
 	/**
 	 * 
 	 */
-	private final BlobsManagerImpl blobsManagerImpl;
+	final BlobsManagerImpl blobsManagerImpl;
 
 	Blob blob;
 
 	final Token blobID;
 
-	final private Set<BlobThread2> blobThreads;
+	final Set<BlobThread2> blobThreads;
 
 	/**
 	 * Buffers for all input and output edges of the {@link #blob}.
 	 */
 	ImmutableMap<Token, Buffer> bufferMap;
 
-	private ImmutableMap<Token, LocalBuffer> outputLocalBuffers;
+	ImmutableMap<Token, LocalBuffer> outputLocalBuffers;
 
 	/**
 	 * This flag will be set to true if an exception thrown by the core code of
@@ -76,22 +67,15 @@ class BlobExecuter {
 	 */
 	AtomicBoolean crashed;
 
-	volatile int drainState;
-
 	final BoundaryInputChannelManager inChnlManager;
 
 	final BoundaryOutputChannelManager outChnlManager;
 
-	private DrainType drainType;
-
-	/**
-	 * ExecutorService to call doDrain in a new thread.
-	 */
-	private ExecutorService executorService = null;
-
 	final Starter starter;
 
 	final EventTimeLogger eventTimeLogger;
+
+	final BlobDrainer drainer;
 
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
@@ -117,9 +101,9 @@ class BlobExecuter {
 		if (blobThreads.size() < 1)
 			throw new IllegalStateException("No blobs to execute");
 
-		drainState = 0;
 		this.blobID = t;
 		this.starter = new StatelessStarter();
+		this.drainer = new BlobDrainer(this);
 	}
 
 	public Token getBlobID() {
@@ -185,223 +169,6 @@ class BlobExecuter {
 	}
 
 	/**
-	 * The actual {@link #doDrain(DrainType)} method calls
-	 * {@link InputChannelManager#waitToStop()}, which is a blocking call. This
-	 * may cause deadlock situation in some cases if the main {@link StreamNode}
-	 * thread calls {@link #doDrain(DrainType)} method. Calling
-	 * {@link #doDrain(DrainType)} in a new thread is always safer.
-	 * 
-	 * @param drainType
-	 * @param inNewThread
-	 */
-	void doDrain(DrainType drainType, boolean inNewThread) {
-		if (inNewThread) {
-			executorService = Executors.newSingleThreadExecutor();
-			executorService.submit(() -> doDrain(drainType));
-			executorService.shutdown();
-		} else
-			doDrain(drainType);
-	}
-
-	void doDrain(DrainType drainType) {
-		// System.out.println("Blob " + blobID + "is doDrain");
-		this.drainType = drainType;
-
-		/*
-		 * [2-9-2015] If this blob crashed during steady run, BlobThread sends
-		 * Appstatus.Error message to the controller. However, if the the
-		 * intermediate draining has already been started at the controller
-		 * level and some other upper blobs are draining, the error message has
-		 * no effect. In that case, this blob will also receive doDrain()
-		 * command. So lets call drained(). If we do not call the drained(), the
-		 * controller will wait at awaitDrainedIntrmdiate() forever.
-		 */
-		if (crashed.get() && drainState == 0)
-			drained();
-
-		drainState = 1;
-		bEvent("inChnlManager.waitToStop");
-		inChnlManager.stop(drainType);
-		// TODO: [2014-03-14] I commented following line to avoid one dead
-		// lock case when draining. Deadlock 5 and 6.
-		// [2014-09-17] Lets waitToStop() if drain data is required.
-		if (drainType != DrainType.DISCARD)
-			inChnlManager.waitToStop();
-		eEvent("inChnlManager.waitToStop");
-
-		for (LocalBuffer buf : outputLocalBuffers.values()) {
-			buf.drainingStarted(drainType);
-		}
-
-		if (this.blob != null) {
-			DrainCallback dcb = new DrainCallback(this);
-			drainState = 2;
-			this.blob.drain(dcb);
-		}
-		// System.out.println("Blob " + blobID +
-		// "this.blob.drain(dcb); passed");
-
-		if (this.blobsManagerImpl.useBufferCleaner
-				&& drainType != DrainType.FINAL) {
-			boolean isLastBlob = true;
-			for (BlobExecuter be : this.blobsManagerImpl.blobExecuters.values()) {
-				if (be.drainState == 0) {
-					isLastBlob = false;
-					break;
-				}
-			}
-
-			if (isLastBlob && this.blobsManagerImpl.bufferCleaner == null) {
-				// System.out.println("****Starting BufferCleaner***");
-				this.blobsManagerImpl.bufferCleaner = this.blobsManagerImpl.new BufferCleaner(
-						drainType == DrainType.INTERMEDIATE);
-				this.blobsManagerImpl.bufferCleaner.start();
-			}
-		}
-	}
-
-	void drained() {
-		// System.out.println("Blob " + blobID + "drained at beg");
-		if (drainState < 3)
-			drainState = 3;
-		else
-			return;
-
-		for (BlobThread2 bt : blobThreads) {
-			bt.requestStop();
-		}
-
-		bEvent("outChnlManager.waitToStop");
-		outChnlManager.stop(drainType == DrainType.FINAL);
-		outChnlManager.waitToStop();
-		eEvent("outChnlManager.waitToStop");
-
-		if (drainState > 3)
-			return;
-
-		drainState = 4;
-		SNMessageElement drained = new SNDrainElement.Drained(blobID);
-		try {
-			this.blobsManagerImpl.streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(drained,
-							blobsManagerImpl.appInstId));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		// System.out.println("Blob " + blobID + "is drained at mid");
-
-		if (drainType != DrainType.DISCARD) {
-			SNMessageElement me;
-			if (crashed.get())
-				me = getEmptyDrainData();
-			else
-				me = getSNDrainData();
-
-			try {
-				this.blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(me,
-								blobsManagerImpl.appInstId));
-				// System.out.println(blobID + " DrainData has been sent");
-				drainState = 6;
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			// System.out.println("**********************************");
-		}
-
-		this.blob = null;
-		blobsManagerImpl.lastBlobActions();
-		// printDrainedStatus();
-	}
-
-	private SNDrainedData getSNDrainData() {
-		if (this.blob == null)
-			return getEmptyDrainData();
-
-		DrainData dd = blob.getDrainData();
-		drainState = 5;
-		// printDrainDataStats(dd);
-
-		ImmutableMap.Builder<Token, ImmutableList<Object>> inputDataBuilder = new ImmutableMap.Builder<>();
-		ImmutableMap.Builder<Token, ImmutableList<Object>> outputDataBuilder = new ImmutableMap.Builder<>();
-
-		ImmutableMap<Token, BoundaryInputChannel> inputChannels = inChnlManager
-				.inputChannelsMap();
-
-		bEvent("inChnlManager.waitToStop");
-		// In a proper system the following line should be called inside
-		// doDrain(), just after inChnlManager.stop(). Read the comment
-		// in doDrain().
-		inChnlManager.waitToStop();
-		eEvent("inChnlManager.waitToStop");
-
-		for (Token t : blob.getInputs()) {
-			if (inputChannels.containsKey(t)) {
-				BoundaryChannel chanl = inputChannels.get(t);
-				ImmutableList<Object> draindata = chanl.getUnprocessedData();
-				// if (draindata.size() > 0)
-				// System.out.println(String.format("From %s - %d",
-				// chanl.name(), draindata.size()));
-				inputDataBuilder.put(t, draindata);
-			}
-
-			else {
-				unprocessedDataFromLocalBuffer(inputDataBuilder, t);
-			}
-		}
-
-		ImmutableMap<Token, BoundaryOutputChannel> outputChannels = outChnlManager
-				.outputChannelsMap();
-		for (Token t : blob.getOutputs()) {
-			if (outputChannels.containsKey(t)) {
-				BoundaryChannel chanl = outputChannels.get(t);
-				ImmutableList<Object> draindata = chanl.getUnprocessedData();
-				// if (draindata.size() > 0)
-				// System.out.println(String.format("From %s - %d",
-				// chanl.name(), draindata.size()));
-				outputDataBuilder.put(t, draindata);
-			}
-		}
-
-		return new SNDrainElement.SNDrainedData(blobID, dd,
-				inputDataBuilder.build(), outputDataBuilder.build());
-	}
-
-	// TODO: Unnecessary data copy. Optimise this.
-	private void unprocessedDataFromLocalBuffer(
-			ImmutableMap.Builder<Token, ImmutableList<Object>> inputDataBuilder,
-			Token t) {
-		Object[] bufArray;
-		if (this.blobsManagerImpl.bufferCleaner == null) {
-			Buffer buf = bufferMap.get(t);
-			bufArray = new Object[buf.size()];
-			buf.readAll(bufArray);
-			assert buf.size() == 0 : String.format(
-					"buffer size is %d. But 0 is expected", buf.size());
-		} else {
-			bufArray = this.blobsManagerImpl.bufferCleaner.copiedBuffer(t);
-		}
-		// if (bufArray.length > 0)
-		// System.out.println(String.format("From LocalBuffer: %s - %d",
-		// t, bufArray.length));
-		inputDataBuilder.put(t, ImmutableList.copyOf(bufArray));
-	}
-
-	private SNDrainedData getEmptyDrainData() {
-		drainState = 5;
-		ImmutableMap.Builder<Token, ImmutableList<Object>> inputDataBuilder = new ImmutableMap.Builder<>();
-		ImmutableMap.Builder<Token, ImmutableList<Object>> outputDataBuilder = new ImmutableMap.Builder<>();
-		ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
-				.builder();
-		ImmutableTable.Builder<Integer, String, Object> stateBuilder = ImmutableTable
-				.builder();
-		DrainData dd = new DrainData(dataBuilder.build(), stateBuilder.build());
-		return new SNDrainElement.SNDrainedData(blobID, dd,
-				inputDataBuilder.build(), outputDataBuilder.build());
-	}
-
-	/**
 	 * Returns a name for thread.
 	 * 
 	 * @param blob
@@ -417,18 +184,6 @@ class BlobExecuter {
 				break;
 		}
 		return sb.toString();
-	}
-
-	private void printDrainDataStats(DrainData dd) {
-		System.out.println("**********printDrainDataStats*************");
-		if (dd != null) {
-			for (Token t : dd.getData().keySet()) {
-				int size = dd.getData().get(t).size();
-				if (size > 0)
-					System.out.println("From Blob: " + t.toString() + " - "
-							+ size);
-			}
-		}
 	}
 
 	void startChannels() {
@@ -457,8 +212,9 @@ class BlobExecuter {
 
 		if (this.blobsManagerImpl.monBufs != null)
 			this.blobsManagerImpl.monBufs.stopMonitoring();
-		if (executorService != null && !executorService.isTerminated())
-			executorService.shutdownNow();
+		if (drainer.executorService != null
+				&& !drainer.executorService.isTerminated())
+			drainer.executorService.shutdownNow();
 	}
 
 	void bEvent(String eventName) {
@@ -514,9 +270,9 @@ class BlobExecuter {
 						+ " crashed...");
 				if (be.crashed.compareAndSet(false, true)) {
 					e.printStackTrace();
-					if (be.drainState == 1 || be.drainState == 2)
-						be.drained();
-					else if (be.drainState == 0) {
+					if (drainer.drainState == 1 || drainer.drainState == 2)
+						drainer.drained();
+					else if (drainer.drainState == 0) {
 						try {
 							blobsManagerImpl.streamNode.controllerConnection
 									.writeObject(new SNMessageElementHolder(
@@ -553,52 +309,6 @@ class BlobExecuter {
 				long avgMills = time / meassureCount;
 				logEvent("-firing", avgMills);
 			}
-		}
-
-	}
-
-	class DrainCallback implements Runnable {
-
-		private final BlobExecuter blobExec;
-
-		private final Stopwatch sw;
-
-		DrainCallback(BlobExecuter be) {
-			this.blobExec = be;
-			sw = Stopwatch.createStarted();
-		}
-
-		private void updateDrainTime() {
-			sw.stop();
-			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			logEvent("-draining", time);
-			try {
-				blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(
-								new SNTimeInfo.DrainingTime(blobExec.blobID,
-										time), blobsManagerImpl.appInstId));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		private void logBlobExecutionStatistics() {
-			ExecutionStatistics es = blob.getExecutionStatistics();
-			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
-					+ "-initTime", 0, es.initTime));
-			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
-					+ "-adjustTime", 0, es.adjustTime));
-			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
-					+ "-adjustCount", 0, es.adjustCount));
-			eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n", blobID
-					+ "-drainTime", 0, es.drainTime));
-		}
-
-		@Override
-		public void run() {
-			logBlobExecutionStatistics();
-			updateDrainTime();
-			blobExec.drained();
 		}
 	}
 
