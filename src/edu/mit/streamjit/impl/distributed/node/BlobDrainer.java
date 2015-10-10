@@ -43,7 +43,7 @@ class BlobDrainer {
 
 	final BlobExecuter be;
 	volatile int drainState;
-	private DrainType drainType;
+	DrainType drainType;
 	/**
 	 * ExecutorService to call doDrain in a new thread.
 	 */
@@ -116,24 +116,7 @@ class BlobDrainer {
 		}
 		// System.out.println("Blob " + blobID +
 		// "this.blob.drain(dcb); passed");
-
-		if (blobsManagerImpl.useBufferCleaner
-				&& drainType != DrainType.FINAL) {
-			boolean isLastBlob = true;
-			for (BlobExecuter be : blobsManagerImpl.blobExecuters.values()) {
-				if (drainState == 0) {
-					isLastBlob = false;
-					break;
-				}
-			}
-
-			if (isLastBlob && blobsManagerImpl.bufferCleaner == null) {
-				// System.out.println("****Starting BufferCleaner***");
-				blobsManagerImpl.bufferCleaner = blobsManagerImpl.new BufferCleaner(
-						drainType == DrainType.INTERMEDIATE);
-				blobsManagerImpl.bufferCleaner.start();
-			}
-		}
+		blobsManagerImpl.doDrainLastBlobActions(this);
 	}
 
 	void drained() {

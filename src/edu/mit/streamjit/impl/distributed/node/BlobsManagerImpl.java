@@ -201,6 +201,39 @@ public class BlobsManagerImpl implements BlobsManager {
 		}
 	}
 
+	private final Object doDrainLastBlobLock = new Object();
+	private boolean doDrainLastBlobActionsDone = false;
+	/**
+	 * Each {@link BlobDrainer} must call this method after its {@link Blob} has
+	 * been called for doDrain.
+	 * <p>
+	 * Multiple {@link BlobDrainer}s may call this method at the same time and
+	 * conclude themselves as the last blob. In order to avoid that situation,
+	 * we need to do the last blob actions in a synchronized block.
+	 */
+	void doDrainLastBlobActions(BlobDrainer bd) {
+		if (!useBufferCleaner || bd.drainType == DrainType.FINAL)
+			return;
+
+		for (BlobExecuter be : blobExecuters.values()) {
+			if (be.drainer.drainState == 0)
+				return;
+		}
+
+		synchronized (doDrainLastBlobLock) {
+			if (doDrainLastBlobActionsDone)
+				return;
+
+			if (bufferCleaner == null) {
+				// System.out.println("****Starting BufferCleaner***");
+				bufferCleaner = new BufferCleaner(
+						bd.drainType == DrainType.INTERMEDIATE);
+				bufferCleaner.start();
+			}
+			doDrainLastBlobActionsDone = true;
+		}
+	}
+
 	/**
 	 * Start and execute the blobs. This function should be responsible to
 	 * manage all CPU and I/O threads those are related to the {@link Blob}s.
