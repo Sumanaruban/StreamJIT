@@ -188,7 +188,7 @@ class BlobDrainer {
 
 		be.blob = null;
 		this.blob = null;
-		blobsManagerImpl.lastBlobActions();
+		blobsManagerImpl.drainedLastBlobActions();
 		// printDrainedStatus();
 	}
 
