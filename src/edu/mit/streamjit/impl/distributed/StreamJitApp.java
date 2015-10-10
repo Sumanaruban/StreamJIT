@@ -98,6 +98,11 @@ public class StreamJitApp<I, O> {
 
 	public final EventTimeLogger eLogger;
 
+	/**
+	 * is app stateful?
+	 */
+	public final boolean stateful;
+
 	public StreamJitApp(OneToOneElement<I, O> streamGraph) {
 		this.streamGraph = streamGraph;
 		Pair<Worker<I, ?>, Worker<?, O>> srcSink = visit(streamGraph);
@@ -111,6 +116,7 @@ public class StreamJitApp<I, O> {
 		Utils.newApp(name);
 		visualizer = new Visualizer.DotVisualizer(streamGraph);
 		eLogger = eventTimeLogger();
+		stateful = isGraphStateful();
 	}
 
 	private EventTimeLogger eventTimeLogger() {
@@ -247,10 +253,9 @@ public class StreamJitApp<I, O> {
 				topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
 		builder.addParameter(SwitchParameter.create(GlobalConstants.STATEFUL,
-				isGraphStateful()));
+				stateful));
 		return builder.build();
 	}
-
 	public AppInstance newConfiguration(NewConfiguration newConfiguration) {
 		if (!newConfiguration.verificationPassed)
 			throw new IllegalStateException(
