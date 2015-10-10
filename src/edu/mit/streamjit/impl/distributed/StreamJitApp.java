@@ -240,9 +240,9 @@ public class StreamJitApp<I, O> {
 	 */
 	public Configuration getStaticConfiguration() {
 		Configuration.Builder builder = Configuration.builder();
-		builder.putExtraData(GlobalConstants.JARFILE_PATH, jarFilePath)
-				.putExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME,
-						topLevelClass);
+		builder.putExtraData(GlobalConstants.JARFILE_PATH, jarFilePath);
+		builder.putExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME,
+				topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
 		return builder.build();
 	}
