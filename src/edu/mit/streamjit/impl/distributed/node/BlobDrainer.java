@@ -115,21 +115,21 @@ class BlobDrainer {
 		// System.out.println("Blob " + blobID +
 		// "this.blob.drain(dcb); passed");
 
-		if (this.blobsManagerImpl.useBufferCleaner
+		if (blobsManagerImpl.useBufferCleaner
 				&& drainType != DrainType.FINAL) {
 			boolean isLastBlob = true;
-			for (BlobExecuter be : this.blobsManagerImpl.blobExecuters.values()) {
+			for (BlobExecuter be : blobsManagerImpl.blobExecuters.values()) {
 				if (drainState == 0) {
 					isLastBlob = false;
 					break;
 				}
 			}
 
-			if (isLastBlob && this.blobsManagerImpl.bufferCleaner == null) {
+			if (isLastBlob && blobsManagerImpl.bufferCleaner == null) {
 				// System.out.println("****Starting BufferCleaner***");
-				this.blobsManagerImpl.bufferCleaner = this.blobsManagerImpl.new BufferCleaner(
+				blobsManagerImpl.bufferCleaner = blobsManagerImpl.new BufferCleaner(
 						drainType == DrainType.INTERMEDIATE);
-				this.blobsManagerImpl.bufferCleaner.start();
+				blobsManagerImpl.bufferCleaner.start();
 			}
 		}
 	}
@@ -156,7 +156,7 @@ class BlobDrainer {
 		drainState = 4;
 		SNMessageElement drained = new SNDrainElement.Drained(be.blobID);
 		try {
-			this.blobsManagerImpl.streamNode.controllerConnection
+			blobsManagerImpl.streamNode.controllerConnection
 					.writeObject(new SNMessageElementHolder(drained,
 							blobsManagerImpl.appInstId));
 		} catch (IOException e) {
@@ -172,7 +172,7 @@ class BlobDrainer {
 				me = getSNDrainData();
 
 			try {
-				this.blobsManagerImpl.streamNode.controllerConnection
+				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(me,
 								blobsManagerImpl.appInstId));
 				// System.out.println(blobID + " DrainData has been sent");
@@ -248,14 +248,14 @@ class BlobDrainer {
 			ImmutableMap.Builder<Token, ImmutableList<Object>> inputDataBuilder,
 			Token t) {
 		Object[] bufArray;
-		if (be.blobsManagerImpl.bufferCleaner == null) {
+		if (blobsManagerImpl.bufferCleaner == null) {
 			Buffer buf = be.bufferMap.get(t);
 			bufArray = new Object[buf.size()];
 			buf.readAll(bufArray);
 			assert buf.size() == 0 : String.format(
 					"buffer size is %d. But 0 is expected", buf.size());
 		} else {
-			bufArray = be.blobsManagerImpl.bufferCleaner.copiedBuffer(t);
+			bufArray = blobsManagerImpl.bufferCleaner.copiedBuffer(t);
 		}
 		// if (bufArray.length > 0)
 		// System.out.println(String.format("From LocalBuffer: %s - %d",
@@ -293,7 +293,7 @@ class BlobDrainer {
 	 */
 	synchronized void printDrainedStatus() {
 		System.out.println("****************************************");
-		for (BlobExecuter be : be.blobsManagerImpl.blobExecuters.values()) {
+		for (BlobExecuter be : blobsManagerImpl.blobExecuters.values()) {
 			switch (be.drainer.drainState) {
 				case 0 :
 					System.out.println(String.format("%s - No Drain Called",
@@ -342,10 +342,10 @@ class BlobDrainer {
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
 			be.logEvent("-draining", time);
 			try {
-				be.blobsManagerImpl.streamNode.controllerConnection
+				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(new SNMessageElementHolder(
 								new SNTimeInfo.DrainingTime(be.blobID, time),
-								be.blobsManagerImpl.appInstId));
+								blobsManagerImpl.appInstId));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
