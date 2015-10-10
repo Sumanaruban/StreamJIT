@@ -34,6 +34,12 @@ interface Starter {
 /**
  * {@link Starter} for stateless graphs.
  * 
+ * <p>
+ * Warning: This class refers {@link BlobExecuter}'s fields frequently as all
+ * methods of this class used to be the methods of {@link BlobExecuter} before
+ * this refactoring. Alternatively, This class is could be made as an inner
+ * class of {@link BlobExecuter}.
+ * 
  * @author sumanan
  * @since 8 Oct, 2015
  */
@@ -104,6 +110,12 @@ final class StatelessStarter implements Starter {
 
 /**
  * {@link Starter} for stateful graphs.
+ * 
+ * <p>
+ * Warning: This class refers {@link BlobExecuter}'s fields frequently as all
+ * methods of this class used to be the methods of {@link BlobExecuter} before
+ * this refactoring. Alternatively, This class is could be made as an inner
+ * class of {@link BlobExecuter}.
  * 
  * @author sumanan
  * @since 8 Oct, 2015

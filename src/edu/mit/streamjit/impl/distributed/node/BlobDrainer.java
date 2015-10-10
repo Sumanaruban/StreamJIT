@@ -32,7 +32,9 @@ import edu.mit.streamjit.impl.distributed.node.BlobExecuter.BlobThread2;
  * here. This class and {@link BlobExecuter} refers each other. This class is
  * could be made as an inner class of {@link BlobExecuter}.
  * <p>
- * Warning: This class refers {@link BlobExecuter}'s fields frequently.
+ * Warning: This class refers {@link BlobExecuter}'s fields frequently as all
+ * methods of this class used to be the methods of {@link BlobExecuter} before
+ * this refactoring.
  * 
  * @author sumanan
  * @since 9 Oct, 2015
