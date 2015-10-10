@@ -21,14 +21,11 @@
  */
 package edu.mit.streamjit.impl.distributed.node;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -55,6 +52,7 @@ import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BufferManagementUtils.BufferCleaner;
+import edu.mit.streamjit.impl.distributed.node.BufferManagementUtils.MonitorBuffers;
 import edu.mit.streamjit.impl.distributed.node.BufferManager.GlobalBufferManager;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData;
@@ -104,7 +102,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	 */
 	private final boolean monitorBuffers = false;
 
-	private final String appName;
+	final String appName;
 
 	private ImmutableSet<StreamNodeProfiler> profilers;
 
@@ -246,7 +244,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		if (monitorBuffers && monBufs == null) {
 			// System.out.println("Creating new MonitorBuffers");
-			monBufs = new MonitorBuffers();
+			monBufs = new MonitorBuffers(this);
 			monBufs.start();
 		}
 	}
@@ -501,143 +499,6 @@ public class BlobsManagerImpl implements BlobsManager {
 					tokenSet = be.blob.getOutputs();
 			}
 			return tokenSet;
-		}
-	}
-
-	private static int count = 0;
-
-	/**
-	 * TODO: [27-01-2015] Use BufferProfiler to get buffer status and then write
-	 * the status in to the file. I created BufferProfiler by copying most of
-	 * the code from this class.
-	 * <p>
-	 * Profiles the buffer sizes in a timely manner and log that information
-	 * into a text file. This information may be useful to analyse and find out
-	 * deadlock situations.
-	 * 
-	 * @author sumanan
-	 * 
-	 */
-	class MonitorBuffers extends Thread {
-
-		private final int id;
-
-		private final AtomicBoolean stopFlag;
-
-		int sleepTime = 25000;
-
-		MonitorBuffers() {
-			super("MonitorBuffers");
-			stopFlag = new AtomicBoolean(false);
-			id = count++;
-		}
-
-		public void run() {
-			FileWriter writer = null;
-			try {
-				String fileName = String.format("%s%sBufferStatus%d.txt",
-						appName, File.separator, streamNode.getNodeID());
-				writer = new FileWriter(fileName, false);
-
-				writer.write(String.format(
-						"********Started*************** - %d\n", id));
-				while (!stopFlag.get()) {
-					try {
-						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {
-						break;
-					}
-
-					if (stopFlag.get())
-						break;
-
-					if (blobExecuters == null) {
-						writer.write("blobExecuters are null...\n");
-						continue;
-					}
-
-					writer.write("----------------------------------\n");
-					for (BlobExecuter be : blobExecuters.values()) {
-						writer.write("Status of blob " + be.blobID.toString()
-								+ "\n");
-
-						if (be.bufferMap == null) {
-							writer.write("Buffer map is null...\n");
-							continue;
-						}
-
-						if (stopFlag.get())
-							break;
-
-						writer.write("Input channel details\n");
-						write(be, writer, true);
-
-						writer.write("Output channel details\n");
-						write(be, writer, false);
-					}
-					writer.write("----------------------------------\n");
-					writer.flush();
-				}
-
-				writer.write(String.format(
-						"********Stopped*************** - %d\n", id));
-			} catch (IOException e1) {
-				e1.printStackTrace();
-				return;
-			}
-
-			try {
-				if (writer != null)
-					writer.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		private void write(BlobExecuter be, FileWriter writer, boolean isIn)
-				throws IOException {
-			Set<Token> tokenSet = tokenSet(be, isIn);
-			for (Token t : tokenSet) {
-				Buffer b = be.bufferMap.get(t);
-				if (b == null)
-					continue;
-				int min = Integer.MAX_VALUE;
-				// BE sets blob to null after the drained().
-				if (be.blob != null)
-					min = be.blob.getMinimumSteadyBufferCapacity(t);
-
-				int availableResource = isIn ? b.size() : b.capacity()
-						- b.size();
-
-				String status = availableResource >= min ? "Firable"
-						: "NOT firable";
-				writer.write(t.toString() + "\tMin - " + min
-						+ ",\tAvailableResource - " + availableResource + "\t"
-						+ status + "\n");
-			}
-		}
-
-		private Set<Token> tokenSet(BlobExecuter be, boolean isIn) {
-			Set<Token> tokenSet;
-			// BE sets blob to null after the drained().
-			if (be.blob == null) {
-				if (isIn)
-					tokenSet = be.inChnlManager.inputChannelsMap().keySet();
-				else
-					tokenSet = be.outChnlManager.outputChannelsMap().keySet();
-			} else {
-				if (isIn)
-					tokenSet = be.blob.getInputs();
-				else
-					tokenSet = be.blob.getOutputs();
-			}
-			return tokenSet;
-		}
-
-		public void stopMonitoring() {
-			// System.out.println("MonitorBuffers: Stop monitoring");
-			stopFlag.set(true);
-			this.interrupt();
 		}
 	}
 
