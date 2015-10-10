@@ -170,7 +170,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	}
 
 	private final Object drainedLastBlobLock = new Object();
-	boolean drainedLastBlobActionsDone = false;
+	private boolean drainedLastBlobActionsDone = false;
 	/**
 	 * Each {@link BlobDrainer} must call this method after its {@link Blob} has
 	 * been drained.
