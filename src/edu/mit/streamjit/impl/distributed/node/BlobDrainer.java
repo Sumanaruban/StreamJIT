@@ -181,7 +181,7 @@ class BlobDrainer {
 
 		DrainData dd = blob.getDrainData();
 		drainState = 5;
-		// printDrainDataStats(dd);
+		// DrainDataUtils.printDrainDataStats(dd);
 
 		ImmutableMap.Builder<Token, ImmutableList<Object>> inputDataBuilder = new ImmutableMap.Builder<>();
 		ImmutableMap.Builder<Token, ImmutableList<Object>> outputDataBuilder = new ImmutableMap.Builder<>();
@@ -259,18 +259,6 @@ class BlobDrainer {
 		DrainData dd = new DrainData(dataBuilder.build(), stateBuilder.build());
 		return new SNDrainElement.SNDrainedData(be.blobID, dd,
 				inputDataBuilder.build(), outputDataBuilder.build());
-	}
-
-	private void printDrainDataStats(DrainData dd) {
-		System.out.println("**********printDrainDataStats*************");
-		if (dd != null) {
-			for (Token t : dd.getData().keySet()) {
-				int size = dd.getData().get(t).size();
-				if (size > 0)
-					System.out.println("From Blob: " + t.toString() + " - "
-							+ size);
-			}
-		}
 	}
 
 	/**

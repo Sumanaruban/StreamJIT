@@ -127,4 +127,16 @@ public class DrainDataUtils {
 			e.printStackTrace();
 		}
 	}
+
+	public static void printDrainDataStats(DrainData dd) {
+		System.out.println("**********printDrainDataStats*************");
+		if (dd != null) {
+			for (Token t : dd.getData().keySet()) {
+				int size = dd.getData().get(t).size();
+				if (size > 0)
+					System.out.println("From Blob: " + t.toString() + " - "
+							+ size);
+			}
+		}
+	}
 }
