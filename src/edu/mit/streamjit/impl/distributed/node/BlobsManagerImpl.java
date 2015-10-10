@@ -292,47 +292,6 @@ public class BlobsManagerImpl implements BlobsManager {
 	}
 
 	/**
-	 * Just to added for debugging purpose.
-	 */
-	synchronized void printDrainedStatus() {
-		System.out.println("****************************************");
-		for (BlobExecuter be : blobExecuters.values()) {
-			switch (be.drainer.drainState) {
-				case 0 :
-					System.out.println(String.format("%s - No Drain Called",
-							be.blobID));
-					break;
-				case 1 :
-					System.out.println(String.format("%s - Drain Called",
-							be.blobID));
-					break;
-				case 2 :
-					System.out.println(String.format(
-							"%s - Drain Passed to Interpreter", be.blobID));
-					break;
-				case 3 :
-					System.out.println(String.format(
-							"%s - Returned from Interpreter", be.blobID));
-					break;
-				case 4 :
-					System.out.println(String.format(
-							"%s - Draining Completed. All threads stopped.",
-							be.blobID));
-					break;
-				case 5 :
-					System.out.println(String.format(
-							"%s - Processing Drain data", be.blobID));
-					break;
-				case 6 :
-					System.out.println(String.format("%s - Draindata sent",
-							be.blobID));
-					break;
-			}
-		}
-		System.out.println("****************************************");
-	}
-
-	/**
 	 * {@link CommandProcessor} at {@link StreamNode} side.
 	 * 
 	 * @author Sumanan sumanan@mit.edu
