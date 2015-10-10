@@ -138,7 +138,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 					.getExtraData(GlobalConstants.CONINFOMAP);
 
 			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
-					streamNode, app.conProvider, app.topLevelClass, appInstId);
+					streamNode, app.conProvider, app.topLevelClass, appInstId,
+					app.stateful);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
 					streamNode, bm, appInstId);
 			streamNode.registerMessageVisitor(mv);;

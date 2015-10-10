@@ -77,7 +77,8 @@ class BlobExecuter {
 
 	BlobExecuter(BlobsManagerImpl blobsManagerImpl, Token t, Blob blob,
 			ImmutableMap<Token, BoundaryInputChannel> inputChannels,
-			ImmutableMap<Token, BoundaryOutputChannel> outputChannels) {
+			ImmutableMap<Token, BoundaryOutputChannel> outputChannels,
+			boolean stateful) {
 		this.blobsManagerImpl = blobsManagerImpl;
 		this.eventTimeLogger = blobsManagerImpl.streamNode.eventTimeLogger;
 		this.crashed = new AtomicBoolean(false);
@@ -100,7 +101,7 @@ class BlobExecuter {
 			throw new IllegalStateException("No blobs to execute");
 
 		this.blobID = t;
-		this.starter = new StatelessStarter(this);
+		this.starter = starter(stateful);
 		this.drainer = new BlobDrainer(this);
 	}
 
@@ -225,6 +226,13 @@ class BlobExecuter {
 
 	void logEvent(String eventName, long elapsedMills) {
 		eventTimeLogger.logEvent(blobID + eventName, elapsedMills);
+	}
+
+	Starter starter(boolean stateful) {
+		if (stateful)
+			return new StatefullStarter(this);
+		else
+			return new StatelessStarter(this);
 	}
 
 	final class BlobThread2 extends Thread {
