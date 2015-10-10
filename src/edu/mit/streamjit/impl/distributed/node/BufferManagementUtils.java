@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData;
+import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData.BlobBufferStatus;
+import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement.SNBufferStatusData.BufferStatus;
 
 /**
  * {@link BlobsManagerImpl} refactored and its buffer management related inner
@@ -341,6 +346,108 @@ public class BufferManagementUtils {
 			// System.out.println("MonitorBuffers: Stop monitoring");
 			stopFlag.set(true);
 			this.interrupt();
+		}
+	}
+
+	static class BlobsBufferStatus {
+
+		final BlobsManagerImpl blobsManagerImpl;
+		BlobsBufferStatus(BlobsManagerImpl blobsManagerImpl) {
+			this.blobsManagerImpl = blobsManagerImpl;
+		}
+
+		/**
+		 * @return Status of all buffers of all blobs of this
+		 *         {@link BlobsManager}.
+		 */
+		SNBufferStatusData snBufferStatusData() {
+			Set<BlobBufferStatus> blobBufferStatusSet = new HashSet<>();
+			if (blobsManagerImpl.blobExecuters != null) {
+				for (BlobExecuter be : blobsManagerImpl.blobExecuters.values()) {
+					blobBufferStatusSet.add(blobBufferStatus(be));
+				}
+			}
+
+			return new SNBufferStatusData(
+					blobsManagerImpl.streamNode.getNodeID(),
+					ImmutableSet.copyOf(blobBufferStatusSet));
+		}
+
+		/**
+		 * Status of the all buffers of the blob represented by the @param be.
+		 * 
+		 * @param be
+		 * @return
+		 */
+		private BlobBufferStatus blobBufferStatus(BlobExecuter be) {
+			return new BlobBufferStatus(be.blobID, bufferStatusSet(be, true),
+					bufferStatusSet(be, false));
+		}
+
+		/**
+		 * @param be
+		 * @param isIn
+		 *            Decides whether a blob's inputbuffer's status or
+		 *            outputbuffers's status should be returned.
+		 * @return Set of {@link BufferStatus} of a blob's set of input buffers
+		 *         or set of output buffers depends on isIn argument.
+		 */
+		private ImmutableSet<BufferStatus> bufferStatusSet(BlobExecuter be,
+				boolean isIn) {
+			// TODO: [Feb 8, 2015] "be.blob == null" condition is added to
+			// avoid sending profile data after the blob has been drained. But
+			// we may need the "after draining buffer status" when analyzing
+			// dead lock situations. Remove "be.blob == null" at that time.
+			if (be.bufferMap == null || be.blob == null)
+				return ImmutableSet.of();
+
+			Set<Token> tokenSet = tokenSet(be, isIn);
+			Set<BufferStatus> bufferStatus = new HashSet<>();
+			for (Token t : tokenSet) {
+				bufferStatus.add(bufferStatus(t, be, isIn));
+			}
+			return ImmutableSet.copyOf(bufferStatus);
+		}
+
+		private BufferStatus bufferStatus(Token bufferID, BlobExecuter be,
+				boolean isIn) {
+			int min = Integer.MAX_VALUE;
+			// BE sets blob to null after the drained().
+			if (be.blob != null)
+				min = be.blob.getMinimumSteadyBufferCapacity(bufferID);
+
+			int availableResource = min;
+			Buffer b = be.bufferMap.get(bufferID);
+			if (b != null)
+				availableResource = isIn ? b.size() : b.capacity() - b.size();
+
+			return new BufferStatus(bufferID, min, availableResource);
+		}
+
+		/**
+		 * Return a blob's either input or output buffer's token set.
+		 * 
+		 * @param be
+		 * @param isIn
+		 *            Decides whether a blob's inputbuffer's token set or
+		 *            outputbuffers's token set should be returned.
+		 * @return Blob's inputbuffer's token set or outputbuffers's token set.
+		 */
+		private Set<Token> tokenSet(BlobExecuter be, boolean isIn) {
+			Set<Token> tokenSet;
+			// BE sets blob to null after the drained().
+			if (be.blob == null) {
+				if (isIn)
+					tokenSet = be.inChnlManager.inputChannelsMap().keySet();
+				else
+					tokenSet = be.outChnlManager.outputChannelsMap().keySet();
+			} else {
+				if (isIn)
+					tokenSet = be.blob.getInputs();
+				else
+					tokenSet = be.blob.getOutputs();
+			}
+			return tokenSet;
 		}
 	}
 }
