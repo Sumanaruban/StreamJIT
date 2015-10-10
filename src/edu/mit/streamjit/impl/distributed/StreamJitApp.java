@@ -34,6 +34,7 @@ import edu.mit.streamjit.api.OneToOneElement;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.Portal;
 import edu.mit.streamjit.api.Splitjoin;
+import edu.mit.streamjit.api.StatefulFilter;
 import edu.mit.streamjit.api.StreamCompilationFailedException;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.AbstractReadOnlyBuffer;
@@ -42,6 +43,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
 import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Portals;
@@ -244,6 +246,8 @@ public class StreamJitApp<I, O> {
 		builder.putExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME,
 				topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
+		builder.addParameter(SwitchParameter.create(GlobalConstants.STATEFUL,
+				isGraphStateful()));
 		return builder.build();
 	}
 
@@ -274,5 +278,13 @@ public class StreamJitApp<I, O> {
 		}
 		return new AppInstance(this, appInstUniqueIDGen++,
 				partitionsMachineMap, null, bg);
+	}
+
+	private boolean isGraphStateful() {
+		for (Worker<?, ?> w : Workers.getAllWorkersInGraph(source)) {
+			if (w instanceof StatefulFilter)
+				return true;
+		}
+		return false;
 	}
 }

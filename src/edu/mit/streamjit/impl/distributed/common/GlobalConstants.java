@@ -45,6 +45,8 @@ public final class GlobalConstants {
 
 	public static final String APP_NAME = "APP_NAME";
 
+	public static final String STATEFUL = "STATEFUL";
+
 	/**
 	 * nodeID to {@link NodeInfo} map is stored in the configuration in this
 	 * name.
