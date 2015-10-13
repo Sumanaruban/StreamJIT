@@ -1,6 +1,7 @@
 package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
@@ -46,7 +47,7 @@ interface Starter {
 final class StatelessStarter implements Starter {
 
 	volatile int steadyRunCount;
-	private final Object initScheduleRunMonitor = new Object();
+	private final CountDownLatch latch = new CountDownLatch(1);
 	private boolean isChannelsStarted = false;
 	final BlobExecuter be;
 
@@ -56,9 +57,7 @@ final class StatelessStarter implements Starter {
 
 	@Override
 	public void start() {
-		synchronized (initScheduleRunMonitor) {
-			initScheduleRunMonitor.notifyAll();
-		}
+		latch.countDown();
 	}
 
 	@Override
@@ -93,10 +92,7 @@ final class StatelessStarter implements Starter {
 					.writeObject(new SNMessageElementHolder(me,
 							be.blobsManagerImpl.appInstId));
 		}
-
-		synchronized (initScheduleRunMonitor) {
-			initScheduleRunMonitor.wait();
-		}
+		latch.await();
 	}
 
 	@Override
