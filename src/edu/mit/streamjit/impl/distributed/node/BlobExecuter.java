@@ -3,6 +3,7 @@ package edu.mit.streamjit.impl.distributed.node;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -629,14 +630,12 @@ class BlobExecuter {
 	private final class StatelessStarter implements Starter {
 
 		volatile int steadyRunCount;
-		private final Object initScheduleRunMonitor = new Object();
+		private final CountDownLatch latch = new CountDownLatch(1);
 		private boolean isChannelsStarted = false;
 
 		@Override
 		public void start() {
-			synchronized (initScheduleRunMonitor) {
-				initScheduleRunMonitor.notifyAll();
-			}
+			latch.countDown();
 		}
 
 		@Override
@@ -672,10 +671,7 @@ class BlobExecuter {
 				blobsManagerImpl.streamNode.controllerConnection
 						.writeObject(me);
 			}
-
-			synchronized (initScheduleRunMonitor) {
-				initScheduleRunMonitor.wait();
-			}
+			latch.await();
 		}
 
 		@Override
