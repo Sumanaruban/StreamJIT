@@ -1,0 +1,38 @@
+# Extracts jobID from Slurm.sbatch's return string.
+function jobId(){
+	IFS=' '
+	read -a outsplit <<< "${out}"
+	jobid=${outsplit[3]}
+	echo $jobid
+}
+
+# Returns nodelist line from "scontrol show job $jobid"'s output.
+function nodelistLine(){
+	ddd=$(scontrol show job $jobid)
+	eee=$(echo $ddd | tr '\n' ' ') #ddd contains newlines. Lets remove all newlines.
+	IFS=' '
+	read -a dnsservers <<< "${eee}"
+	echo ${dnsservers[28]}
+}
+
+function nodeID(){
+	IFS='='
+	read -a rrr <<< "${dnsservers[28]}"
+	echo ${rrr[0]}
+	echo ${rrr[1]}
+	nodeid=${rrr[1]:5}
+	echo $nodeid
+}
+
+out=$(sbatch controller.sh) #start the controller.
+echo $out
+
+jobid=$(jobId)
+nodelistline=$(nodelistLine)
+nodeid=0
+nodeID
+
+ip=$(($nodeid+10))	#In Lanka cluster, a node's ip address is 128.30.116.[Node number + 10]. 
+			#Here $ip variable contains only the last byte of the ip address.
+echo $ip
+sbatch streamnode.sh $ip
