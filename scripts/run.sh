@@ -1,4 +1,4 @@
-# Extracts jobID from Slurm.sbatch's return string.
+# Extracts jobID from slurm.sbatch's return string.
 function jobId(){
 	IFS=' '
 	read -a outsplit <<< "${out}"
@@ -6,7 +6,7 @@ function jobId(){
 	echo $jobid
 }
 
-# Returns nodelist line from "scontrol show job $jobid"'s output.
+# Returns the line that contains nodelist info in "scontrol show job $jobid"'s output.
 function nodelistLine(){
 	ddd=$(scontrol show job $jobid)
 	eee=$(echo $ddd | tr '\n' ' ') #ddd contains newlines. Lets remove all newlines.
