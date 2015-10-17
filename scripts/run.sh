@@ -17,7 +17,7 @@ function nodelistLine(){
 
 function nodeID(){
 	IFS='='
-	read -a rrr <<< "${dnsservers[28]}"
+	read -a rrr <<< "${nodelistline}"
 	echo ${rrr[0]}
 	echo ${rrr[1]}
 	nodeid=${rrr[1]:5}
