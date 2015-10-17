@@ -60,3 +60,5 @@ creatdirs $app			# Changes the current working directory(CWD) as well.
 mv "optionsLanka.properties" "options.properties"
 createCTRLRSh $app $mainClass $totalNodes
 createSNSh $app $nodes
+cp ../run.sh run.sh
+./run.sh
