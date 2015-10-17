@@ -3,5 +3,5 @@
 #SBATCH -N 2
 #SBATCH --cpu_bind=verbose,cores
 #SBATCH --exclusive
-cd /data/scratch/sumanan
-srun --exclusive  --nodes=2 ./bin/java/jdk1.7.0_40/bin/java -jar fmradio/StreamNode.jar 128.30.116.12
+cd /data/scratch/sumanan/FMRadio
+srun --exclusive  --nodes=2 ../bin/java/jdk1.8.0_25/bin/java -Xmx2048m -jar StreamNode.jar 128.30.116.17
