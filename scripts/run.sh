@@ -11,8 +11,8 @@ function nodelistLine(){
 	ddd=$(scontrol show job $jobid)
 	eee=$(echo $ddd | tr '\n' ' ') #ddd contains newlines. Lets remove all newlines.
 	IFS=' '
-	read -a dnsservers <<< "${eee}"
-	echo ${dnsservers[28]}
+	read -a lines <<< "${eee}"
+	echo ${lines[28]}
 }
 
 function nodeID(){
