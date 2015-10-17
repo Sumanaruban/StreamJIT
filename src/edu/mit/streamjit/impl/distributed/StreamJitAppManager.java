@@ -389,10 +389,10 @@ public class StreamJitAppManager {
 	 */
 	private void start(AppInstanceManager aim) {
 		startHead();
+		startTail();
 		if (!app.stateful)
 			aim.runInitSchedule();
 		aim.start();
-		startTail();
 	}
 
 	private void runInitSchedule() {
