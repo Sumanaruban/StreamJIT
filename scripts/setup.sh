@@ -2,6 +2,7 @@
 #Author - Sumanan
 #Feb 9, 2015
 #Setup directories and scripts to run a distributed StreamJit app.
+#Specifically, creates appDir, controller.sh, and streamnode.sh
 function writeController(){
 	runfile="controller.sh"
 	res=$(get_prop "./options.properties" "tune")
