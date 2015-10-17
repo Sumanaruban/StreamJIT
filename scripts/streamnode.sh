@@ -4,4 +4,4 @@
 #SBATCH --cpu_bind=verbose,cores
 #SBATCH --exclusive
 cd /data/scratch/sumanan/FMRadio
-srun --exclusive  --nodes=2 ../bin/java/jdk1.8.0_25/bin/java -Xmx2048m -jar StreamNode.jar 128.30.116.17
+srun --exclusive  --nodes=2 ../bin/java/jdk1.8.0_31/bin/java -Xmx120G -jar -XX:InitialCodeCacheSize=1G -XX:ReservedCodeCacheSize=2G StreamNode.jar 128.30.116.11
