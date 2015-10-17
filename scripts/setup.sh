@@ -3,7 +3,7 @@
 #Feb 9, 2015
 #Setup directories and scripts to run a distributed StreamJit app.
 #Specifically, creates appDir, controller.sh, and streamnode.sh
-function writeController(){
+function createCTRLRSh(){
 	runfile="controller.sh"
 	res=$(get_prop "./options.properties" "tune")
 	echo "#!/bin/bash" > $runfile
@@ -21,7 +21,7 @@ function writeController(){
 	echo "srun -l ../bin/java/jdk1.8.0_31/bin/java -Xmx120G -XX:InitialCodeCacheSize=1G -XX:ReservedCodeCacheSize=2G -jar $1.jar $3" >> $runfile
 }
 
-function writeSN(){
+function createSNSh(){
 	runfile="streamnode.sh"
 	echo "#!/bin/bash" > $runfile
 	echo "#SBATCH --tasks-per-node=1" >> $runfile
@@ -56,7 +56,7 @@ mainClass=${args[1]}
 nodes=${args[2]}
 totalNodes=$((nodes + 1))
 cd /data/scratch/sumanan
-creatdirs $app			#Changes the current working directory(CWD).
+creatdirs $app			# Changes the current working directory(CWD) as well.
 mv "optionsLanka.properties" "options.properties"
-writeController $app $mainClass $totalNodes
-writeSN $app $nodes
+createCTRLRSh $app $mainClass $totalNodes
+createSNSh $app $nodes
