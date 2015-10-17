@@ -2,8 +2,8 @@
 #Author - Sumanan
 #Feb 9, 2015
 #Setup directories and scripts to run a distributed StreamJit app.
-function writeRun(){
-	runfile="run.sh"
+function writeController(){
+	runfile="controller.sh"
 	res=$(get_prop "./options.properties" "tune")
 	echo "#!/bin/bash" > $runfile
 	echo "#SBATCH --tasks-per-node=1" >> $runfile
@@ -57,5 +57,5 @@ totalNodes=$((nodes + 1))
 cd /data/scratch/sumanan
 creatdirs $app			#Changes the current working directory(CWD).
 mv "optionsLanka.properties" "options.properties"
-writeRun $app $mainClass $totalNodes
+writeController $app $mainClass $totalNodes
 writeSN $app $nodes
