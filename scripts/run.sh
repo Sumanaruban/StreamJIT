@@ -18,10 +18,8 @@ function nodelistLine(){
 function nodeID(){
 	IFS='='
 	read -a rrr <<< "${nodelistline}"
-	echo ${rrr[0]}
-	echo ${rrr[1]}
-	nodeid=${rrr[1]:5}
-	echo $nodeid
+	id=${rrr[1]:5}
+	echo $id
 }
 
 function verifyIP(){
@@ -38,8 +36,7 @@ echo $out
 
 jobid=$(jobId)
 nodelistline=$(nodelistLine)
-nodeid=0
-nodeID
+nodeid=$(nodeID)
 
 ip=$(($nodeid+10))	#In Lanka cluster, a node's ip address is 128.30.116.[Node number + 10]. 
 			#Here $ip variable contains only the last byte of the ip address.
