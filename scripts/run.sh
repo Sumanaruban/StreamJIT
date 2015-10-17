@@ -24,6 +24,15 @@ function nodeID(){
 	echo $nodeid
 }
 
+function verifyIP(){
+	if [ $ip -eq 10 ]; then
+		echo "Error in IP address finding"
+		echo "Terminating the controller"
+		scancel $jobid
+		exit
+	fi
+}
+
 out=$(sbatch controller.sh) #start the controller.
 echo $out
 
@@ -35,4 +44,5 @@ nodeID
 ip=$(($nodeid+10))	#In Lanka cluster, a node's ip address is 128.30.116.[Node number + 10]. 
 			#Here $ip variable contains only the last byte of the ip address.
 echo $ip
+verifyIP
 sbatch streamnode.sh $ip
