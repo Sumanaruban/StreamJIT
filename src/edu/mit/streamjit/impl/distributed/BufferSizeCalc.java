@@ -177,16 +177,24 @@ public class BufferSizeCalc {
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
 	}
 
-	private static class bufInfo2 {
-		int steadyInput;
-		int steadyOutput;
-		Variable outVar;
-		Variable inVar;
+	private static class bufInfo2 extends bufInfo {
 
 		void addconstrain(ILPSolver solver) {
 			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
 					steadyInput, inVar);
 			solver.constrainEquals(exp, 0);
+		}
+
+		@Override
+		void addInputs(int steadyInput, int initInput) {
+			this.steadyInput = steadyInput;
+			this.initInput = 0;
+		}
+
+		@Override
+		void addOutputs(int steadyOutput, int initOutput) {
+			this.steadyOutput = steadyOutput;
+			this.initOutput = 0;
 		}
 	}
 
