@@ -68,15 +68,7 @@ public class BufferSizeCalc {
 		boolean inputConsidered = true;
 		MinInfo minInfo = new MinInfo(bufSizes);
 
-		ILPSolver solver = new ILPSolver();
-		Map<Token, bufInfo> bufInfos = new HashMap<>();
-		Map<Token, Variable> variables = new HashMap<>();
-		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
-				variables);
-
-		setInputVariables(app, minInfo, solver, bufInfos, variables);
-
-		solve(solver, variables);
+		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
 
 		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
 
@@ -107,6 +99,20 @@ public class BufferSizeCalc {
 			printFinalSizes(minInfo, finalInputBuf);
 		steadyStateRatios(minInfo, app);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
+	}
+
+	private static Map<Token, Variable> ilpSolve(AppInstance app,
+			boolean inputConsidered, MinInfo minInfo) {
+		ILPSolver solver = new ILPSolver();
+		Map<Token, bufInfo> bufInfos = new HashMap<>();
+		Map<Token, Variable> variables = new HashMap<>();
+		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
+				variables);
+
+		setInputVariables(app, minInfo, solver, bufInfos, variables);
+
+		solve(solver, variables);
+		return variables;
 	}
 
 	private static void setOutputVariables(AppInstance app,
@@ -142,15 +148,7 @@ public class BufferSizeCalc {
 		Token globalInToken = getGlobalInToken(app);
 		boolean inputConsidered = false;
 
-		ILPSolver solver = new ILPSolver();
-		Map<Token, bufInfo> bufInfos = new HashMap<>();
-		Map<Token, Variable> variables = new HashMap<>();
-		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
-				variables);
-
-		setInputVariables(app, minInfo, solver, bufInfos, variables);
-
-		solve(solver, variables);
+		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
 
 		int steadyIn = -1;
 		int steadyOut = -1;
