@@ -219,7 +219,7 @@ public class BufferSizeCalc {
 		}
 
 		ILPSolver solver = new ILPSolver();
-		Map<Token, bufInfo2> bufInfos = new HashMap<>();
+		Map<Token, bufInfo> bufInfos = new HashMap<>();
 		Map<Token, Variable> variables = new HashMap<>();
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			Variable v = solver.newVariable(blob.toString());
@@ -231,7 +231,7 @@ public class BufferSizeCalc {
 				if (out.isOverallOutput()) {
 					continue;
 				}
-				bufInfo2 b = new bufInfo2();
+				bufInfo b = new bufInfo2();
 				b.steadyOutput = minSteadyOutputBufCapacity.get(out);
 				b.outVar = v;
 				bufInfos.put(out, b);
@@ -247,7 +247,7 @@ public class BufferSizeCalc {
 				if (in.isOverallInput()) {
 					continue;
 				}
-				bufInfo2 b = bufInfos.get(in);
+				bufInfo b = bufInfos.get(in);
 				if (b == null)
 					throw new IllegalStateException("No buffer info");
 				b.steadyInput = minSteadyInputBufCapacity.get(in);
