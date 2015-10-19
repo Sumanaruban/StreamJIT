@@ -254,21 +254,15 @@ public class BufferSizeCalc {
 	 * @return Very last blob's blobID and global output token.
 	 */
 	private static Pair<Token, Token> getGlobalOutTokens(AppInstance app) {
-		Token globalOutToken = null;
-		Token globalOutBlob = null;
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				if (out.isOverallOutput()) {
-					globalOutToken = out;
-					globalOutBlob = blob;
-					break;
+					return new Pair<>(out, blob);
 				}
 			}
-			if (globalOutToken != null)
-				break;
 		}
-		return new Pair<>(globalOutToken, globalOutBlob);
+		throw new IllegalStateException("Global output token is Null");
 	}
 
 	private static Token getGlobalInToken(AppInstance app) {
