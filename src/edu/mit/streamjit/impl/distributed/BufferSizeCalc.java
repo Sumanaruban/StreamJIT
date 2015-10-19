@@ -38,18 +38,37 @@ public class BufferSizeCalc {
 	 */
 	public static final int factor = 3;
 
-	private static class bufInfo {
-		int steadyInput;
-		int steadyOutput;
-		int initInput;
-		int initOutput;
+	private static abstract class bufInfo {
+		protected int steadyInput;
+		protected int steadyOutput;
+		protected int initInput;
+		protected int initOutput;
 		Variable outVar;
 		Variable inVar;
+
+		abstract void addInputs(int steadyInput, int initInput);
+		abstract void addOutputs(int steadyOutput, int initOutput);
+		abstract void addconstrain(ILPSolver solver);
+	}
+
+	private static class bufInfo1 extends bufInfo {
 
 		void addconstrain(ILPSolver solver) {
 			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
 					steadyInput, inVar);
 			solver.constrainAtLeast(exp, (initInput + steadyInput - initOutput));
+		}
+
+		@Override
+		void addInputs(int steadyInput, int initInput) {
+			this.steadyInput = steadyInput;
+			this.initInput = initInput;
+		}
+
+		@Override
+		void addOutputs(int steadyOutput, int initOutput) {
+			this.steadyOutput = steadyOutput;
+			this.initOutput = initOutput;
 		}
 	}
 
@@ -98,9 +117,9 @@ public class BufferSizeCalc {
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
-				bufInfo b = new bufInfo();
-				b.initOutput = minInitOutputBufCapacity.get(out);
-				b.steadyOutput = minSteadyOutputBufCapacity.get(out);
+				bufInfo b = new bufInfo1();
+				b.addOutputs(minSteadyOutputBufCapacity.get(out),
+						minInitOutputBufCapacity.get(out));
 				b.outVar = v;
 				bufInfos.put(out, b);
 			}
@@ -117,8 +136,8 @@ public class BufferSizeCalc {
 				bufInfo b = bufInfos.get(in);
 				if (b == null)
 					throw new IllegalStateException("No buffer info");
-				b.initInput = minInitInputBufCapacity.get(in);
-				b.steadyInput = minSteadyInputBufCapacity.get(in);
+				b.addInputs(minSteadyInputBufCapacity.get(in),
+						minInitInputBufCapacity.get(in));
 				b.inVar = v;
 				b.addconstrain(solver);
 			}
