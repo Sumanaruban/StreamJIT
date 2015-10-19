@@ -38,40 +38,6 @@ public class BufferSizeCalc {
 	 */
 	public static final int factor = 3;
 
-	private static abstract class bufInfo {
-		protected int steadyInput;
-		protected int steadyOutput;
-		protected int initInput;
-		protected int initOutput;
-		Variable outVar;
-		Variable inVar;
-
-		abstract void addInputs(int steadyInput, int initInput);
-		abstract void addOutputs(int steadyOutput, int initOutput);
-		abstract void addconstrain(ILPSolver solver);
-	}
-
-	private static class bufInfo1 extends bufInfo {
-
-		void addconstrain(ILPSolver solver) {
-			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
-					steadyInput, inVar);
-			solver.constrainAtLeast(exp, (initInput + steadyInput - initOutput));
-		}
-
-		@Override
-		void addInputs(int steadyInput, int initInput) {
-			this.steadyInput = steadyInput;
-			this.initInput = initInput;
-		}
-
-		@Override
-		void addOutputs(int steadyOutput, int initOutput) {
-			this.steadyOutput = steadyOutput;
-			this.initOutput = initOutput;
-		}
-	}
-
 	private static void solve(ILPSolver solver, Map<Token, Variable> variables) {
 		LinearExpr lf = null;
 		for (Variable v : variables.values()) {
@@ -161,27 +127,6 @@ public class BufferSizeCalc {
 					finalInputBuf);
 		steadyStateRatios(bufSizes, app);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
-	}
-
-	private static class bufInfo2 extends bufInfo {
-
-		void addconstrain(ILPSolver solver) {
-			LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(
-					steadyInput, inVar);
-			solver.constrainEquals(exp, 0);
-		}
-
-		@Override
-		void addInputs(int steadyInput, int initInput) {
-			this.steadyInput = steadyInput;
-			this.initInput = 0;
-		}
-
-		@Override
-		void addOutputs(int steadyOutput, int initOutput) {
-			this.steadyOutput = steadyOutput;
-			this.initOutput = 0;
-		}
 	}
 
 	/**
@@ -424,5 +369,60 @@ public class BufferSizeCalc {
 			this.bufferSizes = bufferSizes;
 			this.steadyRunCount = steadyRunCount;
 		}
+	}
+}
+
+abstract class bufInfo {
+	protected int steadyInput;
+	protected int steadyOutput;
+	protected int initInput;
+	protected int initOutput;
+	Variable outVar;
+	Variable inVar;
+
+	abstract void addInputs(int steadyInput, int initInput);
+	abstract void addOutputs(int steadyOutput, int initOutput);
+	abstract void addconstrain(ILPSolver solver);
+}
+
+class bufInfo1 extends bufInfo {
+
+	void addconstrain(ILPSolver solver) {
+		LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(steadyInput,
+				inVar);
+		solver.constrainAtLeast(exp, (initInput + steadyInput - initOutput));
+	}
+
+	@Override
+	void addInputs(int steadyInput, int initInput) {
+		this.steadyInput = steadyInput;
+		this.initInput = initInput;
+	}
+
+	@Override
+	void addOutputs(int steadyOutput, int initOutput) {
+		this.steadyOutput = steadyOutput;
+		this.initOutput = initOutput;
+	}
+}
+
+class bufInfo2 extends bufInfo {
+
+	void addconstrain(ILPSolver solver) {
+		LinearExpr exp = outVar.asLinearExpr(steadyOutput).minus(steadyInput,
+				inVar);
+		solver.constrainEquals(exp, 0);
+	}
+
+	@Override
+	void addInputs(int steadyInput, int initInput) {
+		this.steadyInput = steadyInput;
+		this.initInput = 0;
+	}
+
+	@Override
+	void addOutputs(int steadyOutput, int initOutput) {
+		this.steadyOutput = steadyOutput;
+		this.initOutput = 0;
 	}
 }
