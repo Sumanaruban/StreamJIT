@@ -38,6 +38,12 @@ public class BufferSizeCalc {
 	 */
 	public static final int factor = 3;
 
+	private static bufInfo makeBufInfo(boolean inputConsidered) {
+		if (inputConsidered)
+			return new bufInfo1();
+		return new bufInfo2();
+	}
+
 	private static void solve(ILPSolver solver, Map<Token, Variable> variables) {
 		LinearExpr lf = null;
 		for (Variable v : variables.values()) {
@@ -59,6 +65,7 @@ public class BufferSizeCalc {
 			Map<Integer, BufferSizes> bufSizes, AppInstance app) {
 
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
+		boolean inputConsidered = true;
 
 		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
@@ -84,7 +91,7 @@ public class BufferSizeCalc {
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
-				bufInfo b = new bufInfo1();
+				bufInfo b = makeBufInfo(inputConsidered);
 				b.addOutputs(minSteadyOutputBufCapacity.get(out),
 						minInitOutputBufCapacity.get(out));
 				b.outVar = v;
@@ -140,6 +147,7 @@ public class BufferSizeCalc {
 		Token globalOutToken = p.first;
 		Token globalOutBlob = p.second;
 		Token globalInToken = getGlobalInToken(app);
+		boolean inputConsidered = false;
 
 		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
@@ -166,7 +174,7 @@ public class BufferSizeCalc {
 				if (out.isOverallOutput()) {
 					continue;
 				}
-				bufInfo b = new bufInfo2();
+				bufInfo b = makeBufInfo(inputConsidered);
 				b.addOutputs(minSteadyOutputBufCapacity.get(out),
 						minInitOutputBufCapacity.get(out));
 				b.outVar = v;
