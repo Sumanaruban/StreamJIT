@@ -82,22 +82,8 @@ public class BufferSizeCalc {
 		ILPSolver solver = new ILPSolver();
 		Map<Token, bufInfo> bufInfos = new HashMap<>();
 		Map<Token, Variable> variables = new HashMap<>();
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Variable v = solver.newVariable(blob.toString());
-			variables.put(blob, v);
-			LinearExpr expr = v.asLinearExpr(1);
-			solver.constrainAtLeast(expr, 1);
-			Set<Token> outputs = app.blobGraph.getOutputs(blob);
-			for (Token out : outputs) {
-				if (out.isOverallOutput())
-					continue;
-				bufInfo b = makeBufInfo(inputConsidered);
-				b.addOutputs(minSteadyOutputBufCapacity.get(out),
-						minInitOutputBufCapacity.get(out));
-				b.outVar = v;
-				bufInfos.put(out, b);
-			}
-		}
+		setOutputVariables(app, inputConsidered, minInitOutputBufCapacity,
+				minSteadyOutputBufCapacity, solver, bufInfos, variables);
 
 		setInputVariables(app, minInitInputBufCapacity,
 				minSteadyInputBufCapacity, solver, bufInfos, variables);
@@ -136,6 +122,29 @@ public class BufferSizeCalc {
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
 	}
 
+	private static void setOutputVariables(AppInstance app,
+			boolean inputConsidered,
+			Map<Token, Integer> minInitOutputBufCapacity,
+			Map<Token, Integer> minSteadyOutputBufCapacity, ILPSolver solver,
+			Map<Token, bufInfo> bufInfos, Map<Token, Variable> variables) {
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Variable v = solver.newVariable(blob.toString());
+			variables.put(blob, v);
+			LinearExpr expr = v.asLinearExpr(1);
+			solver.constrainAtLeast(expr, 1);
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			for (Token out : outputs) {
+				if (out.isOverallOutput())
+					continue;
+				bufInfo b = makeBufInfo(inputConsidered);
+				b.addOutputs(minSteadyOutputBufCapacity.get(out),
+						minInitOutputBufCapacity.get(out));
+				b.outVar = v;
+				bufInfos.put(out, b);
+			}
+		}
+	}
+
 	/**
 	 * Calculates blobs' execution ratios during steady state execution.
 	 * Calculates the total graph's steady state input and output.
@@ -164,23 +173,8 @@ public class BufferSizeCalc {
 		ILPSolver solver = new ILPSolver();
 		Map<Token, bufInfo> bufInfos = new HashMap<>();
 		Map<Token, Variable> variables = new HashMap<>();
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Variable v = solver.newVariable(blob.toString());
-			variables.put(blob, v);
-			LinearExpr expr = v.asLinearExpr(1);
-			solver.constrainAtLeast(expr, 1);
-			Set<Token> outputs = app.blobGraph.getOutputs(blob);
-			for (Token out : outputs) {
-				if (out.isOverallOutput()) {
-					continue;
-				}
-				bufInfo b = makeBufInfo(inputConsidered);
-				b.addOutputs(minSteadyOutputBufCapacity.get(out),
-						minInitOutputBufCapacity.get(out));
-				b.outVar = v;
-				bufInfos.put(out, b);
-			}
-		}
+		setOutputVariables(app, inputConsidered, minInitOutputBufCapacity,
+				minSteadyOutputBufCapacity, solver, bufInfos, variables);
 
 		setInputVariables(app, minInitInputBufCapacity,
 				minSteadyInputBufCapacity, solver, bufInfos, variables);
