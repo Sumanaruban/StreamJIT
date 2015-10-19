@@ -63,14 +63,11 @@ public class BufferSizeCalc {
 	 */
 	public static GraphSchedule finalInputBufSizes(
 			Map<Integer, BufferSizes> bufSizes, AppInstance app) {
-
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
 		boolean inputConsidered = true;
 		MinInfo minInfo = new MinInfo(bufSizes);
-
 		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
-
-		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
 
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
@@ -94,7 +91,6 @@ public class BufferSizeCalc {
 
 		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
 				.build();
-
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
 		steadyStateRatios(minInfo, app);
@@ -108,9 +104,7 @@ public class BufferSizeCalc {
 		Map<Token, Variable> variables = new HashMap<>();
 		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
 				variables);
-
 		setInputVariables(app, minInfo, solver, bufInfos, variables);
-
 		solve(solver, variables);
 		return variables;
 	}
@@ -141,7 +135,8 @@ public class BufferSizeCalc {
 	 * Calculates the total graph's steady state input and output.
 	 */
 	private static void steadyStateRatios(MinInfo minInfo, AppInstance app) {
-
+		int steadyIn = -1;
+		int steadyOut = -1;
 		Pair<Token, Token> p = getGlobalOutTokens(app);
 		Token globalOutToken = p.first;
 		Token globalOutBlob = p.second;
@@ -149,10 +144,6 @@ public class BufferSizeCalc {
 		boolean inputConsidered = false;
 
 		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
-
-		int steadyIn = -1;
-		int steadyOut = -1;
-
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int steadyRun = variables.get(blob).value();
 			System.out.println("Steady run factor of blob " + blob.toString()
@@ -164,7 +155,6 @@ public class BufferSizeCalc {
 				steadyOut = minInfo.minSteadyOutputBufCapacity
 						.get(globalOutToken) * steadyRun;
 		}
-
 		System.out.println("Total graph's steady in = " + steadyIn);
 		System.out.println("Total graph's steady out = " + steadyOut);
 	}
