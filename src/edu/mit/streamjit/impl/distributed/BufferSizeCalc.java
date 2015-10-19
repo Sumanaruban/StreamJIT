@@ -92,11 +92,12 @@ public class BufferSizeCalc {
 	public static GraphSchedule finalInputBufSizes(
 			Map<Integer, BufferSizes> bufSizes, AppInstance app) {
 
+		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
+
 		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
-		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
 
 		for (BufferSizes b : bufSizes.values()) {
 			minInitInputBufCapacity.putAll(b.minInitInputBufCapacity);
