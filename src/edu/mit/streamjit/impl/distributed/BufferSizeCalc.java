@@ -210,10 +210,14 @@ public class BufferSizeCalc {
 		Token globalOutBlob = p.second;
 		Token globalInToken = getGlobalInToken(app);
 
+		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
 
 		for (BufferSizes b : bufSizes.values()) {
+			minInitInputBufCapacity.putAll(b.minInitInputBufCapacity);
+			minInitOutputBufCapacity.putAll(b.minInitOutputBufCapacity);
 			minSteadyInputBufCapacity.putAll(b.minSteadyInputBufCapacity);
 			minSteadyOutputBufCapacity.putAll(b.minSteadyOutputBufCapacity);
 		}
@@ -232,7 +236,8 @@ public class BufferSizeCalc {
 					continue;
 				}
 				bufInfo b = new bufInfo2();
-				b.addOutputs(minSteadyOutputBufCapacity.get(out), 0);
+				b.addOutputs(minSteadyOutputBufCapacity.get(out),
+						minInitOutputBufCapacity.get(out));
 				b.outVar = v;
 				bufInfos.put(out, b);
 			}
@@ -250,7 +255,8 @@ public class BufferSizeCalc {
 				bufInfo b = bufInfos.get(in);
 				if (b == null)
 					throw new IllegalStateException("No buffer info");
-				b.addInputs(minSteadyInputBufCapacity.get(in), 0);
+				b.addInputs(minSteadyInputBufCapacity.get(in),
+						minInitInputBufCapacity.get(in));
 				b.inVar = v;
 				b.addconstrain(solver);
 			}
