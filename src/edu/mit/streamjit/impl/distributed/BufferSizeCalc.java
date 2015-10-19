@@ -232,7 +232,7 @@ public class BufferSizeCalc {
 					continue;
 				}
 				bufInfo b = new bufInfo2();
-				b.steadyOutput = minSteadyOutputBufCapacity.get(out);
+				b.addOutputs(minSteadyOutputBufCapacity.get(out), 0);
 				b.outVar = v;
 				bufInfos.put(out, b);
 			}
@@ -250,7 +250,7 @@ public class BufferSizeCalc {
 				bufInfo b = bufInfos.get(in);
 				if (b == null)
 					throw new IllegalStateException("No buffer info");
-				b.steadyInput = minSteadyInputBufCapacity.get(in);
+				b.addInputs(minSteadyInputBufCapacity.get(in), 0);
 				b.inVar = v;
 				b.addconstrain(solver);
 			}
