@@ -66,27 +66,15 @@ public class BufferSizeCalc {
 
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
 		boolean inputConsidered = true;
-
-		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
-
-		for (BufferSizes b : bufSizes.values()) {
-			minInitInputBufCapacity.putAll(b.minInitInputBufCapacity);
-			minInitOutputBufCapacity.putAll(b.minInitOutputBufCapacity);
-			minSteadyInputBufCapacity.putAll(b.minSteadyInputBufCapacity);
-			minSteadyOutputBufCapacity.putAll(b.minSteadyOutputBufCapacity);
-		}
+		MinInfo minInfo = new MinInfo(bufSizes);
 
 		ILPSolver solver = new ILPSolver();
 		Map<Token, bufInfo> bufInfos = new HashMap<>();
 		Map<Token, Variable> variables = new HashMap<>();
-		setOutputVariables(app, inputConsidered, minInitOutputBufCapacity,
-				minSteadyOutputBufCapacity, solver, bufInfos, variables);
+		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
+				variables);
 
-		setInputVariables(app, minInitInputBufCapacity,
-				minSteadyInputBufCapacity, solver, bufInfos, variables);
+		setInputVariables(app, minInfo, solver, bufInfos, variables);
 
 		solve(solver, variables);
 
@@ -101,10 +89,11 @@ public class BufferSizeCalc {
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
-				int initOut = minInitOutputBufCapacity.get(out);
-				int steadyOut = minSteadyOutputBufCapacity.get(out);
-				int scaledInSize = scaledSize(out, minInitInputBufCapacity,
-						minSteadyInputBufCapacity);
+				int initOut = minInfo.minInitOutputBufCapacity.get(out);
+				int steadyOut = minInfo.minSteadyOutputBufCapacity.get(out);
+				int scaledInSize = scaledSize(out,
+						minInfo.minInitInputBufCapacity,
+						minInfo.minSteadyInputBufCapacity);
 				int newInSize = Math.max(initOut + steadyOut * mul,
 						scaledInSize);
 				finalInputBufCapacity.put(out, newInSize);
@@ -115,17 +104,13 @@ public class BufferSizeCalc {
 				.build();
 
 		if (printFinalBufSizes)
-			printFinalSizes(minInitInputBufCapacity, minInitOutputBufCapacity,
-					minSteadyInputBufCapacity, minSteadyOutputBufCapacity,
-					finalInputBuf);
+			printFinalSizes(minInfo, finalInputBuf);
 		steadyStateRatios(bufSizes, app);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
 	}
 
 	private static void setOutputVariables(AppInstance app,
-			boolean inputConsidered,
-			Map<Token, Integer> minInitOutputBufCapacity,
-			Map<Token, Integer> minSteadyOutputBufCapacity, ILPSolver solver,
+			boolean inputConsidered, MinInfo minInfo, ILPSolver solver,
 			Map<Token, bufInfo> bufInfos, Map<Token, Variable> variables) {
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			Variable v = solver.newVariable(blob.toString());
@@ -137,8 +122,8 @@ public class BufferSizeCalc {
 				if (out.isOverallOutput())
 					continue;
 				bufInfo b = makeBufInfo(inputConsidered);
-				b.addOutputs(minSteadyOutputBufCapacity.get(out),
-						minInitOutputBufCapacity.get(out));
+				b.addOutputs(minInfo.minSteadyOutputBufCapacity.get(out),
+						minInfo.minInitOutputBufCapacity.get(out));
 				b.outVar = v;
 				bufInfos.put(out, b);
 			}
@@ -157,27 +142,15 @@ public class BufferSizeCalc {
 		Token globalOutBlob = p.second;
 		Token globalInToken = getGlobalInToken(app);
 		boolean inputConsidered = false;
-
-		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
-		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
-
-		for (BufferSizes b : bufSizes.values()) {
-			minInitInputBufCapacity.putAll(b.minInitInputBufCapacity);
-			minInitOutputBufCapacity.putAll(b.minInitOutputBufCapacity);
-			minSteadyInputBufCapacity.putAll(b.minSteadyInputBufCapacity);
-			minSteadyOutputBufCapacity.putAll(b.minSteadyOutputBufCapacity);
-		}
+		MinInfo minInfo = new MinInfo(bufSizes);
 
 		ILPSolver solver = new ILPSolver();
 		Map<Token, bufInfo> bufInfos = new HashMap<>();
 		Map<Token, Variable> variables = new HashMap<>();
-		setOutputVariables(app, inputConsidered, minInitOutputBufCapacity,
-				minSteadyOutputBufCapacity, solver, bufInfos, variables);
+		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
+				variables);
 
-		setInputVariables(app, minInitInputBufCapacity,
-				minSteadyInputBufCapacity, solver, bufInfos, variables);
+		setInputVariables(app, minInfo, solver, bufInfos, variables);
 
 		solve(solver, variables);
 
@@ -189,21 +162,20 @@ public class BufferSizeCalc {
 			System.out.println("Steady run factor of blob " + blob.toString()
 					+ " is " + steadyRun);
 			if (blob.equals(globalInToken))
-				steadyIn = minSteadyInputBufCapacity.get(globalInToken)
+				steadyIn = minInfo.minSteadyInputBufCapacity.get(globalInToken)
 						* steadyRun;
 			if (blob.equals(globalOutBlob))
-				steadyOut = minSteadyOutputBufCapacity.get(globalOutToken)
-						* steadyRun;
+				steadyOut = minInfo.minSteadyOutputBufCapacity
+						.get(globalOutToken) * steadyRun;
 		}
 
 		System.out.println("Total graph's steady in = " + steadyIn);
 		System.out.println("Total graph's steady out = " + steadyOut);
 	}
 
-	private static void setInputVariables(AppInstance app,
-			Map<Token, Integer> minInitInputBufCapacity,
-			Map<Token, Integer> minSteadyInputBufCapacity, ILPSolver solver,
-			Map<Token, bufInfo> bufInfos, Map<Token, Variable> variables) {
+	private static void setInputVariables(AppInstance app, MinInfo minInfo,
+			ILPSolver solver, Map<Token, bufInfo> bufInfos,
+			Map<Token, Variable> variables) {
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			Set<Token> inputs = app.blobGraph.getInputs(blob);
 			Variable v = variables.get(blob);
@@ -215,8 +187,8 @@ public class BufferSizeCalc {
 				bufInfo b = bufInfos.get(in);
 				if (b == null)
 					throw new IllegalStateException("No buffer info");
-				b.addInputs(minSteadyInputBufCapacity.get(in),
-						minInitInputBufCapacity.get(in));
+				b.addInputs(minInfo.minSteadyInputBufCapacity.get(in),
+						minInfo.minInitInputBufCapacity.get(in));
 				b.inVar = v;
 				b.addconstrain(solver);
 			}
@@ -250,23 +222,23 @@ public class BufferSizeCalc {
 		throw new IllegalStateException("Global input token is Null");
 	}
 
-	private static void printFinalSizes(
-			Map<Token, Integer> minInitInputBufCapacity,
-			Map<Token, Integer> minInitOutputBufCapacity,
-			Map<Token, Integer> minSteadyInputBufCapacity,
-			Map<Token, Integer> minSteadyOutputBufCapacity,
+	private static void printFinalSizes(MinInfo minInfo,
 			Map<Token, Integer> finalInputBuf) {
 		System.out
 				.println("InputBufCapacity \t\t - Init \t\t - Steady \t\t - final");
-		for (Map.Entry<Token, Integer> en : minInitInputBufCapacity.entrySet()) {
+		for (Map.Entry<Token, Integer> en : minInfo.minInitInputBufCapacity
+				.entrySet()) {
 			System.out.println(en.getKey() + "\t\t - " + en.getValue()
-					+ "\t\t - " + minSteadyInputBufCapacity.get(en.getKey())
+					+ "\t\t - "
+					+ minInfo.minSteadyInputBufCapacity.get(en.getKey())
 					+ "\t\t - " + finalInputBuf.get(en.getKey()));
 		}
 		System.out.println("minOutputBufCapacity requirement");
-		for (Map.Entry<Token, Integer> en : minInitOutputBufCapacity.entrySet()) {
+		for (Map.Entry<Token, Integer> en : minInfo.minInitOutputBufCapacity
+				.entrySet()) {
 			System.out.println(en.getKey() + "\t\t - " + en.getValue()
-					+ "\t\t - " + minSteadyOutputBufCapacity.get(en.getKey())
+					+ "\t\t - "
+					+ minInfo.minSteadyOutputBufCapacity.get(en.getKey())
 					+ "\t\t - " + finalInputBuf.get(en.getKey()));
 		}
 	}
@@ -370,6 +342,22 @@ public class BufferSizeCalc {
 				ImmutableMap<Token, Integer> steadyRunCount) {
 			this.bufferSizes = bufferSizes;
 			this.steadyRunCount = steadyRunCount;
+		}
+	}
+
+	private static class MinInfo {
+		Map<Token, Integer> minInitInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minInitOutputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
+		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
+
+		MinInfo(Map<Integer, BufferSizes> bufSizes) {
+			for (BufferSizes b : bufSizes.values()) {
+				minInitInputBufCapacity.putAll(b.minInitInputBufCapacity);
+				minInitOutputBufCapacity.putAll(b.minInitOutputBufCapacity);
+				minSteadyInputBufCapacity.putAll(b.minSteadyInputBufCapacity);
+				minSteadyOutputBufCapacity.putAll(b.minSteadyOutputBufCapacity);
+			}
 		}
 	}
 }
