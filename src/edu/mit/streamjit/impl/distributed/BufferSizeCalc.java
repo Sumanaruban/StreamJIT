@@ -97,6 +97,35 @@ public class BufferSizeCalc {
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
 	}
 
+	/**
+	 * Calculates blobs' execution ratios during steady state execution.
+	 * Calculates the total graph's steady state input and output.
+	 */
+	private static void steadyStateRatios(MinInfo minInfo, AppInstance app) {
+		int steadyIn = -1;
+		int steadyOut = -1;
+		Pair<Token, Token> p = getGlobalOutTokens(app);
+		Token globalOutToken = p.first;
+		Token globalOutBlob = p.second;
+		Token globalInToken = getGlobalInToken(app);
+		boolean inputConsidered = false;
+
+		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			int steadyRun = variables.get(blob).value();
+			System.out.println("Steady run factor of blob " + blob.toString()
+					+ " is " + steadyRun);
+			if (blob.equals(globalInToken))
+				steadyIn = minInfo.minSteadyInputBufCapacity.get(globalInToken)
+						* steadyRun;
+			if (blob.equals(globalOutBlob))
+				steadyOut = minInfo.minSteadyOutputBufCapacity
+						.get(globalOutToken) * steadyRun;
+		}
+		System.out.println("Total graph's steady in = " + steadyIn);
+		System.out.println("Total graph's steady out = " + steadyOut);
+	}
+
 	private static Map<Token, Variable> ilpSolve(AppInstance app,
 			boolean inputConsidered, MinInfo minInfo) {
 		ILPSolver solver = new ILPSolver();
@@ -128,35 +157,6 @@ public class BufferSizeCalc {
 				bufInfos.put(out, b);
 			}
 		}
-	}
-
-	/**
-	 * Calculates blobs' execution ratios during steady state execution.
-	 * Calculates the total graph's steady state input and output.
-	 */
-	private static void steadyStateRatios(MinInfo minInfo, AppInstance app) {
-		int steadyIn = -1;
-		int steadyOut = -1;
-		Pair<Token, Token> p = getGlobalOutTokens(app);
-		Token globalOutToken = p.first;
-		Token globalOutBlob = p.second;
-		Token globalInToken = getGlobalInToken(app);
-		boolean inputConsidered = false;
-
-		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			int steadyRun = variables.get(blob).value();
-			System.out.println("Steady run factor of blob " + blob.toString()
-					+ " is " + steadyRun);
-			if (blob.equals(globalInToken))
-				steadyIn = minInfo.minSteadyInputBufCapacity.get(globalInToken)
-						* steadyRun;
-			if (blob.equals(globalOutBlob))
-				steadyOut = minInfo.minSteadyOutputBufCapacity
-						.get(globalOutToken) * steadyRun;
-		}
-		System.out.println("Total graph's steady in = " + steadyIn);
-		System.out.println("Total graph's steady out = " + steadyOut);
 	}
 
 	private static void setInputVariables(AppInstance app, MinInfo minInfo,
