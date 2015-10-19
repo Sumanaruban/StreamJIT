@@ -105,7 +105,7 @@ public class BufferSizeCalc {
 
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
-		steadyStateRatios(bufSizes, app);
+		steadyStateRatios(minInfo, app);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
 	}
 
@@ -134,15 +134,13 @@ public class BufferSizeCalc {
 	 * Calculates blobs' execution ratios during steady state execution.
 	 * Calculates the total graph's steady state input and output.
 	 */
-	private static void steadyStateRatios(Map<Integer, BufferSizes> bufSizes,
-			AppInstance app) {
+	private static void steadyStateRatios(MinInfo minInfo, AppInstance app) {
 
 		Pair<Token, Token> p = getGlobalOutTokens(app);
 		Token globalOutToken = p.first;
 		Token globalOutBlob = p.second;
 		Token globalInToken = getGlobalInToken(app);
 		boolean inputConsidered = false;
-		MinInfo minInfo = new MinInfo(bufSizes);
 
 		ILPSolver solver = new ILPSolver();
 		Map<Token, bufInfo> bufInfos = new HashMap<>();
