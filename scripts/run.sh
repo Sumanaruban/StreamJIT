@@ -1,3 +1,12 @@
+#!/bin/bash
+#Author - Sumanan
+#Oct 19, 2015
+#Starts a controller node by calling "sbatch controller.sh", from the sbatch's
+#output string finds the jobId of the controller process, from the jobId finds
+#the ip address of the node where the controller is running and finally, starts
+#streamnodes with the ip address of the controller node by calling
+#"sbatch streamnode.sh $ip".
+
 # Extracts jobID from slurm.sbatch's return string.
 function jobId(){
 	IFS=' '

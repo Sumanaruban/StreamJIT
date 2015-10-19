@@ -2,7 +2,8 @@
 #Author - Sumanan
 #Feb 9, 2015
 #Setup directories and scripts to run a distributed StreamJit app.
-#Specifically, creates appDir, controller.sh, and streamnode.sh
+#Specifically, creates appDir, creates scripts(controller.sh and streamnode.sh)
+#and finally, calls run.sh.
 function createCTRLRSh(){
 	runfile="controller.sh"
 	res=$(get_prop "./options.properties" "tune")
