@@ -13,6 +13,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.ilpsolve.ILPSolver;
 import edu.mit.streamjit.util.ilpsolve.ILPSolver.LinearExpr;
 import edu.mit.streamjit.util.ilpsolve.ILPSolver.Variable;
@@ -177,9 +178,10 @@ public class BufferSizeCalc {
 	private static void steadyStateRatios(Map<Integer, BufferSizes> bufSizes,
 			AppInstance app) {
 
-		Token globalOutToken = null;
+		Pair<Token, Token> p = getGlobalOutTokens(app);
+		Token globalOutToken = p.first;
 		Token globalInToken = null;
-		Token globalOutBlob = null;
+		Token globalOutBlob = p.second;
 		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
 
@@ -199,8 +201,6 @@ public class BufferSizeCalc {
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				if (out.isOverallOutput()) {
-					globalOutToken = out;
-					globalOutBlob = blob;
 					continue;
 				}
 				bufInfo2 b = new bufInfo2();
@@ -248,6 +248,27 @@ public class BufferSizeCalc {
 
 		System.out.println("Total graph's steady in = " + steadyIn);
 		System.out.println("Total graph's steady out = " + steadyOut);
+	}
+
+	/**
+	 * @return Very last blob's blobID and global output token.
+	 */
+	private static Pair<Token, Token> getGlobalOutTokens(AppInstance app) {
+		Token globalOutToken = null;
+		Token globalOutBlob = null;
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			for (Token out : outputs) {
+				if (out.isOverallOutput()) {
+					globalOutToken = out;
+					globalOutBlob = blob;
+					break;
+				}
+			}
+			if (globalOutToken != null)
+				break;
+		}
+		return new Pair<>(globalOutToken, globalOutBlob);
 	}
 
 	private static void printFinalSizes(
