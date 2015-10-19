@@ -13,12 +13,13 @@ import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
+import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
-import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
@@ -86,6 +87,14 @@ public class AppInstanceManager {
 		isRunning = true;
 		System.out
 				.println(String.format("%s has started to run..", toString()));
+	}
+
+	void runInitSchedule() {
+		ImmutableMap<Token, Integer> steadyRunCount = graphSchedule.steadyRunCount;
+		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
+		appManager.controller.sendToAll(new CTRLRMessageElementHolder(
+				new InitSchedule(steadyRunCount), appInstId()));
+		ciP.waitforInitSchedule();
 	}
 
 	GraphSchedule graphSchedule;

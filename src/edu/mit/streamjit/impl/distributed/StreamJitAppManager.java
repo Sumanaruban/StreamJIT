@@ -44,7 +44,6 @@ import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
-import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
@@ -393,13 +392,6 @@ public class StreamJitAppManager {
 		if (!app.stateful)
 			aim.runInitSchedule();
 		aim.start();
-	}
-
-	private void runInitSchedule() {
-		ImmutableMap<Token, Integer> steadyRunCount = graphSchedule.steadyRunCount;
-		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
-		controller.sendToAll(new InitSchedule(steadyRunCount));
-		ciP.waitforInitSchedule();
 	}
 
 	/**
