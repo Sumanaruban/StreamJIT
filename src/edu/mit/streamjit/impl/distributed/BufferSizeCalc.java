@@ -180,7 +180,7 @@ public class BufferSizeCalc {
 
 		Pair<Token, Token> p = getGlobalOutTokens(app);
 		Token globalOutToken = p.first;
-		Token globalInToken = null;
+		Token globalInToken = getGlobalInToken(app);
 		Token globalOutBlob = p.second;
 		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
@@ -217,7 +217,6 @@ public class BufferSizeCalc {
 				throw new IllegalStateException("No variable");
 			for (Token in : inputs) {
 				if (in.isOverallInput()) {
-					globalInToken = in;
 					continue;
 				}
 				bufInfo2 b = bufInfos.get(in);
@@ -269,6 +268,18 @@ public class BufferSizeCalc {
 				break;
 		}
 		return new Pair<>(globalOutToken, globalOutBlob);
+	}
+
+	private static Token getGlobalInToken(AppInstance app) {
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Set<Token> inputs = app.blobGraph.getInputs(blob);
+			for (Token in : inputs) {
+				if (in.isOverallInput()) {
+					return in;
+				}
+			}
+		}
+		throw new IllegalStateException("Global input token is Null");
 	}
 
 	private static void printFinalSizes(
