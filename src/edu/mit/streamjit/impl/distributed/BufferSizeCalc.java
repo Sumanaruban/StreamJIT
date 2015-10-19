@@ -52,6 +52,18 @@ public class BufferSizeCalc {
 		}
 	}
 
+	private static void solve(ILPSolver solver, Map<Token, Variable> variables) {
+		LinearExpr lf = null;
+		for (Variable v : variables.values()) {
+			if (lf == null)
+				lf = v.asLinearExpr(1);
+			else
+				lf = lf.plus(1, v);
+		}
+		solver.minimize(lf);
+		solver.solve();
+	}
+
 	/**
 	 * Calculates the input buffer sizes to avoid deadlocks. Added on
 	 * [2014-03-07]. Finds out the buffer sizes through ILP solving.
@@ -111,15 +123,7 @@ public class BufferSizeCalc {
 			}
 		}
 
-		LinearExpr lf = null;
-		for (Variable v : variables.values()) {
-			if (lf == null)
-				lf = v.asLinearExpr(1);
-			else
-				lf = lf.plus(1, v);
-		}
-		solver.minimize(lf);
-		solver.solve();
+		solve(solver, variables);
 
 		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
 
@@ -225,15 +229,7 @@ public class BufferSizeCalc {
 			}
 		}
 
-		LinearExpr lf = null;
-		for (Variable v : variables.values()) {
-			if (lf == null)
-				lf = v.asLinearExpr(1);
-			else
-				lf = lf.plus(1, v);
-		}
-		solver.minimize(lf);
-		solver.solve();
+		solve(solver, variables);
 
 		int steadyIn = -1;
 		int steadyOut = -1;
