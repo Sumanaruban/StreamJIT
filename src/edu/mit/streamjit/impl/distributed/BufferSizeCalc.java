@@ -180,8 +180,9 @@ public class BufferSizeCalc {
 
 		Pair<Token, Token> p = getGlobalOutTokens(app);
 		Token globalOutToken = p.first;
-		Token globalInToken = getGlobalInToken(app);
 		Token globalOutBlob = p.second;
+		Token globalInToken = getGlobalInToken(app);
+
 		Map<Token, Integer> minSteadyInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minSteadyOutputBufCapacity = new HashMap<>();
 
