@@ -125,23 +125,8 @@ public class BufferSizeCalc {
 			}
 		}
 
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Set<Token> inputs = app.blobGraph.getInputs(blob);
-			Variable v = variables.get(blob);
-			if (v == null)
-				throw new IllegalStateException("No variable");
-			for (Token in : inputs) {
-				if (in.isOverallInput())
-					continue;
-				bufInfo b = bufInfos.get(in);
-				if (b == null)
-					throw new IllegalStateException("No buffer info");
-				b.addInputs(minSteadyInputBufCapacity.get(in),
-						minInitInputBufCapacity.get(in));
-				b.inVar = v;
-				b.addconstrain(solver);
-			}
-		}
+		setInputVariables(app, minInitInputBufCapacity,
+				minSteadyInputBufCapacity, solver, bufInfos, variables);
 
 		solve(solver, variables);
 
@@ -243,24 +228,8 @@ public class BufferSizeCalc {
 			}
 		}
 
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Set<Token> inputs = app.blobGraph.getInputs(blob);
-			Variable v = variables.get(blob);
-			if (v == null)
-				throw new IllegalStateException("No variable");
-			for (Token in : inputs) {
-				if (in.isOverallInput()) {
-					continue;
-				}
-				bufInfo b = bufInfos.get(in);
-				if (b == null)
-					throw new IllegalStateException("No buffer info");
-				b.addInputs(minSteadyInputBufCapacity.get(in),
-						minInitInputBufCapacity.get(in));
-				b.inVar = v;
-				b.addconstrain(solver);
-			}
-		}
+		setInputVariables(app, minInitInputBufCapacity,
+				minSteadyInputBufCapacity, solver, bufInfos, variables);
 
 		solve(solver, variables);
 
@@ -281,6 +250,29 @@ public class BufferSizeCalc {
 
 		System.out.println("Total graph's steady in = " + steadyIn);
 		System.out.println("Total graph's steady out = " + steadyOut);
+	}
+
+	private static void setInputVariables(AppInstance app,
+			Map<Token, Integer> minInitInputBufCapacity,
+			Map<Token, Integer> minSteadyInputBufCapacity, ILPSolver solver,
+			Map<Token, bufInfo> bufInfos, Map<Token, Variable> variables) {
+		for (Token blob : app.blobGraph.getBlobIds()) {
+			Set<Token> inputs = app.blobGraph.getInputs(blob);
+			Variable v = variables.get(blob);
+			if (v == null)
+				throw new IllegalStateException("No variable");
+			for (Token in : inputs) {
+				if (in.isOverallInput())
+					continue;
+				bufInfo b = bufInfos.get(in);
+				if (b == null)
+					throw new IllegalStateException("No buffer info");
+				b.addInputs(minSteadyInputBufCapacity.get(in),
+						minInitInputBufCapacity.get(in));
+				b.inVar = v;
+				b.addconstrain(solver);
+			}
+		}
 	}
 
 	/**
