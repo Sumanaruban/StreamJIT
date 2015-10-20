@@ -235,7 +235,7 @@ public class StreamJitAppManager {
 	}
 
 	public void drainingFinished(boolean isFinal) {
-		headTailHandler.stopHead();
+		headTailHandler.waitToStopHead();
 		headTailHandler.stopTail(isFinal);
 		if (isFinal)
 			stop();

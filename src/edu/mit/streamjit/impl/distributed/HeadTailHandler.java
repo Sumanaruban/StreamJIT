@@ -145,7 +145,7 @@ class HeadTailHandler {
 		}
 	}
 
-	void stopHead() {
+	void waitToStopHead() {
 		if (headChannel != null) {
 			try {
 				headThread.join();
