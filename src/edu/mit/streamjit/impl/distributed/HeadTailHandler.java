@@ -178,7 +178,11 @@ class HeadTailHandler {
 					tailChannel.stop(DrainType.INTERMEDIATE);
 			else
 				tailChannel.stop(DrainType.DISCARD);
+		}
+	}
 
+	void waitToStopTail() {
+		if (tailChannel != null) {
 			try {
 				tailThread.join();
 			} catch (InterruptedException e) {
