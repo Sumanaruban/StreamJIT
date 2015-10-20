@@ -83,7 +83,7 @@
 	<target name="exportAndRunAll" depends="exportAll, runAll">
 	</target>
 
-	<target name="sendtoLanka" depends="exportAll, getLogin">
+	<target name="sendtoLanka" depends="getLogin, exportAll">
 		<scp trust="true" sftp="true" todir="${username}:${password}@lanka.csail.mit.edu:/data/scratch/${username}/${app}">
 			<fileset file="StreamNode.jar" />
 			<fileset file="${app}.jar" />
