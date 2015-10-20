@@ -155,6 +155,12 @@ class HeadTailHandler {
 		}
 	}
 
+	void stopHead(boolean isFinal) {
+		if (headChannel != null) {
+			headChannel.stop(isFinal);
+		}
+	}
+
 	void startTail() {
 		if (tailChannel != null) {
 			tailThread = new Thread(tailChannel.getRunnable(),

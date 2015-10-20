@@ -250,16 +250,7 @@ public class StreamJitAppManager {
 
 	public void drainingStarted(boolean isFinal) {
 		stopwatchRef.set(Stopwatch.createStarted());
-		if (headTailHandler.headChannel != null) {
-			headTailHandler.headChannel.stop(isFinal);
-			// [2014-03-16] Moved to drainingFinished. In any case if headThread
-			// blocked at tcp write, draining will also blocked.
-			// try {
-			// headThread.join();
-			// } catch (InterruptedException e) {
-			// e.printStackTrace();
-			// }
-		}
+		headTailHandler.stopHead(isFinal);
 	}
 
 	private void reset() {
