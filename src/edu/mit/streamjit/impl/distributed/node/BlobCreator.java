@@ -55,8 +55,9 @@ public class BlobCreator {
 
 			Configuration blobConfigs = dyncfg
 					.getSubconfiguration("blobConfigs");
-			return blobset1(blobSet, blobList, drainData, blobConfigs,
-					app.source);
+			CreationLogic creationLogic = new DrainDataCreationLogic(drainData,
+					blobConfigs);
+			return blobset1(blobSet, blobList, creationLogic, app.source);
 
 		} else
 			return null;
@@ -66,14 +67,14 @@ public class BlobCreator {
 	 * Compiles the blobs in parallel.
 	 */
 	private ImmutableSet<Blob> blobset1(ImmutableSet.Builder<Blob> blobSet,
-			List<BlobSpecifier> blobList, DrainData drainData,
-			Configuration blobConfigs, Worker<?, ?> source) {
+			List<BlobSpecifier> blobList, CreationLogic creationLogic,
+			Worker<?, ?> source) {
 		Set<Future<Blob>> futures = new HashSet<>();
 		ExecutorService executerSevce = Executors.newFixedThreadPool(blobList
 				.size());
 
 		for (BlobSpecifier bs : blobList) {
-			MakeBlob mb = new MakeBlob(bs, drainData, blobConfigs, source);
+			MakeBlob mb = new MakeBlob(bs, source, creationLogic);
 			Future<Blob> f = executerSevce.submit(mb);
 			futures.add(f);
 		}
@@ -152,16 +153,14 @@ public class BlobCreator {
 
 	private class MakeBlob implements Callable<Blob> {
 		private final BlobSpecifier bs;
-		private final DrainData drainData;
-		private final Configuration blobConfigs;
+		private final CreationLogic creationLogic;
 		private final Worker<?, ?> source;
 
-		private MakeBlob(BlobSpecifier bs, DrainData drainData,
-				Configuration blobConfigs, Worker<?, ?> source) {
+		private MakeBlob(BlobSpecifier bs, Worker<?, ?> source,
+				CreationLogic creationLogic) {
 			this.bs = bs;
-			this.drainData = drainData;
-			this.blobConfigs = blobConfigs;
 			this.source = source;
+			this.creationLogic = creationLogic;
 		}
 
 		@Override
@@ -173,9 +172,8 @@ public class BlobCreator {
 				BlobFactory bf = bs.getBlobFactory();
 				int maxCores = bs.getCores();
 				Stopwatch sw = Stopwatch.createStarted();
-				DrainData dd = drainData == null ? null : drainData
-						.subset(workIdentifiers);
-				b = bf.makeBlob(workerset, blobConfigs, maxCores, dd);
+				b = creationLogic.create(bf, workerset, maxCores,
+						workIdentifiers);
 				sendCompilationTime(sw, Utils.getblobID(workerset));
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -188,6 +186,30 @@ public class BlobCreator {
 			// "A new blob with workers %s has been created.",
 			// workIdentifiers.toString()));
 			return b;
+		}
+	}
+
+	private interface CreationLogic {
+		public Blob create(BlobFactory bf,
+				ImmutableSet<Worker<?, ?>> workerset, int maxCores,
+				Set<Integer> workIdentifiers);
+	}
+
+	private class DrainDataCreationLogic implements CreationLogic {
+		private final DrainData drainData;
+		private final Configuration blobConfigs;
+
+		DrainDataCreationLogic(DrainData drainData, Configuration blobConfigs) {
+			this.drainData = drainData;
+			this.blobConfigs = blobConfigs;
+		}
+
+		public Blob create(BlobFactory bf,
+				ImmutableSet<Worker<?, ?>> workerset, int maxCores,
+				Set<Integer> workIdentifiers) {
+			DrainData dd = drainData == null ? null : drainData
+					.subset(workIdentifiers);
+			return bf.makeBlob(workerset, blobConfigs, maxCores, dd);
 		}
 	}
 }
