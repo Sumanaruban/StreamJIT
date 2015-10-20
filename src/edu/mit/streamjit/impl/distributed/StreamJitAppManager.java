@@ -34,23 +34,16 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.StreamCompiler;
-import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
-import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
-import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
-import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
-import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
-import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
@@ -60,7 +53,6 @@ import edu.mit.streamjit.impl.distributed.common.SNException.AddressBindExceptio
 import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.SNTimeInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfoProcessorImpl;
-import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
@@ -74,7 +66,7 @@ import edu.mit.streamjit.util.DrainDataUtils;
  */
 public class StreamJitAppManager {
 
-	private final StreamJitApp<?, ?> app;
+	final StreamJitApp<?, ?> app;
 
 	private Map<Token, ConnectionInfo> conInfoMap;
 
@@ -92,30 +84,6 @@ public class StreamJitAppManager {
 
 	public final AppDrainer appDrainer;
 
-	/**
-	 * A {@link BoundaryOutputChannel} for the head of the stream graph. If the
-	 * first {@link Worker} happened to fall outside the {@link Controller}, we
-	 * need to push the {@link CompiledStream}.offer() data to the first
-	 * {@link Worker} of the streamgraph.
-	 */
-	private BoundaryOutputChannel headChannel;
-
-	private Thread headThread;
-
-	private final Token headToken;
-
-	/**
-	 * A {@link BoundaryInputChannel} for the tail of the whole stream graph. If
-	 * the sink {@link Worker} happened to fall outside the {@link Controller},
-	 * we need to pull the sink's output in to the {@link Controller} in order
-	 * to make {@link CompiledStream} .pull() to work.
-	 */
-	TailChannel tailChannel;
-
-	private Thread tailThread;
-
-	private final Token tailToken;
-
 	private volatile AppStatus status;
 
 	/**
@@ -129,6 +97,8 @@ public class StreamJitAppManager {
 	private volatile AppInstanceManager curAIM = null;
 
 	final int noOfnodes;
+
+	final HeadTailHandler headTailHandler;
 
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
 			ConnectionManager conManager, TimeLogger logger) {
@@ -146,9 +116,8 @@ public class StreamJitAppManager {
 															// good calling
 															// place.
 		appDrainer = new AppDrainer();
-		headToken = Token.createOverallInputToken(app.source);
-		tailToken = Token.createOverallOutputToken(app.sink);
 		profiler = setupProfiler();
+		headTailHandler = new HeadTailHandler(controller, app);
 	}
 
 	public ErrorProcessor errorProcessor() {
@@ -189,7 +158,8 @@ public class StreamJitAppManager {
 		AppInstanceManager aim = createNewAIM(appinst);
 		reset();
 		preCompilation(appinst);
-		setupHeadTail(conInfoMap, app.bufferMap, multiplier, appinst);
+		headTailHandler.setupHeadTail(conInfoMap, app.bufferMap, multiplier,
+				appinst);
 		boolean isCompiled = postCompilation(aim);
 
 		if (isCompiled) {
@@ -226,14 +196,14 @@ public class StreamJitAppManager {
 
 	public void stop() {
 		this.status = AppStatus.STOPPED;
-		tailChannel.reset();
+		headTailHandler.tailChannel.reset();
 		controller.closeAll();
 		// dp.drainer.stop();
 		appDrainer.stop();
 	}
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
-		long time = tailChannel.getFixedOutputTime(timeout);
+		long time = headTailHandler.tailChannel.getFixedOutputTime(timeout);
 		if (curAIM.apStsPro.error) {
 			return -1l;
 		}
@@ -265,8 +235,8 @@ public class StreamJitAppManager {
 	}
 
 	public void drainingFinished(boolean isFinal) {
-		stopHead();
-		stopTail(isFinal);
+		headTailHandler.stopHead();
+		headTailHandler.stopTail(isFinal);
 		if (isFinal)
 			stop();
 
@@ -280,8 +250,8 @@ public class StreamJitAppManager {
 
 	public void drainingStarted(boolean isFinal) {
 		stopwatchRef.set(Stopwatch.createStarted());
-		if (headChannel != null) {
-			headChannel.stop(isFinal);
+		if (headTailHandler.headChannel != null) {
+			headTailHandler.headChannel.stop(isFinal);
 			// [2014-03-16] Moved to drainingFinished. In any case if headThread
 			// blocked at tcp write, draining will also blocked.
 			// try {
@@ -311,84 +281,11 @@ public class StreamJitAppManager {
 	}
 
 	/**
-	 * Setup the headchannel and tailchannel.
-	 * 
-	 * @param cfg
-	 * @param bufferMap
-	 */
-	private void setupHeadTail(Map<Token, ConnectionInfo> conInfoMap,
-			ImmutableMap<Token, Buffer> bufferMap, int multiplier,
-			AppInstance appinst) {
-
-		ConnectionInfo headconInfo = conInfoMap.get(headToken);
-		assert headconInfo != null : "No head connection info exists in conInfoMap";
-		assert headconInfo.getSrcID() == controller.controllerNodeID
-				|| headconInfo.getDstID() == controller.controllerNodeID : "Head channel should start from the controller. "
-				+ headconInfo;
-
-		if (!bufferMap.containsKey(headToken))
-			throw new IllegalArgumentException(
-					"No head buffer in the passed bufferMap.");
-
-		if (headconInfo instanceof TCPConnectionInfo)
-			headChannel = new HeadChannel.TCPHeadChannel(
-					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0,
-					app.eLogger);
-		else if (headconInfo instanceof AsyncTCPConnectionInfo)
-			headChannel = new HeadChannel.AsyncHeadChannel(
-					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0,
-					app.eLogger);
-		else
-			throw new IllegalStateException("Head ConnectionInfo doesn't match");
-
-		ConnectionInfo tailconInfo = conInfoMap.get(tailToken);
-		assert tailconInfo != null : "No tail connection info exists in conInfoMap";
-		assert tailconInfo.getSrcID() == controller.controllerNodeID
-				|| tailconInfo.getDstID() == controller.controllerNodeID : "Tail channel should ends at the controller. "
-				+ tailconInfo;
-
-		if (!bufferMap.containsKey(tailToken))
-			throw new IllegalArgumentException(
-					"No tail buffer in the passed bufferMap.");
-
-		int skipCount = Math.max(Options.outputCount, multiplier * 5);
-		tailChannel = tailChannel(bufferMap.get(tailToken), tailconInfo,
-				skipCount, appinst);
-	}
-
-	private TailChannel tailChannel(Buffer buffer, ConnectionInfo conInfo,
-			int skipCount, AppInstance appinst) {
-		String appName = app.name;
-		int steadyCount = Options.outputCount;
-		int debugLevel = 0;
-		String bufferTokenName = "tailChannel - " + tailToken.toString();
-		ConnectionProvider conProvider = controller.getConProvider();
-		String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-				.getConfiguration());
-		switch (Options.tailChannel) {
-			case 1 :
-				return new TailChannels.BlockingTailChannel1(buffer,
-						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
-			case 3 :
-				return new TailChannels.BlockingTailChannel3(buffer,
-						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
-			default :
-				return new TailChannels.BlockingTailChannel2(buffer,
-						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
-		}
-	}
-
-	/**
 	 * Start the execution of the StreamJit application.
 	 */
 	private void start(AppInstanceManager aim) {
-		startHead();
-		startTail();
+		headTailHandler.startHead();
+		headTailHandler.startTail();
 		if (!app.stateful)
 			aim.runInitSchedule();
 		aim.start();
@@ -437,50 +334,6 @@ public class StreamJitAppManager {
 		app.eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
 		return isCompiled;
-	}
-
-	private void startHead() {
-		if (headChannel != null) {
-			headThread = new Thread(headChannel.getRunnable(),
-					headChannel.name());
-			headThread.start();
-		}
-	}
-
-	private void stopHead() {
-		if (headChannel != null) {
-			try {
-				headThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	private void startTail() {
-		if (tailChannel != null) {
-			tailThread = new Thread(tailChannel.getRunnable(),
-					tailChannel.name());
-			tailThread.start();
-		}
-	}
-
-	private void stopTail(boolean isFinal) {
-		if (tailChannel != null) {
-			if (Options.useDrainData)
-				if (isFinal)
-					tailChannel.stop(DrainType.FINAL);
-				else
-					tailChannel.stop(DrainType.INTERMEDIATE);
-			else
-				tailChannel.stop(DrainType.DISCARD);
-
-			try {
-				tailThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 
 	/**
