@@ -32,7 +32,7 @@ function createSNSh(){
 	echo 'args=("$@")' >> $runfile
 	echo 'ip=${args[0]}' >> $runfile
 	echo "cd /data/scratch/sumanan/"$1 >> $runfile
-	echo 'srun --exclusive  --nodes=$2 ../bin/java/jdk1.8.0_31/bin/java -Xmx120G -jar -XX:InitialCodeCacheSize=1G -XX:ReservedCodeCacheSize=2G StreamNode.jar 128.30.116.$ip' >> $runfile
+	echo "srun --exclusive  --nodes=$2 ../bin/java/jdk1.8.0_31/bin/java -Xmx120G -jar -XX:InitialCodeCacheSize=1G -XX:ReservedCodeCacheSize=2G StreamNode.jar 128.30.116."'$ip' >> $runfile
 }
 
 function creatdirs(){
