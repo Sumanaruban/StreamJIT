@@ -145,6 +145,12 @@ class HeadTailHandler {
 		}
 	}
 
+	void stopHead(boolean isFinal) {
+		if (headChannel != null) {
+			headChannel.stop(isFinal);
+		}
+	}
+
 	void waitToStopHead() {
 		if (headChannel != null) {
 			try {
@@ -152,12 +158,6 @@ class HeadTailHandler {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}
-	}
-
-	void stopHead(boolean isFinal) {
-		if (headChannel != null) {
-			headChannel.stop(isFinal);
 		}
 	}
 
