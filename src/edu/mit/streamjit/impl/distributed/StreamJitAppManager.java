@@ -27,9 +27,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
@@ -85,11 +83,6 @@ public class StreamJitAppManager {
 	public final AppDrainer appDrainer;
 
 	private volatile AppStatus status;
-
-	/**
-	 * [2014-03-15] Just to measure the draining time
-	 */
-	AtomicReference<Stopwatch> stopwatchRef = new AtomicReference<>();
 
 	private final TimeLogger logger;
 
@@ -241,16 +234,12 @@ public class StreamJitAppManager {
 		if (isFinal)
 			stop();
 
-		Stopwatch sw = stopwatchRef.get();
-		if (sw != null && sw.isRunning()) {
-			sw.stop();
-			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			System.out.println("Draining time is " + time + " milli seconds");
-		}
+		long time = app.eLogger.eEvent("draining");
+		System.out.println("Draining time is " + time + " milli seconds");
 	}
 
 	public void drainingStarted(boolean isFinal) {
-		stopwatchRef.set(Stopwatch.createStarted());
+		app.eLogger.bEvent("draining");
 		headTailHandler.stopHead(isFinal);
 	}
 
