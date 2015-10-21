@@ -152,7 +152,7 @@ public class AppInstanceManager {
 			this.error = true;
 			// This will release the OpenTuner thread which is waiting for fixed
 			// output.
-			appManager.tailChannel.reset();
+			appManager.headTailHandler.tailChannel.reset();
 		}
 
 		@Override
