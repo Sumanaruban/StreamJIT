@@ -67,8 +67,8 @@ public class SNStreamJitApp {
 	 * @return : StreamGraph
 	 */
 	private OneToOneElement<?, ?> getStreamGraph() {
-		URL url = getUrl();
-		if (url == null)
+		ClassLoader loader = classLoader();
+		if (loader == null)
 			return null;
 
 		String topStreamClassName = (String) staticConfig
@@ -89,8 +89,6 @@ public class SNStreamJitApp {
 		}
 
 		try {
-			URL[] urls = new URL[] { url };
-			ClassLoader loader = new URLClassLoader(urls);
 			Class<?> topStreamClass;
 			if (!Strings.isNullOrEmpty(outterClassName)) {
 				Class<?> clazz1 = loader.loadClass(outterClassName);
@@ -135,7 +133,7 @@ public class SNStreamJitApp {
 						InnterClassName, OutterClass.getName()));
 	}
 
-	private URL getUrl() {
+	private ClassLoader classLoader() {
 		String jarFilePath = (String) staticConfig
 				.getExtraData(GlobalConstants.JARFILE_PATH);
 
@@ -155,7 +153,10 @@ public class SNStreamJitApp {
 		}
 
 		try {
-			return jarFile.toURI().toURL();
+			URL url = jarFile.toURI().toURL();
+			URL[] urls = new URL[] { url };
+			ClassLoader loader = new URLClassLoader(urls);
+			return loader;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			System.out.println("Couldn't find the toplevel worker...Exiting");
