@@ -26,6 +26,14 @@ import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.CompilationTime;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 
+/**
+ * {@link ConfigurationProcessorImpl} refactored and all blob creation methods
+ * have been moved to here. Alternatively, we can make this class as an inner
+ * class of {@link ConfigurationProcessorImpl}.
+ * 
+ * @author sumanan
+ * @since 21 Oct, 2015
+ */
 public class BlobCreator {
 
 	private final SNStreamJitApp app;
@@ -189,12 +197,28 @@ public class BlobCreator {
 		}
 	}
 
+	/**
+	 * This interface is to create {@link Blob}s in different ways. Currently,
+	 * we only have
+	 * {@link BlobFactory#makeBlob(Set, Configuration, int, DrainData)} to make
+	 * blobs.
+	 * 
+	 * @author sumanan
+	 * @since 21 Oct, 2015
+	 */
 	private interface CreationLogic {
 		public Blob create(BlobFactory bf,
 				ImmutableSet<Worker<?, ?>> workerset, int maxCores,
 				Set<Integer> workIdentifiers);
 	}
 
+	/**
+	 * Uses {@link BlobFactory#makeBlob(Set, Configuration, int, DrainData)} to
+	 * make blobs.
+	 * 
+	 * @author sumanan
+	 * @since 21 Oct, 2015
+	 */
 	private class DrainDataCreationLogic implements CreationLogic {
 		private final DrainData drainData;
 		private final Configuration blobConfigs;
