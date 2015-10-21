@@ -67,26 +67,13 @@ public class SNStreamJitApp {
 	 * @return : StreamGraph
 	 */
 	private OneToOneElement<?, ?> getStreamGraph() {
+		URL url = getUrl();
+		if (url == null)
+			return null;
+
 		String topStreamClassName = (String) staticConfig
 				.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
-		String jarFilePath = (String) staticConfig
-				.getExtraData(GlobalConstants.JARFILE_PATH);
-
-		checkNotNull(jarFilePath);
 		checkNotNull(topStreamClassName);
-		jarFilePath = this.getClass().getProtectionDomain().getCodeSource()
-				.getLocation().getPath();
-		File jarFile = new java.io.File(jarFilePath);
-		if (!jarFile.exists()) {
-			System.out.println("Jar file not found....");
-			try {
-				streamNode.controllerConnection
-						.writeObject(Error.FILE_NOT_FOUND);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
 
 		// In some benchmarks, top level stream class is written as an static
 		// inner class. So in that case, we have to find the outer
@@ -101,11 +88,8 @@ public class SNStreamJitApp {
 			topStreamClassName = topStreamClassName.substring(pos + 1);
 		}
 
-		URL url;
 		try {
-			url = jarFile.toURI().toURL();
 			URL[] urls = new URL[] { url };
-
 			ClassLoader loader = new URLClassLoader(urls);
 			Class<?> topStreamClass;
 			if (!Strings.isNullOrEmpty(outterClassName)) {
@@ -116,20 +100,6 @@ public class SNStreamJitApp {
 			}
 			System.out.println(topStreamClass.getSimpleName());
 			return (OneToOneElement<?, ?>) topStreamClass.newInstance();
-
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			System.out.println("Couldn't find the toplevel worker...Exiting");
-
-			// TODO: Try catch inside a catch block. Good practice???
-			try {
-				streamNode.controllerConnection
-						.writeObject(Error.WORKER_NOT_FOUND);
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			// System.exit(0);
 		} catch (InstantiationException iex) {
 			System.err.println("InstantiationException exception.");
 			System.err
@@ -163,6 +133,44 @@ public class SNStreamJitApp {
 				String.format(
 						"Innter class %s is not found in the outter class %s. Check the accessibility/visibility of the inner class",
 						InnterClassName, OutterClass.getName()));
+	}
+
+	private URL getUrl() {
+		String jarFilePath = (String) staticConfig
+				.getExtraData(GlobalConstants.JARFILE_PATH);
+
+		checkNotNull(jarFilePath);
+		jarFilePath = this.getClass().getProtectionDomain().getCodeSource()
+				.getLocation().getPath();
+		File jarFile = new java.io.File(jarFilePath);
+		if (!jarFile.exists()) {
+			System.out.println("Jar file not found....");
+			try {
+				streamNode.controllerConnection
+						.writeObject(Error.FILE_NOT_FOUND);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+
+		try {
+			return jarFile.toURI().toURL();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			System.out.println("Couldn't find the toplevel worker...Exiting");
+
+			// TODO: Try catch inside a catch block. Good practice???
+			try {
+				streamNode.controllerConnection
+						.writeObject(Error.WORKER_NOT_FOUND);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			// System.exit(0);
+		}
+		return null;
 	}
 
 	private Worker<?, ?> source() {
