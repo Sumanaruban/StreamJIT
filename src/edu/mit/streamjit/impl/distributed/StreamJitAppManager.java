@@ -136,7 +136,7 @@ public class StreamJitAppManager {
 		Configuration.Builder builder = app.getStaticConfiguration();
 		builder.addParameter(new IntParameter(GlobalConstants.StarterType, 1,
 				2, reconfigurer.starterType()));
-		controller.newApp(builder.build());
+		controller.newApp(builder);
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {

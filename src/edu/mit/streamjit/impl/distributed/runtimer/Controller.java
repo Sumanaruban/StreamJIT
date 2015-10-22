@@ -96,8 +96,7 @@ public class Controller {
 					"Conflict in nodeID assignment. controllerNodeID has been assigned to a SteamNode");
 
 		setMachineIds();
-		sendToAll(new CTRLRMessageElementHolder(
-				Request.NodeInfo, -1));
+		sendToAll(new CTRLRMessageElementHolder(Request.NodeInfo, -1));
 	}
 
 	private void setMachineIds() {
@@ -130,8 +129,7 @@ public class Controller {
 		return coreCounts;
 	}
 
-	public void newApp(Configuration staticCfg) {
-		Configuration.Builder builder = Configuration.builder(staticCfg);
+	public void newApp(Configuration.Builder builder) {
 		Map<Integer, InetAddress> inetMap = new HashMap<>();
 		for (StreamNodeAgent agent : StreamNodeMap.values())
 			inetMap.put(agent.getNodeID(), agent.getAddress());
@@ -142,8 +140,7 @@ public class Controller {
 		this.conProvider = new ConnectionProvider(controllerNodeID, networkinfo);
 		ConfigurationString json = new ConfigurationString1(builder.build()
 				.toJson(), ConfigType.STATIC, null);
-		sendToAll(new CTRLRMessageElementHolder(
-				json, -1));
+		sendToAll(new CTRLRMessageElementHolder(json, -1));
 	}
 
 	public Set<Integer> getAllNodeIDs() {
