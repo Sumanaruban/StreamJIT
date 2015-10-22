@@ -109,15 +109,13 @@ public class StreamJitAppManager {
 		this.status = AppStatus.NOT_STARTED;
 		this.exP = new SNExceptionProcessorImpl();
 		this.ep = new ErrorProcessorImpl();
-		controller.registerManager(this);
-		controller.newApp(app.getStaticConfiguration()); // TODO: Find a
-															// good calling
-															// place.
+
 		appDrainer = new AppDrainer();
-		profiler = setupProfiler();
 		headTailHandler = new HeadTailHandler(controller, app);
 		this.mLogger = app.eLogger;
 		this.reconfigurer = new PauseResumeReconfigurer();
+		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
+		profiler = setupProfiler();
 	}
 
 	public ErrorProcessor errorProcessor() {
@@ -130,6 +128,11 @@ public class StreamJitAppManager {
 
 	public SNTimeInfoProcessor timeInfoProcessor() {
 		return timeInfoProcessor;
+	}
+
+	private void setNewApp() {
+		controller.registerManager(this);
+		controller.newApp(app.getStaticConfiguration());
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {
