@@ -431,6 +431,13 @@ public class StreamJitAppManager {
 		 *         <li>-2: Compilation has failed.
 		 */
 		public int reconfigure(int multiplier, AppInstance appinst);
+
+		/**
+		 * Type of starter required at StreamNode side.
+		 * 
+		 * @return
+		 */
+		public int starterType();
 	}
 
 	private class PauseResumeReconfigurer implements Reconfigurer {
@@ -474,6 +481,11 @@ public class StreamJitAppManager {
 			headTailHandler.startHead();
 			headTailHandler.startTail();
 			aim.start();
+		}
+
+		@Override
+		public int starterType() {
+			return 1;
 		}
 	}
 }
