@@ -107,19 +107,19 @@ public class BlobsManagerImpl implements BlobsManager {
 	public final int appInstId;
 
 	/**
-	 * is app stateful?
+	 * {@link Starter} type.
 	 */
-	private final boolean stateful;
+	private final int starterType;
 
 	public BlobsManagerImpl(ImmutableSet<Blob> blobSet,
 			Map<Token, ConnectionInfo> conInfoMap, StreamNode streamNode,
 			ConnectionProvider conProvider, String appName, int appInstId,
-			boolean stateful) {
+			int starterType) {
 		this.conInfoMap = conInfoMap;
 		this.streamNode = streamNode;
 		this.conProvider = conProvider;
 		this.appInstId = appInstId;
-		this.stateful = stateful;
+		this.starterType = starterType;
 
 		this.cmdProcessor = new CommandProcessorImpl();
 		this.drainProcessor = new CTRLRDrainProcessorImpl();
@@ -302,7 +302,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels = createOutputChannels(
 					Sets.difference(b.getOutputs(), locaTokens), bufferSizesMap);
 			blobExecuters.put(t, new BlobExecuter(this, t, b, inputChannels,
-					outputChannels, stateful));
+					outputChannels, starterType));
 		}
 	}
 

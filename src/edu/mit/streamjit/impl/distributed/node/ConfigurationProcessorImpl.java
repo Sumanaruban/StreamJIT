@@ -138,7 +138,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
 					streamNode, app.conProvider, app.topLevelClass, appInstId,
-					app.stateful);
+					app.starterType);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
 					streamNode, bm, appInstId);
 			streamNode.registerMessageVisitor(mv);;

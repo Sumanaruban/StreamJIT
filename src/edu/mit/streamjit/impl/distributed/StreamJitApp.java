@@ -252,7 +252,7 @@ public class StreamJitApp<I, O> {
 		builder.putExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME,
 				topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
-		builder.addParameter(SwitchParameter.create(GlobalConstants.STATEFUL,
+		builder.addParameter(SwitchParameter.create(GlobalConstants.StarterType,
 				stateful));
 		return builder.build();
 	}

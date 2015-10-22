@@ -41,7 +41,7 @@ public class SNStreamJitApp {
 	public final OneToOneElement<?, ?> streamGraph;
 	public final Worker<?, ?> source;
 	private final StreamNode streamNode;
-	public final boolean stateful;
+	public final int starterType;
 
 	SNStreamJitApp(String json, StreamNode streamNode) {
 		this.streamNode = streamNode;
@@ -61,13 +61,12 @@ public class SNStreamJitApp {
 				.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);
 		streamGraph = getStreamGraph();
 		source = source();
-		stateful = stateful();
+		starterType = starterType();
 	}
 
-	boolean stateful() {
-		Configuration.SwitchParameter<Boolean> param = staticConfig
-				.getParameter(GlobalConstants.STATEFUL,
-						Configuration.SwitchParameter.class, Boolean.class);
+	int starterType() {
+		Configuration.IntParameter param = staticConfig.getParameter(
+				GlobalConstants.StarterType, Configuration.IntParameter.class);
 		return param.getValue();
 	}
 
