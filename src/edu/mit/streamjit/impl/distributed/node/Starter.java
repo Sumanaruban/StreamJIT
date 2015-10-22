@@ -33,7 +33,10 @@ interface Starter {
 }
 
 /**
- * {@link Starter} for stateless graphs.
+ * This {@link Starter} first runs init schedule and waits for command from
+ * controller to start steady state execution. This is suitable if the stream
+ * graph has neither initial state nor initial drain data (e.g, stateless
+ * graphs).
  * 
  * <p>
  * Warning: This class refers {@link BlobExecuter}'s fields frequently as all
@@ -44,14 +47,14 @@ interface Starter {
  * @author sumanan
  * @since 8 Oct, 2015
  */
-final class StatelessStarter implements Starter {
+final class Starter2 implements Starter {
 
 	volatile int steadyRunCount;
 	private final CountDownLatch latch = new CountDownLatch(1);
 	private boolean isChannelsStarted = false;
 	final BlobExecuter be;
 
-	StatelessStarter(BlobExecuter be) {
+	Starter2(BlobExecuter be) {
 		this.be = be;
 	}
 
@@ -105,7 +108,9 @@ final class StatelessStarter implements Starter {
 }
 
 /**
- * {@link Starter} for stateful graphs.
+ * This {@link Starter} straightly starts blobs, which is suitable if the stream
+ * graph has either initial state or initial drain data. This does not
+ * differentiate init schedule and steady state schedule.
  * 
  * <p>
  * Warning: This class refers {@link BlobExecuter}'s fields frequently as all
@@ -116,10 +121,10 @@ final class StatelessStarter implements Starter {
  * @author sumanan
  * @since 8 Oct, 2015
  */
-final class StatefullStarter implements Starter {
+final class Starter1 implements Starter {
 
 	final BlobExecuter be;
-	StatefullStarter(BlobExecuter be) {
+	Starter1(BlobExecuter be) {
 		this.be = be;
 	}
 

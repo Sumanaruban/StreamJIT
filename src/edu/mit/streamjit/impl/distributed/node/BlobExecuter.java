@@ -230,9 +230,9 @@ class BlobExecuter {
 
 	Starter starter(boolean stateful) {
 		if (stateful)
-			return new StatefullStarter(this);
+			return new Starter1(this);
 		else
-			return new StatelessStarter(this);
+			return new Starter2(this);
 	}
 
 	final class BlobThread2 extends Thread {
