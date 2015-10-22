@@ -35,6 +35,7 @@ import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
@@ -132,7 +133,10 @@ public class StreamJitAppManager {
 
 	private void setNewApp() {
 		controller.registerManager(this);
-		controller.newApp(app.getStaticConfiguration());
+		Configuration.Builder builder = app.getStaticConfiguration();
+		builder.addParameter(new IntParameter(GlobalConstants.StarterType, 1,
+				2, reconfigurer.starterType()));
+		controller.newApp(builder.build());
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {

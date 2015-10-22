@@ -246,15 +246,13 @@ public class StreamJitApp<I, O> {
 	 * 
 	 * @return static information of the app that is needed by steramnodes.
 	 */
-	public Configuration getStaticConfiguration() {
+	public Configuration.Builder getStaticConfiguration() {
 		Configuration.Builder builder = Configuration.builder();
 		builder.putExtraData(GlobalConstants.JARFILE_PATH, jarFilePath);
 		builder.putExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME,
 				topLevelClass);
 		builder.putExtraData(GlobalConstants.APP_NAME, name);
-		builder.addParameter(SwitchParameter.create(GlobalConstants.StarterType,
-				stateful));
-		return builder.build();
+		return builder;
 	}
 	public AppInstance newConfiguration(NewConfiguration newConfiguration) {
 		if (!newConfiguration.verificationPassed)
