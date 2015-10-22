@@ -156,7 +156,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		boolean needTermination = setBufferMap(input, output,
 				manager.appDrainer, app);
 
-		manager.reconfigure(1, appinst);
+		manager.reconfigurer.reconfigure(1, appinst);
 		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer);
 
 		if (Options.tune > 0 && this.cfg != null) {

@@ -11,8 +11,6 @@ import edu.mit.streamjit.impl.distributed.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
-import edu.mit.streamjit.util.ConfigurationUtils;
-import edu.mit.streamjit.util.DrainDataUtils;
 import edu.mit.streamjit.util.Pair;
 
 /**
@@ -82,18 +80,15 @@ public class Reconfigurer {
 
 		mLogger.eEvent("serialcfg");
 		try {
-			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = manager.intermediateDraining();
-			mLogger.eEvent("intermediateDraining");
-			if (!intermediateDraining)
-				return new Pair<Boolean, Integer>(false, -5);
-
 			AppInstance appinst = app.newConfiguration(newConfig);
 			int multiplier = getMultiplier(newConfig.configuration);
 			mLogger.bEvent("managerReconfigure");
-			boolean reconfigure = manager.reconfigure(multiplier, appinst);
+			int reconfigure = manager.reconfigurer.reconfigure(multiplier,
+					appinst);
 			mLogger.eEvent("managerReconfigure");
-			if (!reconfigure)
+			if (reconfigure == 1)
+				return new Pair<Boolean, Integer>(false, -5);
+			else if (reconfigure == 2)
 				reason = -6;
 		} catch (Exception ex) {
 			ex.printStackTrace();

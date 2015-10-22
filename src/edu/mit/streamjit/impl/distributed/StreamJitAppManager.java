@@ -55,6 +55,7 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.DrainDataUtils;
 
@@ -93,6 +94,10 @@ public class StreamJitAppManager {
 
 	final HeadTailHandler headTailHandler;
 
+	final EventTimeLogger mLogger;
+
+	public final Reconfigurer reconfigurer;
+
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
 			ConnectionManager conManager, TimeLogger logger) {
 		noOfnodes = controller.getAllNodeIDs().size();
@@ -111,6 +116,8 @@ public class StreamJitAppManager {
 		appDrainer = new AppDrainer();
 		profiler = setupProfiler();
 		headTailHandler = new HeadTailHandler(controller, app);
+		this.mLogger = app.eLogger;
+		this.reconfigurer = new PauseResumeReconfigurer();
 	}
 
 	public ErrorProcessor errorProcessor() {
@@ -145,29 +152,6 @@ public class StreamJitAppManager {
 
 	public boolean isRunning() {
 		return curAIM.isRunning;
-	}
-
-	public boolean reconfigure(int multiplier, AppInstance appinst) {
-		AppInstanceManager aim = createNewAIM(appinst);
-		reset();
-		preCompilation(appinst);
-		headTailHandler.setupHeadTail(conInfoMap, app.bufferMap, multiplier,
-				appinst);
-		boolean isCompiled = postCompilation(aim);
-
-		if (isCompiled) {
-			start(aim);
-		} else {
-			aim.drainingFinished(false);
-		}
-
-		if (profiler != null) {
-			String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-					.getConfiguration());
-			profiler.logger().newConfiguration(cfgPrefix);
-		}
-		Utils.printMemoryStatus();
-		return aim.isRunning;
 	}
 
 	private AppInstanceManager createNewAIM(AppInstance appinst) {
@@ -446,6 +430,58 @@ public class StreamJitAppManager {
 			// Need to drain newAIM also. drainer.drainFinal() method is
 			// blocking. Need to to make this unblocking.
 			return curAIM.drainer.drainFinal(isSemeFinal);
+		}
+	}
+
+	public interface Reconfigurer {
+		/**
+		 * @param multiplier
+		 * @param appinst
+		 * @return <ol>
+		 *         <li>-0: Reconfiguration is successful.
+		 *         <li>-1: Intermediate draining has failed.
+		 *         <li>-2: Compilation has failed.
+		 */
+		public int reconfigure(int multiplier, AppInstance appinst);
+	}
+
+	private class PauseResumeReconfigurer implements Reconfigurer {
+
+		public int reconfigure(int multiplier, AppInstance appinst) {
+			mLogger.bEvent("intermediateDraining");
+			boolean intermediateDraining = false;
+			try {
+				intermediateDraining = intermediateDraining();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			mLogger.eEvent("intermediateDraining");
+			if (!intermediateDraining)
+				return 1;
+
+			AppInstanceManager aim = createNewAIM(appinst);
+			reset();
+			preCompilation(appinst);
+			headTailHandler.setupHeadTail(conInfoMap, app.bufferMap,
+					multiplier, appinst);
+			boolean isCompiled = postCompilation(aim);
+
+			if (isCompiled) {
+				start(aim);
+			} else {
+				aim.drainingFinished(false);
+			}
+
+			if (profiler != null) {
+				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
+						.getConfiguration());
+				profiler.logger().newConfiguration(cfgPrefix);
+			}
+			Utils.printMemoryStatus();
+			if (aim.isRunning)
+				return 0;
+			else
+				return 2;
 		}
 	}
 }
