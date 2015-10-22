@@ -82,10 +82,8 @@ public class Reconfigurer {
 		try {
 			AppInstance appinst = app.newConfiguration(newConfig);
 			int multiplier = getMultiplier(newConfig.configuration);
-			mLogger.bEvent("managerReconfigure");
 			int reconfigure = manager.reconfigurer.reconfigure(multiplier,
 					appinst);
-			mLogger.eEvent("managerReconfigure");
 			if (reconfigure == 1)
 				return new Pair<Boolean, Integer>(false, -5);
 			else if (reconfigure == 2)
