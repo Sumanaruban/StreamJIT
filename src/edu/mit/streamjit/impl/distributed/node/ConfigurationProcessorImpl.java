@@ -129,7 +129,6 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		System.out
 				.println("------------------------------------------------------------");
 		System.out.println("New Configuration.....");
-		// streamNode.releaseOldBM();
 		int appInstId = (int) cfg.getExtraData("appInstId");
 		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic,
 				appInstId);

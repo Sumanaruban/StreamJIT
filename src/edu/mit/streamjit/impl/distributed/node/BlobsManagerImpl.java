@@ -196,6 +196,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			if (this.bufferCleaner != null)
 				this.bufferCleaner.stopit();
 
+			streamNode.unRegisterMessageVisitor(appInstId);
 			this.streamNode.eventTimeLogger.eTuningRound();
 			drainedLastBlobActionsDone = true;
 		}
