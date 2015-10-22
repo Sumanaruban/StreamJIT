@@ -192,9 +192,8 @@ public class StreamJitAppManager {
 	 * 
 	 * @return <code>true</code> iff the draining is success or the application
 	 *         is not running currently.
-	 * @throws InterruptedException
 	 */
-	public boolean intermediateDraining() throws InterruptedException {
+	public boolean intermediateDraining() {
 		if (curAIM == null)
 			return true;
 
@@ -449,12 +448,7 @@ public class StreamJitAppManager {
 
 		public int reconfigure(int multiplier, AppInstance appinst) {
 			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = false;
-			try {
-				intermediateDraining = intermediateDraining();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			boolean intermediateDraining = intermediateDraining();
 			mLogger.eEvent("intermediateDraining");
 			if (!intermediateDraining)
 				return 1;
