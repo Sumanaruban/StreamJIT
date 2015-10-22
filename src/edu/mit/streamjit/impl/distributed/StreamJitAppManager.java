@@ -245,17 +245,6 @@ public class StreamJitAppManager {
 	}
 
 	/**
-	 * Start the execution of the StreamJit application.
-	 */
-	private void start(AppInstanceManager aim) {
-		headTailHandler.startHead();
-		headTailHandler.startTail();
-		if (!app.stateful)
-			aim.runInitSchedule();
-		aim.start();
-	}
-
-	/**
 	 * Performs the steps that need to be done in order to create new blobs at
 	 * stream nodes side. Specifically, sends new configuration along with drain
 	 * data to stream nodes for compilation.
@@ -476,6 +465,15 @@ public class StreamJitAppManager {
 				return 0;
 			else
 				return 2;
+		}
+
+		/**
+		 * Start the execution of the StreamJit application.
+		 */
+		private void start(AppInstanceManager aim) {
+			headTailHandler.startHead();
+			headTailHandler.startTail();
+			aim.start();
 		}
 	}
 }
