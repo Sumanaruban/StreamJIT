@@ -180,31 +180,18 @@ public class AppInstance {
 	 */
 	public Configuration getDynamicConfiguration() {
 		Configuration.Builder builder = Configuration.builder();
-
 		int maxCores = maxCores();
-
-		Map<Integer, Integer> machineCoreMap = new HashMap<>();
-		for (Entry<Integer, List<Set<Worker<?, ?>>>> machine : partitionsMachineMap
-				.entrySet()) {
-			machineCoreMap.put(machine.getKey(), machine.getValue().size()
-					* maxCores);
-		}
-
-		PartitionParameter.Builder partParam = PartitionParameter.builder(
-				GlobalConstants.PARTITION, machineCoreMap);
-
+		PartitionParameter.Builder partParam = addMachineCoreMap(maxCores);
 		BlobFactory intFactory = new Interpreter.InterpreterBlobFactory();
 		BlobFactory comp2Factory = new Compiler2BlobFactory();
 		partParam.addBlobFactory(intFactory);
 		partParam.addBlobFactory(comp2Factory);
 		blobtoMachineMap = new HashMap<>();
-
 		BlobFactory bf = Options.useCompilerBlob ? comp2Factory : intFactory;
 		for (Integer machineID : partitionsMachineMap.keySet()) {
 			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
 					.get(machineID);
 			for (Set<Worker<?, ?>> blobWorkers : blobList) {
-				// TODO: One core per blob. Need to change this.
 				partParam.addBlob(machineID, maxCores, bf, blobWorkers);
 
 				// TODO: Temp fix to build.
@@ -219,6 +206,18 @@ public class AppInstance {
 		else
 			builder.addSubconfiguration("blobConfigs", getInterpreterConfg());
 		return builder.build();
+	}
+
+	PartitionParameter.Builder addMachineCoreMap(int maxCores) {
+		Map<Integer, Integer> machineCoreMap = new HashMap<>();
+		for (Entry<Integer, List<Set<Worker<?, ?>>>> machine : partitionsMachineMap
+				.entrySet()) {
+			machineCoreMap.put(machine.getKey(), machine.getValue().size()
+					* maxCores);
+		}
+		PartitionParameter.Builder partParam = PartitionParameter.builder(
+				GlobalConstants.PARTITION, machineCoreMap);
+		return partParam;
 	}
 
 	private Configuration getInterpreterConfg() {
