@@ -182,11 +182,7 @@ public class AppInstance {
 		Configuration.Builder builder = Configuration.builder();
 		int maxCores = maxCores();
 		PartitionParameter.Builder partParam = addMachineCoreMap(maxCores);
-		BlobFactory intFactory = new Interpreter.InterpreterBlobFactory();
-		BlobFactory comp2Factory = new Compiler2BlobFactory();
-		partParam.addBlobFactory(intFactory);
-		partParam.addBlobFactory(comp2Factory);
-		BlobFactory bf = Options.useCompilerBlob ? comp2Factory : intFactory;
+		BlobFactory bf = addBlobFactories(partParam);
 		addBlobs(partParam, maxCores, bf);
 		builder.addParameter(partParam.build());
 		if (Options.useCompilerBlob)
@@ -206,6 +202,14 @@ public class AppInstance {
 		PartitionParameter.Builder partParam = PartitionParameter.builder(
 				GlobalConstants.PARTITION, machineCoreMap);
 		return partParam;
+	}
+
+	private BlobFactory addBlobFactories(PartitionParameter.Builder partParam) {
+		BlobFactory intFactory = new Interpreter.InterpreterBlobFactory();
+		BlobFactory comp2Factory = new Compiler2BlobFactory();
+		partParam.addBlobFactory(intFactory);
+		partParam.addBlobFactory(comp2Factory);
+		return Options.useCompilerBlob ? comp2Factory : intFactory;
 	}
 
 	private void addBlobs(PartitionParameter.Builder partParam, int maxCores,
