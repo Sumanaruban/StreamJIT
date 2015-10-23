@@ -101,7 +101,7 @@
 	</target>
 
 	<target name="remotesetup" depends="sendtoLanka, createDownloadScript">
-		<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}" password="${password}" command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/setup.sh ${app} ${streamGraphName} ${numOfSNs}" />
+		<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}" password="${password}" command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/setup.sh ${app} ${streamGraphName} ${numOfSNs} ${branch}" />
 	</target>
 
 	<!--http://www.vogella.com/tutorials/ApacheAnt/article.html-->

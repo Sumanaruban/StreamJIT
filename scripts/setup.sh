@@ -46,10 +46,24 @@ get_prop(){
 	grep  "^${2}=" ${1}| sed "s%${2}=\(.*\)%\1%"
 }
 
-if [ "$#" -ne 3 ]; then
+function copyOTScripts(){
+	parent="/data/scratch/sumanan/lib/opentuner"
+	rm -r $parent/streamjit
+	dir="Adjbuf"
+	if [ "$1" = "seam" ]; then
+		dir="Seamless"
+	fi
+	cp -r $parent/streamjit$dir $parent/streamjit
+}
+
+#TODO: 23-10-2015. adjbuf branch and seamlessreconfig branch have different versions
+#of online tuning python scripts. I'm adding 4th argument to automatically copy the
+#correct scripts based on the branch. Remove this change once everything is settled,
+#including the function copyOTScripts.
+if [ "$#" -ne 4 ]; then
 	echo "Illegal number of parameters"
-	echo "3 arguments must be passed"
-	echo "setup.sh <app> <mainClass> <noOfnodes>"
+	echo "4 arguments must be passed"
+	echo "setup.sh <app> <mainClass> <noOfnodes> <branch>"
 	exit
 fi
 
@@ -57,11 +71,13 @@ args=("$@")
 app=${args[0]}
 mainClass=${args[1]}
 nodes=${args[2]}
+branch=${args[3]}
 totalNodes=$((nodes + 1))
 cd /data/scratch/sumanan
 creatdirs $app			# Changes the current working directory(CWD) as well.
 mv "optionsLanka.properties" "options.properties"
 createCTRLRSh $app $mainClass $totalNodes
 createSNSh $app $nodes
+copyOTScripts $branch
 cp ../run.sh run.sh
 ./run.sh
