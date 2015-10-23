@@ -200,16 +200,16 @@ public class StreamJitAppManager {
 	 * @return <code>true</code> iff the draining is success or the application
 	 *         is not running currently.
 	 */
-	public boolean intermediateDraining() {
-		if (curAIM == null)
+	public boolean intermediateDraining(AppInstanceManager aim) {
+		if (aim == null)
 			return true;
 
-		if (curAIM.isRunning) {
-			boolean ret = curAIM.drainer.drainIntermediate();
+		if (aim.isRunning) {
+			boolean ret = aim.drainer.drainIntermediate();
 			if (Options.useDrainData && Options.dumpDrainData) {
 				String cfgPrefix = ConfigurationUtils
-						.getConfigPrefix(curAIM.appInst.configuration);
-				DrainData dd = curAIM.appInst.drainData;
+						.getConfigPrefix(aim.appInst.configuration);
+				DrainData dd = aim.appInst.drainData;
 				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
 			}
 			return ret;
@@ -451,7 +451,7 @@ public class StreamJitAppManager {
 
 		public int reconfigure(int multiplier, AppInstance appinst) {
 			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = intermediateDraining();
+			boolean intermediateDraining = intermediateDraining(curAIM);
 			mLogger.eEvent("intermediateDraining");
 			if (!intermediateDraining)
 				return 1;
