@@ -185,6 +185,7 @@ public class AppInstance {
 		BlobFactory bf = addBlobFactories(partParam);
 		addBlobs(partParam, maxCores, bf);
 		builder.addParameter(partParam.build());
+		builder.putExtraData("appInstId", id);
 		if (Options.useCompilerBlob)
 			builder.addSubconfiguration("blobConfigs", getConfiguration());
 		else
