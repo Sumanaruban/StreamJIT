@@ -259,8 +259,7 @@ public class StreamJitAppManager {
 	 * @param appinst
 	 */
 	private void preCompilation(AppInstance appinst) {
-		Configuration.Builder builder = Configuration.builder(appinst
-				.getDynamicConfiguration());
+		Configuration.Builder builder = appinst.getDynamicConfiguration();
 		conInfoMap = conManager.conInfoMap(appinst.getConfiguration(),
 				appinst.partitionsMachineMap, app.source, app.sink);
 		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);

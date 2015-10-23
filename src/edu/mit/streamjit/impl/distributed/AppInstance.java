@@ -17,6 +17,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Configuration.Builder;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.PartitionParameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
@@ -178,7 +179,7 @@ public class AppInstance {
 	 * 
 	 * @return new partition information
 	 */
-	public Configuration getDynamicConfiguration() {
+	Builder getDynamicConfiguration() {
 		Configuration.Builder builder = Configuration.builder();
 		int maxCores = maxCores();
 		PartitionParameter.Builder partParam = addMachineCoreMap(maxCores);
@@ -190,7 +191,7 @@ public class AppInstance {
 			builder.addSubconfiguration("blobConfigs", getConfiguration());
 		else
 			builder.addSubconfiguration("blobConfigs", getInterpreterConfg());
-		return builder.build();
+		return builder;
 	}
 
 	private PartitionParameter.Builder addMachineCoreMap(int maxCores) {
