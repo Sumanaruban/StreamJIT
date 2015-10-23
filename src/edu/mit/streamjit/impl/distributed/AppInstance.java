@@ -175,9 +175,11 @@ public class AppInstance {
 	 * For every reconfiguration, this method may be called by an appropriate
 	 * class to get new configuration information that can be sent to all
 	 * participating {@link StreamNode}s. Mainly this configuration contains
-	 * partition information.
+	 * graph partition information for running this {@link AppInstance} on a
+	 * distributed environment.
 	 * 
-	 * @return new partition information
+	 * @return {@link Configuration.Builder} that is specific to this
+	 *         {@link AppInstance}.
 	 */
 	Builder getDynamicConfiguration() {
 		Configuration.Builder builder = Configuration.builder();
