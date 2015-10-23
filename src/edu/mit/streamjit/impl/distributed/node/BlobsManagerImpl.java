@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -196,10 +198,17 @@ public class BlobsManagerImpl implements BlobsManager {
 			if (this.bufferCleaner != null)
 				this.bufferCleaner.stopit();
 
-			streamNode.unRegisterMessageVisitor(appInstId);
+			unRegisterMe();
 			this.streamNode.eventTimeLogger.eTuningRound();
 			drainedLastBlobActionsDone = true;
 		}
+	}
+
+	void unRegisterMe() {
+		ExecutorService executorService = Executors.newSingleThreadExecutor();
+		executorService.submit(() -> streamNode
+				.unRegisterMessageVisitor(appInstId));
+		executorService.shutdown();
 	}
 
 	private final Object doDrainLastBlobLock = new Object();
