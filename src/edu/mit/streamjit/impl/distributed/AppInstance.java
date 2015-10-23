@@ -186,8 +186,31 @@ public class AppInstance {
 		BlobFactory comp2Factory = new Compiler2BlobFactory();
 		partParam.addBlobFactory(intFactory);
 		partParam.addBlobFactory(comp2Factory);
-		blobtoMachineMap = new HashMap<>();
 		BlobFactory bf = Options.useCompilerBlob ? comp2Factory : intFactory;
+		addBlobs(partParam, maxCores, bf);
+		builder.addParameter(partParam.build());
+		if (Options.useCompilerBlob)
+			builder.addSubconfiguration("blobConfigs", getConfiguration());
+		else
+			builder.addSubconfiguration("blobConfigs", getInterpreterConfg());
+		return builder.build();
+	}
+
+	private PartitionParameter.Builder addMachineCoreMap(int maxCores) {
+		Map<Integer, Integer> machineCoreMap = new HashMap<>();
+		for (Entry<Integer, List<Set<Worker<?, ?>>>> machine : partitionsMachineMap
+				.entrySet()) {
+			machineCoreMap.put(machine.getKey(), machine.getValue().size()
+					* maxCores);
+		}
+		PartitionParameter.Builder partParam = PartitionParameter.builder(
+				GlobalConstants.PARTITION, machineCoreMap);
+		return partParam;
+	}
+
+	private void addBlobs(PartitionParameter.Builder partParam, int maxCores,
+			BlobFactory bf) {
+		blobtoMachineMap = new HashMap<>();
 		for (Integer machineID : partitionsMachineMap.keySet()) {
 			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
 					.get(machineID);
@@ -199,25 +222,6 @@ public class AppInstance {
 				blobtoMachineMap.put(t, machineID);
 			}
 		}
-
-		builder.addParameter(partParam.build());
-		if (Options.useCompilerBlob)
-			builder.addSubconfiguration("blobConfigs", getConfiguration());
-		else
-			builder.addSubconfiguration("blobConfigs", getInterpreterConfg());
-		return builder.build();
-	}
-
-	PartitionParameter.Builder addMachineCoreMap(int maxCores) {
-		Map<Integer, Integer> machineCoreMap = new HashMap<>();
-		for (Entry<Integer, List<Set<Worker<?, ?>>>> machine : partitionsMachineMap
-				.entrySet()) {
-			machineCoreMap.put(machine.getKey(), machine.getValue().size()
-					* maxCores);
-		}
-		PartitionParameter.Builder partParam = PartitionParameter.builder(
-				GlobalConstants.PARTITION, machineCoreMap);
-		return partParam;
 	}
 
 	private Configuration getInterpreterConfg() {
