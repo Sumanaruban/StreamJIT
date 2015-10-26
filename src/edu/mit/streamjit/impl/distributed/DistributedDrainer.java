@@ -66,6 +66,6 @@ public class DistributedDrainer extends AbstractDrainer {
 
 	@Override
 	protected void prepareDraining(boolean isFinal) {
-		appInstManager.appManager.drainingStarted(isFinal);
+		appInstManager.drainingStarted(isFinal);
 	}
 }

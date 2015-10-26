@@ -64,6 +64,8 @@ public class AppInstanceManager {
 
 	Map<Token, ConnectionInfo> conInfoMap;
 
+	final HeadTailHandler headTailHandler;
+
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
 		this.appInst = appInst;
@@ -77,6 +79,8 @@ public class AppInstanceManager {
 		this.ciP = new CompilationInfoProcessorImpl(appManager.noOfnodes);
 		this.mv = new SNMessageVisitorImpl();
 		this.exP = new SNExceptionProcessorImpl();
+		headTailHandler = new HeadTailHandler(appManager.controller,
+				appInst.app);
 	}
 
 	public int appInstId() {
@@ -87,6 +91,9 @@ public class AppInstanceManager {
 		System.out.println(String
 				.format("%s: Draining Finished...", toString()));
 		isRunning = false;
+		headTailHandler.waitToStopHead();
+		headTailHandler.stopTail(isFinal);
+		headTailHandler.waitToStopTail();
 		appManager.drainingFinished(isFinal);
 	}
 
@@ -177,7 +184,7 @@ public class AppInstanceManager {
 			this.error = true;
 			// This will release the OpenTuner thread which is waiting for fixed
 			// output.
-			appManager.headTailHandler.tailChannel.reset();
+			headTailHandler.tailChannel.reset();
 		}
 
 		@Override
@@ -395,5 +402,10 @@ public class AppInstanceManager {
 					"AppInstanceManager's SNMessageVisitor does not process NodeInfo."
 							+ " StreamNodeAgent's SNMessageVisitor must be called.");
 		}
+	}
+
+	public void drainingStarted(boolean isFinal) {
+		appManager.app.eLogger.bEvent("draining");
+		headTailHandler.stopHead(isFinal);
 	}
 }

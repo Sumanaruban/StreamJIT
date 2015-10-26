@@ -79,8 +79,6 @@ public class StreamJitAppManager {
 
 	final int noOfnodes;
 
-	final HeadTailHandler headTailHandler;
-
 	final EventTimeLogger mLogger;
 
 	public final Reconfigurer reconfigurer;
@@ -97,7 +95,6 @@ public class StreamJitAppManager {
 		this.ep = new ErrorProcessorImpl();
 
 		appDrainer = new AppDrainer();
-		headTailHandler = new HeadTailHandler(controller, app);
 		this.mLogger = app.eLogger;
 		this.reconfigurer = new PauseResumeReconfigurer();
 		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
@@ -161,14 +158,15 @@ public class StreamJitAppManager {
 
 	public void stop() {
 		this.status = AppStatus.STOPPED;
-		headTailHandler.tailChannel.reset();
+		curAIM.headTailHandler.tailChannel.reset();
 		controller.closeAll();
 		// dp.drainer.stop();
 		appDrainer.stop();
 	}
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
-		long time = headTailHandler.tailChannel.getFixedOutputTime(timeout);
+		long time = curAIM.headTailHandler.tailChannel
+				.getFixedOutputTime(timeout);
 		if (curAIM.apStsPro.error) {
 			return -1l;
 		}
@@ -199,19 +197,11 @@ public class StreamJitAppManager {
 	}
 
 	public void drainingFinished(boolean isFinal) {
-		headTailHandler.waitToStopHead();
-		headTailHandler.stopTail(isFinal);
-		headTailHandler.waitToStopTail();
 		if (isFinal)
 			stop();
 
 		long time = app.eLogger.eEvent("draining");
 		System.out.println("Draining time is " + time + " milli seconds");
-	}
-
-	public void drainingStarted(boolean isFinal) {
-		app.eLogger.bEvent("draining");
-		headTailHandler.stopHead(isFinal);
 	}
 
 	private void reset() {
@@ -386,7 +376,7 @@ public class StreamJitAppManager {
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim);
-			headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
+			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
 					multiplier, appinst);
 			boolean isCompiled = postCompilation(aim);
 
@@ -412,8 +402,8 @@ public class StreamJitAppManager {
 		 * Start the execution of the StreamJit application.
 		 */
 		private void start(AppInstanceManager aim) {
-			headTailHandler.startHead();
-			headTailHandler.startTail();
+			aim.headTailHandler.startHead();
+			aim.headTailHandler.startTail();
 			aim.start();
 		}
 
