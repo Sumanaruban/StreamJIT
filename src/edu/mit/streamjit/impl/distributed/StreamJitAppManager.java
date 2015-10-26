@@ -21,9 +21,6 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -32,24 +29,17 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.StreamCompiler;
-import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
-import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
-import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
-import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
 import edu.mit.streamjit.impl.distributed.common.Options;
-import edu.mit.streamjit.impl.distributed.common.SNException;
-import edu.mit.streamjit.impl.distributed.common.SNException.AddressBindException;
-import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.SNTimeInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfoProcessorImpl;
 import edu.mit.streamjit.impl.distributed.common.Utils;
@@ -68,15 +58,11 @@ public class StreamJitAppManager {
 
 	final StreamJitApp<?, ?> app;
 
-	private Map<Token, ConnectionInfo> conInfoMap;
-
-	private final ConnectionManager conManager;
+	final ConnectionManager conManager;
 
 	final Controller controller;
 
 	private final ErrorProcessor ep;
-
-	private final SNExceptionProcessorImpl exP;
 
 	private final SNTimeInfoProcessor timeInfoProcessor;
 
@@ -108,7 +94,6 @@ public class StreamJitAppManager {
 		this.logger = logger;
 		this.timeInfoProcessor = new SNTimeInfoProcessorImpl(logger);
 		this.status = AppStatus.NOT_STARTED;
-		this.exP = new SNExceptionProcessorImpl();
 		this.ep = new ErrorProcessorImpl();
 
 		appDrainer = new AppDrainer();
@@ -121,10 +106,6 @@ public class StreamJitAppManager {
 
 	public ErrorProcessor errorProcessor() {
 		return ep;
-	}
-
-	public SNExceptionProcessor exceptionProcessor() {
-		return exP;
 	}
 
 	public SNTimeInfoProcessor timeInfoProcessor() {
@@ -234,7 +215,9 @@ public class StreamJitAppManager {
 	}
 
 	private void reset() {
-		exP.exConInfos = new HashSet<>();
+		// 2015-10-26.
+		// As exP is moved to AppInstManager, we don't need to reset it.
+		// exP.exConInfos = new HashSet<>();
 		// No need to do the following resets as we create new appInstManager at
 		// every reconfiguration.
 		// appInstManager.apStsPro.reset();
@@ -260,9 +243,7 @@ public class StreamJitAppManager {
 	 */
 	private void preCompilation(AppInstanceManager aim) {
 		Configuration.Builder builder = aim.appInst.getDynamicConfiguration();
-		conInfoMap = conManager.conInfoMap(aim.appInst.getConfiguration(),
-				aim.appInst.partitionsMachineMap, app.source, app.sink);
-		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
+		aim.addConInfoMap(builder);
 		Configuration cfg = builder.build();
 		String jsonStirng = cfg.toJson();
 		ImmutableMap<Integer, DrainData> drainDataMap = aim.appInst
@@ -315,59 +296,6 @@ public class StreamJitAppManager {
 			System.err
 					.println("No top level class in the jar file. Terminating...");
 			stop();
-		}
-	}
-
-	private class SNExceptionProcessorImpl implements SNExceptionProcessor {
-
-		private final Object abExLock = new Object();
-
-		private Set<ConnectionInfo> exConInfos;
-
-		private SNExceptionProcessorImpl() {
-			exConInfos = new HashSet<>();
-		}
-
-		@Override
-		public void process(AddressBindException abEx) {
-			synchronized (abExLock) {
-				if (exConInfos.contains(abEx.conInfo)) {
-					System.out
-							.println("AddressBindException : Already handled...");
-					return;
-				}
-
-				Token t = null;
-				for (Map.Entry<Token, ConnectionInfo> entry : conInfoMap
-						.entrySet()) {
-					if (abEx.conInfo.equals(entry.getValue())) {
-						t = entry.getKey();
-						break;
-					}
-				}
-
-				if (t == null) {
-					throw new IllegalArgumentException(
-							"Illegal TCP connection - " + abEx.conInfo);
-				}
-
-				ConnectionInfo coninfo = conManager
-						.replaceConInfo(abEx.conInfo);
-
-				exConInfos.add(abEx.conInfo);
-
-				CTRLRMessageElement msg = new NewConInfo(coninfo, t);
-
-				// TODO: seamless. correct appInstId must be passed.
-				controller.send(coninfo.getSrcID(),
-						new CTRLRMessageElementHolder(msg, 1));
-				controller.send(coninfo.getDstID(),
-						new CTRLRMessageElementHolder(msg, 1));
-			}
-		}
-
-		@Override
-		public void process(SNException ex) {
 		}
 	}
 
@@ -458,7 +386,7 @@ public class StreamJitAppManager {
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim);
-			headTailHandler.setupHeadTail(conInfoMap, app.bufferMap,
+			headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
 					multiplier, appinst);
 			boolean isCompiled = postCompilation(aim);
 

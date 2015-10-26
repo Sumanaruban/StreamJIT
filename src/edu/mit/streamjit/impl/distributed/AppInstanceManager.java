@@ -1,12 +1,15 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
+import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
@@ -21,7 +24,10 @@ import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
+import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Error;
+import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
+import edu.mit.streamjit.impl.distributed.common.MiscCtrlElements.NewConInfo;
 import edu.mit.streamjit.impl.distributed.common.NodeInfo;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
@@ -29,6 +35,8 @@ import edu.mit.streamjit.impl.distributed.common.SNDrainElement.Drained;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNException;
+import edu.mit.streamjit.impl.distributed.common.SNException.AddressBindException;
+import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.common.SystemInfo;
@@ -50,8 +58,11 @@ public class AppInstanceManager {
 	AppStatusProcessorImpl apStsPro;
 	SNDrainProcessorImpl dp;
 	CompilationInfoProcessorImpl ciP;
+	private final SNExceptionProcessorImpl exP;
 	public final SNMessageVisitor mv;
 	boolean isRunning = false;
+
+	Map<Token, ConnectionInfo> conInfoMap;
 
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
@@ -65,6 +76,7 @@ public class AppInstanceManager {
 		this.dp = new SNDrainProcessorImpl(drainer);
 		this.ciP = new CompilationInfoProcessorImpl(appManager.noOfnodes);
 		this.mv = new SNMessageVisitorImpl();
+		this.exP = new SNExceptionProcessorImpl();
 	}
 
 	public int appInstId() {
@@ -113,6 +125,19 @@ public class AppInstanceManager {
 
 	public String toString() {
 		return String.format("AppInstanceManager-%d", appInst.id);
+	}
+
+	/**
+	 * Builds a new {@link ConnectionInfo} map based on this {@link AppInstance}
+	 * 's partition information and adds it to the @param builder.
+	 * 
+	 * @param builder
+	 */
+	void addConInfoMap(Configuration.Builder builder) {
+		conInfoMap = appManager.conManager.conInfoMap(
+				appInst.getConfiguration(), appInst.partitionsMachineMap,
+				appInst.app.source, appInst.app.sink);
+		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
 	}
 
 	/**
@@ -263,6 +288,59 @@ public class AppInstanceManager {
 		}
 	}
 
+	private class SNExceptionProcessorImpl implements SNExceptionProcessor {
+
+		private final Object abExLock = new Object();
+
+		private Set<ConnectionInfo> exConInfos;
+
+		private SNExceptionProcessorImpl() {
+			exConInfos = new HashSet<>();
+		}
+
+		@Override
+		public void process(AddressBindException abEx) {
+			synchronized (abExLock) {
+				if (exConInfos.contains(abEx.conInfo)) {
+					System.out
+							.println("AddressBindException : Already handled...");
+					return;
+				}
+
+				Token t = null;
+				for (Map.Entry<Token, ConnectionInfo> entry : conInfoMap
+						.entrySet()) {
+					if (abEx.conInfo.equals(entry.getValue())) {
+						t = entry.getKey();
+						break;
+					}
+				}
+
+				if (t == null) {
+					throw new IllegalArgumentException(
+							"Illegal TCP connection - " + abEx.conInfo);
+				}
+
+				ConnectionInfo coninfo = appManager.conManager
+						.replaceConInfo(abEx.conInfo);
+
+				exConInfos.add(abEx.conInfo);
+
+				CTRLRMessageElement msg = new NewConInfo(coninfo, t);
+
+				// TODO: seamless. correct appInstId must be passed.
+				appManager.controller.send(coninfo.getSrcID(),
+						new CTRLRMessageElementHolder(msg, 1));
+				appManager.controller.send(coninfo.getDstID(),
+						new CTRLRMessageElementHolder(msg, 1));
+			}
+		}
+
+		@Override
+		public void process(SNException ex) {
+		}
+	}
+
 	/**
 	 * @author Sumanan sumanan@mit.edu
 	 * @since May 20, 2013
@@ -286,7 +364,7 @@ public class AppInstanceManager {
 
 		@Override
 		public void visit(SNException snException) {
-			snException.process(appManager.exceptionProcessor());
+			snException.process(exP);
 		}
 
 		@Override
