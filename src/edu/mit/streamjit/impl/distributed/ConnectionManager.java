@@ -104,19 +104,8 @@ public interface ConnectionManager {
 			Map<Token, ConnectionInfo> conInfoMap = new HashMap<>();
 
 			for (Integer machineID : partitionsMachineMap.keySet()) {
-				List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
-						.get(machineID);
-				Set<Worker<?, ?>> allWorkers = new HashSet<>(); // Contains all
-																// workers those
-																// are
-																// assigned to
-																// the
-																// current
-																// machineID
-																// machine.
-				for (Set<Worker<?, ?>> blobWorkers : blobList) {
-					allWorkers.addAll(blobWorkers);
-				}
+				Set<Worker<?, ?>> allWorkers = allWorkers(partitionsMachineMap,
+						machineID);
 
 				for (Worker<?, ?> w : allWorkers) {
 					for (Worker<?, ?> succ : Workers.getSuccessors(w)) {
@@ -142,6 +131,25 @@ public interface ConnectionManager {
 					usedConInfos, conInfoMap, cfg);
 
 			return conInfoMap;
+		}
+
+		private static Set<Worker<?, ?>> allWorkers(
+				Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
+				Integer machineID) {
+			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
+					.get(machineID);
+			Set<Worker<?, ?>> allWorkers = new HashSet<>(); // Contains all
+															// workers those
+															// are
+															// assigned to
+															// the
+															// current
+															// machineID
+															// machine.
+			for (Set<Worker<?, ?>> blobWorkers : blobList) {
+				allWorkers.addAll(blobWorkers);
+			}
+			return allWorkers;
 		}
 
 		/**
