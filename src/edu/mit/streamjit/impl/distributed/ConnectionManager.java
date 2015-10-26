@@ -2,6 +2,7 @@ package edu.mit.streamjit.impl.distributed;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -66,7 +67,8 @@ public interface ConnectionManager {
 	 */
 	public Map<Token, ConnectionInfo> conInfoMap(Configuration cfg,
 			Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
-			Worker<?, ?> source, Worker<?, ?> sink);
+			Collection<ConnectionInfo> connectionsInUse, Worker<?, ?> source,
+			Worker<?, ?> sink);
 
 	/**
 	 * Sometimes an assigned TCP ports may not available to make new connection
@@ -104,11 +106,14 @@ public interface ConnectionManager {
 
 		public Map<Token, ConnectionInfo> conInfoMap(Configuration cfg,
 				Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
+				Collection<ConnectionInfo> connectionsInUse,
 				Worker<?, ?> source, Worker<?, ?> sink) {
 
 			assert partitionsMachineMap != null : "partitionsMachineMap is null";
 
-			Set<ConnectionInfo> usedConInfos = new HashSet<>();
+			if (connectionsInUse == null)
+				connectionsInUse = new HashSet<>();
+			Set<ConnectionInfo> usedConInfos = new HashSet<>(connectionsInUse);
 			Map<Token, ConnectionInfo> conInfoMap = new HashMap<>();
 
 			for (Integer machineID : partitionsMachineMap.keySet()) {
