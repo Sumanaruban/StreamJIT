@@ -85,6 +85,14 @@ public interface ConnectionManager {
 
 		private final int controllerNodeID;
 
+		/**
+		 * We do not make new connections at every reconfiguration. Instead, we
+		 * reuse the connections that were created during the past
+		 * reconfiguration cycles.
+		 * <p>
+		 * This set keeps track of the {@link Connection}s that have already
+		 * been established.
+		 */
 		protected Set<ConnectionInfo> currentConInfos;
 
 		protected int startPortNo = 24896; // Just a random magic number.
