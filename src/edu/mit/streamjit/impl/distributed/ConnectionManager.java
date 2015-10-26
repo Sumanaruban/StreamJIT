@@ -133,19 +133,20 @@ public interface ConnectionManager {
 			return conInfoMap;
 		}
 
+		/**
+		 * Returns all workers those are assigned to the machine whose id = @param
+		 * machineID.
+		 * 
+		 * @param partitionsMachineMap
+		 * @param machineID
+		 * @return
+		 */
 		private static Set<Worker<?, ?>> allWorkers(
 				Map<Integer, List<Set<Worker<?, ?>>>> partitionsMachineMap,
 				Integer machineID) {
 			List<Set<Worker<?, ?>>> blobList = partitionsMachineMap
 					.get(machineID);
-			Set<Worker<?, ?>> allWorkers = new HashSet<>(); // Contains all
-															// workers those
-															// are
-															// assigned to
-															// the
-															// current
-															// machineID
-															// machine.
+			Set<Worker<?, ?>> allWorkers = new HashSet<>();
 			for (Set<Worker<?, ?>> blobWorkers : blobList) {
 				allWorkers.addAll(blobWorkers);
 			}
