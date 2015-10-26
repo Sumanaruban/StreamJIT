@@ -21,6 +21,7 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -37,6 +38,7 @@ import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
+import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Error.ErrorProcessor;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -233,7 +235,7 @@ public class StreamJitAppManager {
 	 */
 	private void preCompilation(AppInstanceManager aim) {
 		Configuration.Builder builder = aim.appInst.getDynamicConfiguration();
-		aim.addConInfoMap(builder);
+		aim.addConInfoMap(builder, connectionsInUse());
 		Configuration cfg = builder.build();
 		String jsonStirng = cfg.toJson();
 		ImmutableMap<Integer, DrainData> drainDataMap = aim.appInst
@@ -246,6 +248,13 @@ public class StreamJitAppManager {
 			controller.send(nodeID, new CTRLRMessageElementHolder(json,
 					aim.appInst.id));
 		}
+	}
+
+	private Collection<ConnectionInfo> connectionsInUse() {
+		Collection<ConnectionInfo> connectionsInUse = null;
+		if (prevAIM != null && prevAIM.conInfoMap != null)
+			connectionsInUse = prevAIM.conInfoMap.values();
+		return connectionsInUse;
 	}
 
 	/**

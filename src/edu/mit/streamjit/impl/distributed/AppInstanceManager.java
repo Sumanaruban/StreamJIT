@@ -1,5 +1,6 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -94,6 +95,7 @@ public class AppInstanceManager {
 		headTailHandler.waitToStopHead();
 		headTailHandler.stopTail(isFinal);
 		headTailHandler.waitToStopTail();
+		conInfoMap = null;
 		appManager.drainingFinished(isFinal);
 	}
 
@@ -139,11 +141,13 @@ public class AppInstanceManager {
 	 * 's partition information and adds it to the @param builder.
 	 * 
 	 * @param builder
+	 * @param connectionsInUse
 	 */
-	void addConInfoMap(Configuration.Builder builder) {
+	void addConInfoMap(Configuration.Builder builder,
+			Collection<ConnectionInfo> connectionsInUse) {
 		conInfoMap = appManager.conManager.conInfoMap(
 				appInst.getConfiguration(), appInst.partitionsMachineMap,
-				appInst.app.source, appInst.app.sink);
+				connectionsInUse, appInst.app.source, appInst.app.sink);
 		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
 	}
 
