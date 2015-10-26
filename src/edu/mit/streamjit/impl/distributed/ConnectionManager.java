@@ -93,13 +93,13 @@ public interface ConnectionManager {
 		 * This set keeps track of the {@link Connection}s that have already
 		 * been established.
 		 */
-		protected Set<ConnectionInfo> currentConInfos;
+		protected Set<ConnectionInfo> establishedConInfos;
 
 		protected int startPortNo = 24896; // Just a random magic number.
 
 		public AbstractConnectionManager(int controllerNodeID) {
 			this.controllerNodeID = controllerNodeID;
-			this.currentConInfos = new HashSet<>();
+			this.establishedConInfos = new HashSet<>();
 		}
 
 		public Map<Token, ConnectionInfo> conInfoMap(Configuration cfg,
@@ -159,7 +159,7 @@ public interface ConnectionManager {
 
 			if (tcpConInfo == null) {
 				tcpConInfo = makeConnectionInfo(srcID, dstID, t, cfg);
-				this.currentConInfos.add(tcpConInfo);
+				this.establishedConInfos.add(tcpConInfo);
 			}
 
 			conInfoMap.put(t, tcpConInfo);
@@ -216,7 +216,7 @@ public interface ConnectionManager {
 		 */
 		protected List<ConnectionInfo> establishedConList(ConnectionInfo conInfo) {
 			List<ConnectionInfo> conList = new ArrayList<>();
-			for (ConnectionInfo estConInfo : currentConInfos) {
+			for (ConnectionInfo estConInfo : establishedConInfos) {
 				if (conInfo.equals(estConInfo))
 					conList.add(estConInfo);
 			}
@@ -229,8 +229,8 @@ public interface ConnectionManager {
 		}
 
 		public ConnectionInfo replaceConInfo(ConnectionInfo conInfo) {
-			if (currentConInfos.contains(conInfo))
-				currentConInfos.remove(conInfo);
+			if (establishedConInfos.contains(conInfo))
+				establishedConInfos.remove(conInfo);
 			ConnectionInfo newConinfo;
 			if (conInfo.getSrcID() == 0)
 				newConinfo = new TCPConnectionInfo(conInfo.getSrcID(),
@@ -238,7 +238,7 @@ public interface ConnectionManager {
 			else
 				newConinfo = new AsyncTCPConnectionInfo(conInfo.getSrcID(),
 						conInfo.getDstID(), startPortNo++);
-			currentConInfos.add(newConinfo);
+			establishedConInfos.add(newConinfo);
 
 			return newConinfo;
 		}
