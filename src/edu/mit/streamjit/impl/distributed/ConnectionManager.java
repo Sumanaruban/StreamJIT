@@ -147,7 +147,7 @@ public interface ConnectionManager {
 
 			ConnectionInfo conInfo = new GenericConnectionInfo(srcID, dstID);
 
-			List<ConnectionInfo> conSet = getTcpConInfo(conInfo);
+			List<ConnectionInfo> conSet = establishedConList(conInfo);
 			ConnectionInfo tcpConInfo = null;
 
 			for (ConnectionInfo con : conSet) {
@@ -207,7 +207,14 @@ public interface ConnectionManager {
 		protected abstract ConnectionInfo makeConnectionInfo(int srcID,
 				int dstID, Token t, Configuration cfg);
 
-		protected List<ConnectionInfo> getTcpConInfo(ConnectionInfo conInfo) {
+		/**
+		 * Returns the list of connections that have already been established
+		 * between the source and destination of the @param conInfo.
+		 * 
+		 * @param conInfo
+		 * @return
+		 */
+		protected List<ConnectionInfo> establishedConList(ConnectionInfo conInfo) {
 			List<ConnectionInfo> conList = new ArrayList<>();
 			for (ConnectionInfo tcpconInfo : currentConInfos) {
 				if (conInfo.equals(tcpconInfo))
