@@ -216,9 +216,9 @@ public interface ConnectionManager {
 		 */
 		protected List<ConnectionInfo> establishedConList(ConnectionInfo conInfo) {
 			List<ConnectionInfo> conList = new ArrayList<>();
-			for (ConnectionInfo tcpconInfo : currentConInfos) {
-				if (conInfo.equals(tcpconInfo))
-					conList.add(tcpconInfo);
+			for (ConnectionInfo estConInfo : currentConInfos) {
+				if (conInfo.equals(estConInfo))
+					conList.add(estConInfo);
 			}
 			return conList;
 		}
