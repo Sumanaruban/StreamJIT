@@ -133,6 +133,31 @@ public interface ConnectionManager {
 			return conInfoMap;
 		}
 
+		protected void addtoconInfoMap(int srcID, int dstID, Token t,
+				Set<ConnectionInfo> usedConInfos,
+				Map<Token, ConnectionInfo> conInfoMap, Configuration cfg) {
+
+			ConnectionInfo conInfo = new GenericConnectionInfo(srcID, dstID);
+
+			List<ConnectionInfo> conSet = getTcpConInfo(conInfo);
+			ConnectionInfo tcpConInfo = null;
+
+			for (ConnectionInfo con : conSet) {
+				if (!usedConInfos.contains(con)) {
+					tcpConInfo = con;
+					break;
+				}
+			}
+
+			if (tcpConInfo == null) {
+				tcpConInfo = makeConnectionInfo(srcID, dstID, t, cfg);
+				this.currentConInfos.add(tcpConInfo);
+			}
+
+			conInfoMap.put(t, tcpConInfo);
+			usedConInfos.add(tcpConInfo);
+		}
+
 		/**
 		 * Returns all workers those are assigned to the machine whose id = @param
 		 * machineID.
@@ -171,9 +196,8 @@ public interface ConnectionManager {
 					"%s is not assigned to anyof the machines", worker));
 		}
 
-		protected abstract void addtoconInfoMap(int srcID, int dstID, Token t,
-				Set<ConnectionInfo> usedConInfos,
-				Map<Token, ConnectionInfo> conInfoMap, Configuration cfg);
+		protected abstract ConnectionInfo makeConnectionInfo(int srcID,
+				int dstID, Token t, Configuration cfg);
 
 		protected List<ConnectionInfo> getTcpConInfo(ConnectionInfo conInfo) {
 			List<ConnectionInfo> conList = new ArrayList<>();
@@ -221,34 +245,6 @@ public interface ConnectionManager {
 		public Configuration getDefaultConfiguration(Set<Worker<?, ?>> workers) {
 			return Configuration.builder().build();
 		}
-
-		protected void addtoconInfoMap(int srcID, int dstID, Token t,
-				Set<ConnectionInfo> usedConInfos,
-				Map<Token, ConnectionInfo> conInfoMap, Configuration cfg) {
-
-			ConnectionInfo conInfo = new GenericConnectionInfo(srcID, dstID);
-
-			List<ConnectionInfo> conSet = getTcpConInfo(conInfo);
-			ConnectionInfo tcpConInfo = null;
-
-			for (ConnectionInfo con : conSet) {
-				if (!usedConInfos.contains(con)) {
-					tcpConInfo = con;
-					break;
-				}
-			}
-
-			if (tcpConInfo == null) {
-				tcpConInfo = makeConnectionInfo(srcID, dstID);
-				this.currentConInfos.add(tcpConInfo);
-			}
-
-			conInfoMap.put(t, tcpConInfo);
-			usedConInfos.add(tcpConInfo);
-		}
-
-		protected abstract ConnectionInfo makeConnectionInfo(int srcID,
-				int dstID);
 	}
 
 	public static class BlockingTCPNoParams extends NoParams {
@@ -258,7 +254,8 @@ public interface ConnectionManager {
 		}
 
 		@Override
-		protected ConnectionInfo makeConnectionInfo(int srcID, int dstID) {
+		protected ConnectionInfo makeConnectionInfo(int srcID, int dstID,
+				Token t, Configuration cfg) {
 			return new TCPConnectionInfo(srcID, dstID, startPortNo++);
 		}
 	}
@@ -270,7 +267,8 @@ public interface ConnectionManager {
 		}
 
 		@Override
-		protected ConnectionInfo makeConnectionInfo(int srcID, int dstID) {
+		protected ConnectionInfo makeConnectionInfo(int srcID, int dstID,
+				Token t, Configuration cfg) {
 			return new AsyncTCPConnectionInfo(srcID, dstID, startPortNo++);
 		}
 	}
@@ -326,32 +324,7 @@ public interface ConnectionManager {
 			return cfgBuilder.build();
 		}
 
-		protected void addtoconInfoMap(int srcID, int dstID, Token t,
-				Set<ConnectionInfo> usedConInfos,
-				Map<Token, ConnectionInfo> conInfoMap, Configuration cfg) {
-
-			ConnectionInfo conInfo = new GenericConnectionInfo(srcID, dstID);
-
-			List<ConnectionInfo> conSet = getTcpConInfo(conInfo);
-			ConnectionInfo tcpConInfo = null;
-
-			for (ConnectionInfo con : conSet) {
-				if (!usedConInfos.contains(con)) {
-					tcpConInfo = con;
-					break;
-				}
-			}
-
-			if (tcpConInfo == null) {
-				tcpConInfo = makeConnectionInfo(srcID, dstID, t, cfg);
-				this.currentConInfos.add(tcpConInfo);
-			}
-
-			conInfoMap.put(t, tcpConInfo);
-			usedConInfos.add(tcpConInfo);
-		}
-
-		private ConnectionInfo makeConnectionInfo(int srcID, int dstID,
+		protected ConnectionInfo makeConnectionInfo(int srcID, int dstID,
 				Token t, Configuration cfg) {
 			SwitchParameter<ConnectionType> p = cfg.getParameter(
 					getParamName(t), SwitchParameter.class,
