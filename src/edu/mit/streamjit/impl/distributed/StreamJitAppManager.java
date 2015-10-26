@@ -258,21 +258,22 @@ public class StreamJitAppManager {
 	 * 
 	 * @param appinst
 	 */
-	private void preCompilation(AppInstance appinst) {
-		Configuration.Builder builder = appinst.getDynamicConfiguration();
-		conInfoMap = conManager.conInfoMap(appinst.getConfiguration(),
-				appinst.partitionsMachineMap, app.source, app.sink);
+	private void preCompilation(AppInstanceManager aim) {
+		Configuration.Builder builder = aim.appInst.getDynamicConfiguration();
+		conInfoMap = conManager.conInfoMap(aim.appInst.getConfiguration(),
+				aim.appInst.partitionsMachineMap, app.source, app.sink);
 		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
 		Configuration cfg = builder.build();
 		String jsonStirng = cfg.toJson();
-		ImmutableMap<Integer, DrainData> drainDataMap = appinst.getDrainData();
+		ImmutableMap<Integer, DrainData> drainDataMap = aim.appInst
+				.getDrainData();
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString1(jsonStirng,
 					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
 			controller.send(nodeID, new CTRLRMessageElementHolder(json,
-					appinst.id));
+					aim.appInst.id));
 		}
 	}
 
@@ -456,7 +457,7 @@ public class StreamJitAppManager {
 
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
-			preCompilation(appinst);
+			preCompilation(aim);
 			headTailHandler.setupHeadTail(conInfoMap, app.bufferMap,
 					multiplier, appinst);
 			boolean isCompiled = postCompilation(aim);
