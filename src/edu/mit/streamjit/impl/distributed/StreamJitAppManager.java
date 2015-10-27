@@ -421,4 +421,55 @@ public class StreamJitAppManager {
 			return 1;
 		}
 	}
+
+	private class SeamlessStatelessReconfigurer implements Reconfigurer {
+
+		public int reconfigure(int multiplier, AppInstance appinst) {
+			AppInstanceManager aim = createNewAIM(appinst);
+			reset();
+			preCompilation(aim);
+			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
+					multiplier, appinst);
+			boolean isCompiled = postCompilation(aim);
+
+			if (isCompiled) {
+				startInit(aim);
+				aim.start();
+				mLogger.bEvent("intermediateDraining");
+				boolean intermediateDraining = intermediateDraining(prevAIM);
+				mLogger.eEvent("intermediateDraining");
+				if (!intermediateDraining)
+					new IllegalStateException(
+							"IntermediateDraining of prevAIM failed.")
+							.printStackTrace();
+			} else {
+				aim.drainingFinished(false);
+			}
+
+			if (profiler != null) {
+				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
+						.getConfiguration());
+				profiler.logger().newConfiguration(cfgPrefix);
+			}
+			Utils.printMemoryStatus();
+			if (aim.isRunning)
+				return 0;
+			else
+				return 2;
+		}
+
+		/**
+		 * Start the execution of the StreamJit application.
+		 */
+		private void startInit(AppInstanceManager aim) {
+			aim.headTailHandler.startHead();
+			aim.headTailHandler.startTail();
+			aim.runInitSchedule();
+		}
+
+		@Override
+		public int starterType() {
+			return 2;
+		}
+	}
 }
