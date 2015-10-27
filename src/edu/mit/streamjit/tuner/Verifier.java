@@ -182,7 +182,7 @@ public class Verifier implements Runnable {
 					System.err.println("Evaluation failed.ret.second="
 							+ ret.second);
 				}
-				logEnding(time);
+				logEnding(time, cfgPrefix);
 				runningTime.add(time);
 			}
 		} else {
@@ -206,9 +206,9 @@ public class Verifier implements Runnable {
 		configurer.logger.newConfiguration(cfgPrefix);
 	}
 
-	private void logEnding(long time) {
+	private void logEnding(long time, String cfgPrefix) {
 		configurer.logger.logRunTime(time);
 		configurer.prognosticator.time(time);
-		configurer.mLogger.eTuningRound();
+		configurer.mLogger.eTuningRound(cfgPrefix);
 	}
 }

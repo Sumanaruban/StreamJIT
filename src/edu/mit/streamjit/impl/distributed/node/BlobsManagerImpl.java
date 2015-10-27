@@ -113,15 +113,18 @@ public class BlobsManagerImpl implements BlobsManager {
 	 */
 	private final int starterType;
 
+	private final String cfgPrefix;
+
 	public BlobsManagerImpl(ImmutableSet<Blob> blobSet,
 			Map<Token, ConnectionInfo> conInfoMap, StreamNode streamNode,
 			ConnectionProvider conProvider, String appName, int appInstId,
-			int starterType) {
+			int starterType, String cfgPrefix) {
 		this.conInfoMap = conInfoMap;
 		this.streamNode = streamNode;
 		this.conProvider = conProvider;
 		this.appInstId = appInstId;
 		this.starterType = starterType;
+		this.cfgPrefix = cfgPrefix;
 
 		this.cmdProcessor = new CommandProcessorImpl();
 		this.drainProcessor = new CTRLRDrainProcessorImpl();
@@ -199,7 +202,7 @@ public class BlobsManagerImpl implements BlobsManager {
 				this.bufferCleaner.stopit();
 
 			unRegisterMe();
-			this.streamNode.eventTimeLogger.eTuningRound();
+			this.streamNode.eventTimeLogger.eTuningRound(cfgPrefix);
 			drainedLastBlobActionsDone = true;
 		}
 	}

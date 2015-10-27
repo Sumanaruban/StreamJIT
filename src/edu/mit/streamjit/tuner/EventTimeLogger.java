@@ -37,7 +37,7 @@ public interface EventTimeLogger {
 	long eEvent(String eventName);
 
 	void bTuningRound(String cfgPrefix);
-	void eTuningRound();
+	void eTuningRound(String cfgPrefix);
 
 	/**
 	 * This method can be used to log extra messages. A newline must be added at
@@ -75,7 +75,7 @@ public interface EventTimeLogger {
 		}
 
 		@Override
-		public void eTuningRound() {
+		public void eTuningRound(String cfgPrefix) {
 		}
 
 		@Override
@@ -156,15 +156,15 @@ public interface EventTimeLogger {
 
 		@Override
 		public void bTuningRound(String cfgPrefix) {
-			bEvent("tuningRound");
+			bEvent("tuningRound-" + cfgPrefix);
 			write(String
 					.format("----------------------------%s----------------------------\n",
 							cfgPrefix));
 		}
 
 		@Override
-		public void eTuningRound() {
-			eEvent("tuningRound");
+		public void eTuningRound(String cfgPrefix) {
+			eEvent("tuningRound-" + cfgPrefix);
 		}
 
 		private long log(Event e) {

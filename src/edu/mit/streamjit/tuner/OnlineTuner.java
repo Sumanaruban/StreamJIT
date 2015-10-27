@@ -126,7 +126,7 @@ public class OnlineTuner implements Runnable {
 					tuner.writeLine("exit");
 					break;
 				}
-				mLogger.eTuningRound();
+				mLogger.eTuningRound(cfgPrefix);
 			}
 
 		} catch (IOException e) {

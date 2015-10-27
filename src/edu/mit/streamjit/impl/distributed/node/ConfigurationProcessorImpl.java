@@ -74,7 +74,6 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				blobConfigs);
 		return creationLogic;
 	}
-
 	CreationLogic creationLogic(Configuration dyncfg,
 			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
 		Configuration blobConfigs = dyncfg.getSubconfiguration("blobConfigs");
@@ -130,6 +129,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				.println("------------------------------------------------------------");
 		System.out.println("New Configuration.....");
 		int appInstId = (int) cfg.getExtraData("appInstId");
+		String cfgPrefix = ConfigurationUtils.getConfigPrefix(cfg
+				.getSubconfiguration("blobConfigs"));
 		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic,
 				appInstId);
 		if (blobSet != null) {
@@ -138,7 +139,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
 					streamNode, app.conProvider, app.topLevelClass, appInstId,
-					app.starterType);
+					app.starterType, cfgPrefix);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
 					streamNode, bm, appInstId);
 			streamNode.registerMessageVisitor(mv);;
@@ -153,8 +154,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 			}
 			System.out.println("Couldn't get the blobset....");
 		}
-		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
-				.getSubconfiguration("blobConfigs")));
+		newTuningRound(blobSet, cfgPrefix);
 	}
 
 	@Override
