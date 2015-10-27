@@ -98,7 +98,7 @@ public class StreamJitAppManager {
 
 		appDrainer = new AppDrainer();
 		this.mLogger = app.eLogger;
-		this.reconfigurer = new PauseResumeReconfigurer();
+		this.reconfigurer = reconfigurer();
 		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
 		profiler = setupProfiler();
 	}
@@ -117,6 +117,12 @@ public class StreamJitAppManager {
 		builder.addParameter(new IntParameter(GlobalConstants.StarterType, 1,
 				2, reconfigurer.starterType()));
 		controller.newApp(builder);
+	}
+
+	Reconfigurer reconfigurer() {
+		if (Options.seamlessReconfig && !app.stateful)
+			return new SeamlessStatelessReconfigurer();
+		return new PauseResumeReconfigurer();
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {

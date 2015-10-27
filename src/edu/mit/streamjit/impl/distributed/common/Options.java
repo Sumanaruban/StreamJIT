@@ -211,6 +211,13 @@ public final class Options {
 	 */
 	public static final boolean dumpDrainData;
 
+	// Reconfiguration related options.
+	/**
+	 * If this flag is <code>true</code>, seamless reconfiguration will take
+	 * place; otherwise, pause-resume reconfiguration will take place.
+	 */
+	public static final boolean seamlessReconfig;
+
 	static {
 		Properties prop = loadProperties();
 		throughputMeasurementPeriod = Integer.parseInt(prop
@@ -256,6 +263,8 @@ public final class Options {
 		doDraininNewThread = Boolean.parseBoolean(prop
 				.getProperty("doDraininNewThread"));
 		dumpDrainData = Boolean.parseBoolean(prop.getProperty("dumpDrainData"));
+		seamlessReconfig = Boolean.parseBoolean(prop
+				.getProperty("seamlessReconfig"));
 	}
 
 	public static Properties getProperties() {
@@ -292,6 +301,7 @@ public final class Options {
 		setProperty(prop, "logEventTime", logEventTime);
 		setProperty(prop, "doDraininNewThread", doDraininNewThread);
 		setProperty(prop, "dumpDrainData", dumpDrainData);
+		setProperty(prop, "seamlessReconfig", seamlessReconfig);
 		return prop;
 	}
 
