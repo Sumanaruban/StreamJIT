@@ -3,10 +3,13 @@ package edu.mit.streamjit.impl.distributed;
 import edu.mit.streamjit.impl.blob.Buffer;
 
 /**
- * Interface to merge two different {@link AppInstance}s' outputs together.
+ * Interface to merge two different {@link AppInstance}s' outputs together and
+ * pass it to user.
  * <p>
- * {@link AppInstance}s must use the {@link Buffer} given by this interface for
- * their {@link TailChannel}s.
+ * Actually {@link AppInstanceManager} maintains {@link TailChannel}, that
+ * writes the output of corresponding {@link AppInstance} to its output buffer.
+ * {@link AppInstanceManager}s must use the {@link Buffer} given by this
+ * interface for their {@link TailChannel}s.
  * 
  * @author sumanan
  * @since 28 Oct, 2015
@@ -14,7 +17,7 @@ import edu.mit.streamjit.impl.blob.Buffer;
 public interface TailBufferMerger {
 
 	/**
-	 * @return {@link Runnable} that to all data merging.
+	 * @return {@link Runnable} that do all data merging.
 	 */
 	Runnable getRunnable();
 
@@ -31,9 +34,10 @@ public interface TailBufferMerger {
 	 * {@link TailChannel}.
 	 * 
 	 * @param appInstId
+	 *            id of the {@link AppInstance}.
 	 * @param skipCount
 	 *            Number of outputs of the {@link AppInstance} (with
-	 *            id=appInstId) that should be discarded
+	 *            id=appInstId) that should be discarded.
 	 * @return A {@link Buffer} that must be used by {@link AppInstance}s for
 	 *         their {@link TailChannel}s.
 	 */
@@ -41,7 +45,8 @@ public interface TailBufferMerger {
 
 	/**
 	 * Once an {@link AppInstance} is drained, {@link StreamJitAppManager} must
-	 * unregister it in order to release the allocated {@link Buffer}.
+	 * unregister it from {@link TailBufferMerger} in order to release the
+	 * allocated {@link Buffer}.
 	 * 
 	 * @param appInstId
 	 */
