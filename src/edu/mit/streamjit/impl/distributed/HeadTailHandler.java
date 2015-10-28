@@ -73,29 +73,7 @@ class HeadTailHandler {
 	void setupHeadTail(Map<Token, ConnectionInfo> conInfoMap,
 			ImmutableMap<Token, Buffer> bufferMap, int multiplier,
 			AppInstance appinst) {
-
-		ConnectionInfo headconInfo = conInfoMap.get(headToken);
-		assert headconInfo != null : "No head connection info exists in conInfoMap";
-		assert headconInfo.getSrcID() == controller.controllerNodeID
-				|| headconInfo.getDstID() == controller.controllerNodeID : "Head channel should start from the controller. "
-				+ headconInfo;
-
-		if (!bufferMap.containsKey(headToken))
-			throw new IllegalArgumentException(
-					"No head buffer in the passed bufferMap.");
-
-		if (headconInfo instanceof TCPConnectionInfo)
-			headChannel = new HeadChannel.TCPHeadChannel(
-					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0,
-					app.eLogger);
-		else if (headconInfo instanceof AsyncTCPConnectionInfo)
-			headChannel = new HeadChannel.AsyncHeadChannel(
-					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0,
-					app.eLogger);
-		else
-			throw new IllegalStateException("Head ConnectionInfo doesn't match");
+		setHead(conInfoMap, bufferMap);
 
 		ConnectionInfo tailconInfo = conInfoMap.get(tailToken);
 		assert tailconInfo != null : "No tail connection info exists in conInfoMap";
@@ -135,6 +113,32 @@ class HeadTailHandler {
 						conProvider, conInfo, bufferTokenName, debugLevel,
 						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
 		}
+	}
+
+	private void setHead(Map<Token, ConnectionInfo> conInfoMap,
+			ImmutableMap<Token, Buffer> bufferMap) {
+		ConnectionInfo headconInfo = conInfoMap.get(headToken);
+		assert headconInfo != null : "No head connection info exists in conInfoMap";
+		assert headconInfo.getSrcID() == controller.controllerNodeID
+				|| headconInfo.getDstID() == controller.controllerNodeID : "Head channel should start from the controller. "
+				+ headconInfo;
+
+		if (!bufferMap.containsKey(headToken))
+			throw new IllegalArgumentException(
+					"No head buffer in the passed bufferMap.");
+
+		if (headconInfo instanceof TCPConnectionInfo)
+			headChannel = new HeadChannel.TCPHeadChannel(
+					bufferMap.get(headToken), controller.getConProvider(),
+					headconInfo, "headChannel - " + headToken.toString(), 0,
+					app.eLogger);
+		else if (headconInfo instanceof AsyncTCPConnectionInfo)
+			headChannel = new HeadChannel.AsyncHeadChannel(
+					bufferMap.get(headToken), controller.getConProvider(),
+					headconInfo, "headChannel - " + headToken.toString(), 0,
+					app.eLogger);
+		else
+			throw new IllegalStateException("Head ConnectionInfo doesn't match");
 	}
 
 	void startHead() {
