@@ -88,6 +88,11 @@ public class AppInstanceManager {
 		return appInst.id;
 	}
 
+	public void drainingStarted(boolean isFinal) {
+		appManager.app.eLogger.bEvent("draining");
+		headTailHandler.stopHead(isFinal);
+	}
+
 	public void drainingFinished(boolean isFinal) {
 		System.out.println(String
 				.format("%s: Draining Finished...", toString()));
@@ -406,10 +411,5 @@ public class AppInstanceManager {
 					"AppInstanceManager's SNMessageVisitor does not process NodeInfo."
 							+ " StreamNodeAgent's SNMessageVisitor must be called.");
 		}
-	}
-
-	public void drainingStarted(boolean isFinal) {
-		appManager.app.eLogger.bEvent("draining");
-		headTailHandler.stopHead(isFinal);
 	}
 }
