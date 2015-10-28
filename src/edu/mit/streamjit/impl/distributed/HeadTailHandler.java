@@ -127,16 +127,16 @@ class HeadTailHandler {
 			throw new IllegalArgumentException(
 					"No head buffer in the passed bufferMap.");
 
+		Buffer b = bufferMap.get(headToken);
+		ConnectionProvider c = controller.getConProvider();
+		String name = "headChannel - " + headToken.toString();
+
 		if (headconInfo instanceof TCPConnectionInfo)
-			headChannel = new HeadChannel.TCPHeadChannel(
-					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0,
-					app.eLogger);
+			headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,
+					name, 0, app.eLogger);
 		else if (headconInfo instanceof AsyncTCPConnectionInfo)
-			headChannel = new HeadChannel.AsyncHeadChannel(
-					bufferMap.get(headToken), controller.getConProvider(),
-					headconInfo, "headChannel - " + headToken.toString(), 0,
-					app.eLogger);
+			headChannel = new HeadChannel.AsyncHeadChannel(b, c, headconInfo,
+					name, 0, app.eLogger);
 		else
 			throw new IllegalStateException("Head ConnectionInfo doesn't match");
 	}
