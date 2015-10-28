@@ -10,15 +10,12 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 
 /**
- * Reads output from two {@link AppInstance}s, merge them, and pass it to user.
- * 
- * Actually {@link AppInstanceManager} maintains {@link TailChannel}, that
- * writes the output of corresponding {@link AppInstance} to its output buffer.
+ * {@link TailBufferMerger} for state-less seam-less reconfiguration process.
  * 
  * @author sumanan
  * @since 28 Oct, 2015
  */
-public class TailBufferMergerStateless {
+public class TailBufferMergerStateless implements TailBufferMerger {
 
 	/**
 	 * TODO: Determine this buffer size correctly.
@@ -124,7 +121,7 @@ public class TailBufferMergerStateless {
 		switchBuf = false;
 	}
 
-	public void switchBuf(int appInstId) {
+	public void switchBuf() {
 		if (switchBuf)
 			throw new IllegalStateException("switchBuf==false expected.");
 		switchBuf = true;
