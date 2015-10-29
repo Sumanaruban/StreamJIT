@@ -504,6 +504,8 @@ public class StreamJitAppManager {
 
 		@Override
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
+			tailMerger.switchBuf();
+			tailMerger.unregisterAppInst(aim.appInstId());
 		}
 	}
 }
