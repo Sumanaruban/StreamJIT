@@ -30,6 +30,8 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.StreamCompiler;
+import edu.mit.streamjit.impl.blob.Blob.Token;
+import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
@@ -430,6 +432,13 @@ public class StreamJitAppManager {
 
 	private class SeamlessStatelessReconfigurer implements Reconfigurer {
 
+		private final TailBufferMerger tailMerger;
+
+		SeamlessStatelessReconfigurer() {
+			Buffer tailBuffer = app.bufferMap.get(app.tailToken);
+			tailMerger = new TailBufferMergerStateless(tailBuffer);
+		}
+
 		public int reconfigure(int multiplier, AppInstance appinst) {
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
@@ -462,6 +471,15 @@ public class StreamJitAppManager {
 				return 0;
 			else
 				return 2;
+		}
+
+		ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
+			ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap
+					.builder();
+			builder.put(app.headToken, app.bufferMap.get(app.headToken));
+			// TODO: skipCount = 0.
+			builder.put(app.tailToken, tailMerger.registerAppInst(appInstId, 0));
+			return builder.build();
 		}
 
 		/**
