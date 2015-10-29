@@ -172,6 +172,7 @@ public class StreamJitAppManager {
 		controller.closeAll();
 		// dp.drainer.stop();
 		appDrainer.stop();
+		reconfigurer.stop();
 	}
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
@@ -381,6 +382,8 @@ public class StreamJitAppManager {
 		public int starterType();
 
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim);
+
+		public void stop();
 	}
 
 	private class PauseResumeReconfigurer implements Reconfigurer {
@@ -433,6 +436,10 @@ public class StreamJitAppManager {
 
 		@Override
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
+		}
+
+		@Override
+		public void stop() {
 		}
 	}
 
@@ -505,6 +512,11 @@ public class StreamJitAppManager {
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 			tailMerger.switchBuf();
 			tailMerger.unregisterAppInst(aim.appInstId());
+		}
+
+		@Override
+		public void stop() {
+			tailMerger.stop();
 		}
 	}
 }
