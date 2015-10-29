@@ -106,6 +106,8 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 	}
 
 	public void unregisterAppInst(int appInstId) {
+		// TODO: Busy waiting. Consider using phaser.
+		while (switchBuf);
 		if (prevBuf == null)
 			throw new IllegalStateException("prevBuf != null expected.");
 
