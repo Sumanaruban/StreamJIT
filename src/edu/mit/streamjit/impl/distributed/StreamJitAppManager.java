@@ -88,7 +88,7 @@ public class StreamJitAppManager {
 	public final Reconfigurer reconfigurer;
 
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
-			ConnectionManager conManager, TimeLogger logger) {
+			ConnectionManager conManager, TimeLogger logger, Buffer tailBuffer) {
 		noOfnodes = controller.getAllNodeIDs().size();
 		this.controller = controller;
 		this.app = app;
@@ -100,7 +100,7 @@ public class StreamJitAppManager {
 
 		appDrainer = new AppDrainer();
 		this.mLogger = app.eLogger;
-		this.reconfigurer = reconfigurer();
+		this.reconfigurer = reconfigurer(tailBuffer);
 		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
 		profiler = setupProfiler();
 	}
@@ -121,9 +121,9 @@ public class StreamJitAppManager {
 		controller.newApp(builder);
 	}
 
-	Reconfigurer reconfigurer() {
+	Reconfigurer reconfigurer(Buffer tailBuffer) {
 		if (Options.seamlessReconfig && !app.stateful)
-			return new SeamlessStatelessReconfigurer();
+			return new SeamlessStatelessReconfigurer(tailBuffer);
 		return new PauseResumeReconfigurer();
 	}
 
@@ -440,8 +440,7 @@ public class StreamJitAppManager {
 
 		private final TailBufferMerger tailMerger;
 
-		SeamlessStatelessReconfigurer() {
-			Buffer tailBuffer = app.bufferMap.get(app.tailToken);
+		SeamlessStatelessReconfigurer(Buffer tailBuffer) {
 			tailMerger = new TailBufferMergerStateless(tailBuffer);
 		}
 

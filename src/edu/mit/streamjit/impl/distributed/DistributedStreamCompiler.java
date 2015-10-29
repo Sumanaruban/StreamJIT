@@ -146,15 +146,16 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		AppInstance appinst = setConfiguration(controller, app,
 				partitionManager, conManager, cfgManager);
 
+		Buffer tail = tailBuffer(output);
 		TimeLogger logger = new TimeLoggers.FileTimeLogger(app.name);
 		StreamJitAppManager manager = new StreamJitAppManager(controller, app,
-				conManager, logger);
+				conManager, logger, tail);
 		// final AbstractDrainer drainer = new DistributedDrainer(app, logger,
 		// manager);
 		// drainer.setAppInstance(appinst);
 
-		boolean needTermination = setBufferMap(input, output,
-				manager.appDrainer, app);
+		boolean needTermination = setBufferMap(input, tail, manager.appDrainer,
+				app);
 
 		manager.reconfigurer.reconfigure(1, appinst);
 		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer);
@@ -252,12 +253,10 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	/**
 	 * Sets head and tail buffers.
 	 */
-	private <I, O> boolean setBufferMap(Input<I> input, Output<O> output,
+	private <I, O> boolean setBufferMap(Input<I> input, Buffer tail,
 			final AppDrainer drainer, StreamJitApp<I, O> app) {
 		// TODO: derive a algorithm to find good buffer size and use here.
 		Buffer head = InputBufferFactory.unwrap(input).createReadableBuffer(
-				10000);
-		Buffer tail = OutputBufferFactory.unwrap(output).createWritableBuffer(
 				10000);
 
 		boolean needTermination;
@@ -288,6 +287,12 @@ public class DistributedStreamCompiler implements StreamCompiler {
 
 		app.bufferMap = bufferMapBuilder.build();
 		return needTermination;
+	}
+
+	private <O> Buffer tailBuffer(Output<O> output) {
+		Buffer tail = OutputBufferFactory.unwrap(output).createWritableBuffer(
+				10000);
+		return tail;
 	}
 
 	private <I, O> AppInstance setConfiguration(Controller controller,
