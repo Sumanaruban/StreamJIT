@@ -447,8 +447,11 @@ public class StreamJitAppManager {
 
 		private final TailBufferMerger tailMerger;
 
+		private final Thread tailMergerThread;
+
 		SeamlessStatelessReconfigurer(Buffer tailBuffer) {
 			tailMerger = new TailBufferMergerStateless(tailBuffer);
+			tailMergerThread = createAndStartTailMergerThread();
 		}
 
 		public int reconfigure(int multiplier, AppInstance appinst) {
@@ -517,6 +520,17 @@ public class StreamJitAppManager {
 		@Override
 		public void stop() {
 			tailMerger.stop();
+			try {
+				tailMergerThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private Thread createAndStartTailMergerThread() {
+			Thread t = new Thread(tailMerger.getRunnable());
+			t.start();
+			return t;
 		}
 	}
 }
