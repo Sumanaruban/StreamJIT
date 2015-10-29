@@ -43,8 +43,6 @@ class HeadTailHandler {
 
 	private Thread headThread;
 
-	private final Token headToken;
-
 	/**
 	 * A {@link BoundaryInputChannel} for the tail of the whole stream graph. If
 	 * the sink {@link Worker} happened to fall outside the {@link Controller},
@@ -55,13 +53,9 @@ class HeadTailHandler {
 
 	private Thread tailThread;
 
-	private final Token tailToken;
-
 	public HeadTailHandler(Controller controller, StreamJitApp<?, ?> app) {
 		this.controller = controller;
 		this.app = app;
-		headToken = Token.createOverallInputToken(app.source);
-		tailToken = Token.createOverallOutputToken(app.sink);
 	}
 
 	/**
@@ -75,18 +69,18 @@ class HeadTailHandler {
 			AppInstance appinst) {
 		setHead(conInfoMap, bufferMap);
 
-		ConnectionInfo tailconInfo = conInfoMap.get(tailToken);
+		ConnectionInfo tailconInfo = conInfoMap.get(app.tailToken);
 		assert tailconInfo != null : "No tail connection info exists in conInfoMap";
 		assert tailconInfo.getSrcID() == controller.controllerNodeID
 				|| tailconInfo.getDstID() == controller.controllerNodeID : "Tail channel should ends at the controller. "
 				+ tailconInfo;
 
-		if (!bufferMap.containsKey(tailToken))
+		if (!bufferMap.containsKey(app.tailToken))
 			throw new IllegalArgumentException(
 					"No tail buffer in the passed bufferMap.");
 
 		int skipCount = Math.max(Options.outputCount, multiplier * 5);
-		tailChannel = tailChannel(bufferMap.get(tailToken), tailconInfo,
+		tailChannel = tailChannel(bufferMap.get(app.tailToken), tailconInfo,
 				skipCount, appinst);
 	}
 
@@ -95,7 +89,7 @@ class HeadTailHandler {
 		String appName = app.name;
 		int steadyCount = Options.outputCount;
 		int debugLevel = 0;
-		String bufferTokenName = "tailChannel - " + tailToken.toString();
+		String bufferTokenName = "tailChannel - " + app.tailToken.toString();
 		ConnectionProvider conProvider = controller.getConProvider();
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
 				.getConfiguration());
@@ -117,19 +111,19 @@ class HeadTailHandler {
 
 	private void setHead(Map<Token, ConnectionInfo> conInfoMap,
 			ImmutableMap<Token, Buffer> bufferMap) {
-		ConnectionInfo headconInfo = conInfoMap.get(headToken);
+		ConnectionInfo headconInfo = conInfoMap.get(app.headToken);
 		assert headconInfo != null : "No head connection info exists in conInfoMap";
 		assert headconInfo.getSrcID() == controller.controllerNodeID
 				|| headconInfo.getDstID() == controller.controllerNodeID : "Head channel should start from the controller. "
 				+ headconInfo;
 
-		if (!bufferMap.containsKey(headToken))
+		if (!bufferMap.containsKey(app.headToken))
 			throw new IllegalArgumentException(
 					"No head buffer in the passed bufferMap.");
 
-		Buffer b = bufferMap.get(headToken);
+		Buffer b = bufferMap.get(app.headToken);
 		ConnectionProvider c = controller.getConProvider();
-		String name = "headChannel - " + headToken.toString();
+		String name = "headChannel - " + app.headToken.toString();
 
 		if (headconInfo instanceof TCPConnectionInfo)
 			headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,

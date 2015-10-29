@@ -43,7 +43,6 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
-import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
 import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Portals;
@@ -103,6 +102,10 @@ public class StreamJitApp<I, O> {
 	 */
 	public final boolean stateful;
 
+	public final Token headToken;
+
+	public final Token tailToken;
+
 	public StreamJitApp(OneToOneElement<I, O> streamGraph) {
 		this.streamGraph = streamGraph;
 		Pair<Worker<I, ?>, Worker<?, O>> srcSink = visit(streamGraph);
@@ -117,6 +120,8 @@ public class StreamJitApp<I, O> {
 		visualizer = new Visualizer.DotVisualizer(streamGraph);
 		eLogger = eventTimeLogger();
 		stateful = isGraphStateful();
+		headToken = Token.createOverallInputToken(source);
+		tailToken = Token.createOverallOutputToken(sink);
 	}
 
 	private EventTimeLogger eventTimeLogger() {
