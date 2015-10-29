@@ -47,13 +47,18 @@ get_prop(){
 }
 
 function copyOTScripts(){
-	parent="/data/scratch/sumanan/lib/opentuner"
-	rm -r $parent/streamjit
-	dir="Adjbuf"
-	if [ "$1" = "seam" ]; then
-		dir="Seamless"
-	fi
-	cp -r $parent/streamjit$dir $parent/streamjit
+        parent="/data/scratch/sumanan/lib/opentuner"
+        dir="Adjbuf"
+        if [ "$1" = "seam" ]; then
+                dir="Seamless"
+        fi
+        if [ ! -f $parent/streamjit/$dir.txt ]; then
+                rm -r $parent/streamjit
+                cp -r $parent/streamjit$dir $parent/streamjit
+                echo "Copied $dir branch's OT scripts."
+        else
+                echo "Aready $dir branch's OT scripts are loaded."
+        fi
 }
 
 #TODO: 23-10-2015. adjbuf branch and seamlessreconfig branch have different versions
