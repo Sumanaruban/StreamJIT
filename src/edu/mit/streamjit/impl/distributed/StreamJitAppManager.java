@@ -379,6 +379,8 @@ public class StreamJitAppManager {
 		 * @return
 		 */
 		public int starterType();
+
+		public void drainingFinished(boolean isFinal, AppInstanceManager aim);
 	}
 
 	private class PauseResumeReconfigurer implements Reconfigurer {
@@ -427,6 +429,10 @@ public class StreamJitAppManager {
 		@Override
 		public int starterType() {
 			return 1;
+		}
+
+		@Override
+		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 		}
 	}
 
@@ -494,6 +500,10 @@ public class StreamJitAppManager {
 		@Override
 		public int starterType() {
 			return 2;
+		}
+
+		@Override
+		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 		}
 	}
 }
