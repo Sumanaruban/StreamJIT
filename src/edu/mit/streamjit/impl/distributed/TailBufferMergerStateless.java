@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
@@ -41,6 +42,8 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private volatile boolean switchBuf;
 
+	private final CountDownLatch latch = new CountDownLatch(1);
+
 	private final Queue<Buffer> freeBufferQueue;
 
 	private final Map<Buffer, AppInstBufInfo> appInstBufInfos;
@@ -63,6 +66,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		return new Runnable() {
 			@Override
 			public void run() {
+				waitForCurBuf();
 				while (!stopCalled) {
 					copyToTailBuffer(curBuf);
 					if (switchBuf) {
@@ -73,15 +77,27 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		};
 	}
 
+	/**
+	 * wait for curBuf to be set.
+	 */
+	private void waitForCurBuf() {
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public Buffer registerAppInst(int appInstId, int skipCount) {
 		Buffer b = freeBufferQueue.poll();
 		if (b == null)
 			throw new IllegalStateException("freeBufferQueue is empty.");
 		AppInstBufInfo a = new AppInstBufInfo(appInstId, b, skipCount);
 		appInstBufInfos.put(b, a);
-		if (curBuf == null)
+		if (curBuf == null) {
 			curBuf = b;
-		else {
+			latch.countDown();
+		} else {
 			if (nextBuf != null)
 				throw new IllegalStateException("nextBuf == null expected.");
 			nextBuf = b;
