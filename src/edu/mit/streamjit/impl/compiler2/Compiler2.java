@@ -119,7 +119,9 @@ public class Compiler2 {
 	public static final UnboxingStrategy UNBOXING_STRATEGY = new BitsetUnboxingStrategy();
 	public static final AllocationStrategy ALLOCATION_STRATEGY = new SubsetBiasAllocationStrategy(Options.maxNumCores);
 	public static final StorageStrategy INTERNAL_STORAGE_STRATEGY = new TuneInternalStorageStrategy();
-	public static final StorageStrategy EXTERNAL_STORAGE_STRATEGY = new TuneExternalStorageStrategy();
+	//TODO: TuneExternalStorageStrategy has some indexing bug. Fix it and use it. Temporarily, we are using
+	// StandardExternalStorageStrategy.
+	public static final StorageStrategy EXTERNAL_STORAGE_STRATEGY = new StandardExternalStorageStrategy();
 	public static final SwitchingStrategy SWITCHING_STRATEGY = SwitchingStrategy.tunePerWorker();
 	private static final AtomicInteger PACKAGE_NUMBER = new AtomicInteger();
 	private final ImmutableSet<Worker<?, ?>> workers;
