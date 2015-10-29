@@ -132,11 +132,17 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		if (nextBuf == null)
 			throw new IllegalStateException("nextBuf != null expected.");
 		AppInstBufInfo a = appInstBufInfos.get(nextBuf);
+		copyFully(curBuf);
 		skip(a.buf, a.skipCount);
 		prevBuf = curBuf;
 		curBuf = nextBuf;
 		nextBuf = null;
 		switchBuf = false;
+	}
+
+	private void copyFully(final Buffer readBuffer) {
+		while (readBuffer.size() > 0)
+			copyToTailBuffer(readBuffer);
 	}
 
 	public void switchBuf() {
