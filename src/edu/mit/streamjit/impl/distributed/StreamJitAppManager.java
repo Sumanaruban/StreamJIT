@@ -531,7 +531,8 @@ public class StreamJitAppManager {
 		}
 
 		private Thread createAndStartTailMergerThread() {
-			Thread t = new Thread(tailMerger.getRunnable());
+			Thread t = new Thread(tailMerger.getRunnable(),
+					"TailBufferMergerStateless");
 			t.start();
 			return t;
 		}
