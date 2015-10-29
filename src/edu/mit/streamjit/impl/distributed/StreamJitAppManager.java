@@ -208,6 +208,7 @@ public class StreamJitAppManager {
 	}
 
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
+		reconfigurer.drainingFinished(isFinal, aim);
 		if (isFinal)
 			stop();
 
@@ -513,8 +514,10 @@ public class StreamJitAppManager {
 
 		@Override
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
-			tailMerger.switchBuf();
-			tailMerger.unregisterAppInst(aim.appInstId());
+			if (!isFinal) {
+				tailMerger.switchBuf();
+				tailMerger.unregisterAppInst(aim.appInstId());
+			}
 		}
 
 		@Override
