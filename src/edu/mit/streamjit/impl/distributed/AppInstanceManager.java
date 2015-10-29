@@ -101,7 +101,7 @@ public class AppInstanceManager {
 		headTailHandler.stopTail(isFinal);
 		headTailHandler.waitToStopTail();
 		conInfoMap = null;
-		appManager.drainingFinished(isFinal);
+		appManager.drainingFinished(isFinal, this);
 	}
 
 	void start() {

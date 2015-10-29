@@ -204,7 +204,7 @@ public class StreamJitAppManager {
 			return true;
 	}
 
-	public void drainingFinished(boolean isFinal) {
+	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 		if (isFinal)
 			stop();
 
