@@ -443,8 +443,8 @@ public class StreamJitAppManager {
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim);
-			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
-					multiplier, appinst);
+			aim.headTailHandler.setupHeadTail(aim.conInfoMap,
+					bufferMap(aim.appInstId()), multiplier, appinst);
 			boolean isCompiled = postCompilation(aim);
 
 			if (isCompiled) {
