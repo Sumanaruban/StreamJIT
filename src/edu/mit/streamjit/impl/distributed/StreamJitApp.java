@@ -179,7 +179,6 @@ public class StreamJitApp<I, O> {
 			}
 		};
 
-		Token headToken = Token.createOverallInputToken(source);
 		for (Map.Entry<Token, Buffer> en : bufferMap.entrySet()) {
 			if (en.getKey().equals(headToken))
 				bufMapBuilder.put(headToken, head);

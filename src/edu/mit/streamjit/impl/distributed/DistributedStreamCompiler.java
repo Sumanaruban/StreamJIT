@@ -283,8 +283,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
 				.<Token, Buffer> builder();
 
-		bufferMapBuilder.put(Token.createOverallInputToken(app.source), head);
-		bufferMapBuilder.put(Token.createOverallOutputToken(app.sink), tail);
+		bufferMapBuilder.put(app.headToken, head);
+		bufferMapBuilder.put(app.tailToken, tail);
 
 		app.bufferMap = bufferMapBuilder.build();
 		return needTermination;
