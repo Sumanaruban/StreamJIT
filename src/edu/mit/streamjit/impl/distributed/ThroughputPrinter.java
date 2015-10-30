@@ -78,47 +78,50 @@ public class ThroughputPrinter {
 		noOutputStartTime = lastNano;
 		isPrevNoOutput = false;
 		scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-		scheduledExecutorService.scheduleAtFixedRate(
-				new Runnable() {
-					@Override
-					public void run() {
-						int currentCount = counter.count();
-						long currentNano = System.nanoTime();
-						int newOutputs = currentCount - lastCount;
-						double throughput;
-						if (newOutputs < 1) {
-							throughput = 0;
-							if (!isPrevNoOutput) {
-								noOutputStartTime = lastNano;
-								isPrevNoOutput = true;
-							}
-						} else {
-							long duration = currentNano - lastNano;
-							// number of items per second.
-							throughput = (newOutputs * 1e9) / duration;
-							if (isPrevNoOutput) {
-								isPrevNoOutput = false;
-								long noOutputPeriod = TimeUnit.MILLISECONDS
-										.convert(currentNano
-												- noOutputStartTime,
-												TimeUnit.NANOSECONDS);
-								if (noOutputPeriod > tolerablenoOutputPeriod)
-									eLogger.logEvent("noOutput", noOutputPeriod);
-							}
-						}
-						lastCount = currentCount;
-						lastNano = currentNano;
-						String msg = String.format("%d\t\t%d\t\t%.2f\n",
-								rb.getUptime(), currentCount, throughput);
-						try {
-							writer.write(msg);
-							// writer.flush();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-				}, Options.throughputMeasurementPeriod,
+		scheduledExecutorService.scheduleAtFixedRate(runnable(),
+				Options.throughputMeasurementPeriod,
 				Options.throughputMeasurementPeriod, TimeUnit.MILLISECONDS);
+	}
+
+	private Runnable runnable() {
+		return new Runnable() {
+			@Override
+			public void run() {
+				int currentCount = counter.count();
+				long currentNano = System.nanoTime();
+				int newOutputs = currentCount - lastCount;
+				double throughput;
+				if (newOutputs < 1) {
+					throughput = 0;
+					if (!isPrevNoOutput) {
+						noOutputStartTime = lastNano;
+						isPrevNoOutput = true;
+					}
+				} else {
+					long duration = currentNano - lastNano;
+					// number of items per second.
+					throughput = (newOutputs * 1e9) / duration;
+					if (isPrevNoOutput) {
+						isPrevNoOutput = false;
+						long noOutputPeriod = TimeUnit.MILLISECONDS.convert(
+								currentNano - noOutputStartTime,
+								TimeUnit.NANOSECONDS);
+						if (noOutputPeriod > tolerablenoOutputPeriod)
+							eLogger.logEvent("noOutput", noOutputPeriod);
+					}
+				}
+				lastCount = currentCount;
+				lastNano = currentNano;
+				String msg = String.format("%d\t\t%d\t\t%.2f\n",
+						rb.getUptime(), currentCount, throughput);
+				try {
+					writer.write(msg);
+					// writer.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
 	}
 
 	void stop() {
