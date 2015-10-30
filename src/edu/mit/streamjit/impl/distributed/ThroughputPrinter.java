@@ -9,18 +9,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
- * Periodically prints the number of outputs received by a {@link TailChannel}.
+ * Periodically prints the number of outputs received by a {@link Counter}.
  */
 public class ThroughputPrinter {
 
 	private final String appName;
 
-	private final TailChannel tailChannel;
+	private final Counter counter;
 
 	/**
 	 * The no of outputs received at the end of last period.
@@ -52,9 +53,9 @@ public class ThroughputPrinter {
 
 	private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
-	ThroughputPrinter(TailChannel tailChannel, String appName,
-			EventTimeLogger eLogger, String cfgPrefix) {
-		this.tailChannel = tailChannel;
+	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
+			String cfgPrefix) {
+		this.counter = counter;
 		this.appName = appName;
 		this.eLogger = eLogger;
 		printThroughput(cfgPrefix);
@@ -73,7 +74,7 @@ public class ThroughputPrinter {
 				new Runnable() {
 					@Override
 					public void run() {
-						int currentCount = tailChannel.count();
+						int currentCount = counter.count();
 						long currentNano = System.nanoTime();
 						int newOutputs = currentCount - lastCount;
 						double throughput;
