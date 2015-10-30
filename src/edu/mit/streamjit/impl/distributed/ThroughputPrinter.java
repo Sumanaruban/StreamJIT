@@ -112,16 +112,20 @@ public class ThroughputPrinter {
 				}
 				lastCount = currentCount;
 				lastNano = currentNano;
-				String msg = String.format("%d\t\t%d\t\t%.2f\n",
-						rb.getUptime(), currentCount, throughput);
-				try {
-					writer.write(msg);
-					// writer.flush();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				newThroughput(currentCount, throughput);
 			}
 		};
+	}
+
+	private void newThroughput(int currentCount, double throughput) {
+		String msg = String.format("%d\t\t%d\t\t%.2f\n", rb.getUptime(),
+				currentCount, throughput);
+		try {
+			writer.write(msg);
+			// writer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	void stop() {
