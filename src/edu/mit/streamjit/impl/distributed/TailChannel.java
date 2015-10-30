@@ -21,6 +21,7 @@
  */
 package edu.mit.streamjit.impl.distributed;
 
+import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 
 /**
@@ -31,12 +32,7 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputCh
  * @author sumanan
  * @since 24 Jan, 2015
  */
-public interface TailChannel extends BoundaryInputChannel {
-
-	/**
-	 * @return Number of elements received after the last reset()
-	 */
-	public int count();
+public interface TailChannel extends BoundaryInputChannel, Counter {
 
 	/**
 	 * Returns the time to receive fixed number of outputs. The fixed number can
