@@ -53,6 +53,8 @@ public class ThroughputPrinter {
 
 	private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
+	private final String fileName = "throughput.txt";
+
 	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
 			String cfgPrefix) {
 		this.counter = counter;
@@ -132,7 +134,6 @@ public class ThroughputPrinter {
 	 * @param cfgPrefix
 	 */
 	private void initWriter(String cfgPrefix) {
-		String fileName = "throughput.txt";
 		File f = new File(String.format("%s%s%s", appName, File.separator,
 				fileName));
 		boolean alreadyExists = f.exists();
