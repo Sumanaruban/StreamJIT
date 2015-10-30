@@ -53,13 +53,19 @@ public class ThroughputPrinter {
 
 	private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
-	private final String fileName = "throughput.txt";
+	private final String fileName;
 
 	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
 			String cfgPrefix) {
+		this(counter, appName, eLogger, cfgPrefix, "throughput.txt");
+	}
+
+	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
+			String cfgPrefix, String fileName) {
 		this.counter = counter;
 		this.appName = appName;
 		this.eLogger = eLogger;
+		this.fileName = fileName;
 		printThroughput(cfgPrefix);
 	}
 
