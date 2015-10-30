@@ -93,22 +93,13 @@ public class ThroughputPrinter {
 				double throughput;
 				if (newOutputs < 1) {
 					throughput = 0;
-					if (!isPrevNoOutput) {
-						noOutputStartTime = lastNano;
-						isPrevNoOutput = true;
-					}
+					noOutput();
 				} else {
 					long duration = currentNano - lastNano;
 					// number of items per second.
 					throughput = (newOutputs * 1e9) / duration;
-					if (isPrevNoOutput) {
-						isPrevNoOutput = false;
-						long noOutputPeriod = TimeUnit.MILLISECONDS.convert(
-								currentNano - noOutputStartTime,
-								TimeUnit.NANOSECONDS);
-						if (noOutputPeriod > tolerablenoOutputPeriod)
-							eLogger.logEvent("noOutput", noOutputPeriod);
-					}
+					if (isPrevNoOutput)
+						outputReceived(currentNano);
 				}
 				lastCount = currentCount;
 				lastNano = currentNano;
@@ -125,6 +116,21 @@ public class ThroughputPrinter {
 			// writer.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void outputReceived(long currentNano) {
+		isPrevNoOutput = false;
+		long noOutputPeriod = TimeUnit.MILLISECONDS.convert(currentNano
+				- noOutputStartTime, TimeUnit.NANOSECONDS);
+		if (noOutputPeriod > tolerablenoOutputPeriod)
+			eLogger.logEvent("noOutput", noOutputPeriod);
+	}
+
+	private void noOutput() {
+		if (!isPrevNoOutput) {
+			noOutputStartTime = lastNano;
+			isPrevNoOutput = true;
 		}
 	}
 
