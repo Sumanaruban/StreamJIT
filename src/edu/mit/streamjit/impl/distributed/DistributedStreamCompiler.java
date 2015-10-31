@@ -43,6 +43,7 @@ import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.common.BufferCounter;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.InputBufferFactory;
 import edu.mit.streamjit.impl.common.OutputBufferFactory;
@@ -61,6 +62,7 @@ import edu.mit.streamjit.tuner.OnlineTuner;
 import edu.mit.streamjit.tuner.Reconfigurer;
 import edu.mit.streamjit.tuner.Verifier;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.Pair;
 
 /**
  * 
@@ -88,6 +90,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	 * Total number of nodes including controller node.
 	 */
 	private int noOfnodes;
+
+	private final boolean measureThroughput = true;
 
 	/**
 	 * Run the whole application on the controller node. No distributions. See
@@ -146,7 +150,10 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		AppInstance appinst = setConfiguration(controller, app,
 				partitionManager, conManager, cfgManager);
 
-		Buffer tail = tailBuffer(output);
+		Pair<Buffer, ThroughputPrinter> p = tailBuffer(output, app);
+		Buffer tail = p.first;
+		ThroughputPrinter tp = p.second;
+
 		TimeLogger logger = new TimeLoggers.FileTimeLogger(app.name);
 		StreamJitAppManager manager = new StreamJitAppManager(controller, app,
 				conManager, logger, tail);
@@ -158,7 +165,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 				app);
 
 		manager.reconfigurer.reconfigure(1, appinst);
-		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer);
+		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer,
+				tp);
 
 		if (Options.tune > 0 && this.cfg != null) {
 			Reconfigurer configurer = new Reconfigurer(manager, app,
@@ -289,10 +297,27 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		return needTermination;
 	}
 
-	private <O> Buffer tailBuffer(Output<O> output) {
+	private <O> Pair<Buffer, ThroughputPrinter> tailBuffer(Output<O> output,
+			StreamJitApp<?, ?> app) {
 		Buffer tail = OutputBufferFactory.unwrap(output).createWritableBuffer(
 				10000);
-		return tail;
+		return measureThroughput(tail, app);
+	}
+
+	private Pair<Buffer, ThroughputPrinter> measureThroughput(
+			Buffer tailBuffer, StreamJitApp<?, ?> app) {
+		ThroughputPrinter tp;
+		Buffer b;
+		if (measureThroughput) {
+			BufferCounter bc = new BufferCounter(tailBuffer);
+			tp = new ThroughputPrinter(bc, app.name, app.eLogger,
+					"DistributedStreamCompiler", "tailBuffer.txt");
+			b = bc;
+		} else {
+			b = tailBuffer;
+			tp = null;
+		}
+		return new Pair<Buffer, ThroughputPrinter>(b, tp);
 	}
 
 	private <I, O> AppInstance setConfiguration(Controller controller,
@@ -343,27 +368,40 @@ public class DistributedStreamCompiler implements StreamCompiler {
 
 	private static class DistributedCompiledStream implements CompiledStream {
 
-		AppDrainer drainer;
+		private final AppDrainer drainer;
 
-		public DistributedCompiledStream(AppDrainer drainer) {
+		private final ThroughputPrinter throughputPrinter;
+
+		public DistributedCompiledStream(AppDrainer drainer,
+				ThroughputPrinter throughputPrinter) {
 			this.drainer = drainer;
+			this.throughputPrinter = throughputPrinter;
 		}
 
 		@Override
 		public void awaitDrained() throws InterruptedException {
 			drainer.awaitDrained();
-
+			stop();
 		}
 
 		@Override
 		public void awaitDrained(long timeout, TimeUnit unit)
 				throws InterruptedException, TimeoutException {
 			drainer.awaitDrained(timeout, unit);
+			stop();
 		}
 
 		@Override
 		public boolean isDrained() {
-			return drainer.isDrained();
+			boolean ret = drainer.isDrained();
+			if (ret)
+				stop();
+			return ret;
+		}
+
+		private void stop() {
+			if (throughputPrinter != null)
+				throughputPrinter.stop();
 		}
 	}
 
