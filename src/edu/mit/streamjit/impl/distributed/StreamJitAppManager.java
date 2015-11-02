@@ -173,6 +173,7 @@ public class StreamJitAppManager {
 		// dp.drainer.stop();
 		appDrainer.stop();
 		reconfigurer.stop();
+		System.out.println(String.format("%s: Stopped.", app.name));
 	}
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
