@@ -94,14 +94,17 @@ public class AppInstanceManager {
 	}
 
 	public void drainingFinished(boolean isFinal) {
-		System.out.println(String
-				.format("%s: Draining Finished...", toString()));
 		isRunning = false;
 		headTailHandler.waitToStopHead();
 		headTailHandler.stopTail(isFinal);
 		headTailHandler.waitToStopTail();
 		conInfoMap = null;
 		appManager.drainingFinished(isFinal, this);
+
+		long time = appManager.app.eLogger.eEvent("draining");
+		System.out.println(String.format(
+				"%s: Draining Finished. Draining time = %dms.", toString(),
+				time));
 	}
 
 	void start() {
@@ -111,8 +114,8 @@ public class AppInstanceManager {
 		appManager.controller.sendToAll(new CTRLRMessageElementHolder(
 				Command.START, appInstId()));
 		isRunning = true;
-		System.out
-				.println(String.format("%s has started to run..", toString()));
+		System.out.println(String
+				.format("%s has started to run...", toString()));
 	}
 
 	void runInitSchedule() {

@@ -211,9 +211,6 @@ public class StreamJitAppManager {
 		reconfigurer.drainingFinished(isFinal, aim);
 		if (isFinal)
 			stop();
-
-		long time = app.eLogger.eEvent("draining");
-		System.out.println("Draining time is " + time + " milli seconds");
 	}
 
 	private void reset() {
