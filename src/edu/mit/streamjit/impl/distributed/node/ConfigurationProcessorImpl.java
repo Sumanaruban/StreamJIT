@@ -21,6 +21,7 @@ import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BlobCreator.CreationLogic;
 import edu.mit.streamjit.impl.distributed.node.BlobCreator.DrainDataCreationLogic;
+import edu.mit.streamjit.impl.distributed.node.BlobCreator.InitDataSizeCreationLogic;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.json.Jsonifiers;
 
@@ -70,6 +71,14 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		Configuration blobConfigs = dyncfg.getSubconfiguration("blobConfigs");
 		CreationLogic creationLogic = new DrainDataCreationLogic(drainData,
 				blobConfigs);
+		return creationLogic;
+	}
+
+	CreationLogic creationLogic(Configuration dyncfg,
+			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
+		Configuration blobConfigs = dyncfg.getSubconfiguration("blobConfigs");
+		CreationLogic creationLogic = new InitDataSizeCreationLogic(
+				initialDrainDataBufferSizes, blobConfigs);
 		return creationLogic;
 	}
 
@@ -143,10 +152,12 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	}
 
 	@Override
-	public void process(String cfg, ConfigType type,
+	public void process(String json, ConfigType type,
 			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
-		// TODO Auto-generated method stub
-
+		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
+		CreationLogic creationLogic = creationLogic(cfg,
+				initialDrainDataBufferSizes);
+		compile(cfg, creationLogic);
 	}
 
 	@Override
