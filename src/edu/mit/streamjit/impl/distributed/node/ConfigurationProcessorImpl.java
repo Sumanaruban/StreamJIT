@@ -61,32 +61,9 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	}
 
 	private void processDynamicCfg(String json, DrainData drainData) {
-		System.out
-				.println("------------------------------------------------------------");
-		System.out.println("New Configuration.....");
-		streamNode.releaseOldBM();
 		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
-		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg,
-				creationLogic(cfg, drainData));
-		if (blobSet != null) {
-			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
-					.getExtraData(GlobalConstants.CONINFOMAP);
-
-			streamNode
-					.setBlobsManager(new BlobsManagerImpl(blobSet, conInfoMap,
-							streamNode, app.conProvider, app.topLevelClass));
-		} else {
-			try {
-				streamNode.controllerConnection
-						.writeObject(AppStatus.COMPILATION_ERROR);
-				sendEmptyBuffersizes();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			System.out.println("Couldn't get the blobset....");
-		}
-		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
-				.getSubconfiguration("blobConfigs")));
+		CreationLogic creationLogic = creationLogic(cfg, drainData);
+		compile(cfg, creationLogic);
 	}
 
 	CreationLogic creationLogic(Configuration dyncfg, DrainData drainData) {
@@ -135,5 +112,33 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 				sb.append('\n');
 				streamNode.eventTimeLogger.log(sb.toString());
 			}
+	}
+
+	private void compile(Configuration cfg, CreationLogic creationLogic) {
+		System.out
+				.println("------------------------------------------------------------");
+		System.out.println("New Configuration.....");
+		streamNode.releaseOldBM();
+
+		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic);
+		if (blobSet != null) {
+			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
+					.getExtraData(GlobalConstants.CONINFOMAP);
+
+			streamNode
+					.setBlobsManager(new BlobsManagerImpl(blobSet, conInfoMap,
+							streamNode, app.conProvider, app.topLevelClass));
+		} else {
+			try {
+				streamNode.controllerConnection
+						.writeObject(AppStatus.COMPILATION_ERROR);
+				sendEmptyBuffersizes();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			System.out.println("Couldn't get the blobset....");
+		}
+		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
+				.getSubconfiguration("blobConfigs")));
 	}
 }
