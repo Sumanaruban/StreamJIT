@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import edu.mit.streamjit.api.Worker;
@@ -231,6 +232,34 @@ public class BlobCreator {
 			DrainData dd = drainData == null ? null : drainData
 					.subset(workIdentifiers);
 			return bf.makeBlob(workerset, blobConfigs, maxCores, dd);
+		}
+	}
+
+	/**
+	 * Uses {@link BlobFactory#makeBlob(Set, Configuration, int, ImmutableMap)}
+	 * to make blobs.
+	 * 
+	 * @author sumanan
+	 * @since 3 Nov, 2015
+	 */
+	static class InitDataSizeCreationLogic implements CreationLogic {
+
+		private final ImmutableMap<Token, Integer> initialDrainDataBufferSizes;
+		private final Configuration blobConfigs;
+
+		InitDataSizeCreationLogic(
+				ImmutableMap<Token, Integer> initialDrainDataBufferSizes,
+				Configuration blobConfigs) {
+			this.initialDrainDataBufferSizes = initialDrainDataBufferSizes;
+			this.blobConfigs = blobConfigs;
+		}
+
+		@Override
+		public Blob create(BlobFactory bf,
+				ImmutableSet<Worker<?, ?>> workerset, int maxCores,
+				Set<Integer> workIdentifiers) {
+			return bf.makeBlob(workerset, blobConfigs, maxCores,
+					initialDrainDataBufferSizes);
 		}
 	}
 }
