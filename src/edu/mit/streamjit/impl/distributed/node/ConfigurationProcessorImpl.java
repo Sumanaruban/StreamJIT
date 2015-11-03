@@ -19,6 +19,8 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.impl.distributed.node.BlobCreator.CreationLogic;
+import edu.mit.streamjit.impl.distributed.node.BlobCreator.DrainDataCreationLogic;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.json.Jsonifiers;
 
@@ -64,7 +66,8 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		System.out.println("New Configuration.....");
 		streamNode.releaseOldBM();
 		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
-		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, drainData);
+		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg,
+				creationLogic(cfg, drainData));
 		if (blobSet != null) {
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
@@ -84,6 +87,13 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		}
 		newTuningRound(blobSet, ConfigurationUtils.getConfigPrefix(cfg
 				.getSubconfiguration("blobConfigs")));
+	}
+
+	CreationLogic creationLogic(Configuration dyncfg, DrainData drainData) {
+		Configuration blobConfigs = dyncfg.getSubconfiguration("blobConfigs");
+		CreationLogic creationLogic = new DrainDataCreationLogic(drainData,
+				blobConfigs);
+		return creationLogic;
 	}
 
 	/**

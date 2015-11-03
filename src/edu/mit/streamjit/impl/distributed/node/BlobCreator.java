@@ -44,7 +44,8 @@ public class BlobCreator {
 		this.streamNode = streamNode;
 	}
 
-	public ImmutableSet<Blob> getBlobs(Configuration dyncfg, DrainData drainData) {
+	public ImmutableSet<Blob> getBlobs(Configuration dyncfg,
+			CreationLogic creationLogic) {
 
 		PartitionParameter partParam = dyncfg.getParameter(
 				GlobalConstants.PARTITION, PartitionParameter.class);
@@ -61,10 +62,6 @@ public class BlobCreator {
 			if (blobList == null)
 				return blobSet.build();
 
-			Configuration blobConfigs = dyncfg
-					.getSubconfiguration("blobConfigs");
-			CreationLogic creationLogic = new DrainDataCreationLogic(drainData,
-					blobConfigs);
 			return blobset1(blobSet, blobList, creationLogic, app.source);
 
 		} else
@@ -206,7 +203,7 @@ public class BlobCreator {
 	 * @author sumanan
 	 * @since 21 Oct, 2015
 	 */
-	private interface CreationLogic {
+	interface CreationLogic {
 		public Blob create(BlobFactory bf,
 				ImmutableSet<Worker<?, ?>> workerset, int maxCores,
 				Set<Integer> workIdentifiers);
@@ -219,7 +216,7 @@ public class BlobCreator {
 	 * @author sumanan
 	 * @since 21 Oct, 2015
 	 */
-	private class DrainDataCreationLogic implements CreationLogic {
+	static class DrainDataCreationLogic implements CreationLogic {
 		private final DrainData drainData;
 		private final Configuration blobConfigs;
 
