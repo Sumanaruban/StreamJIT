@@ -49,16 +49,29 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 
 	public abstract void process(ConfigurationProcessor jp);
 
-	public static final class ConfigurationString1 extends ConfigurationString {
+	private static abstract class AbsConfigurationString
+			extends
+				ConfigurationString {
+		protected static final long serialVersionUID = 1L;
+		protected final String jsonString;
+		protected final ConfigType type;
+
+		public AbsConfigurationString(String jsonString, ConfigType type) {
+			this.jsonString = jsonString;
+			this.type = type;
+		}
+	}
+
+	public static final class ConfigurationString1
+			extends
+				AbsConfigurationString {
+
 		private static final long serialVersionUID = 1L;
-		private final String jsonString;
-		private final ConfigType type;
 		private final DrainData drainData;
 
 		public ConfigurationString1(String jsonString, ConfigType type,
 				DrainData drainData) {
-			this.jsonString = jsonString;
-			this.type = type;
+			super(jsonString, type);
 			this.drainData = drainData;
 		}
 
@@ -67,16 +80,15 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 		}
 	}
 
-	public static final class ConfigurationString2 extends ConfigurationString {
+	public static final class ConfigurationString2
+			extends
+				AbsConfigurationString {
 		private static final long serialVersionUID = 1L;
-		private final String jsonString;
-		private final ConfigType type;
 		private final ImmutableMap<Token, Integer> initialDrainDataBufferSizes;
 
 		public ConfigurationString2(String jsonString, ConfigType type,
 				ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
-			this.jsonString = jsonString;
-			this.type = type;
+			super(jsonString, type);
 			this.initialDrainDataBufferSizes = initialDrainDataBufferSizes;
 		}
 
