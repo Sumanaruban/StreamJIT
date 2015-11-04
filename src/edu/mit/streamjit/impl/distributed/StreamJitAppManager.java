@@ -80,6 +80,7 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.util.CollectionUtils;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
 /**
@@ -274,6 +275,9 @@ public class StreamJitAppManager {
 	}
 
 	public boolean reconfigure(int multiplier) {
+		ciP.waitforDDSizes();
+		Map<Integer, DrainDataSizes> prevDDSizes = ciP.ddSizes;
+
 		reset();
 		generateDrainDataAtBoundaries();
 		Configuration.Builder builder = Configuration.builder(app
@@ -293,7 +297,7 @@ public class StreamJitAppManager {
 		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString.ConfigurationString2(
-					jsonStirng, ConfigType.DYNAMIC, drainDataSize());
+					jsonStirng, ConfigType.DYNAMIC, drainDataSize(prevDDSizes));
 			controller.send(nodeID, json);
 		}
 
@@ -351,6 +355,27 @@ public class StreamJitAppManager {
 			sizeBuilder.put(en.getKey(), en.getValue().size());
 		}
 		return sizeBuilder.build();
+	}
+
+	ImmutableMap<Token, Integer> drainDataSize(
+			Map<Integer, DrainDataSizes> prevDDSizes) {
+		if (Options.useDrainData && Options.generateDrainDataAtBoundaries
+				&& Options.putDDinBuffers)
+			return null;
+		if (prevDDSizes == null)
+			return null;
+		List<Map<Token, Integer>> sizes = new ArrayList<>(prevDDSizes
+				.entrySet().size());
+		for (DrainDataSizes d : prevDDSizes.values())
+			sizes.add(d.ddSizes);
+		ImmutableMap<Token, Integer> mergedSizes = CollectionUtils.union((key,
+				value) -> {
+			int size = 0;
+			for (int s : value)
+				size += s;
+			return size;
+		}, sizes);
+		return mergedSizes;
 	}
 
 	final int size = 10000;
