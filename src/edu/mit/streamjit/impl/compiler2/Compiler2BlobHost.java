@@ -503,6 +503,12 @@ public class Compiler2BlobHost implements Blob {
 		return esBuilder.build();
 	}
 
+	/**
+	 * The methods below are to compile with sizes.
+	 * @author Sumanan
+	 * 25 Aug, 2015
+	 */
+
 	void setDrainDataVariables(boolean needDrainData,
 			List<SplitJoinRemovalReplayer> SplitJoinRemovalList,
 			Map<Token, Storage> drainDataStorages,
