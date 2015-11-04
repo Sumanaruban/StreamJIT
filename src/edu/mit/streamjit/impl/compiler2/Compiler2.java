@@ -292,7 +292,18 @@ public class Compiler2 {
 		if (needDrainData)
 			b.setDrainDataVariables(needDrainData, SplitJoinRemovalList,
 					drainDataStorages, initStorage);
+		b.setDDSizes(drainDataSize());
 		return b;
+	}
+
+	private ImmutableMap<Token, Integer> drainDataSize() {
+		ImmutableMap.Builder<Token, Integer> builder = ImmutableMap.builder();
+		for (DrainInstruction d : drainInstructions)
+			if (d instanceof XDrainInstruction) {
+				XDrainInstruction xd = (XDrainInstruction) d;
+				builder.put(xd.token, xd.index.length);
+			}
+		return builder.build();
 	}
 
 	private void findRemovals() {

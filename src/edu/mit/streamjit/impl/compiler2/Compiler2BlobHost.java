@@ -37,6 +37,7 @@ import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Blob.ExecutionStatistics.ExecutionStatisticsBuilder;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.compiler2.Compiler2.InitDataReadInstruction;
@@ -586,5 +587,15 @@ public class Compiler2BlobHost implements Blob {
 		this.SplitJoinRemovalList = null;
 		this.drainDataStorages = null;
 		this.initStorage = null;
+	}
+
+	ImmutableMap<Token, Integer> ddSizes = null;
+
+	public ImmutableMap<Token, Integer> getDDSizes() {
+		return ddSizes;
+	}
+
+	void setDDSizes(ImmutableMap<Token, Integer> ddSizes) {
+		this.ddSizes = ddSizes;
 	}
 }
