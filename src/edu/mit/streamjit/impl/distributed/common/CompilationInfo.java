@@ -48,7 +48,27 @@ public abstract class CompilationInfo implements SNMessageElement {
 		}
 	}
 
+	public static final class DrainDataSizes extends CompilationInfo {
+		private static final long serialVersionUID = 1L;
+
+		public final int machineID;
+
+		public final ImmutableMap<Token, Integer> ddSizes;
+
+		public DrainDataSizes(int machineID,
+				ImmutableMap<Token, Integer> ddSizes) {
+			this.machineID = machineID;
+			this.ddSizes = ddSizes;
+		}
+
+		@Override
+		public void process(CompilationInfoProcessor cip) {
+			cip.process(this);
+		}
+	}
+
 	public interface CompilationInfoProcessor {
 		public void process(BufferSizes bufferSizes);
+		public void process(DrainDataSizes ddSizes);
 	}
 }

@@ -58,6 +58,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
@@ -705,14 +706,22 @@ public class StreamJitAppManager {
 			CompilationInfoProcessor {
 
 		private Map<Integer, BufferSizes> bufSizes;
+		private Map<Integer, DrainDataSizes> ddSizes;
 
 		private final int noOfnodes;
 		private CountDownLatch bufSizeLatch;
+		private CountDownLatch ddSizesLatch;
 
 		@Override
 		public void process(BufferSizes bufferSizes) {
 			bufSizes.put(bufferSizes.machineID, bufferSizes);
 			bufSizeLatch.countDown();
+		}
+
+		@Override
+		public void process(DrainDataSizes ddSizes) {
+			this.ddSizes.put(ddSizes.machineID, ddSizes);
+			ddSizesLatch.countDown();
 		}
 
 		private CompilationInfoProcessorImpl(int noOfnodes) {
@@ -722,6 +731,8 @@ public class StreamJitAppManager {
 		private void reset() {
 			bufSizes = new ConcurrentHashMap<>();
 			bufSizeLatch = new CountDownLatch(noOfnodes);
+			ddSizes = new ConcurrentHashMap<>();
+			ddSizesLatch = new CountDownLatch(noOfnodes);
 		}
 
 		private void waitforBufSizes() {
@@ -733,6 +744,21 @@ public class StreamJitAppManager {
 
 			for (Integer nodeID : controller.getAllNodeIDs()) {
 				if (!bufSizes.containsKey(nodeID)) {
+					throw new AssertionError(
+							"Not all Stream nodes have sent the buffer size info");
+				}
+			}
+		}
+
+		private void waitforDDSizes() {
+			try {
+				ddSizesLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			for (Integer nodeID : controller.getAllNodeIDs()) {
+				if (!ddSizes.containsKey(nodeID)) {
 					throw new AssertionError(
 							"Not all Stream nodes have sent the buffer size info");
 				}
