@@ -116,14 +116,17 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 	}
 
 	/**
-	 * Three types of draining are possible.
+	 * Three types of drain data actions are possible.
 	 */
 	public enum DrainDataAction {
 		/**
-		 * Final draining. No drain data. All {@link Blob}s are expected to run
-		 * and finish data in input buffers buffers.
+		 * Controller expects minimum possible drain data. All {@link Blob}s are
+		 * expected to run and finish the data in their input buffers. However,
+		 * {@link Blob}s may send the residues that are not enough to do a full
+		 * firing.
 		 */
-		FINAL(1), /**
+		FINISH(1),
+		/**
 		 * Intermediate draining. Drain data is required in this mode.
 		 * {@link BoundaryInputChannel}s may create extra buffer and put all
 		 * unconsumed data, and finally send this drain data to the

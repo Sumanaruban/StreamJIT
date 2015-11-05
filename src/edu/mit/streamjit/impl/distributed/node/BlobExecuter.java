@@ -191,7 +191,7 @@ class BlobExecuter {
 	}
 
 	void stop() {
-		inChnlManager.stop(DrainDataAction.FINAL);
+		inChnlManager.stop(DrainDataAction.FINISH);
 		outChnlManager.stop(true);
 
 		for (Thread t : blobThreads) {

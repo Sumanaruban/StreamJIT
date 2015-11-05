@@ -131,7 +131,7 @@ class BlobDrainer {
 		}
 
 		be.bEvent("outChnlManager.waitToStop");
-		be.outChnlManager.stop(drainDataAction == DrainDataAction.FINAL);
+		be.outChnlManager.stop(drainDataAction == DrainDataAction.FINISH);
 		be.outChnlManager.waitToStop();
 		be.eEvent("outChnlManager.waitToStop");
 

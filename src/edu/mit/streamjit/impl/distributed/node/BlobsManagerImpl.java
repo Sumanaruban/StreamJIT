@@ -225,7 +225,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * we need to do the last blob actions in a synchronized block.
 	 */
 	void doDrainLastBlobActions(BlobDrainer bd) {
-		if (!useBufferCleaner || bd.drainDataAction == DrainDataAction.FINAL)
+		if (!useBufferCleaner || bd.drainDataAction == DrainDataAction.FINISH)
 			return;
 
 		for (BlobExecuter be : blobExecuters.values()) {

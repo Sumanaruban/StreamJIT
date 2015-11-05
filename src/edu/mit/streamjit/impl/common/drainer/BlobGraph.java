@@ -323,7 +323,7 @@ public class BlobGraph {
 			DrainDataAction drainDataAction;
 			if (Options.useDrainData)
 				if (drainer.state == DrainerState.FINAL)
-					drainDataAction = DrainDataAction.FINAL;
+					drainDataAction = DrainDataAction.FINISH;
 				else
 					drainDataAction = DrainDataAction.INTERMEDIATE;
 			else
