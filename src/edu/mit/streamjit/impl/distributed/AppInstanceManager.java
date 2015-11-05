@@ -144,6 +144,13 @@ public class AppInstanceManager {
 		return String.format("AppInstanceManager-%d", appInst.id);
 	}
 
+	String dynamicCfg(Collection<ConnectionInfo> connectionsInUse) {
+		Configuration.Builder builder = appInst.getDynamicConfiguration();
+		addConInfoMap(builder, connectionsInUse);
+		Configuration cfg = builder.build();
+		return cfg.toJson();
+	}
+
 	/**
 	 * Builds a new {@link ConnectionInfo} map based on this {@link AppInstance}
 	 * 's partition information and adds it to the @param builder.
