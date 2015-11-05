@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
@@ -279,13 +280,13 @@ public class StreamJitAppManager {
 		Configuration cfg = builder.build();
 		String jsonStirng = cfg.toJson();
 
-		ImmutableMap<Integer, DrainData> drainDataMap = app.getDrainData();
+		// ImmutableMap<Integer, DrainData> drainDataMap = app.getDrainData();
 
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
-			ConfigurationString json = new ConfigurationString.ConfigurationString1(
-					jsonStirng, ConfigType.DYNAMIC, drainDataMap.get(nodeID));
+			ConfigurationString json = new ConfigurationString.ConfigurationString2(
+					jsonStirng, ConfigType.DYNAMIC, drainDataSize());
 			controller.send(nodeID, json);
 		}
 
@@ -302,6 +303,9 @@ public class StreamJitAppManager {
 		logger.compilationFinished(isCompiled, "");
 
 		if (isCompiled) {
+			ConfigurationString json = new ConfigurationString.ConfigurationString2DD(
+					app.drainData);
+			controller.sendToAll(json);
 			start();
 			isRunning = true;
 		} else {
@@ -318,6 +322,19 @@ public class StreamJitAppManager {
 		System.out.println("StraemJit app is running...");
 		Utils.printMemoryStatus();
 		return isRunning;
+	}
+
+	ImmutableMap<Token, Integer> drainDataSize() {
+		if (app.drainData == null)
+			return null;
+		ImmutableMap.Builder<Token, Integer> sizeBuilder = ImmutableMap
+				.builder();
+		for (Map.Entry<Token, ImmutableList<Object>> en : app.drainData
+				.getData().entrySet()) {
+			System.out.println(en.getKey() + "=" + en.getValue().size());
+			sizeBuilder.put(en.getKey(), en.getValue().size());
+		}
+		return sizeBuilder.build();
 	}
 
 	private void sendDeadlockfreeBufSizes() {
