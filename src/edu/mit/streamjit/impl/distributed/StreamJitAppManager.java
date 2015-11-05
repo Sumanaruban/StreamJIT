@@ -243,10 +243,7 @@ public class StreamJitAppManager {
 	 * @param appinst
 	 */
 	private void preCompilation(AppInstanceManager aim) {
-		Configuration.Builder builder = aim.appInst.getDynamicConfiguration();
-		aim.addConInfoMap(builder, connectionsInUse());
-		Configuration cfg = builder.build();
-		String jsonStirng = cfg.toJson();
+		String jsonStirng = dynamicCfg(aim);
 		ImmutableMap<Integer, DrainData> drainDataMap = aim.appInst
 				.getDrainData();
 		logger.compilationStarted();
@@ -257,6 +254,14 @@ public class StreamJitAppManager {
 			controller.send(nodeID, new CTRLRMessageElementHolder(json,
 					aim.appInst.id));
 		}
+	}
+
+	private String dynamicCfg(AppInstanceManager aim) {
+		Configuration.Builder builder = aim.appInst.getDynamicConfiguration();
+		aim.addConInfoMap(builder, connectionsInUse());
+		Configuration cfg = builder.build();
+		String jsonStirng = cfg.toJson();
+		return jsonStirng;
 	}
 
 	private Collection<ConnectionInfo> connectionsInUse() {
