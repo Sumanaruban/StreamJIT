@@ -162,7 +162,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 	@Override
 	public void process(DrainData drainData) {
-		// TODO Auto-generated method stub
-
+		BlobsManagerImpl bm = (BlobsManagerImpl) streamNode.getBlobsManager();
+		bm.insertDrainData(drainData);
 	}
 }

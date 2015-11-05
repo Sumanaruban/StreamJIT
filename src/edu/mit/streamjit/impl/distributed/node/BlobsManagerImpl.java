@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
@@ -802,5 +803,10 @@ public class BlobsManagerImpl implements BlobsManager {
 		public SNProfileElement profile() {
 			return bbs.snBufferStatusData();
 		}
+	}
+
+	public void insertDrainData(DrainData initialState) {
+		for (BlobExecuter be : blobExecuters.values())
+			be.blob.insertDrainData(initialState);
 	}
 }
