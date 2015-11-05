@@ -7,7 +7,7 @@ import java.util.List;
 
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.util.ConstructorSupplier;
 import edu.mit.streamjit.util.ReflectionUtils;
 
@@ -25,7 +25,7 @@ import edu.mit.streamjit.util.ReflectionUtils;
  */
 public interface LocalBuffer extends Buffer {
 
-	public void drainingStarted(DrainType drainType);
+	public void drainingStarted(DrainDataAction drainType);
 
 	/**
 	 * Just a wrapper for {@link ConcurrentArrayBuffer}
@@ -78,7 +78,7 @@ public interface LocalBuffer extends Buffer {
 		}
 
 		@Override
-		public void drainingStarted(DrainType drainType) {
+		public void drainingStarted(DrainDataAction drainType) {
 			System.out.println("drainingStarted: Not supported");
 		}
 	}
@@ -173,7 +173,7 @@ public interface LocalBuffer extends Buffer {
 		}
 
 		@Override
-		public void drainingStarted(DrainType drainType) {
+		public void drainingStarted(DrainDataAction drainType) {
 			hasDrainingStarted = true;
 		}
 

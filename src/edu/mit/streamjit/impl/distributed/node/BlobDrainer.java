@@ -19,7 +19,7 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputChannelManager;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
@@ -43,7 +43,7 @@ class BlobDrainer {
 
 	final BlobExecuter be;
 	volatile int drainState;
-	DrainType drainType;
+	DrainDataAction drainType;
 	/**
 	 * ExecutorService to call doDrain in a new thread.
 	 */
@@ -61,16 +61,16 @@ class BlobDrainer {
 	}
 
 	/**
-	 * The actual {@link #doDrain(DrainType)} method calls
+	 * The actual {@link #doDrain(DrainDataAction)} method calls
 	 * {@link InputChannelManager#waitToStop()}, which is a blocking call. This
 	 * may cause deadlock situation in some cases if the main {@link StreamNode}
-	 * thread calls {@link #doDrain(DrainType)} method. Calling
-	 * {@link #doDrain(DrainType)} in a new thread is always safer.
+	 * thread calls {@link #doDrain(DrainDataAction)} method. Calling
+	 * {@link #doDrain(DrainDataAction)} in a new thread is always safer.
 	 * 
 	 * @param drainType
 	 * @param inNewThread
 	 */
-	void doDrain(DrainType drainType, boolean inNewThread) {
+	void doDrain(DrainDataAction drainType, boolean inNewThread) {
 		if (inNewThread) {
 			executorService = Executors.newSingleThreadExecutor();
 			executorService.submit(() -> doDrain(drainType));
@@ -79,7 +79,7 @@ class BlobDrainer {
 			doDrain(drainType);
 	}
 
-	void doDrain(DrainType drainType) {
+	void doDrain(DrainDataAction drainType) {
 		// System.out.println("Blob " + blobID + "is doDrain");
 		this.drainType = drainType;
 
@@ -101,7 +101,7 @@ class BlobDrainer {
 		// TODO: [2014-03-14] I commented following line to avoid one dead
 		// lock case when draining. Deadlock 5 and 6.
 		// [2014-09-17] Lets waitToStop() if drain data is required.
-		if (drainType != DrainType.DISCARD)
+		if (drainType != DrainDataAction.DISCARD)
 			be.inChnlManager.waitToStop();
 		be.eEvent("inChnlManager.waitToStop");
 
@@ -131,7 +131,7 @@ class BlobDrainer {
 		}
 
 		be.bEvent("outChnlManager.waitToStop");
-		be.outChnlManager.stop(drainType == DrainType.FINAL);
+		be.outChnlManager.stop(drainType == DrainDataAction.FINAL);
 		be.outChnlManager.waitToStop();
 		be.eEvent("outChnlManager.waitToStop");
 
@@ -149,7 +149,7 @@ class BlobDrainer {
 		}
 		// System.out.println("Blob " + blobID + "is drained at mid");
 
-		if (drainType != DrainType.DISCARD) {
+		if (drainType != DrainDataAction.DISCARD) {
 			SNMessageElement me;
 			if (be.crashed.get())
 				me = getEmptyDrainData();

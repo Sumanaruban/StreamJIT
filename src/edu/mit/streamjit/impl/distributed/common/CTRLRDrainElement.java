@@ -81,7 +81,7 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 	public static final class DoDrain extends CTRLRDrainElement {
 		private static final long serialVersionUID = 1L;
 
-		public final DrainType drainType;
+		public final DrainDataAction drainType;
 
 		/**
 		 * Identifies the blob. Since {@link Blob}s do not have an unique
@@ -90,7 +90,7 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		 */
 		public final Token blobID;
 
-		public DoDrain(Token blobID, DrainType drainType) {
+		public DoDrain(Token blobID, DrainDataAction drainType) {
 			this.blobID = blobID;
 			this.drainType = drainType;
 		}
@@ -118,7 +118,7 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 	/**
 	 * Three types of draining are possible.
 	 */
-	public enum DrainType {
+	public enum DrainDataAction {
 		/**
 		 * Final draining. No drain data. All {@link Blob}s are expected to run
 		 * and finish data in input buffers buffers.
@@ -137,7 +137,7 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		DISCARD(3);
 		private final int code;
 
-		DrainType(int code) {
+		DrainDataAction(int code) {
 			this.code = code;
 		}
 

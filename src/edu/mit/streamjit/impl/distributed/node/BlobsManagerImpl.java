@@ -44,7 +44,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedul
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
@@ -142,12 +142,12 @@ public class BlobsManagerImpl implements BlobsManager {
 	/**
 	 * Drain the blob identified by the token.
 	 */
-	public void drain(Token blobID, DrainType drainType) {
+	public void drain(Token blobID, DrainDataAction drainType) {
 		for (BlobExecuter be : blobExecuters.values()) {
 			if (be.getBlobID().equals(blobID)) {
 				if (Options.doDraininNewThread)
 					be.drainer.doDrain(drainType,
-							drainType != DrainType.DISCARD);
+							drainType != DrainDataAction.DISCARD);
 				else
 					be.drainer.doDrain(drainType);
 				return;
@@ -225,7 +225,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * we need to do the last blob actions in a synchronized block.
 	 */
 	void doDrainLastBlobActions(BlobDrainer bd) {
-		if (!useBufferCleaner || bd.drainType == DrainType.FINAL)
+		if (!useBufferCleaner || bd.drainType == DrainDataAction.FINAL)
 			return;
 
 		for (BlobExecuter be : blobExecuters.values()) {
@@ -240,7 +240,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			if (bufferCleaner == null) {
 				// System.out.println("****Starting BufferCleaner***");
 				bufferCleaner = new BufferCleaner(this,
-						bd.drainType == DrainType.INTERMEDIATE);
+						bd.drainType == DrainDataAction.INTERMEDIATE);
 				bufferCleaner.start();
 			}
 			doDrainLastBlobActionsDone = true;

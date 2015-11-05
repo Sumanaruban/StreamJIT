@@ -11,7 +11,7 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -171,11 +171,11 @@ class HeadTailHandler {
 		if (tailChannel != null) {
 			if (Options.useDrainData)
 				if (isFinal)
-					tailChannel.stop(DrainType.FINAL);
+					tailChannel.stop(DrainDataAction.FINAL);
 				else
-					tailChannel.stop(DrainType.INTERMEDIATE);
+					tailChannel.stop(DrainDataAction.INTERMEDIATE);
 			else
-				tailChannel.stop(DrainType.DISCARD);
+				tailChannel.stop(DrainDataAction.DISCARD);
 		}
 	}
 

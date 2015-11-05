@@ -24,7 +24,7 @@ import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.IOInfo;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainerState;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 
@@ -320,14 +320,14 @@ public class BlobGraph {
 						"Drain of this blobNode has already been called");
 			}
 
-			DrainType drainType;
+			DrainDataAction drainType;
 			if (Options.useDrainData)
 				if (drainer.state == DrainerState.FINAL)
-					drainType = DrainType.FINAL;
+					drainType = DrainDataAction.FINAL;
 				else
-					drainType = DrainType.INTERMEDIATE;
+					drainType = DrainDataAction.INTERMEDIATE;
 			else
-				drainType = DrainType.DISCARD;
+				drainType = DrainDataAction.DISCARD;
 
 			drainer.drain(blobID, drainType);
 

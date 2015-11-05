@@ -46,7 +46,7 @@ import edu.mit.streamjit.impl.common.drainer.BlobGraph.BlobNode;
 import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
@@ -320,7 +320,7 @@ public abstract class AbstractDrainer {
 	 * Once a {@link BlobNode}'s all preconditions are satisfied for draining,
 	 * blob node will call this function drain the blob.
 	 */
-	protected abstract void drain(Token blobID, DrainType drainType);
+	protected abstract void drain(Token blobID, DrainDataAction drainType);
 
 	/**
 	 * {@link AbstractDrainer} will call this function after the corresponding

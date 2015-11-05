@@ -25,7 +25,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 
 /**
@@ -48,7 +48,7 @@ public class DistributedDrainer extends AbstractDrainer {
 	}
 
 	@Override
-	protected void drain(Token blobID, DrainType drainType) {
+	protected void drain(Token blobID, DrainDataAction drainType) {
 		// System.out.println("Drain requested to blob " + blobID);
 		if (!appinst.blobtoMachineMap.containsKey(blobID))
 			throw new IllegalArgumentException(blobID

@@ -23,7 +23,7 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.Boundary
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.BoundaryOutputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputChannelManager;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
@@ -191,7 +191,7 @@ class BlobExecuter {
 	}
 
 	void stop() {
-		inChnlManager.stop(DrainType.FINAL);
+		inChnlManager.stop(DrainDataAction.FINAL);
 		outChnlManager.stop(true);
 
 		for (Thread t : blobThreads) {

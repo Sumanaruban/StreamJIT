@@ -24,7 +24,7 @@ package edu.mit.streamjit.impl.distributed.common;
 import com.google.common.collect.ImmutableList;
 
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 
 /**
@@ -80,7 +80,7 @@ public interface BoundaryChannel {
 		 * </p>
 		 * 
 		 */
-		void stop(DrainType type);
+		void stop(DrainDataAction type);
 
 		/**
 		 * Receive data from other node.

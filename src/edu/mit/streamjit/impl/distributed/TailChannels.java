@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -160,7 +160,7 @@ public class TailChannels {
 		}
 
 		@Override
-		public void stop(DrainType type) {
+		public void stop(DrainDataAction type) {
 			super.stop(type);
 			if (pLogger != null) {
 				releaseAndInitilize();
