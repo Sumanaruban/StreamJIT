@@ -80,7 +80,7 @@ public interface BoundaryChannel {
 		 * </p>
 		 * 
 		 */
-		void stop(DrainDataAction type);
+		void stop(DrainDataAction drainDataAction);
 
 		/**
 		 * Receive data from other node.

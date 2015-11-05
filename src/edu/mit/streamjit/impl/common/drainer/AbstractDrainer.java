@@ -320,7 +320,7 @@ public abstract class AbstractDrainer {
 	 * Once a {@link BlobNode}'s all preconditions are satisfied for draining,
 	 * blob node will call this function drain the blob.
 	 */
-	protected abstract void drain(Token blobID, DrainDataAction drainType);
+	protected abstract void drain(Token blobID, DrainDataAction drainDataAction);
 
 	/**
 	 * {@link AbstractDrainer} will call this function after the corresponding

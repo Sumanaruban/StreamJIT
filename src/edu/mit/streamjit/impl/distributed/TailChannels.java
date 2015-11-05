@@ -160,8 +160,8 @@ public class TailChannels {
 		}
 
 		@Override
-		public void stop(DrainDataAction type) {
-			super.stop(type);
+		public void stop(DrainDataAction drainDataAction) {
+			super.stop(drainDataAction);
 			if (pLogger != null) {
 				releaseAndInitilize();
 				pLogger.stopLogging();

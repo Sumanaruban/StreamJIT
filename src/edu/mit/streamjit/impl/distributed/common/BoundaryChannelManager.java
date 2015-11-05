@@ -38,10 +38,10 @@ public interface BoundaryChannelManager {
 		ImmutableMap<Token, BoundaryInputChannel> inputChannelsMap();
 
 		/**
-		 * @param stopType
+		 * @param drainDataAction
 		 *            See {@link BoundaryInputChannel#stop(int)}
 		 */
-		void stop(DrainDataAction stopType);
+		void stop(DrainDataAction drainDataAction);
 	}
 
 	public interface BoundaryOutputChannelManager
@@ -109,9 +109,9 @@ public interface BoundaryChannelManager {
 		}
 
 		@Override
-		public void stop(DrainDataAction stopType) {
+		public void stop(DrainDataAction drainDataAction) {
 			for (BoundaryInputChannel bc : inputChannels.values()) {
-				bc.stop(stopType);
+				bc.stop(drainDataAction);
 			}
 		}
 

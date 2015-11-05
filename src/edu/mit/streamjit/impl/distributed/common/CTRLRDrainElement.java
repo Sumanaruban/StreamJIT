@@ -81,7 +81,7 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 	public static final class DoDrain extends CTRLRDrainElement {
 		private static final long serialVersionUID = 1L;
 
-		public final DrainDataAction drainType;
+		public final DrainDataAction drainDataAction;
 
 		/**
 		 * Identifies the blob. Since {@link Blob}s do not have an unique
@@ -90,9 +90,9 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		 */
 		public final Token blobID;
 
-		public DoDrain(Token blobID, DrainDataAction drainType) {
+		public DoDrain(Token blobID, DrainDataAction drainDataAction) {
 			this.blobID = blobID;
-			this.drainType = drainType;
+			this.drainDataAction = drainDataAction;
 		}
 
 		@Override

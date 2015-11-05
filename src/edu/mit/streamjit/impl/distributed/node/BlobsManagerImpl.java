@@ -142,14 +142,14 @@ public class BlobsManagerImpl implements BlobsManager {
 	/**
 	 * Drain the blob identified by the token.
 	 */
-	public void drain(Token blobID, DrainDataAction drainType) {
+	public void drain(Token blobID, DrainDataAction drainDataAction) {
 		for (BlobExecuter be : blobExecuters.values()) {
 			if (be.getBlobID().equals(blobID)) {
 				if (Options.doDraininNewThread)
-					be.drainer.doDrain(drainType,
-							drainType != DrainDataAction.DISCARD);
+					be.drainer.doDrain(drainDataAction,
+							drainDataAction != DrainDataAction.DISCARD);
 				else
-					be.drainer.doDrain(drainType);
+					be.drainer.doDrain(drainDataAction);
 				return;
 			}
 		}
@@ -225,7 +225,7 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * we need to do the last blob actions in a synchronized block.
 	 */
 	void doDrainLastBlobActions(BlobDrainer bd) {
-		if (!useBufferCleaner || bd.drainType == DrainDataAction.FINAL)
+		if (!useBufferCleaner || bd.drainDataAction == DrainDataAction.FINAL)
 			return;
 
 		for (BlobExecuter be : blobExecuters.values()) {
@@ -240,7 +240,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			if (bufferCleaner == null) {
 				// System.out.println("****Starting BufferCleaner***");
 				bufferCleaner = new BufferCleaner(this,
-						bd.drainType == DrainDataAction.INTERMEDIATE);
+						bd.drainDataAction == DrainDataAction.INTERMEDIATE);
 				bufferCleaner.start();
 			}
 			doDrainLastBlobActionsDone = true;
@@ -381,7 +381,7 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		@Override
 		public void process(DoDrain drain) {
-			drain(drain.blobID, drain.drainType);
+			drain(drain.blobID, drain.drainDataAction);
 		}
 
 		@Override

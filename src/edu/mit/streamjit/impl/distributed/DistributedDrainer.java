@@ -48,7 +48,7 @@ public class DistributedDrainer extends AbstractDrainer {
 	}
 
 	@Override
-	protected void drain(Token blobID, DrainDataAction drainType) {
+	protected void drain(Token blobID, DrainDataAction drainDataAction) {
 		// System.out.println("Drain requested to blob " + blobID);
 		if (!appinst.blobtoMachineMap.containsKey(blobID))
 			throw new IllegalArgumentException(blobID
@@ -56,7 +56,7 @@ public class DistributedDrainer extends AbstractDrainer {
 		int nodeID = appinst.blobtoMachineMap.get(blobID);
 		appInstManager.appManager.controller.send(nodeID,
 				new CTRLRMessageElementHolder(new CTRLRDrainElement.DoDrain(
-						blobID, drainType), appInstManager.appInstId()));
+						blobID, drainDataAction), appInstManager.appInstId()));
 	}
 
 	@Override

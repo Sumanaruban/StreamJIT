@@ -369,9 +369,9 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 	}
 
 	@Override
-	public void stop(DrainDataAction type) {
+	public void stop(DrainDataAction drainDataAction) {
 		if (this.stopType.get() == 0) {
-			stopType.set(type.toint());
+			stopType.set(drainDataAction.toint());
 		} else if (debugLevel > 0) {
 			System.err.println(name + " Stop has already been called.");
 		}

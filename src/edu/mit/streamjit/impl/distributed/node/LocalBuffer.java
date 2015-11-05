@@ -25,7 +25,7 @@ import edu.mit.streamjit.util.ReflectionUtils;
  */
 public interface LocalBuffer extends Buffer {
 
-	public void drainingStarted(DrainDataAction drainType);
+	public void drainingStarted(DrainDataAction drainDataAction);
 
 	/**
 	 * Just a wrapper for {@link ConcurrentArrayBuffer}
@@ -78,7 +78,7 @@ public interface LocalBuffer extends Buffer {
 		}
 
 		@Override
-		public void drainingStarted(DrainDataAction drainType) {
+		public void drainingStarted(DrainDataAction drainDataAction) {
 			System.out.println("drainingStarted: Not supported");
 		}
 	}
@@ -173,7 +173,7 @@ public interface LocalBuffer extends Buffer {
 		}
 
 		@Override
-		public void drainingStarted(DrainDataAction drainType) {
+		public void drainingStarted(DrainDataAction drainDataAction) {
 			hasDrainingStarted = true;
 		}
 

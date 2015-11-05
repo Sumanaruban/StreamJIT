@@ -43,7 +43,7 @@ class BlobDrainer {
 
 	final BlobExecuter be;
 	volatile int drainState;
-	DrainDataAction drainType;
+	DrainDataAction drainDataAction;
 	/**
 	 * ExecutorService to call doDrain in a new thread.
 	 */
@@ -67,21 +67,21 @@ class BlobDrainer {
 	 * thread calls {@link #doDrain(DrainDataAction)} method. Calling
 	 * {@link #doDrain(DrainDataAction)} in a new thread is always safer.
 	 * 
-	 * @param drainType
+	 * @param drainDataAction
 	 * @param inNewThread
 	 */
-	void doDrain(DrainDataAction drainType, boolean inNewThread) {
+	void doDrain(DrainDataAction drainDataAction, boolean inNewThread) {
 		if (inNewThread) {
 			executorService = Executors.newSingleThreadExecutor();
-			executorService.submit(() -> doDrain(drainType));
+			executorService.submit(() -> doDrain(drainDataAction));
 			executorService.shutdown();
 		} else
-			doDrain(drainType);
+			doDrain(drainDataAction);
 	}
 
-	void doDrain(DrainDataAction drainType) {
+	void doDrain(DrainDataAction drainDataAction) {
 		// System.out.println("Blob " + blobID + "is doDrain");
-		this.drainType = drainType;
+		this.drainDataAction = drainDataAction;
 
 		/*
 		 * [2-9-2015] If this blob crashed during steady run, BlobThread sends
@@ -97,16 +97,16 @@ class BlobDrainer {
 
 		drainState = 1;
 		be.bEvent("inChnlManager.waitToStop");
-		be.inChnlManager.stop(drainType);
+		be.inChnlManager.stop(drainDataAction);
 		// TODO: [2014-03-14] I commented following line to avoid one dead
 		// lock case when draining. Deadlock 5 and 6.
 		// [2014-09-17] Lets waitToStop() if drain data is required.
-		if (drainType != DrainDataAction.DISCARD)
+		if (drainDataAction != DrainDataAction.DISCARD)
 			be.inChnlManager.waitToStop();
 		be.eEvent("inChnlManager.waitToStop");
 
 		for (LocalBuffer buf : be.outputLocalBuffers.values()) {
-			buf.drainingStarted(drainType);
+			buf.drainingStarted(drainDataAction);
 		}
 
 		if (this.blob != null) {
@@ -131,7 +131,7 @@ class BlobDrainer {
 		}
 
 		be.bEvent("outChnlManager.waitToStop");
-		be.outChnlManager.stop(drainType == DrainDataAction.FINAL);
+		be.outChnlManager.stop(drainDataAction == DrainDataAction.FINAL);
 		be.outChnlManager.waitToStop();
 		be.eEvent("outChnlManager.waitToStop");
 
@@ -149,7 +149,7 @@ class BlobDrainer {
 		}
 		// System.out.println("Blob " + blobID + "is drained at mid");
 
-		if (drainType != DrainDataAction.DISCARD) {
+		if (drainDataAction != DrainDataAction.DISCARD) {
 			SNMessageElement me;
 			if (be.crashed.get())
 				me = getEmptyDrainData();

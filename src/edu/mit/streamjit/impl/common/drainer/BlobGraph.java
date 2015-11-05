@@ -320,16 +320,16 @@ public class BlobGraph {
 						"Drain of this blobNode has already been called");
 			}
 
-			DrainDataAction drainType;
+			DrainDataAction drainDataAction;
 			if (Options.useDrainData)
 				if (drainer.state == DrainerState.FINAL)
-					drainType = DrainDataAction.FINAL;
+					drainDataAction = DrainDataAction.FINAL;
 				else
-					drainType = DrainDataAction.INTERMEDIATE;
+					drainDataAction = DrainDataAction.INTERMEDIATE;
 			else
-				drainType = DrainDataAction.DISCARD;
+				drainDataAction = DrainDataAction.DISCARD;
 
-			drainer.drain(blobID, drainType);
+			drainer.drain(blobID, drainDataAction);
 
 			// TODO: Verify the waiting time is reasonable.
 			if (Options.needDrainDeadlockHandler)
