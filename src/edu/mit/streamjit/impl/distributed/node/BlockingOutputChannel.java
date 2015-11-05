@@ -206,7 +206,9 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		try {
 			Object o = buffer.read();
 			connection.writeObject(o);
-			count++;
+
+			if (debugLevel == 2)
+				count++;
 
 			if (debugLevel == 3) {
 				System.out.println(Thread.currentThread().getName()
@@ -223,10 +225,9 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 			System.err.println("TCP Output Channel. Send exception.");
 			reConnect();
 		}
-		if (count % 1000 == 0 && debugLevel == 2) {
+		if (debugLevel == 2 && count % 1000 == 0)
 			System.out.println(Thread.currentThread().getName() + " Send - "
 					+ count + " no of items have been sent");
-		}
 	}
 
 	@Override
