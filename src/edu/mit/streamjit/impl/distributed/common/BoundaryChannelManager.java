@@ -8,9 +8,9 @@ import java.util.Set;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
+import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
 
 /**
@@ -44,9 +44,8 @@ public interface BoundaryChannelManager {
 		void stop(DrainDataAction drainDataAction);
 	}
 
-	public interface BoundaryOutputChannelManager
-			extends
-				BoundaryChannelManager {
+	public interface BoundaryOutputChannelManager extends
+			BoundaryChannelManager {
 
 		/**
 		 * In streamJit, a channel can be identified by a {@link Token}.
@@ -63,9 +62,8 @@ public interface BoundaryChannelManager {
 		void stop(boolean stopType);
 	}
 
-	public static class InputChannelManager
-			implements
-				BoundaryInputChannelManager {
+	public static class InputChannelManager implements
+			BoundaryInputChannelManager {
 
 		private final ImmutableMap<Token, BoundaryInputChannel> inputChannels;
 
@@ -121,9 +119,8 @@ public interface BoundaryChannelManager {
 		}
 	}
 
-	public static class OutputChannelManager
-			implements
-				BoundaryOutputChannelManager {
+	public static class OutputChannelManager implements
+			BoundaryOutputChannelManager {
 
 		protected final ImmutableMap<Token, BoundaryOutputChannel> outputChannels;
 		protected final Map<BoundaryOutputChannel, Thread> outputChannelThreads;

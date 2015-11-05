@@ -15,6 +15,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.Buffers;
 import edu.mit.streamjit.impl.common.Workers;
+import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
@@ -23,7 +24,6 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.Boundary
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.BoundaryOutputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputChannelManager;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;

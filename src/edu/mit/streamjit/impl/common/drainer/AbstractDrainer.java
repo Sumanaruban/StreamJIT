@@ -39,6 +39,7 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Sets;
 
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.TimeLogger;
@@ -46,10 +47,12 @@ import edu.mit.streamjit.impl.common.drainer.BlobGraph.BlobNode;
 import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
+import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
+import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.OnlineTuner;
 
 /**
@@ -532,5 +535,40 @@ public abstract class AbstractDrainer {
 		 * executes until all input buffers become empty.
 		 */
 		FINAL
+	}
+
+	/**
+	 * Three types of drain data actions are possible.
+	 */
+	public enum DrainDataAction {
+		/**
+		 * Controller expects minimum possible drain data. All {@link Blob}s are
+		 * expected to run and finish the data in their input buffers. However,
+		 * {@link Blob}s may send the residues that are not enough to do a full
+		 * firing.
+		 */
+		FINISH(1),
+		/**
+		 * In this mode, {@link Blob}s are expected to stop as soon as
+		 * {@link CTRLRDrainElement.DoDrain} message is received.
+		 * {@link BoundaryInputChannel}s may create extra buffer and put all
+		 * unconsumed data, and finally send this drain data to the
+		 * {@link Controller} for reconfiguration.
+		 */
+		SEND_BACK(2), /**
+		 * Discard all unconsumed data. This is useful, if we
+		 * don't care about the data while tuning for performance.
+		 * 
+		 */
+		DISCARD(3);
+		private final int code;
+
+		DrainDataAction(int code) {
+			this.code = code;
+		}
+
+		public int toint() {
+			return code;
+		}
 	}
 }

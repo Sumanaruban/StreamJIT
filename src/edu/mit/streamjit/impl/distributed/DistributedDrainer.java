@@ -25,7 +25,6 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 
 /**

@@ -24,7 +24,7 @@ package edu.mit.streamjit.impl.distributed.common;
 import com.google.common.collect.ImmutableList;
 
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
+import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 
 /**

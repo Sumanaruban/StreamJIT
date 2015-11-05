@@ -25,7 +25,7 @@ import java.util.Set;
 
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
-import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
+import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 
@@ -113,39 +113,5 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		public void process(DrainDataRequest drnDataReq);
 
 		public void process(DoDrain drain);
-	}
-
-	/**
-	 * Three types of drain data actions are possible.
-	 */
-	public enum DrainDataAction {
-		/**
-		 * Controller expects minimum possible drain data. All {@link Blob}s are
-		 * expected to run and finish the data in their input buffers. However,
-		 * {@link Blob}s may send the residues that are not enough to do a full
-		 * firing.
-		 */
-		FINISH(1),
-		/**
-		 * In this mode, {@link Blob}s are expected to stop as soon as
-		 * {@link DoDrain} message is received. {@link BoundaryInputChannel}s
-		 * may create extra buffer and put all unconsumed data, and finally send
-		 * this drain data to the {@link Controller} for reconfiguration.
-		 */
-		SEND_BACK(2), /**
-		 * Discard all unconsumed data. This is useful, if we
-		 * don't care about the data while tuning for performance.
-		 * 
-		 */
-		DISCARD(3);
-		private final int code;
-
-		DrainDataAction(int code) {
-			this.code = code;
-		}
-
-		public int toint() {
-			return code;
-		}
 	}
 }

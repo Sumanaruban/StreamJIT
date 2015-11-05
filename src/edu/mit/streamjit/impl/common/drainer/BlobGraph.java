@@ -23,8 +23,8 @@ import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.IOInfo;
+import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainerState;
-import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 
