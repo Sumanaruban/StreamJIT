@@ -173,7 +173,7 @@ class HeadTailHandler {
 				if (isFinal)
 					tailChannel.stop(DrainDataAction.FINISH);
 				else
-					tailChannel.stop(DrainDataAction.INTERMEDIATE);
+					tailChannel.stop(DrainDataAction.SEND_BACK);
 			else
 				tailChannel.stop(DrainDataAction.DISCARD);
 		}

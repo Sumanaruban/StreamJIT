@@ -127,12 +127,12 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		 */
 		FINISH(1),
 		/**
-		 * Intermediate draining. Drain data is required in this mode.
-		 * {@link BoundaryInputChannel}s may create extra buffer and put all
-		 * unconsumed data, and finally send this drain data to the
-		 * {@link Controller} for reconfiguration.
+		 * In this mode, {@link Blob}s are expected to stop as soon as
+		 * {@link DoDrain} message is received. {@link BoundaryInputChannel}s
+		 * may create extra buffer and put all unconsumed data, and finally send
+		 * this drain data to the {@link Controller} for reconfiguration.
 		 */
-		INTERMEDIATE(2), /**
+		SEND_BACK(2), /**
 		 * Discard all unconsumed data. This is useful, if we
 		 * don't care about the data while tuning for performance.
 		 * 

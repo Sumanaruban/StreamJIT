@@ -240,7 +240,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			if (bufferCleaner == null) {
 				// System.out.println("****Starting BufferCleaner***");
 				bufferCleaner = new BufferCleaner(this,
-						bd.drainDataAction == DrainDataAction.INTERMEDIATE);
+						bd.drainDataAction == DrainDataAction.SEND_BACK);
 				bufferCleaner.start();
 			}
 			doDrainLastBlobActionsDone = true;
