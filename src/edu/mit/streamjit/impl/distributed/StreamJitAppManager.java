@@ -22,10 +22,12 @@
 package edu.mit.streamjit.impl.distributed;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
@@ -123,8 +125,12 @@ public class StreamJitAppManager {
 	}
 
 	Reconfigurer reconfigurer(Buffer tailBuffer) {
-		if (Options.seamlessReconfig && !app.stateful)
-			return new SeamlessStatelessReconfigurer(tailBuffer);
+		if (Options.seamlessReconfig) {
+			if (app.stateful)
+				return new SeamlessStatefulReconfigurer();
+			else
+				return new SeamlessStatelessReconfigurer(tailBuffer);
+		}
 		return new PauseResumeReconfigurer();
 	}
 
@@ -544,6 +550,83 @@ public class StreamJitAppManager {
 					"TailBufferMergerStateless");
 			t.start();
 			return t;
+		}
+	}
+
+	private class SeamlessStatefulReconfigurer implements Reconfigurer {
+		public int reconfigure(int multiplier, AppInstance appinst) {
+			mLogger.bEvent("intermediateDraining");
+			boolean intermediateDraining = intermediateDraining(curAIM);
+			mLogger.eEvent("intermediateDraining");
+			if (!intermediateDraining)
+				return 1;
+
+			AppInstanceManager aim = createNewAIM(appinst);
+			reset();
+			preCompilation(aim, drainDataSize());
+			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
+					multiplier, appinst);
+			boolean isCompiled = postCompilation(aim);
+
+			if (isCompiled) {
+				if (prevAIM != null) {
+					// TODO : Should send node specific DrainData. Don't send
+					// the full drain data to all node.
+					ConfigurationString json = new ConfigurationString.ConfigurationString2DD(
+							prevAIM.appInst.drainData);
+					controller.sendToAll(new CTRLRMessageElementHolder(json,
+							aim.appInst.id));
+				}
+				start(aim);
+			} else {
+				aim.drainingFinished(false);
+			}
+
+			if (profiler != null) {
+				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
+						.getConfiguration());
+				profiler.logger().newConfiguration(cfgPrefix);
+			}
+			Utils.printMemoryStatus();
+			if (aim.isRunning)
+				return 0;
+			else
+				return 2;
+		}
+
+		/**
+		 * Start the execution of the StreamJit application.
+		 */
+		private void start(AppInstanceManager aim) {
+			aim.headTailHandler.startHead();
+			aim.headTailHandler.startTail();
+			aim.start();
+		}
+
+		@Override
+		public int starterType() {
+			return 1;
+		}
+
+		@Override
+		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
+		}
+
+		@Override
+		public void stop() {
+		}
+
+		ImmutableMap<Token, Integer> drainDataSize() {
+			if (prevAIM.appInst.drainData == null)
+				return null;
+			ImmutableMap.Builder<Token, Integer> sizeBuilder = ImmutableMap
+					.builder();
+			for (Map.Entry<Token, ImmutableList<Object>> en : prevAIM.appInst.drainData
+					.getData().entrySet()) {
+				System.out.println(en.getKey() + "=" + en.getValue().size());
+				sizeBuilder.put(en.getKey(), en.getValue().size());
+			}
+			return sizeBuilder.build();
 		}
 	}
 }
