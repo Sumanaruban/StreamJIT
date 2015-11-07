@@ -617,6 +617,8 @@ public class StreamJitAppManager {
 		}
 
 		ImmutableMap<Token, Integer> drainDataSize() {
+			if (prevAIM == null)
+				return null;
 			if (prevAIM.appInst.drainData == null)
 				return null;
 			ImmutableMap.Builder<Token, Integer> sizeBuilder = ImmutableMap
