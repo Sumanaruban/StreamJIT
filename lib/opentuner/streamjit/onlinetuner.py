@@ -115,6 +115,6 @@ def start(argv, cfg, connection):
 	print 'test_limit=%d'%args.test_limit
 
 	if not args.database:
-    		args.database = 'sqlite:///' + args.program + '.db'
+		args.database = 'sqlite:///' + args.program.rstrip('\n') + '.db'
 
 	main(args, cfg, connection)

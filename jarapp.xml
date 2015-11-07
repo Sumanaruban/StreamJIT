@@ -169,7 +169,7 @@ mkdir -p $mainClass
 db=""
 jar=""
 if [ "$all" = "all" ];then
-	db=,$mainClass
+	db=,$mainClass.db
 	jar=,*.jar
 fi
 scp -r ${username}@lanka.csail.mit.edu:/data/scratch/${username}/$app/$mainClass/\{summary,tune,*.txt,*.orig,streamgraph.dot$db\} $mainClass/
