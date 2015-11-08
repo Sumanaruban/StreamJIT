@@ -193,7 +193,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					// System.err.println(name + " : " + methodName
 					// + " : DISCARDING...");
 					break;
-				} else if (stopType.get() > 0 && ++bufFullCount > 20) {
+				} else if (stopType.get() == 2 && ++bufFullCount > 20) {
 					this.extraBuffer = new ExtraBuffer();
 					extraBuffer.write(obj);
 					System.err.println(name + " : " + methodName
