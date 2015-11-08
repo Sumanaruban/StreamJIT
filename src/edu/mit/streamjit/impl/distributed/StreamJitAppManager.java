@@ -573,10 +573,10 @@ public class StreamJitAppManager {
 				if (prevAIM != null) {
 					// TODO : Should send node specific DrainData. Don't send
 					// the full drain data to all node.
-					CTRLCompilationInfo json = new CTRLCompilationInfo.ConfigurationString2DD(
+					CTRLCompilationInfo initialState = new CTRLCompilationInfo.InitialState(
 							prevAIM.appInst.drainData);
-					controller.sendToAll(new CTRLRMessageElementHolder(json,
-							aim.appInst.id));
+					controller.sendToAll(new CTRLRMessageElementHolder(
+							initialState, aim.appInst.id));
 				}
 				start(aim);
 			} else {

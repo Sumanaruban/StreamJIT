@@ -52,7 +52,7 @@ public abstract class CTRLCompilationInfo implements CTRLRMessageElement {
 	public interface CTRLCompilationInfoProcessor {
 		public void process(FinalBufferSizes finalBufferSizes);
 		public void process(InitSchedule InitSchedule);
-		public void process(ConfigurationString2DD cfgDD);
+		public void process(InitialState cfgDD);
 	}
 
 	/**
@@ -61,13 +61,13 @@ public abstract class CTRLCompilationInfo implements CTRLRMessageElement {
 	 * @author sumanan
 	 * @since 27 Aug, 2015
 	 */
-	public static final class ConfigurationString2DD
+	public static final class InitialState
 			extends
 				CTRLCompilationInfo {
 		private static final long serialVersionUID = 1L;
 		public final DrainData drainData;
 
-		public ConfigurationString2DD(DrainData drainData) {
+		public InitialState(DrainData drainData) {
 			this.drainData = drainData;
 		}
 
