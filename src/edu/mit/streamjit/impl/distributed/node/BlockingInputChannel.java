@@ -168,6 +168,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 
 	@Override
 	public void receiveData() {
+		final String methodName = "receiveData";
 		int bufFullCount = 0;
 		try {
 			Object obj = connection.readObject();
@@ -177,8 +178,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				count++;
 
 			if (debugLevel == 3) {
-				System.out.println(Thread.currentThread().getName() + " - "
-						+ obj.toString());
+				System.out.println(name + " : " + obj.toString());
 			}
 
 			if (writer != null) {
@@ -188,11 +188,11 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 
 			while (!this.buffer.write(obj)) {
 				if (debugLevel == 3) {
-					System.out.println(Thread.currentThread().getName()
-							+ " Buffer FULL - " + obj.toString());
+					System.out.println(name + " : Buffer FULL : "
+							+ obj.toString());
 				}
 				if (writer != null) {
-					writer.write("receiveData:Buffer FULL");
+					writer.write(methodName + " : Buffer FULL");
 					writer.write('\n');
 				}
 				try {
@@ -207,16 +207,15 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				} else if (stopType.get() > 0 && ++bufFullCount > 20) {
 					this.extraBuffer = new ExtraBuffer();
 					extraBuffer.write(obj);
-					System.err
-							.println(name
-									+ " receiveData:Writing extra data in to extra buffer");
+					System.err.println(name + " : " + methodName
+							+ " : Writing extra data in to extra buffer");
 					break;
 				}
 			}
 
 			if (debugLevel == 2 && count % 1000 == 0) {
-				System.out.println(Thread.currentThread().getName() + " - "
-						+ count + " no of items have been received");
+				System.out.println(name + " : " + count
+						+ " no of items have been received");
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
@@ -224,8 +223,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 			softClosed = true;
 		} catch (EOFException e) {
 			// Other side is closed.
-			System.out.println(name
-					+ " receiveData:Closing by EOFExp. Not by softClose");
+			System.out.println(name + " : " + methodName
+					+ " : Closing by EOFExp. Not by softClose");
 			stopType.set(2);
 		} catch (IOException e) {
 			// TODO: Verify the program quality. Try to reconnect until it
@@ -244,6 +243,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 	 * in the kernel's TCP buffer. Otherwise those data will be lost forever.
 	 */
 	private void finalReceive() {
+		final String methodName = "finalReceive";
 		assert stopType.get() == 1 || stopType.get() == 2 : "Illegal stopType state";
 		boolean hasData = true;
 		int bufFullCount;
@@ -262,8 +262,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					count++;
 
 				if (debugLevel == 2) {
-					System.out.println(Thread.currentThread().getName()
-							+ " finalReceive - " + obj.toString());
+					System.out.println(name + " : " + methodName + " : "
+							+ obj.toString());
 				}
 
 				if (writer != null) {
@@ -275,13 +275,12 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 
 				while (!buffer.write(obj)) {
 					if (debugLevel == 3) {
-						System.out.println(Thread.currentThread().getName()
-								+ " finalReceive:Buffer FULL - "
-								+ obj.toString());
+						System.out.println(name + " : " + methodName
+								+ " : Buffer FULL : " + obj.toString());
 					}
 
 					if (writer != null) {
-						writer.write("finalReceive:Buffer FULL");
+						writer.write(methodName + " : Buffer FULL");
 						writer.write('\n');
 					}
 
@@ -297,16 +296,15 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 						this.extraBuffer = new ExtraBuffer();
 						extraBuffer.write(obj);
 						buffer = extraBuffer;
-						System.err
-								.println(name
-										+ " finalReceive:Writing extra data in to extra buffer");
+						System.err.println(name + " : " + methodName
+								+ " : Writing extra data in to extra buffer");
 						break;
 					}
 				}
 
 				if (debugLevel == 2 && count % 1000 == 0) {
-					System.out.println(Thread.currentThread().getName() + " - "
-							+ count + " no of items have been received");
+					System.out.println(name + " : " + count
+							+ " no of items have been received");
 				}
 
 			} catch (ClassNotFoundException e) {
@@ -317,9 +315,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				hasData = false;
 			} catch (IOException e) {
 				e.printStackTrace();
-				System.out
-						.println(name
-								+ " finalReceive:Closing by IOException. Not by softClose.");
+				System.out.println(name + " : " + methodName
+						+ " : Closing by IOException. Not by softClose.");
 				hasData = false;
 			}
 		} while (hasData);
