@@ -179,14 +179,9 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				debugMethod1(methodName, obj);
 
 			while (!this.buffer.write(obj)) {
-				if (debugLevel == 3) {
-					System.out.println(name + " : Buffer FULL : "
-							+ obj.toString());
-				}
-				if (writer != null) {
-					writer.write(methodName + " : Buffer FULL");
-					writer.write('\n');
-				}
+				if (debugLevel > 0)
+					debugMethod2(methodName, obj);
+
 				try {
 					// TODO: Need to tune the sleep time.
 					Thread.sleep(100);
@@ -257,15 +252,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				hasData = true;
 
 				while (!buffer.write(obj)) {
-					if (debugLevel == 3) {
-						System.out.println(name + " : " + methodName
-								+ " : Buffer FULL : " + obj.toString());
-					}
-
-					if (writer != null) {
-						writer.write(methodName + " : Buffer FULL");
-						writer.write('\n');
-					}
+					if (debugLevel > 0)
+						debugMethod2(methodName, obj);
 
 					try {
 						Thread.sleep(100);
@@ -303,6 +291,19 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				hasData = false;
 			}
 		} while (hasData);
+	}
+
+	private void debugMethod2(final String methodName, Object obj)
+			throws IOException {
+		if (debugLevel == 3) {
+			System.out.println(name + " : " + methodName + " : Buffer FULL : "
+					+ obj.toString());
+		}
+
+		if (writer != null) {
+			writer.write(methodName + " : Buffer FULL");
+			writer.write('\n');
+		}
 	}
 
 	private void debugMethod1(final String methodName, Object obj)
