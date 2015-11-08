@@ -54,6 +54,7 @@ import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.OnlineTuner;
+import edu.mit.streamjit.util.DrainDataUtils;
 
 /**
  * Abstract drainer is to perform draining on a stream application. Both
@@ -450,8 +451,11 @@ public abstract class AbstractDrainer {
 			DrainData draindata1 = new DrainData(dataBuilder.build(), state);
 			drainData = drainData.merge(draindata1);
 			updateDrainDataStatistics(drainData);
-			// printDrainDataStats(drainData);
-			// dumpDrainData(drainData);
+			// DrainDataUtils.printDrainDataStats(drainData, app.name,
+			// new Integer(appinst.id).toString());
+			// DrainDataUtils.printDrainDataStats(drainData);
+			// DrainDataUtils.dumpDrainData(drainData, app.name, new Integer(
+			// appinst.id).toString());
 			return drainData;
 		}
 
