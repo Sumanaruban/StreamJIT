@@ -174,17 +174,9 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 			Object obj = connection.readObject();
 			if (obj == null) // [2014-03-15] Sometimes null is received.
 				return;
+
 			if (debugLevel > 0)
-				count++;
-
-			if (debugLevel == 3) {
-				System.out.println(name + " : " + obj.toString());
-			}
-
-			if (writer != null) {
-				writer.write(obj.toString());
-				writer.write('\n');
-			}
+				debugMethod1(methodName, obj);
 
 			while (!this.buffer.write(obj)) {
 				if (debugLevel == 3) {
@@ -258,18 +250,9 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				Object obj = connection.readObject();
 				if (obj == null) // [2015-09-1] Sometimes null is received.
 					continue;
+
 				if (debugLevel > 0)
-					count++;
-
-				if (debugLevel == 2) {
-					System.out.println(name + " : " + methodName + " : "
-							+ obj.toString());
-				}
-
-				if (writer != null) {
-					writer.write(obj.toString());
-					writer.write('\n');
-				}
+					debugMethod1(methodName, obj);
 
 				hasData = true;
 
@@ -320,6 +303,20 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				hasData = false;
 			}
 		} while (hasData);
+	}
+
+	private void debugMethod1(final String methodName, Object obj)
+			throws IOException {
+		count++;
+		if (debugLevel == 3) {
+			System.out.println(name + " : " + methodName + " : "
+					+ obj.toString());
+		}
+
+		if (writer != null) {
+			writer.write(obj.toString());
+			writer.write('\n');
+		}
 	}
 
 	/**
