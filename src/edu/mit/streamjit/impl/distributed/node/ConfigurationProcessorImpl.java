@@ -142,7 +142,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 					app.starterType, cfgPrefix);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
 					streamNode, bm, appInstId);
-			streamNode.registerMessageVisitor(mv);;
+			streamNode.registerMessageVisitor(mv);
 		} else {
 			try {
 				streamNode.controllerConnection
@@ -164,11 +164,5 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		CreationLogic creationLogic = creationLogic(cfg,
 				initialDrainDataBufferSizes);
 		compile(cfg, creationLogic);
-	}
-
-	@Override
-	public void process(DrainData drainData) {
-		BlobsManagerImpl bm = (BlobsManagerImpl) streamNode.getBlobsManager();
-		bm.insertDrainData(drainData);
 	}
 }

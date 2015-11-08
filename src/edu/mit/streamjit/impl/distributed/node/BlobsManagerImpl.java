@@ -33,13 +33,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import edu.mit.streamjit.impl.blob.Blob;
-import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.blob.Blob.Token;
+import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.ConfigurationString2DD;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.FinalBufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
@@ -419,6 +420,11 @@ public class BlobsManagerImpl implements BlobsManager {
 		@Override
 		public void process(InitSchedule initSchedule) {
 			runInitSchedule(initSchedule);
+		}
+
+		@Override
+		public void process(ConfigurationString2DD cfgDD) {
+			insertDrainData(cfgDD.drainData);
 		}
 	}
 
