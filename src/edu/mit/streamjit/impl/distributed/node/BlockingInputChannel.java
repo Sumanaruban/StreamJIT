@@ -189,7 +189,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					e.printStackTrace();
 				}
 				if (stopType.get() == 3) {
-					// System.err.println(name + " receiveData:DISCARDING....");
+					// System.err.println(name + " : " + methodName
+					// + " : DISCARDING...");
 					break;
 				} else if (stopType.get() > 0 && ++bufFullCount > 20) {
 					this.extraBuffer = new ExtraBuffer();
@@ -260,7 +261,6 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-
 					if (++bufFullCount > 20) {
 						assert buffer != this.extraBuffer : "ExtraBuffer is full. This shouldn't be the case.";
 						assert this.extraBuffer == null : "Extra buffer has already been created.";
