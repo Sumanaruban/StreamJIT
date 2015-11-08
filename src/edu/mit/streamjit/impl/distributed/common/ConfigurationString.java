@@ -98,27 +98,6 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 	}
 
 	/**
-	 * ConfigurationString2-DrainData
-	 * 
-	 * @author sumanan
-	 * @since 27 Aug, 2015
-	 */
-	public static final class ConfigurationString2DD
-			extends
-				ConfigurationString {
-		private static final long serialVersionUID = 1L;
-		private final DrainData drainData;
-
-		public ConfigurationString2DD(DrainData drainData) {
-			this.drainData = drainData;
-		}
-
-		public void process(ConfigurationProcessor jp) {
-			jp.process(drainData);
-		}
-	}
-
-	/**
 	 * Processes configuration string of a {@link Configuration} that is sent by
 	 * {@link Controller}.
 	 * 
@@ -131,8 +110,6 @@ public abstract class ConfigurationString implements CTRLRMessageElement {
 
 		public void process(String cfg, ConfigType type,
 				ImmutableMap<Token, Integer> initialDrainDataBufferSizes);
-
-		public void process(DrainData drainData);
 
 		/**
 		 * Indicates the type of the configuration.

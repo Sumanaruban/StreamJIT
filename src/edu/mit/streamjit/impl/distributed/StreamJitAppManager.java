@@ -39,6 +39,7 @@ import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
@@ -572,7 +573,7 @@ public class StreamJitAppManager {
 				if (prevAIM != null) {
 					// TODO : Should send node specific DrainData. Don't send
 					// the full drain data to all node.
-					ConfigurationString json = new ConfigurationString.ConfigurationString2DD(
+					CTRLCompilationInfo json = new CTRLCompilationInfo.ConfigurationString2DD(
 							prevAIM.appInst.drainData);
 					controller.sendToAll(new CTRLRMessageElementHolder(json,
 							aim.appInst.id));
