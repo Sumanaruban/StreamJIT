@@ -626,7 +626,7 @@ public class StreamJitAppManager {
 					.builder();
 			for (Map.Entry<Token, ImmutableList<Object>> en : prevAIM.appInst.drainData
 					.getData().entrySet()) {
-				System.out.println(en.getKey() + "=" + en.getValue().size());
+				// System.out.println(en.getKey() + "=" + en.getValue().size());
 				sizeBuilder.put(en.getKey(), en.getValue().size());
 			}
 			return sizeBuilder.build();
