@@ -137,7 +137,8 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 						e.printStackTrace();
 					}
 				}
-				while (stopType.get() == 0 && !softClosed) {
+				// [2015-11-8] calls receiveData() if stopType == 0 or 1.
+				while (stopType.get() < 2 && !softClosed) {
 					receiveData();
 				}
 
