@@ -76,6 +76,8 @@ public class AppInstance {
 	 */
 	public final Configuration configuration;
 
+	public final int multiplier;
+
 	/**
 	 * Keeps track of assigned machine Ids of each blob. This information is
 	 * need for draining. TODO: If possible use a better solution.
@@ -140,8 +142,20 @@ public class AppInstance {
 		this.partitionsMachineMap = ImmutableMap.copyOf(partitionsMachineMap);
 		this.blobGraph = blobGraph;
 		this.configuration = configuration;
+		this.multiplier = getMultiplier(configuration);
 		app.visualizer.newConfiguration(configuration);
 		app.visualizer.newPartitionMachineMap(partitionsMachineMap);
+	}
+
+	private int getMultiplier(Configuration config) {
+		int multiplier = 50;
+		IntParameter mulParam = config.getParameter("multiplier",
+				IntParameter.class);
+		if (mulParam != null)
+			multiplier = mulParam.getValue();
+		System.err.println(String.format("%s - multiplier = %d", toString(),
+				multiplier));
+		return multiplier;
 	}
 
 	/**
