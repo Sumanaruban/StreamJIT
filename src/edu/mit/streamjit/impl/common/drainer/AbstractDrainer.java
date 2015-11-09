@@ -451,8 +451,9 @@ public abstract class AbstractDrainer {
 			DrainData draindata1 = new DrainData(dataBuilder.build(), state);
 			drainData = drainData.merge(draindata1);
 			updateDrainDataStatistics(drainData);
-			// DrainDataUtils.printDrainDataStats(drainData, app.name,
-			// new Integer(appinst.id).toString());
+			// TODO: Remove this file writing once everything is stable.
+			DrainDataUtils.printDrainDataStats(drainData, app.name,
+					new Integer(appinst.id).toString());
 			// DrainDataUtils.printDrainDataStats(drainData);
 			// DrainDataUtils.dumpDrainData(drainData, app.name, new Integer(
 			// appinst.id).toString());
