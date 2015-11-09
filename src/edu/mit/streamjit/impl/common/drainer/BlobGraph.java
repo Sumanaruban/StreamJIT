@@ -321,13 +321,7 @@ public class BlobGraph {
 			}
 
 			DrainDataAction drainDataAction;
-			if (Options.useDrainData)
-				if (drainer.state == DrainerState.FINAL)
-					drainDataAction = DrainDataAction.FINISH;
-				else
-					drainDataAction = DrainDataAction.SEND_BACK;
-			else
-				drainDataAction = DrainDataAction.DISCARD;
+			drainDataAction = ddAction(drainer.state == DrainerState.FINAL);
 
 			drainer.drain(blobID, drainDataAction);
 
@@ -335,6 +329,18 @@ public class BlobGraph {
 			if (Options.needDrainDeadlockHandler)
 				drainer.schExecutorService.schedule(deadLockHandler(), 6000,
 						TimeUnit.MILLISECONDS);
+		}
+
+		public static DrainDataAction ddAction(boolean isFinal) {
+			DrainDataAction drainDataAction;
+			if (Options.useDrainData)
+				if (isFinal)
+					drainDataAction = DrainDataAction.FINISH;
+				else
+					drainDataAction = DrainDataAction.SEND_BACK;
+			else
+				drainDataAction = DrainDataAction.DISCARD;
+			return drainDataAction;
 		}
 
 		void setDrainData(SNDrainedData drainedData) {
