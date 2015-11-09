@@ -44,7 +44,7 @@ public class BufferSizeCalc {
 	 * {@link #sendNewbufSizes()} doesn't guarantee deadlock freeness.
 	 */
 	public static GraphSchedule finalInputBufSizes(
-			Map<Integer, BufferSizes> bufSizes, AppInstance app) {
+			Map<Integer, BufferSizes> bufSizes, AppInstance appInst) {
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
 		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
 		boolean inputConsidered = true;
@@ -52,12 +52,13 @@ public class BufferSizeCalc {
 		int totalGraphOutDuringInit = 0;
 		int totalGraphInDuringInit = 0;
 
-		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
+		Map<Token, Variable> variables = ilpSolve(appInst, inputConsidered,
+				minInfo);
 
-		for (Token blob : app.blobGraph.getBlobIds()) {
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
 			steadyRunCount.put(blob, mul);
-			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			Set<Token> outputs = appInst.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				int initOut = minInfo.minInitOutputBufCapacity.get(out);
 				int steadyOut = minInfo.minSteadyOutputBufCapacity.get(out);
@@ -74,21 +75,22 @@ public class BufferSizeCalc {
 			}
 		}
 
-		totalGraphInDuringInit = totalGraphInDuringInit(app, minInfo, variables);
+		totalGraphInDuringInit = totalGraphInDuringInit(appInst, minInfo,
+				variables);
 
 		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
 				.build();
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
-		steadyStateRatios(minInfo, app);
+		steadyStateRatios(minInfo, appInst);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build(),
 				totalGraphInDuringInit, totalGraphOutDuringInit);
 	}
 
-	private static int totalGraphInDuringInit(AppInstance app, MinInfo minInfo,
-			Map<Token, Variable> variables) {
+	private static int totalGraphInDuringInit(AppInstance appInst,
+			MinInfo minInfo, Map<Token, Variable> variables) {
 		int totalGraphInDuringInit;
-		Token headToken = app.app.headToken;
+		Token headToken = appInst.app.headToken;
 		int mul = variables.get(headToken).value();
 		int initIn = minInfo.minInitInputBufCapacity.get(headToken);
 		int steadyIn = minInfo.minSteadyInputBufCapacity.get(headToken);
@@ -100,17 +102,18 @@ public class BufferSizeCalc {
 	 * Calculates blobs' execution ratios during steady state execution.
 	 * Calculates the total graph's steady state input and output.
 	 */
-	private static void steadyStateRatios(MinInfo minInfo, AppInstance app) {
+	private static void steadyStateRatios(MinInfo minInfo, AppInstance appInst) {
 		int steadyIn = -1;
 		int steadyOut = -1;
-		Pair<Token, Token> p = getGlobalOutTokens(app);
+		Pair<Token, Token> p = getGlobalOutTokens(appInst);
 		Token globalOutToken = p.first;
 		Token globalOutBlob = p.second;
-		Token globalInToken = getGlobalInToken(app);
+		Token globalInToken = getGlobalInToken(appInst);
 		boolean inputConsidered = false;
 
-		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
-		for (Token blob : app.blobGraph.getBlobIds()) {
+		Map<Token, Variable> variables = ilpSolve(appInst, inputConsidered,
+				minInfo);
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			int steadyRun = variables.get(blob).value();
 			System.out.println("Steady run factor of blob " + blob.toString()
 					+ " is " + steadyRun);
@@ -125,14 +128,14 @@ public class BufferSizeCalc {
 		System.out.println("Total graph's steady out = " + steadyOut);
 	}
 
-	private static Map<Token, Variable> ilpSolve(AppInstance app,
+	private static Map<Token, Variable> ilpSolve(AppInstance appInst,
 			boolean inputConsidered, MinInfo minInfo) {
 		ILPSolver solver = new ILPSolver();
 		Map<Token, bufInfo> bufInfos = new HashMap<>();
 		Map<Token, Variable> variables = new HashMap<>();
-		setOutputVariables(app, inputConsidered, minInfo, solver, bufInfos,
+		setOutputVariables(appInst, inputConsidered, minInfo, solver, bufInfos,
 				variables);
-		setInputVariables(app, minInfo, solver, bufInfos, variables);
+		setInputVariables(appInst, minInfo, solver, bufInfos, variables);
 		solve(solver, variables);
 		return variables;
 	}
@@ -149,15 +152,15 @@ public class BufferSizeCalc {
 		solver.solve();
 	}
 
-	private static void setOutputVariables(AppInstance app,
+	private static void setOutputVariables(AppInstance appInst,
 			boolean inputConsidered, MinInfo minInfo, ILPSolver solver,
 			Map<Token, bufInfo> bufInfos, Map<Token, Variable> variables) {
-		for (Token blob : app.blobGraph.getBlobIds()) {
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			Variable v = solver.newVariable(blob.toString());
 			variables.put(blob, v);
 			LinearExpr expr = v.asLinearExpr(1);
 			solver.constrainAtLeast(expr, 1);
-			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			Set<Token> outputs = appInst.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
@@ -170,11 +173,11 @@ public class BufferSizeCalc {
 		}
 	}
 
-	private static void setInputVariables(AppInstance app, MinInfo minInfo,
+	private static void setInputVariables(AppInstance appInst, MinInfo minInfo,
 			ILPSolver solver, Map<Token, bufInfo> bufInfos,
 			Map<Token, Variable> variables) {
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Set<Token> inputs = app.blobGraph.getInputs(blob);
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
+			Set<Token> inputs = appInst.blobGraph.getInputs(blob);
 			Variable v = variables.get(blob);
 			if (v == null)
 				throw new IllegalStateException("No variable");
@@ -195,9 +198,9 @@ public class BufferSizeCalc {
 	/**
 	 * @return Very last blob's blobID and global output token.
 	 */
-	private static Pair<Token, Token> getGlobalOutTokens(AppInstance app) {
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+	private static Pair<Token, Token> getGlobalOutTokens(AppInstance appInst) {
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
+			Set<Token> outputs = appInst.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				if (out.isOverallOutput()) {
 					return new Pair<>(out, blob);
@@ -210,12 +213,12 @@ public class BufferSizeCalc {
 	/**
 	 * TODO: Remove this method and use {@link StreamJitApp#tailToken}, instead.
 	 * 
-	 * @param app
+	 * @param appInst
 	 * @return
 	 */
-	private static Token getGlobalInToken(AppInstance app) {
-		for (Token blob : app.blobGraph.getBlobIds()) {
-			Set<Token> inputs = app.blobGraph.getInputs(blob);
+	private static Token getGlobalInToken(AppInstance appInst) {
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
+			Set<Token> inputs = appInst.blobGraph.getInputs(blob);
 			for (Token in : inputs) {
 				if (in.isOverallInput()) {
 					return in;
@@ -267,7 +270,7 @@ public class BufferSizeCalc {
 	 * [2014-03-01]
 	 */
 	private void sendNewbufSizes(Map<Integer, BufferSizes> bufSizes,
-			AppInstance app, Controller controller) {
+			AppInstance appInst, Controller controller) {
 		Map<Token, Integer> minInputBufCapacity = new HashMap<>();
 		Map<Token, Integer> minOutputBufCapacity = new HashMap<>();
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
@@ -294,9 +297,9 @@ public class BufferSizeCalc {
 			IORatio.put(t, (int) Math.ceil(((double) inSize) / outSize));
 		}
 
-		for (Token blob : app.blobGraph.getBlobIds()) {
+		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			int mul = 1;
-			Set<Token> outputs = app.blobGraph.getOutputs(blob);
+			Set<Token> outputs = appInst.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				if (out.isOverallOutput())
 					continue;
@@ -324,7 +327,7 @@ public class BufferSizeCalc {
 
 		CTRLRMessageElement me = new CTRLCompilationInfo.FinalBufferSizes(
 				finalInputBuf);
-		controller.sendToAll(new CTRLRMessageElementHolder(me, app.id));
+		controller.sendToAll(new CTRLRMessageElementHolder(me, appInst.id));
 	}
 
 	/**
