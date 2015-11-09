@@ -82,7 +82,7 @@ public class BufferSizeCalc {
 				.build();
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
-		Pair<Integer, Integer> p = steadyStateRatios(minInfo, appInst);
+		Pair<Integer, Integer> p = steadyStateRates(minInfo, appInst);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build(),
 				totalGraphInDuringInit, totalGraphOutDuringInit, p.first,
 				p.second);
@@ -108,12 +108,12 @@ public class BufferSizeCalc {
 	 * @param appInst
 	 * @return
 	 */
-	private static Pair<Integer, Integer> steadyStateRatios(MinInfo minInfo,
+	private static Pair<Integer, Integer> steadyStateRates(MinInfo minInfo,
 			AppInstance appInst) {
 		StreamJitApp<?, ?> app = appInst.app;
 		int multiplier = appInst.multiplier;
 		if (app.steadyIn < 0 || app.steadyOut < 0) {
-			Pair<Integer, Integer> p = calculateSteadyStateRatios(minInfo,
+			Pair<Integer, Integer> p = calculateSteadyStateRates(minInfo,
 					appInst);
 			app.steadyIn = p.first / multiplier;
 			app.steadyOut = p.second / multiplier;
@@ -145,7 +145,7 @@ public class BufferSizeCalc {
 	 * Calculates blobs' execution ratios during steady state execution.
 	 * Calculates the total graph's steady state input and output.
 	 */
-	private static Pair<Integer, Integer> calculateSteadyStateRatios(
+	private static Pair<Integer, Integer> calculateSteadyStateRates(
 			MinInfo minInfo, AppInstance appInst) {
 		int steadyIn = -1;
 		int steadyOut = -1;
