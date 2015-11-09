@@ -377,7 +377,7 @@ public abstract class AbstractDrainer {
 				state = DrainerState.NODRAINING;
 			}
 
-			if (Options.needDrainDeadlockHandler)
+			if (schExecutorService != null)
 				schExecutorService.shutdownNow();
 		}
 	}
