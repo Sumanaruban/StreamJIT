@@ -49,34 +49,51 @@ public class BufferSizeCalc {
 		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
 		boolean inputConsidered = true;
 		MinInfo minInfo = new MinInfo(bufSizes);
+		int totalGraphOutDuringInit = 0;
+		int totalGraphInDuringInit = 0;
+
 		Map<Token, Variable> variables = ilpSolve(app, inputConsidered, minInfo);
 
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
 			steadyRunCount.put(blob, mul);
 			Set<Token> outputs = app.blobGraph.getOutputs(blob);
-			// System.out.println("Multiplication factor of blob "
-			// + blob.toString() + " is " + mul);
 			for (Token out : outputs) {
-				if (out.isOverallOutput())
-					continue;
 				int initOut = minInfo.minInitOutputBufCapacity.get(out);
 				int steadyOut = minInfo.minSteadyOutputBufCapacity.get(out);
-				int scaledInSize = scaledSize(out,
-						minInfo.minInitInputBufCapacity,
-						minInfo.minSteadyInputBufCapacity);
-				int newInSize = Math.max(initOut + steadyOut * mul,
-						scaledInSize);
-				finalInputBufCapacity.put(out, newInSize);
+				int totalOut = initOut + steadyOut * mul;
+				if (out.isOverallOutput()) {
+					totalGraphOutDuringInit = totalOut;
+				} else {
+					int scaledInSize = scaledSize(out,
+							minInfo.minInitInputBufCapacity,
+							minInfo.minSteadyInputBufCapacity);
+					int newInSize = Math.max(totalOut, scaledInSize);
+					finalInputBufCapacity.put(out, newInSize);
+				}
 			}
 		}
+
+		totalGraphInDuringInit = totalGraphInDuringInit(app, minInfo, variables);
 
 		ImmutableMap<Token, Integer> finalInputBuf = finalInputBufCapacity
 				.build();
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
 		steadyStateRatios(minInfo, app);
-		return new GraphSchedule(finalInputBuf, steadyRunCount.build());
+		return new GraphSchedule(finalInputBuf, steadyRunCount.build(),
+				totalGraphInDuringInit, totalGraphOutDuringInit);
+	}
+
+	private static int totalGraphInDuringInit(AppInstance app, MinInfo minInfo,
+			Map<Token, Variable> variables) {
+		int totalGraphInDuringInit;
+		Token headToken = app.app.headToken;
+		int mul = variables.get(headToken).value();
+		int initIn = minInfo.minInitInputBufCapacity.get(headToken);
+		int steadyIn = minInfo.minSteadyInputBufCapacity.get(headToken);
+		totalGraphInDuringInit = initIn + steadyIn * mul;
+		return totalGraphInDuringInit;
 	}
 
 	/**
@@ -330,10 +347,16 @@ public class BufferSizeCalc {
 		 */
 		public final ImmutableMap<Token, Integer> steadyRunCount;
 
+		public final int totalOutDuringInit;
+		public final int totalInDuringInit;
+
 		GraphSchedule(ImmutableMap<Token, Integer> bufferSizes,
-				ImmutableMap<Token, Integer> steadyRunCount) {
+				ImmutableMap<Token, Integer> steadyRunCount,
+				int totalInDuringInit, int totalOutDuringInit) {
 			this.bufferSizes = bufferSizes;
 			this.steadyRunCount = steadyRunCount;
+			this.totalInDuringInit = totalInDuringInit;
+			this.totalOutDuringInit = totalOutDuringInit;
 		}
 	}
 
