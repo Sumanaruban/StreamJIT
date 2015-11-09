@@ -152,7 +152,7 @@ public class BlobGraph {
 	public static DrainDataAction ddAction(boolean isFinal) {
 		DrainDataAction ddAction;
 		if (Options.useDrainData)
-			if (isFinal)
+			if (Options.DDActionFINISH || isFinal)
 				ddAction = DrainDataAction.FINISH;
 			else
 				ddAction = DrainDataAction.SEND_BACK;

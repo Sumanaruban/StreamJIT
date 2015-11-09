@@ -9,6 +9,7 @@ import java.util.Properties;
 
 import sun.misc.PerformanceLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
+import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.AllConnectionParams;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.AsyncTCPNoParams;
 import edu.mit.streamjit.impl.distributed.ConnectionManager.BlockingTCPNoParams;
@@ -211,6 +212,12 @@ public final class Options {
 	 */
 	public static final boolean dumpDrainData;
 
+	/**
+	 * Always use {@link DrainDataAction#FINISH} when reconfiguring. See
+	 * {@link DrainDataAction#FINISH} for its functionality.
+	 */
+	public static final boolean DDActionFINISH;
+
 	// Reconfiguration related options.
 	/**
 	 * If this flag is <code>true</code>, seamless reconfiguration will take
@@ -265,6 +272,8 @@ public final class Options {
 		dumpDrainData = Boolean.parseBoolean(prop.getProperty("dumpDrainData"));
 		seamlessReconfig = Boolean.parseBoolean(prop
 				.getProperty("seamlessReconfig"));
+		DDActionFINISH = Boolean.parseBoolean(prop
+				.getProperty("DDActionFINISH"));
 	}
 
 	public static Properties getProperties() {
@@ -302,6 +311,7 @@ public final class Options {
 		setProperty(prop, "doDraininNewThread", doDraininNewThread);
 		setProperty(prop, "dumpDrainData", dumpDrainData);
 		setProperty(prop, "seamlessReconfig", seamlessReconfig);
+		setProperty(prop, "DDActionFINISH", DDActionFINISH);
 		return prop;
 	}
 
