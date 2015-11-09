@@ -148,7 +148,7 @@ public class AppInstance {
 	}
 
 	private int getMultiplier(Configuration config) {
-		int multiplier = 50;
+		int multiplier = 1;
 		IntParameter mulParam = config.getParameter("multiplier",
 				IntParameter.class);
 		if (mulParam != null)
