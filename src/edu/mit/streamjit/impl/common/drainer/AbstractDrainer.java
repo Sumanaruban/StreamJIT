@@ -194,7 +194,7 @@ public abstract class AbstractDrainer {
 				throw e;
 			}
 
-			if (Options.needDrainDeadlockHandler)
+			if (!Options.DDActionFINISH && Options.needDrainDeadlockHandler)
 				this.schExecutorService = Executors
 						.newSingleThreadScheduledExecutor();
 
