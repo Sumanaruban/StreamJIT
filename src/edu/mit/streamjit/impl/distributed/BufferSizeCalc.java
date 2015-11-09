@@ -82,9 +82,10 @@ public class BufferSizeCalc {
 				.build();
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
-		calculatedSteadyStateRatios(minInfo, appInst);
+		Pair<Integer, Integer> p = calculatedSteadyStateRatios(minInfo, appInst);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build(),
-				totalGraphInDuringInit, totalGraphOutDuringInit);
+				totalGraphInDuringInit, totalGraphOutDuringInit, p.first,
+				p.second);
 	}
 
 	private static int totalGraphInDuringInit(AppInstance appInst,
@@ -352,16 +353,22 @@ public class BufferSizeCalc {
 		 */
 		public final ImmutableMap<Token, Integer> steadyRunCount;
 
-		public final int totalOutDuringInit;
 		public final int totalInDuringInit;
+		public final int totalOutDuringInit;
+
+		public final int steadyIn;
+		public final int steadyOut;
 
 		GraphSchedule(ImmutableMap<Token, Integer> bufferSizes,
 				ImmutableMap<Token, Integer> steadyRunCount,
-				int totalInDuringInit, int totalOutDuringInit) {
+				int totalInDuringInit, int totalOutDuringInit, int steadyIn,
+				int steadyOut) {
 			this.bufferSizes = bufferSizes;
 			this.steadyRunCount = steadyRunCount;
 			this.totalInDuringInit = totalInDuringInit;
 			this.totalOutDuringInit = totalOutDuringInit;
+			this.steadyIn = steadyIn;
+			this.steadyOut = steadyOut;
 		}
 	}
 
