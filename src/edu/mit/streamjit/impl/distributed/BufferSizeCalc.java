@@ -102,7 +102,8 @@ public class BufferSizeCalc {
 	 * Calculates blobs' execution ratios during steady state execution.
 	 * Calculates the total graph's steady state input and output.
 	 */
-	private static void steadyStateRatios(MinInfo minInfo, AppInstance appInst) {
+	private static Pair<Integer, Integer> steadyStateRatios(MinInfo minInfo,
+			AppInstance appInst) {
 		int steadyIn = -1;
 		int steadyOut = -1;
 		Pair<Token, Token> p = getGlobalOutTokens(appInst);
@@ -115,8 +116,8 @@ public class BufferSizeCalc {
 				minInfo);
 		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			int steadyRun = variables.get(blob).value();
-			System.out.println("Steady run factor of blob " + blob.toString()
-					+ " is " + steadyRun);
+			// System.out.println("Steady run factor of blob " + blob.toString()
+			// + " is " + steadyRun);
 			if (blob.equals(globalInToken))
 				steadyIn = minInfo.minSteadyInputBufCapacity.get(globalInToken)
 						* steadyRun;
@@ -126,6 +127,7 @@ public class BufferSizeCalc {
 		}
 		System.out.println("Total graph's steady in = " + steadyIn);
 		System.out.println("Total graph's steady out = " + steadyOut);
+		return new Pair<Integer, Integer>(steadyIn, steadyOut);
 	}
 
 	private static Map<Token, Variable> ilpSolve(AppInstance appInst,
