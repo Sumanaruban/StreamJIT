@@ -320,10 +320,8 @@ public class BlobGraph {
 						"Drain of this blobNode has already been called");
 			}
 
-			DrainDataAction drainDataAction;
-			drainDataAction = ddAction(drainer.state == DrainerState.FINAL);
-
-			drainer.drain(blobID, drainDataAction);
+			DrainDataAction ddAction = ddAction(drainer.state == DrainerState.FINAL);
+			drainer.drain(blobID, ddAction);
 
 			// TODO: Verify the waiting time is reasonable.
 			if (Options.needDrainDeadlockHandler)
@@ -332,15 +330,15 @@ public class BlobGraph {
 		}
 
 		public static DrainDataAction ddAction(boolean isFinal) {
-			DrainDataAction drainDataAction;
+			DrainDataAction ddAction;
 			if (Options.useDrainData)
 				if (isFinal)
-					drainDataAction = DrainDataAction.FINISH;
+					ddAction = DrainDataAction.FINISH;
 				else
-					drainDataAction = DrainDataAction.SEND_BACK;
+					ddAction = DrainDataAction.SEND_BACK;
 			else
-				drainDataAction = DrainDataAction.DISCARD;
-			return drainDataAction;
+				ddAction = DrainDataAction.DISCARD;
+			return ddAction;
 		}
 
 		void setDrainData(SNDrainedData drainedData) {
