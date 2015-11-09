@@ -382,14 +382,13 @@ public class StreamJitAppManager {
 
 	public interface Reconfigurer {
 		/**
-		 * @param multiplier
 		 * @param appinst
 		 * @return <ol>
 		 *         <li>-0: Reconfiguration is successful.
 		 *         <li>-1: Intermediate draining has failed.
 		 *         <li>-2: Compilation has failed.
 		 */
-		public int reconfigure(int multiplier, AppInstance appinst);
+		public int reconfigure(AppInstance appinst);
 
 		/**
 		 * Type of starter required at StreamNode side.
@@ -405,7 +404,8 @@ public class StreamJitAppManager {
 
 	private class PauseResumeReconfigurer implements Reconfigurer {
 
-		public int reconfigure(int multiplier, AppInstance appinst) {
+		public int reconfigure(AppInstance appinst) {
+			int multiplier = appinst.multiplier;
 			System.out.println("PauseResumeReconfigurer...");
 			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining(curAIM);
@@ -472,7 +472,8 @@ public class StreamJitAppManager {
 			tailMergerThread = createAndStartTailMergerThread();
 		}
 
-		public int reconfigure(int multiplier, AppInstance appinst) {
+		public int reconfigure(AppInstance appinst) {
+			int multiplier = appinst.multiplier;
 			System.out.println("SeamlessStatelessReconfigurer...");
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
@@ -557,7 +558,8 @@ public class StreamJitAppManager {
 	}
 
 	private class SeamlessStatefulReconfigurer implements Reconfigurer {
-		public int reconfigure(int multiplier, AppInstance appinst) {
+		public int reconfigure(AppInstance appinst) {
+			int multiplier = appinst.multiplier;
 			System.out.println("SeamlessStatefulReconfigurer...");
 			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining(curAIM);

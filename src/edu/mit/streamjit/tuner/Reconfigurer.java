@@ -1,7 +1,6 @@
 package edu.mit.streamjit.tuner;
 
 import edu.mit.streamjit.impl.common.Configuration;
-import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.AppInstance;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
@@ -81,9 +80,7 @@ public class Reconfigurer {
 		mLogger.eEvent("serialcfg");
 		try {
 			AppInstance appinst = app.newConfiguration(newConfig);
-			int multiplier = getMultiplier(newConfig.configuration);
-			int reconfigure = manager.reconfigurer.reconfigure(multiplier,
-					appinst);
+			int reconfigure = manager.reconfigurer.reconfigure(appinst);
 			if (reconfigure == 1)
 				return new Pair<Boolean, Integer>(false, -5);
 			else if (reconfigure == 2)
@@ -110,16 +107,6 @@ public class Reconfigurer {
 		}
 		newConfiguration.setPrognosticationPassed(prog);
 		return newConfiguration;
-	}
-
-	private int getMultiplier(Configuration config) {
-		int multiplier = 50;
-		IntParameter mulParam = config.getParameter("multiplier",
-				IntParameter.class);
-		if (mulParam != null)
-			multiplier = mulParam.getValue();
-		System.err.println("Reconfiguring...multiplier = " + multiplier);
-		return multiplier;
 	}
 
 	public void terminate() {
