@@ -149,6 +149,18 @@ public class BlobGraph {
 		}
 	}
 
+	public static DrainDataAction ddAction(boolean isFinal) {
+		DrainDataAction ddAction;
+		if (Options.useDrainData)
+			if (isFinal)
+				ddAction = DrainDataAction.FINISH;
+			else
+				ddAction = DrainDataAction.SEND_BACK;
+		else
+			ddAction = DrainDataAction.DISCARD;
+		return ddAction;
+	}
+
 	/**
 	 * @return the sourceBlobNode
 	 */
@@ -327,18 +339,6 @@ public class BlobGraph {
 			if (Options.needDrainDeadlockHandler)
 				drainer.schExecutorService.schedule(deadLockHandler(), 6000,
 						TimeUnit.MILLISECONDS);
-		}
-
-		public static DrainDataAction ddAction(boolean isFinal) {
-			DrainDataAction ddAction;
-			if (Options.useDrainData)
-				if (isFinal)
-					ddAction = DrainDataAction.FINISH;
-				else
-					ddAction = DrainDataAction.SEND_BACK;
-			else
-				ddAction = DrainDataAction.DISCARD;
-			return ddAction;
 		}
 
 		void setDrainData(SNDrainedData drainedData) {
