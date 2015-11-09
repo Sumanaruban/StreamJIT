@@ -117,10 +117,28 @@ public class BufferSizeCalc {
 					appInst);
 			app.steadyIn = p.first / multiplier;
 			app.steadyOut = p.second / multiplier;
+			verifyRates(app, multiplier, p);
 			return p;
 		} else
 			return new Pair<>(app.steadyIn * multiplier, app.steadyOut
 					* multiplier);
+	}
+
+	private static void verifyRates(StreamJitApp<?, ?> app, int multiplier,
+			Pair<Integer, Integer> p) {
+		if (app.steadyIn * multiplier != p.first)
+			throw new IllegalStateException(String.format(
+					"appInst's steadyIn rate is not multiple of app's"
+							+ " steadyIn rate. app.steadyIn=%d, "
+							+ "multiplier=%d, appInst.steadyIn=%d",
+					app.steadyIn, multiplier, p.first));
+
+		if (app.steadyOut * multiplier != p.second)
+			throw new IllegalStateException(String.format(
+					"appInst's steadyOut rate is not multiple of app's"
+							+ " steadyOut rate. app.steadyOut=%d, "
+							+ "multiplier=%d, appInst.steadyOut=%d",
+					app.steadyOut, multiplier, p.second));
 	}
 
 	/**
