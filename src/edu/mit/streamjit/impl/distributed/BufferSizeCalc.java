@@ -190,6 +190,12 @@ public class BufferSizeCalc {
 		throw new IllegalStateException("Global output token is Null");
 	}
 
+	/**
+	 * TODO: Remove this method and use {@link StreamJitApp#tailToken}, instead.
+	 * 
+	 * @param app
+	 * @return
+	 */
 	private static Token getGlobalInToken(AppInstance app) {
 		for (Token blob : app.blobGraph.getBlobIds()) {
 			Set<Token> inputs = app.blobGraph.getInputs(blob);

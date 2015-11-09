@@ -406,6 +406,7 @@ public class StreamJitAppManager {
 	private class PauseResumeReconfigurer implements Reconfigurer {
 
 		public int reconfigure(int multiplier, AppInstance appinst) {
+			System.out.println("PauseResumeReconfigurer...");
 			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining(curAIM);
 			mLogger.eEvent("intermediateDraining");
@@ -472,6 +473,7 @@ public class StreamJitAppManager {
 		}
 
 		public int reconfigure(int multiplier, AppInstance appinst) {
+			System.out.println("SeamlessStatelessReconfigurer...");
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim);
@@ -556,6 +558,7 @@ public class StreamJitAppManager {
 
 	private class SeamlessStatefulReconfigurer implements Reconfigurer {
 		public int reconfigure(int multiplier, AppInstance appinst) {
+			System.out.println("SeamlessStatefulReconfigurer...");
 			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining(curAIM);
 			mLogger.eEvent("intermediateDraining");
