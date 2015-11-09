@@ -261,4 +261,8 @@ public class AppInstance {
 		}
 		return workerIds;
 	}
+
+	public String toString() {
+		return String.format("AppInstance-%d", id);
+	}
 }
