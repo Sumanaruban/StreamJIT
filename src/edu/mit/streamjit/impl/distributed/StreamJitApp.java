@@ -106,6 +106,11 @@ public class StreamJitApp<I, O> {
 
 	public final Token tailToken;
 
+	// TODO: Make these variables final. Or add getter setter methods.
+	// Stream graph's total input and output rates when multiplier == 1.
+	public int steadyIn = -1;
+	public int steadyOut = -1;
+
 	public StreamJitApp(OneToOneElement<I, O> streamGraph) {
 		this.streamGraph = streamGraph;
 		Pair<Worker<I, ?>, Worker<?, O>> srcSink = visit(streamGraph);

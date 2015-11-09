@@ -82,7 +82,7 @@ public class BufferSizeCalc {
 				.build();
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
-		Pair<Integer, Integer> p = calculatedSteadyStateRatios(minInfo, appInst);
+		Pair<Integer, Integer> p = steadyStateRatios(minInfo, appInst);
 		return new GraphSchedule(finalInputBuf, steadyRunCount.build(),
 				totalGraphInDuringInit, totalGraphOutDuringInit, p.first,
 				p.second);
@@ -100,10 +100,34 @@ public class BufferSizeCalc {
 	}
 
 	/**
+	 * Try to calculate steady state rates from {@link StreamJitApp#steadyIn}
+	 * and {@link StreamJitApp#steadyOut} values. If those variables are not
+	 * set, then uses ILP solver to calculates the steady state rates.
+	 * 
+	 * @param minInfo
+	 * @param appInst
+	 * @return
+	 */
+	private static Pair<Integer, Integer> steadyStateRatios(MinInfo minInfo,
+			AppInstance appInst) {
+		StreamJitApp<?, ?> app = appInst.app;
+		int multiplier = appInst.multiplier;
+		if (app.steadyIn < 0 || app.steadyOut < 0) {
+			Pair<Integer, Integer> p = calculateSteadyStateRatios(minInfo,
+					appInst);
+			app.steadyIn = p.first / multiplier;
+			app.steadyOut = p.second / multiplier;
+			return p;
+		} else
+			return new Pair<>(app.steadyIn * multiplier, app.steadyOut
+					* multiplier);
+	}
+
+	/**
 	 * Calculates blobs' execution ratios during steady state execution.
 	 * Calculates the total graph's steady state input and output.
 	 */
-	private static Pair<Integer, Integer> calculatedSteadyStateRatios(
+	private static Pair<Integer, Integer> calculateSteadyStateRatios(
 			MinInfo minInfo, AppInstance appInst) {
 		int steadyIn = -1;
 		int steadyOut = -1;
