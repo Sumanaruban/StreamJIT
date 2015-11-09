@@ -8,7 +8,7 @@ import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
+import edu.mit.streamjit.impl.common.drainer.BlobGraph;
 import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
@@ -168,15 +168,8 @@ class HeadTailHandler {
 	}
 
 	void stopTail(boolean isFinal) {
-		if (tailChannel != null) {
-			if (Options.useDrainData)
-				if (isFinal)
-					tailChannel.stop(DrainDataAction.FINISH);
-				else
-					tailChannel.stop(DrainDataAction.SEND_BACK);
-			else
-				tailChannel.stop(DrainDataAction.DISCARD);
-		}
+		if (tailChannel != null)
+			tailChannel.stop(BlobGraph.ddAction(isFinal));
 	}
 
 	void waitToStopTail() {
