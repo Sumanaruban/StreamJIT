@@ -63,6 +63,20 @@ public class AppInstanceManager {
 	private final SNExceptionProcessorImpl exP;
 	public final SNMessageVisitor mv;
 	boolean isRunning = false;
+
+	/**
+	 * TODO: An AppInstance can have three states about compilation:
+	 * <ol>
+	 * <li>Not compiled.
+	 * <li>Compilation failed due to compilation errors.
+	 * <li>Compilation successful.
+	 * </ol>
+	 * <p>
+	 * This boolean flag distinguishes the third, which is Compilation
+	 * successful, from the rest.
+	 */
+	boolean isCompiled = false;
+
 	GraphSchedule graphSchedule;
 
 	Map<Token, ConnectionInfo> conInfoMap;
@@ -116,9 +130,8 @@ public class AppInstanceManager {
 	 * 
 	 * @return <code>true</code> iff the compilation process is success.
 	 */
-	private boolean postCompilation() {
+	boolean postCompilation() {
 		sendDeadlockfreeBufSizes();
-		boolean isCompiled;
 		if (apStsPro.compilationError)
 			isCompiled = false;
 		else
