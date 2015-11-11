@@ -146,8 +146,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 				}
 
 				if (debugLevel > 0) {
-					System.err.println(Thread.currentThread().getName()
-							+ " - Exiting...");
+					System.err.println(name + " : Exiting...");
 					System.out.println("isFinal " + isFinal);
 					System.out.println("stopFlag " + stopFlag.get());
 				}
@@ -174,8 +173,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 	@Override
 	public final void stop(boolean isFinal) {
 		if (debugLevel > 0)
-			System.out.println(Thread.currentThread().getName()
-					+ " - stop request");
+			System.out.println(name + " : stop request");
 		if (!this.stopFlag.get()) {
 			this.isFinal = isFinal;
 			this.stopFlag.set(true);
@@ -216,8 +214,8 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 			reConnect();
 		}
 		if (debugLevel == 2 && count % 1000 == 0)
-			System.out.println(Thread.currentThread().getName() + " Send - "
-					+ count + " no of items have been sent");
+			System.out.println(name + " : " + count
+					+ " no of items have been sent");
 	}
 
 	private void debugMethod1(Object o) throws IOException {
@@ -225,8 +223,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 			count++;
 
 		if (debugLevel == 3) {
-			System.out.println(Thread.currentThread().getName() + " Send - "
-					+ o.toString());
+			System.out.println(name + " : Send : " + o.toString());
 		}
 
 		if (writer != null) {
