@@ -9,7 +9,7 @@ import edu.mit.streamjit.impl.blob.Buffer;
  * @author sumanan
  * @since 30 Oct, 2015
  */
-public class BufferCounter implements Buffer, Counter {
+public class BufferWriteCounter implements Buffer, Counter {
 
 	private final Buffer buffer;
 	private int count;
@@ -20,7 +20,7 @@ public class BufferCounter implements Buffer, Counter {
 	 */
 	private volatile boolean piggybackSync = true;
 
-	public BufferCounter(Buffer buffer) {
+	public BufferWriteCounter(Buffer buffer) {
 		this.buffer = buffer;
 	}
 

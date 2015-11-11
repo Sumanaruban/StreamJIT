@@ -43,7 +43,7 @@ import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.common.BufferCounter;
+import edu.mit.streamjit.impl.common.BufferWriteCounter;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.InputBufferFactory;
 import edu.mit.streamjit.impl.common.OutputBufferFactory;
@@ -309,7 +309,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		ThroughputPrinter tp;
 		Buffer b;
 		if (measureThroughput) {
-			BufferCounter bc = new BufferCounter(tailBuffer);
+			BufferWriteCounter bc = new BufferWriteCounter(tailBuffer);
 			tp = new ThroughputPrinter(bc, app.name, app.eLogger,
 					"DistributedStreamCompiler", "tailBuffer.txt");
 			b = bc;
