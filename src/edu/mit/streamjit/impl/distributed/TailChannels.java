@@ -108,6 +108,13 @@ public class TailChannels {
 
 		protected int count;
 
+		/**
+		 * {@link #releaseAndInitilize()} and {@link #reset()} methods set the
+		 * {@link #count} value to 0. This variable copies the {@link #count}'s
+		 * value just before resetting.
+		 */
+		protected int countAtReset = 0;
+
 		private final PerformanceLogger pLogger;
 
 		private final ThroughputPrinter throughputPrinter;
@@ -172,7 +179,7 @@ public class TailChannels {
 
 		@Override
 		public int count() {
-			return count;
+			return count + countAtReset;
 		}
 
 		protected long normalizedTime(int count, long time) {
@@ -313,6 +320,7 @@ public class TailChannels {
 		 * Releases all latches, and re-initializes the latches and counters.
 		 */
 		protected void releaseAndInitilize() {
+			countAtReset += count;
 			count = 0;
 			skipLatch.countDown();
 			skipLatch = new CountDownLatch(1);
@@ -325,6 +333,7 @@ public class TailChannels {
 		public void reset() {
 			steadyLatch.countDown();
 			skipLatch.countDown();
+			countAtReset += count;
 			count = 0;
 		}
 	}
@@ -432,6 +441,7 @@ public class TailChannels {
 		 * Releases all latches, and re-initializes the latches and counters.
 		 */
 		protected void releaseAndInitilize() {
+			countAtReset += count;
 			count = 0;
 			skipLatch.countDown();
 			skipLatch = new CountDownLatch(1);
@@ -442,6 +452,7 @@ public class TailChannels {
 		public void reset() {
 			stopWatch.reset();
 			skipLatch.countDown();
+			countAtReset += count;
 			count = 0;
 		}
 	}
@@ -523,11 +534,13 @@ public class TailChannels {
 		@Override
 		public void reset() {
 			stopWatch.reset();
+			countAtReset += count;
 			count = 0;
 		}
 
 		@Override
 		protected void releaseAndInitilize() {
+			countAtReset += count;
 			count = 0;
 			stopWatch.reset();
 		}
