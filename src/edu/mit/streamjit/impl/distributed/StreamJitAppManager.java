@@ -284,24 +284,6 @@ public class StreamJitAppManager {
 	}
 
 	/**
-	 * Performs the steps that need to be done after the blobs are created.
-	 * Specifically, sends deadlock free buffer sizes.
-	 * 
-	 * @return <code>true</code> iff the compilation process is success.
-	 */
-	private boolean postCompilation(AppInstanceManager appInstManager) {
-		appInstManager.sendDeadlockfreeBufSizes();
-		boolean isCompiled;
-		if (appInstManager.apStsPro.compilationError)
-			isCompiled = false;
-		else
-			isCompiled = appInstManager.apStsPro.waitForCompilation();
-		app.eLogger.eEvent("compilation");
-		logger.compilationFinished(isCompiled, "");
-		return isCompiled;
-	}
-
-	/**
 	 * {@link ErrorProcessor} at {@link Controller} side.
 	 * 
 	 * @author Sumanan sumanan@mit.edu
@@ -418,7 +400,7 @@ public class StreamJitAppManager {
 			preCompilation(aim);
 			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
 					multiplier, appinst);
-			boolean isCompiled = postCompilation(aim);
+			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
 				start(aim);
@@ -480,7 +462,7 @@ public class StreamJitAppManager {
 			preCompilation(aim);
 			aim.headTailHandler.setupHeadTail(aim.conInfoMap,
 					bufferMap(aim.appInstId()), multiplier, appinst);
-			boolean isCompiled = postCompilation(aim);
+			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
 				startInit(aim);
@@ -572,7 +554,7 @@ public class StreamJitAppManager {
 			preCompilation(aim, drainDataSize());
 			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
 					multiplier, appinst);
-			boolean isCompiled = postCompilation(aim);
+			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
 				if (prevAIM != null) {

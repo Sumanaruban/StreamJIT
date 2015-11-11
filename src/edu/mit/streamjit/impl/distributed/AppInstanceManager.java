@@ -56,12 +56,14 @@ public class AppInstanceManager {
 	final AppInstance appInst;
 	final AbstractDrainer drainer;
 	final StreamJitAppManager appManager;
+	final TimeLogger logger;
 	AppStatusProcessorImpl apStsPro;
 	SNDrainProcessorImpl dp;
 	CompilationInfoProcessorImpl ciP;
 	private final SNExceptionProcessorImpl exP;
 	public final SNMessageVisitor mv;
 	boolean isRunning = false;
+	GraphSchedule graphSchedule;
 
 	Map<Token, ConnectionInfo> conInfoMap;
 
@@ -71,6 +73,7 @@ public class AppInstanceManager {
 			StreamJitAppManager appManager) {
 		this.appInst = appInst;
 		this.appManager = appManager;
+		this.logger = logger;
 		// TODO:
 		// Read this. Don't let the "this" reference escape during construction
 		// http://www.ibm.com/developerworks/java/library/j-jtp0618/
@@ -107,6 +110,24 @@ public class AppInstanceManager {
 				time));
 	}
 
+	/**
+	 * Performs the steps that need to be done after the blobs are created.
+	 * Specifically, sends deadlock free buffer sizes.
+	 * 
+	 * @return <code>true</code> iff the compilation process is success.
+	 */
+	private boolean postCompilation() {
+		sendDeadlockfreeBufSizes();
+		boolean isCompiled;
+		if (apStsPro.compilationError)
+			isCompiled = false;
+		else
+			isCompiled = apStsPro.waitForCompilation();
+		appManager.app.eLogger.eEvent("compilation");
+		logger.compilationFinished(isCompiled, "");
+		return isCompiled;
+	}
+
 	void start() {
 		if (isRunning)
 			throw new IllegalStateException(String.format(
@@ -126,7 +147,6 @@ public class AppInstanceManager {
 		ciP.waitforInitSchedule();
 	}
 
-	GraphSchedule graphSchedule;
 	void sendDeadlockfreeBufSizes() {
 		ciP.waitforBufSizes();
 		if (!apStsPro.compilationError) {
