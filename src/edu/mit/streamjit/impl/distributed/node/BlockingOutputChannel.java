@@ -207,18 +207,8 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 			Object o = buffer.read();
 			connection.writeObject(o);
 
-			if (debugLevel == 2)
-				count++;
-
-			if (debugLevel == 3) {
-				System.out.println(Thread.currentThread().getName()
-						+ " Send - " + o.toString());
-			}
-
-			if (writer != null) {
-				writer.write(o.toString());
-				writer.write('\n');
-			}
+			if (debugLevel > 0)
+				debugMethod1(o);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -228,6 +218,21 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		if (debugLevel == 2 && count % 1000 == 0)
 			System.out.println(Thread.currentThread().getName() + " Send - "
 					+ count + " no of items have been sent");
+	}
+
+	private void debugMethod1(Object o) throws IOException {
+		if (debugLevel == 2)
+			count++;
+
+		if (debugLevel == 3) {
+			System.out.println(Thread.currentThread().getName() + " Send - "
+					+ o.toString());
+		}
+
+		if (writer != null) {
+			writer.write(o.toString());
+			writer.write('\n');
+		}
 	}
 
 	@Override
