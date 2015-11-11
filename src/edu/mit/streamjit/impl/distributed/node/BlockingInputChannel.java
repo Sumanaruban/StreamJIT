@@ -309,7 +309,9 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 
 	private void debugMethod1(final String methodName, Object obj)
 			throws IOException {
-		count++;
+		if (debugLevel == 2)
+			count++;
+
 		if (debugLevel == 3) {
 			System.out.println(name + " : " + methodName + " : "
 					+ obj.toString());
