@@ -120,13 +120,8 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		return new Runnable() {
 			@Override
 			public void run() {
-				if (connection == null || !connection.isStillConnected()) {
-					try {
-						connection = conProvider.getConnection(conInfo);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+				makeConnection();
+
 				while (!stopFlag.get())
 					sendData();
 
@@ -155,6 +150,16 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 	private void finalSend() {
 		while (this.buffer.size() > 0) {
 			send();
+		}
+	}
+
+	private void makeConnection() {
+		if (connection == null || !connection.isStillConnected()) {
+			try {
+				connection = conProvider.getConnection(conInfo);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
