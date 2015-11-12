@@ -125,6 +125,8 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 	}
 
 	private void waitForDuplication() {
+		if (latch == null)
+			return;
 		try {
 			latch.await();
 		} catch (InterruptedException e) {
