@@ -387,7 +387,6 @@ public class StreamJitAppManager {
 	private class PauseResumeReconfigurer implements Reconfigurer {
 
 		public int reconfigure(AppInstance appinst) {
-			int multiplier = appinst.multiplier;
 			System.out.println("PauseResumeReconfigurer...");
 			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining(curAIM);
@@ -398,8 +397,7 @@ public class StreamJitAppManager {
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim);
-			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
-					multiplier, appinst);
+			aim.headTailHandler.setupHeadTail(app.bufferMap, aim);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
@@ -455,13 +453,11 @@ public class StreamJitAppManager {
 		}
 
 		public int reconfigure(AppInstance appinst) {
-			int multiplier = appinst.multiplier;
 			System.out.println("SeamlessStatelessReconfigurer...");
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim);
-			aim.headTailHandler.setupHeadTail(aim.conInfoMap,
-					bufferMap(aim.appInstId()), multiplier, appinst);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
@@ -541,7 +537,6 @@ public class StreamJitAppManager {
 
 	private class SeamlessStatefulReconfigurer implements Reconfigurer {
 		public int reconfigure(AppInstance appinst) {
-			int multiplier = appinst.multiplier;
 			System.out.println("SeamlessStatefulReconfigurer...");
 			mLogger.bEvent("intermediateDraining");
 			boolean intermediateDraining = intermediateDraining(curAIM);
@@ -552,8 +547,7 @@ public class StreamJitAppManager {
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim, drainDataSize());
-			aim.headTailHandler.setupHeadTail(aim.conInfoMap, app.bufferMap,
-					multiplier, appinst);
+			aim.headTailHandler.setupHeadTail(app.bufferMap, aim);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {

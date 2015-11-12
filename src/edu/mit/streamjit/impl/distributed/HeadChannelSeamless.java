@@ -32,14 +32,16 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 
 	int count;
 
-	final GraphSchedule graphSchedule;
+	GraphSchedule graphSchedule;
 
 	final Counter tailCounter;
+
+	final AppInstanceManager aim;
 
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName, int debugLevel,
 			EventTimeLogger eLogger, boolean waitForDuplication,
-			GraphSchedule graphSchedule, Counter tailCounter) {
+			Counter tailCounter, AppInstanceManager aim) {
 		super(conProvider, conInfo, bufferTokenName, debugLevel);
 		readBuffer = buffer;
 		stopCalled = false;
@@ -47,8 +49,8 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 		count = 0;
 		canWrite = false;
 		latch = latch(waitForDuplication);
-		this.graphSchedule = graphSchedule;
 		this.tailCounter = tailCounter;
+		this.aim = aim;
 	}
 
 	@Override
@@ -62,9 +64,9 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 				writeBuffer = getBuffer();
 				canWrite = true;
 				waitForDuplication();
+				graphSchedule = aim.graphSchedule;
 				sendData();
 				sendRemining();
-			
 				stopSuper(isFinal);
 			}
 		};
