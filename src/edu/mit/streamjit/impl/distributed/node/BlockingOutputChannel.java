@@ -136,20 +136,8 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 				}
 
 				fillUnprocessedData();
-				if (writer != null) {
-					try {
-						writer.flush();
-						writer.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-
-				if (debugLevel > 0) {
-					System.err.println(name + " : Exiting...");
-					System.out.println("isFinal " + isFinal);
-					System.out.println("stopFlag " + stopFlag.get());
-				}
+				if (debugLevel > 0)
+					debugMethod2();
 			}
 		};
 	}
@@ -229,6 +217,23 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		if (writer != null) {
 			writer.write(o.toString());
 			writer.write('\n');
+		}
+	}
+
+	private void debugMethod2() {
+		if (writer != null) {
+			try {
+				writer.flush();
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if (debugLevel > 0) {
+			System.err.println(name + " : Exiting...");
+			System.out.println("isFinal " + isFinal);
+			System.out.println("stopFlag " + stopFlag.get());
 		}
 	}
 
