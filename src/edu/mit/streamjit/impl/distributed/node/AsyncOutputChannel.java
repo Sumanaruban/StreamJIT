@@ -47,14 +47,7 @@ public class AsyncOutputChannel implements BoundaryOutputChannel {
 		return new Runnable() {
 			@Override
 			public void run() {
-				if (con == null || !con.isStillConnected()) {
-					try {
-						con = conProvider.getConnection(conInfo);
-						buffer = new AsyncTCPBuffer((AsyncTCPConnection) con);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+				makeConnection();
 			}
 		};
 	}
@@ -96,5 +89,16 @@ public class AsyncOutputChannel implements BoundaryOutputChannel {
 	@Override
 	public Buffer getBuffer() {
 		return buffer;
+	}
+
+	private void makeConnection() {
+		if (con == null || !con.isStillConnected()) {
+			try {
+				con = conProvider.getConnection(conInfo);
+				buffer = new AsyncTCPBuffer((AsyncTCPConnection) con);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
