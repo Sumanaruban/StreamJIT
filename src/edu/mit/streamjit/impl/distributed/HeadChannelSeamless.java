@@ -38,6 +38,8 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 
 	final AppInstanceManager aim;
 
+	private final int debugLevel = 0;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName, int debugLevel,
 			EventTimeLogger eLogger, boolean waitForDuplication,
@@ -89,12 +91,28 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 
 	private void flowControl() {
 		int expectedFiring = expectedFiring();
-		while ((expectedFiring - currentFiring() > 100) && !stopCalled) {
+		int currentFiring = 0;
+		while ((expectedFiring - (currentFiring = currentFiring()) > 1000)
+				&& !stopCalled) {
 			try {
-				Thread.sleep(100);
+				// TODO: Need to tune this sleep time.
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+
+			if (debugLevel > 0)
+				System.out
+						.println(String
+								.format("flowControl : expectedFiring - %d, currentFiring = %d",
+										expectedFiring, currentFiring));
+		}
+
+		if (debugLevel > 0) {
+			System.out.println(String.format(
+					"flowControl : expectedFiring - %d, currentFiring = %d",
+					expectedFiring, currentFiring));
+			System.out.println("flowControl Over................");
 		}
 	}
 
