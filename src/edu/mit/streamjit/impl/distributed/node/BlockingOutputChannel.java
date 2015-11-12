@@ -106,9 +106,13 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		return w;
 	}
 
-	private void closeConnection() throws IOException {
-		// tcpConnection.closeConnection();
-		connection.softClose();
+	private void closeConnection() {
+		try {
+			// tcpConnection.closeConnection();
+			connection.softClose();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -129,11 +133,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 				if (isFinal)
 					finalSend();
 
-				try {
-					closeConnection();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				closeConnection();
 
 				fillUnprocessedData();
 				if (debugLevel > 0)
