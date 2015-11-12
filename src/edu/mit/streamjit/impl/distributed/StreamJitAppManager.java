@@ -354,11 +354,11 @@ public class StreamJitAppManager {
 			this.finalLatch.countDown();
 		}
 
-		public boolean drainFinal(Boolean isSemeFinal) {
+		public boolean drainFinal(Boolean isFinal) {
 			// TODO: seamless
 			// Need to drain newAIM also. drainer.drainFinal() method is
 			// blocking. Need to to make this unblocking.
-			return curAIM.drainer.drainFinal(isSemeFinal);
+			return curAIM.drainer.drainFinal(isFinal);
 		}
 	}
 

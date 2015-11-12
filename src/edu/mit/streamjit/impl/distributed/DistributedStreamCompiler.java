@@ -279,7 +279,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 								@Override
 								public void drain() {
 									// drainer.startDraining(2);
-									drainer.drainFinal(false);
+									drainer.drainFinal(true);
 								}
 							});
 		} else {

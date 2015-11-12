@@ -195,7 +195,7 @@ public class HeadChannel {
 			public void run() {
 				System.out.println("Input data finished");
 				// drainer.startDraining(2);
-				drainer.drainFinal(false);
+				drainer.drainFinal(true);
 			}
 		}
 	}

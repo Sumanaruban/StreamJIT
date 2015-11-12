@@ -112,7 +112,7 @@ public class Reconfigurer {
 	public void terminate() {
 		if (manager.isRunning()) {
 			// drainer.startDraining(1);
-			manager.appDrainer.drainFinal(true);
+			manager.appDrainer.drainFinal(false);
 		} else {
 			manager.stop();
 		}

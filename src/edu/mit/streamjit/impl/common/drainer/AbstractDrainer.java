@@ -236,10 +236,10 @@ public abstract class AbstractDrainer {
 		return true;
 	}
 
-	public boolean drainFinal(Boolean isSemeFinal) {
-		int drainType = 2;
-		if (isSemeFinal)
-			drainType = 1;
+	public boolean drainFinal(Boolean isFinal) {
+		int drainType = 1;
+		if (isFinal)
+			drainType = 2;
 		logger.drainingStarted();
 		boolean state = startDraining(drainType);
 		if (!state) {
