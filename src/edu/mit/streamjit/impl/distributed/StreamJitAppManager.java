@@ -537,16 +537,9 @@ public class StreamJitAppManager {
 
 	private class SeamlessStatefulReconfigurer implements Reconfigurer {
 		public int reconfigure(AppInstance appinst) {
-			System.out.println("SeamlessStatefulReconfigurer...");
-			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = intermediateDraining(curAIM);
-			mLogger.eEvent("intermediateDraining");
-			if (!intermediateDraining)
-				return 1;
-
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
-			preCompilation(aim, drainDataSize());
+			preCompilation(aim, drainDataSize1());
 			aim.headTailHandler.setupHeadTail(app.bufferMap, aim);
 			boolean isCompiled = aim.postCompilation();
 
@@ -564,6 +557,13 @@ public class StreamJitAppManager {
 				aim.drainingFinished(false);
 			}
 
+			System.out.println("SeamlessStatefulReconfigurer...");
+			mLogger.bEvent("intermediateDraining");
+			boolean intermediateDraining = intermediateDraining(curAIM);
+			mLogger.eEvent("intermediateDraining");
+			if (!intermediateDraining)
+				return 1;
+
 			if (profiler != null) {
 				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
 						.getConfiguration());
@@ -576,7 +576,6 @@ public class StreamJitAppManager {
 			} else
 				return 2;
 		}
-
 		/**
 		 * Start the execution of the StreamJit application.
 		 */
@@ -597,6 +596,12 @@ public class StreamJitAppManager {
 
 		@Override
 		public void stop() {
+		}
+
+		ImmutableMap<Token, Integer> drainDataSize1() {
+			if (prevAIM == null)
+				return null;
+			return prevAIM.getDDsizes();
 		}
 
 		ImmutableMap<Token, Integer> drainDataSize() {
