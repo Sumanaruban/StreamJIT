@@ -33,16 +33,18 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import edu.mit.streamjit.api.StatefulFilter;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
-import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Blob.ExecutionStatistics.ExecutionStatisticsBuilder;
 import edu.mit.streamjit.impl.common.Configuration;
+import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.compiler2.Compiler2.InitDataReadInstruction;
 import edu.mit.streamjit.impl.compiler2.Compiler2.SplitJoinRemovalReplayer;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.node.BlobsManagerImpl.StateCallback;
 import edu.mit.streamjit.impl.interp.Interpreter;
 import edu.mit.streamjit.util.CollectionUtils;
 import edu.mit.streamjit.util.Pair;
@@ -58,6 +60,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.SwitchPoint;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -358,10 +362,24 @@ public class Compiler2BlobHost implements Blob {
 		for (MethodHandle h : storageAdjusts)
 			h.invokeExact();
 
+		if(requireState)
+			stateSend();
+
 		readOrDrain();
 
 		if (logTimings)
 			adjustTime.stop();
+	}
+
+	private void stateSend() {
+		if (stateAdjustCount == adjustCount)
+			sendState(getState(drainInstructions));
+		else if (stateAdjustCount < adjustCount) {
+			throw new IllegalStateException(
+					String.format(
+							"adjustCount(=%d) has already passed the stateAdjustCount(=%d).",
+							adjustCount, stateAdjustCount));
+		}
 	}
 
 	/**
@@ -596,5 +614,71 @@ public class Compiler2BlobHost implements Blob {
 
 	void setDDSizes(ImmutableMap<Token, Integer> ddSizes) {
 		this.ddSizes = ddSizes;
+	}
+
+	int stateAdjustCount;
+	StateCallback stateCallback;
+	volatile boolean requireState = false;
+
+	public void requestState(int adjustCount, StateCallback callback) {
+		stateAdjustCount = adjustCount;
+		stateCallback = callback;
+		requireState = true;
+	}
+
+	private void sendState(DrainData state) {
+		stateCallback.sendState(state);
+		requireState = false;
+		stateCallback = null;
+		stateAdjustCount = 0;
+	}
+
+	private DrainData getState(List<DrainInstruction> drains) {
+		List<Map<Token, Object[]>> data = new ArrayList<>(drains.size());
+		for (DrainInstruction i : drains)
+			if (!(i instanceof StateHolder))
+				data.add(i.call());
+
+		ImmutableMap<Token, List<Object>> mergedData = CollectionUtils.union((
+				key, value) -> {
+			int size = 0;
+			for (Object[] v : value)
+				size += v.length;
+			List<Object> data1 = new ArrayList<>(size);
+			for (Object[] v : value)
+				data1.addAll(Arrays.asList(v));
+			return data1;
+		}, data);
+		return new DrainData(mergedData, state());
+	}
+
+	/**
+	 * Copied form {@link Interpreter#getDrainData}
+	 * 
+	 * @return
+	 */
+	private ImmutableTable<Integer, String, Object> state() {
+		ImmutableTable.Builder<Integer, String, Object> stateBuilder = ImmutableTable
+				.builder();
+		for (Worker<?, ?> worker : workers) {
+			if (!(worker instanceof StatefulFilter))
+				continue;
+			int id = Workers.getIdentifier(worker);
+			for (Class<?> klass = worker.getClass(); !klass
+					.equals(StatefulFilter.class); klass = klass
+					.getSuperclass()) {
+				for (Field f : klass.getDeclaredFields()) {
+					if ((f.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0)
+						continue;
+					f.setAccessible(true);
+					try {
+						stateBuilder.put(id, f.getName(), f.get(worker));
+					} catch (IllegalArgumentException | IllegalAccessException ex) {
+						throw new AssertionError(ex);
+					}
+				}
+			}
+		}
+		return stateBuilder.build();
 	}
 }

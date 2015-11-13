@@ -443,4 +443,10 @@ public class BlobsManagerImpl implements BlobsManager {
 		for (BlobExecuter be : blobExecuters.values())
 			be.blob.insertDrainData(initialState);
 	}
+
+	public class StateCallback {
+		public void sendState(DrainData state) {
+
+		}
+	}
 }
