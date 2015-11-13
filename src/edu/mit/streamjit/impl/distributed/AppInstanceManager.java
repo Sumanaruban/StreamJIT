@@ -300,19 +300,19 @@ public class AppInstanceManager {
 	 */
 	class CompilationInfoProcessorImpl implements CompilationInfoProcessor {
 
-		private Map<Integer, BufferSizes> bufSizes;
+		private CompilationInfoProcessorImpl(int noOfnodes) {
+			bufSizes = new ConcurrentHashMap<>();
+			bufSizeLatch = new CountDownLatch(noOfnodes);
+		}
 
+		// BufferSizes related variables and methods.
+		private Map<Integer, BufferSizes> bufSizes;
 		private CountDownLatch bufSizeLatch;
 
 		@Override
 		public void process(BufferSizes bufferSizes) {
 			bufSizes.put(bufferSizes.machineID, bufferSizes);
 			bufSizeLatch.countDown();
-		}
-
-		private CompilationInfoProcessorImpl(int noOfnodes) {
-			bufSizes = new ConcurrentHashMap<>();
-			bufSizeLatch = new CountDownLatch(noOfnodes);
 		}
 
 		private void waitforBufSizes() {
@@ -330,7 +330,9 @@ public class AppInstanceManager {
 			}
 		}
 
+		// InitScheduleCompleted related variables and methods.
 		private volatile CountDownLatch initScheduleLatch;
+
 		@Override
 		public void process(InitScheduleCompleted initScheduleCompleted) {
 			appInst.app.eLogger.logEvent(String.format("InitSchedule-%s",
