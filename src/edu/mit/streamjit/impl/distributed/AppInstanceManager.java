@@ -303,6 +303,8 @@ public class AppInstanceManager {
 		private CompilationInfoProcessorImpl(int noOfnodes) {
 			bufSizes = new ConcurrentHashMap<>();
 			bufSizeLatch = new CountDownLatch(noOfnodes);
+			ddSizes = new ConcurrentHashMap<>();
+			bufSizeLatch = new CountDownLatch(noOfnodes);
 		}
 
 		// BufferSizes related variables and methods.
@@ -349,9 +351,29 @@ public class AppInstanceManager {
 			}
 		}
 
+		// DrainDataSizes related variables and methods.
+		private Map<Integer, DrainDataSizes> ddSizes;
+		private CountDownLatch ddSizesLatch;
+
 		@Override
 		public void process(DrainDataSizes ddSizes) {
-			// TODO Auto-generated method stub
+			this.ddSizes.put(ddSizes.machineID, ddSizes);
+			ddSizesLatch.countDown();
+		}
+
+		private void waitforDDSizes() {
+			try {
+				ddSizesLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			for (Integer nodeID : appManager.controller.getAllNodeIDs()) {
+				if (!ddSizes.containsKey(nodeID)) {
+					throw new AssertionError(
+							"Not all Stream nodes have sent the buffer size info");
+				}
+			}
 		}
 	}
 
