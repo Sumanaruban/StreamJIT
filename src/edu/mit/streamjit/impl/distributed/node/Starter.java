@@ -5,7 +5,6 @@ import java.util.concurrent.CountDownLatch;
 
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
-import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.node.BlobExecuter.BlobThread2;
 
 /**
@@ -91,9 +90,7 @@ final class Starter2 implements Starter {
 		if (bt.logTime) {
 			long time = be.eEvent("initScheduleRun");
 			SNMessageElement me = new InitScheduleCompleted(be.blobID, time);
-			be.blobsManagerImpl.streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(me,
-							be.blobsManagerImpl.appInstId));
+			be.blobsManagerImpl.sendToController(me);
 		}
 		latch.await();
 	}

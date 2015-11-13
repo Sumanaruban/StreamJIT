@@ -1,6 +1,5 @@
 package edu.mit.streamjit.impl.distributed.node;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +24,6 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.Boundary
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.Connection;
-import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.affinity.Affinity;
@@ -279,14 +277,7 @@ class BlobExecuter {
 					if (drainer.drainState == 1 || drainer.drainState == 2)
 						drainer.drained();
 					else if (drainer.drainState == 0) {
-						try {
-							blobsManagerImpl.streamNode.controllerConnection
-									.writeObject(new SNMessageElementHolder(
-											AppStatus.ERROR,
-											be.blobsManagerImpl.appInstId));
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
+						blobsManagerImpl.sendToController(AppStatus.ERROR);
 					}
 				}
 			}

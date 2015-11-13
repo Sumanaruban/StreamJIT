@@ -1,6 +1,5 @@
 package edu.mit.streamjit.impl.distributed.node;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +22,6 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputCha
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement;
 import edu.mit.streamjit.impl.distributed.common.SNDrainElement.SNDrainedData;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
-import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.node.BlobExecuter.BlobThread2;
 
@@ -140,13 +138,7 @@ class BlobDrainer {
 
 		drainState = 4;
 		SNMessageElement drained = new SNDrainElement.Drained(be.blobID);
-		try {
-			blobsManagerImpl.streamNode.controllerConnection
-					.writeObject(new SNMessageElementHolder(drained,
-							blobsManagerImpl.appInstId));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		blobsManagerImpl.sendToController(drained);
 		// System.out.println("Blob " + blobID + "is drained at mid");
 
 		if (drainDataAction != DrainDataAction.DISCARD) {
@@ -156,16 +148,9 @@ class BlobDrainer {
 			else
 				me = getSNDrainData();
 
-			try {
-				blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(me,
-								blobsManagerImpl.appInstId));
-				// System.out.println(blobID + " DrainData has been sent");
-				drainState = 6;
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			blobsManagerImpl.sendToController(me);
+			// System.out.println(blobID + " DrainData has been sent");
+			drainState = 6;
 			// System.out.println("**********************************");
 		}
 
@@ -314,14 +299,8 @@ class BlobDrainer {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
 			be.logEvent("-draining", time);
-			try {
-				blobsManagerImpl.streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(
-								new SNTimeInfo.DrainingTime(be.blobID, time),
-								blobsManagerImpl.appInstId));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			blobsManagerImpl.sendToController(new SNTimeInfo.DrainingTime(
+					be.blobID, time));
 		}
 
 		private void logBlobExecutionStatistics() {

@@ -55,6 +55,7 @@ import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.common.SNMessageElement;
 import edu.mit.streamjit.impl.distributed.common.SNMessageElement.SNMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.node.BufferManagementUtils.BlobsBufferStatus;
@@ -347,6 +348,15 @@ public class BlobsManagerImpl implements BlobsManager {
 		return outputChannelMap.build();
 	}
 
+	void sendToController(SNMessageElement me) {
+		try {
+			streamNode.controllerConnection
+					.writeObject(new SNMessageElementHolder(me, appInstId));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * {@link CommandProcessor} at {@link StreamNode} side.
 	 * 
@@ -366,13 +376,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		public void processSTOP() {
 			stop();
 			System.out.println("StraemJit app stopped...");
-			try {
-				streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(
-								AppStatus.STOPPED, appInstId));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			sendToController(AppStatus.STOPPED);
 		}
 	}
 
@@ -413,14 +417,7 @@ public class BlobsManagerImpl implements BlobsManager {
 			bufferManager.initialise2(finalBufferSizes.minInputBufCapacity);
 			assert bufferManager.isbufferSizesReady() == true : "bufferSizes are not ready";
 			createBEs(blobSet);
-
-			try {
-				streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(
-								AppStatus.COMPILED, appInstId));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			sendToController(AppStatus.COMPILED);
 		}
 
 		@Override
@@ -448,14 +445,7 @@ public class BlobsManagerImpl implements BlobsManager {
 				return size;
 			}, sizeList);
 
-			try {
-				streamNode.controllerConnection
-						.writeObject(new SNMessageElementHolder(
-								new DrainDataSizes(streamNode.getNodeID(),
-										sizeMap), appInstId));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			sendToController(new DrainDataSizes(streamNode.getNodeID(), sizeMap));
 		}
 	}
 
