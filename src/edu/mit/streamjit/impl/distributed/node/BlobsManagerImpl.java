@@ -22,7 +22,9 @@
 package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -36,17 +38,20 @@ import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
+import edu.mit.streamjit.impl.compiler2.Compiler2BlobHost;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.CTRLCompilationInfoProcessor;
-import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitialState;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.DDSizes;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.FinalBufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitialState;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -58,6 +63,7 @@ import edu.mit.streamjit.impl.distributed.node.BufferManagementUtils.MonitorBuff
 import edu.mit.streamjit.impl.distributed.node.BufferManager.GlobalBufferManager;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.profiler.StreamNodeProfiler;
+import edu.mit.streamjit.util.CollectionUtils;
 
 /**
  * {@link BlobsManagerImpl} responsible to run all {@link Blob}s those are
@@ -425,6 +431,31 @@ public class BlobsManagerImpl implements BlobsManager {
 		@Override
 		public void process(InitialState initialState) {
 			insertDrainData(initialState.drainData);
+		}
+
+		@Override
+		public void process(DDSizes ddSizes) {
+			List<ImmutableMap<Token, Integer>> sizeList = new ArrayList<>();
+			for (BlobExecuter be : blobExecuters.values()) {
+				sizeList.add(((Compiler2BlobHost) be.blob).getDDSizes());
+			}
+
+			ImmutableMap<Token, Integer> sizeMap = CollectionUtils.union((key,
+					value) -> {
+				int size = 0;
+				for (Integer i : value)
+					size += i;
+				return size;
+			}, sizeList);
+
+			try {
+				streamNode.controllerConnection
+						.writeObject(new SNMessageElementHolder(
+								new DrainDataSizes(streamNode.getNodeID(),
+										sizeMap), appInstId));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

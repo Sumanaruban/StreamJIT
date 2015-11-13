@@ -49,10 +49,21 @@ public abstract class CTRLCompilationInfo implements CTRLRMessageElement {
 		}
 	}
 
+	public static final class DDSizes extends CTRLCompilationInfo {
+
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public void process(CTRLCompilationInfoProcessor cip) {
+			cip.process(this);
+		}
+	}
+
 	public interface CTRLCompilationInfoProcessor {
 		public void process(FinalBufferSizes finalBufferSizes);
 		public void process(InitSchedule InitSchedule);
 		public void process(InitialState cfgDD);
+		public void process(DDSizes ddSizes);
 	}
 
 	/**
@@ -61,9 +72,7 @@ public abstract class CTRLCompilationInfo implements CTRLRMessageElement {
 	 * @author sumanan
 	 * @since 27 Aug, 2015
 	 */
-	public static final class InitialState
-			extends
-				CTRLCompilationInfo {
+	public static final class InitialState extends CTRLCompilationInfo {
 		private static final long serialVersionUID = 1L;
 		public final DrainData drainData;
 
