@@ -1,7 +1,9 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +46,7 @@ import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.common.SystemInfo;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.util.CollectionUtils;
 
 /**
  * This class is responsible to manage an {@link AppInstance} including
@@ -64,6 +67,8 @@ public class AppInstanceManager {
 	private final SNExceptionProcessorImpl exP;
 	public final SNMessageVisitor mv;
 	boolean isRunning = false;
+
+	private ImmutableMap<Token, Integer> drainDataSizes = null;
 
 	/**
 	 * TODO: An AppInstance can have three states about compilation:
@@ -200,6 +205,30 @@ public class AppInstanceManager {
 		builder.putExtraData(GlobalConstants.CONINFOMAP, conInfoMap);
 	}
 
+	void requestDDsizes() {
+		CTRLRMessageElement me = new CTRLCompilationInfo.DDSizes();
+		appManager.controller.sendToAll(new CTRLRMessageElementHolder(me,
+				appInstId()));
+	}
+
+	ImmutableMap<Token, Integer> getDDsizes() {
+		if (drainDataSizes == null) {
+			ciP.waitforDDSizes();
+
+			List<ImmutableMap<Token, Integer>> sizeList = new ArrayList<>();
+			for (DrainDataSizes dds : ciP.ddSizes.values()) {
+				sizeList.add(dds.ddSizes);
+			}
+
+			drainDataSizes = CollectionUtils.union((key, value) -> {
+				int size = 0;
+				for (Integer i : value)
+					size += i;
+				return size;
+			}, sizeList);
+		}
+		return drainDataSizes;
+	}
 	/**
 	 * {@link AppStatusProcessor} at {@link Controller} side.
 	 * 

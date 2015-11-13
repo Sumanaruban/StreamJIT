@@ -570,9 +570,10 @@ public class StreamJitAppManager {
 				profiler.logger().newConfiguration(cfgPrefix);
 			}
 			Utils.printMemoryStatus();
-			if (aim.isRunning)
+			if (aim.isRunning) {
+				aim.requestDDsizes();
 				return 0;
-			else
+			} else
 				return 2;
 		}
 
