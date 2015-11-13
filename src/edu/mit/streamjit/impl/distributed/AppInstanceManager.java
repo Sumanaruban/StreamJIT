@@ -24,6 +24,7 @@ import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Error;
@@ -344,6 +345,11 @@ public class AppInstanceManager {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public void process(DrainDataSizes ddSizes) {
+			// TODO Auto-generated method stub
 		}
 	}
 
