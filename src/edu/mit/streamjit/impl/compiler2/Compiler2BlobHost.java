@@ -347,13 +347,12 @@ public class Compiler2BlobHost implements Blob {
 	}
 
 	private final Stopwatch adjustTime = Stopwatch.createUnstarted();
-	private int adjustCount;
+	private int adjustCount = 0;
 	private void doAdjust() throws Throwable {
-		if (logTimings) {
+		if (logTimings)
 			adjustTime.start();
-			++adjustCount;
-		}
 
+		++adjustCount;
 		doWrites(writeInstructions);
 
 		for (MethodHandle h : storageAdjusts)
