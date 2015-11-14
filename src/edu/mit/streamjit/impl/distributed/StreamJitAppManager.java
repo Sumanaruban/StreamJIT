@@ -249,9 +249,9 @@ public class StreamJitAppManager {
 	 * 
 	 * @param appinst
 	 */
-	private void preCompilation(AppInstanceManager aim) {
-		String jsonStirng = aim.dynamicCfg(connectionsInUse());
-		ImmutableMap<Integer, DrainData> drainDataMap = aim.appInst
+	private void preCompilation(AppInstanceManager currentAim) {
+		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
+		ImmutableMap<Integer, DrainData> drainDataMap = currentAim.appInst
 				.getDrainData();
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
@@ -259,20 +259,20 @@ public class StreamJitAppManager {
 			ConfigurationString json = new ConfigurationString1(jsonStirng,
 					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
 			controller.send(nodeID, new CTRLRMessageElementHolder(json,
-					aim.appInst.id));
+					currentAim.appInst.id));
 		}
 	}
 
-	private void preCompilation(AppInstanceManager aim,
+	private void preCompilation(AppInstanceManager currentAim,
 			ImmutableMap<Token, Integer> drainDataSize) {
-		String jsonStirng = aim.dynamicCfg(connectionsInUse());
+		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString.ConfigurationString2(
 					jsonStirng, ConfigType.DYNAMIC, drainDataSize);
 			controller.send(nodeID, new CTRLRMessageElementHolder(json,
-					aim.appInst.id));
+					currentAim.appInst.id));
 		}
 	}
 
