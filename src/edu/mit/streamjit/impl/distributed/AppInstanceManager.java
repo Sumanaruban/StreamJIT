@@ -333,7 +333,7 @@ public class AppInstanceManager {
 			bufSizes = new ConcurrentHashMap<>();
 			bufSizeLatch = new CountDownLatch(noOfnodes);
 			ddSizes = new ConcurrentHashMap<>();
-			bufSizeLatch = new CountDownLatch(noOfnodes);
+			ddSizesLatch = new CountDownLatch(noOfnodes);
 		}
 
 		// BufferSizes related variables and methods.
