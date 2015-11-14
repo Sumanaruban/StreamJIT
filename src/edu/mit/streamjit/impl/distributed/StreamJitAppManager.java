@@ -249,10 +249,15 @@ public class StreamJitAppManager {
 	 * 
 	 * @param appinst
 	 */
-	private void preCompilation(AppInstanceManager currentAim) {
+	private void preCompilation(AppInstanceManager currentAim,
+			AppInstanceManager previousAim) {
 		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
-		ImmutableMap<Integer, DrainData> drainDataMap = currentAim.appInst
-				.getDrainData();
+		ImmutableMap<Integer, DrainData> drainDataMap;
+		if (previousAim == null)
+			drainDataMap = ImmutableMap.of();
+		else
+			drainDataMap = previousAim.appInst.getDrainData();
+		System.out.println("drainDataMap.size() = " + drainDataMap.size());
 		logger.compilationStarted();
 		app.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
@@ -396,7 +401,7 @@ public class StreamJitAppManager {
 
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
-			preCompilation(aim);
+			preCompilation(aim, prevAIM);
 			aim.headTailHandler.setupHeadTail(app.bufferMap, aim);
 			boolean isCompiled = aim.postCompilation();
 
@@ -456,7 +461,7 @@ public class StreamJitAppManager {
 			System.out.println("SeamlessStatelessReconfigurer...");
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
-			preCompilation(aim);
+			preCompilation(aim, prevAIM);
 			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim);
 			boolean isCompiled = aim.postCompilation();
 
