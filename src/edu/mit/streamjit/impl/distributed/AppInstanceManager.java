@@ -221,6 +221,8 @@ public class AppInstanceManager {
 			}
 
 			drainDataSizes = CollectionUtils.union((key, value) -> {
+				if (key.equals(appInst.app.tailToken))
+					return 0;
 				int size = 0;
 				for (Integer i : value)
 					size += i;
