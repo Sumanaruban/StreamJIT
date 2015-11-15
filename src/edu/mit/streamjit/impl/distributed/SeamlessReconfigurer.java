@@ -14,9 +14,9 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
-public abstract class SeamlessReconfigurer {
+public abstract class SeamlessReconfigurer implements Reconfigurer {
 
-	static class SeamlessStatefulReconfigurer implements Reconfigurer {
+	static class SeamlessStatefulReconfigurer extends SeamlessReconfigurer {
 
 		private final StreamJitAppManager appManager;
 
@@ -115,7 +115,7 @@ public abstract class SeamlessReconfigurer {
 		}
 	}
 
-	static class SeamlessStatelessReconfigurer implements Reconfigurer {
+	static class SeamlessStatelessReconfigurer extends SeamlessReconfigurer {
 
 		/**
 		 * 
