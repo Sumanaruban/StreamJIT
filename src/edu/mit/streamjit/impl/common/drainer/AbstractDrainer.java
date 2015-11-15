@@ -435,21 +435,9 @@ public abstract class AbstractDrainer {
 					drainData = drainData.merge(node.snDrainData.drainData);
 			}
 
-			ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
-					.builder();
-			for (Token t : Sets.union(boundaryInputData.keySet(),
-					boundaryOutputData.keySet())) {
-				ImmutableList<Object> in = boundaryInputData.get(t) != null
-						? boundaryInputData.get(t) : ImmutableList.of();
-				ImmutableList<Object> out = boundaryOutputData.get(t) != null
-						? boundaryOutputData.get(t) : ImmutableList.of();
-				dataBuilder.put(t,
-						ImmutableList.builder().addAll(in).addAll(out).build());
-			}
-
-			ImmutableTable<Integer, String, Object> state = ImmutableTable.of();
-			DrainData draindata1 = new DrainData(dataBuilder.build(), state);
-			drainData = drainData.merge(draindata1);
+			DrainData boundaryData = boundaryData(boundaryInputData,
+					boundaryOutputData);
+			drainData = drainData.merge(boundaryData);
 			updateDrainDataStatistics(drainData);
 			// TODO: Remove this file writing once everything is stable.
 			DrainDataUtils.printDrainDataStats(drainData, app.name,
@@ -499,6 +487,26 @@ public abstract class AbstractDrainer {
 			}
 			writer.flush();
 			writer.close();
+		}
+
+		private DrainData boundaryData(
+				Map<Token, ImmutableList<Object>> boundaryInputData,
+				Map<Token, ImmutableList<Object>> boundaryOutputData) {
+			ImmutableMap.Builder<Token, ImmutableList<Object>> dataBuilder = ImmutableMap
+					.builder();
+			for (Token t : Sets.union(boundaryInputData.keySet(),
+					boundaryOutputData.keySet())) {
+				ImmutableList<Object> in = boundaryInputData.get(t) != null
+						? boundaryInputData.get(t) : ImmutableList.of();
+				ImmutableList<Object> out = boundaryOutputData.get(t) != null
+						? boundaryOutputData.get(t) : ImmutableList.of();
+				dataBuilder.put(t,
+						ImmutableList.builder().addAll(in).addAll(out).build());
+			}
+
+			DrainData draindata1 = new DrainData(dataBuilder.build(),
+					ImmutableTable.of());
+			return draindata1;
 		}
 
 		/**
