@@ -74,7 +74,7 @@ public class StreamJitAppManager {
 
 	private final SNTimeInfoProcessor timeInfoProcessor;
 
-	private final MasterProfiler profiler;
+	final MasterProfiler profiler;
 
 	public final AppDrainer appDrainer;
 
@@ -82,8 +82,8 @@ public class StreamJitAppManager {
 
 	private final TimeLogger logger;
 
-	private volatile AppInstanceManager prevAIM = null;
-	private volatile AppInstanceManager curAIM = null;
+	volatile AppInstanceManager prevAIM = null;
+	volatile AppInstanceManager curAIM = null;
 
 	final int noOfnodes;
 
@@ -132,7 +132,7 @@ public class StreamJitAppManager {
 			else
 				return new SeamlessStatelessReconfigurer(tailBuffer);
 		}
-		return new PauseResumeReconfigurer();
+		return new PauseResumeReconfigurer(this);
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {
@@ -157,7 +157,7 @@ public class StreamJitAppManager {
 		return curAIM.isRunning;
 	}
 
-	private AppInstanceManager createNewAIM(AppInstance appinst) {
+	AppInstanceManager createNewAIM(AppInstance appinst) {
 		if (prevAIM != null && prevAIM.isRunning)
 			throw new IllegalStateException(
 					"Couldn't create a new AIM as already two AppInstances are running. Drain the current AppInstance first.");
@@ -222,7 +222,7 @@ public class StreamJitAppManager {
 			stop();
 	}
 
-	private void reset() {
+	void reset() {
 		// 2015-10-26.
 		// As exP is moved to AppInstManager, we don't need to reset it.
 		// exP.exConInfos = new HashSet<>();
@@ -249,7 +249,7 @@ public class StreamJitAppManager {
 	 * 
 	 * @param appinst
 	 */
-	private void preCompilation(AppInstanceManager currentAim,
+	void preCompilation(AppInstanceManager currentAim,
 			AppInstanceManager previousAim) {
 		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
 		ImmutableMap<Integer, DrainData> drainDataMap;
@@ -387,63 +387,6 @@ public class StreamJitAppManager {
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim);
 
 		public void stop();
-	}
-
-	private class PauseResumeReconfigurer implements Reconfigurer {
-
-		public int reconfigure(AppInstance appinst) {
-			System.out.println("PauseResumeReconfigurer...");
-			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = intermediateDraining(curAIM);
-			mLogger.eEvent("intermediateDraining");
-			if (!intermediateDraining)
-				return 1;
-
-			AppInstanceManager aim = createNewAIM(appinst);
-			reset();
-			preCompilation(aim, prevAIM);
-			aim.headTailHandler.setupHeadTail(app.bufferMap, aim);
-			boolean isCompiled = aim.postCompilation();
-
-			if (isCompiled) {
-				start(aim);
-			} else {
-				aim.drainingFinished(false);
-			}
-
-			if (profiler != null) {
-				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-						.getConfiguration());
-				profiler.logger().newConfiguration(cfgPrefix);
-			}
-			Utils.printMemoryStatus();
-			if (aim.isRunning)
-				return 0;
-			else
-				return 2;
-		}
-
-		/**
-		 * Start the execution of the StreamJit application.
-		 */
-		private void start(AppInstanceManager aim) {
-			aim.headTailHandler.startHead();
-			aim.headTailHandler.startTail();
-			aim.start();
-		}
-
-		@Override
-		public int starterType() {
-			return 1;
-		}
-
-		@Override
-		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
-		}
-
-		@Override
-		public void stop() {
-		}
 	}
 
 	private class SeamlessStatelessReconfigurer implements Reconfigurer {
