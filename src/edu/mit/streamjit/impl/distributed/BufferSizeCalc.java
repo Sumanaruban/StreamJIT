@@ -46,7 +46,7 @@ public class BufferSizeCalc {
 	public static GraphSchedule finalInputBufSizes(
 			Map<Integer, BufferSizes> bufSizes, AppInstance appInst) {
 		ImmutableMap.Builder<Token, Integer> finalInputBufCapacity = new ImmutableMap.Builder<>();
-		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
+		ImmutableMap.Builder<Token, Integer> steadyRunCountDuringInit = new ImmutableMap.Builder<>();
 		boolean inputConsidered = true;
 		MinInfo minInfo = new MinInfo(bufSizes);
 		int totalGraphOutDuringInit = 0;
@@ -57,7 +57,7 @@ public class BufferSizeCalc {
 
 		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			int mul = variables.get(blob).value();
-			steadyRunCount.put(blob, mul);
+			steadyRunCountDuringInit.put(blob, mul);
 			Set<Token> outputs = appInst.blobGraph.getOutputs(blob);
 			for (Token out : outputs) {
 				int initOut = minInfo.minInitOutputBufCapacity.get(out);
@@ -83,9 +83,9 @@ public class BufferSizeCalc {
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
 		Pair<Integer, Integer> p = steadyStateRates(minInfo, appInst);
-		return new GraphSchedule(finalInputBuf, steadyRunCount.build(),
-				totalGraphInDuringInit, totalGraphOutDuringInit, p.first,
-				p.second);
+		return new GraphSchedule(finalInputBuf,
+				steadyRunCountDuringInit.build(), totalGraphInDuringInit,
+				totalGraphOutDuringInit, p.first, p.second);
 	}
 
 	private static int totalGraphInDuringInit(AppInstance appInst,
@@ -391,9 +391,10 @@ public class BufferSizeCalc {
 		/**
 		 * During the whole graph initialization, upper blobs may need to run
 		 * few steady state runs in order to produce enough data for the down
-		 * blobs' init schedule.
+		 * blobs' init schedule. This map contains each blob's steady run counts
+		 * in order to initialize the whole graph.
 		 */
-		public final ImmutableMap<Token, Integer> steadyRunCount;
+		public final ImmutableMap<Token, Integer> steadyRunCountDuringInit;
 
 		public final int totalInDuringInit;
 		public final int totalOutDuringInit;
@@ -402,11 +403,11 @@ public class BufferSizeCalc {
 		public final int steadyOut;
 
 		GraphSchedule(ImmutableMap<Token, Integer> bufferSizes,
-				ImmutableMap<Token, Integer> steadyRunCount,
+				ImmutableMap<Token, Integer> steadyRunCountDuringInit,
 				int totalInDuringInit, int totalOutDuringInit, int steadyIn,
 				int steadyOut) {
 			this.bufferSizes = bufferSizes;
-			this.steadyRunCount = steadyRunCount;
+			this.steadyRunCountDuringInit = steadyRunCountDuringInit;
 			this.totalInDuringInit = totalInDuringInit;
 			this.totalOutDuringInit = totalOutDuringInit;
 			this.steadyIn = steadyIn;

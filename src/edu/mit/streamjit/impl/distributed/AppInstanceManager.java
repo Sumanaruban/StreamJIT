@@ -167,7 +167,7 @@ public class AppInstanceManager {
 	}
 
 	void runInitSchedule() {
-		ImmutableMap<Token, Integer> steadyRunCount = graphSchedule.steadyRunCount;
+		ImmutableMap<Token, Integer> steadyRunCount = graphSchedule.steadyRunCountDuringInit;
 		ciP.initScheduleLatch = new CountDownLatch(steadyRunCount.size());
 		appManager.controller.sendToAll(new CTRLRMessageElementHolder(
 				new InitSchedule(steadyRunCount), appInstId()));
