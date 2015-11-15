@@ -210,7 +210,7 @@ class BlobDrainer {
 		}
 
 		return new SNDrainElement.SNDrainedData(be.blobID, dd,
-				inputDataBuilder.build(), outputDataBuilder.build());
+				ImmutableMap.of(), ImmutableMap.of());
 	}
 
 	// TODO: Unnecessary data copy. Optimise this.

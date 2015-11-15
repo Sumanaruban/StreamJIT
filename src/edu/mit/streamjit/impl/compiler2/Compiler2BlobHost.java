@@ -459,7 +459,7 @@ public class Compiler2BlobHost implements Blob {
 		interp.drain(() -> interpFinished.set(true));
 		while (!interpFinished.get())
 			interpCode.run();
-		this.drainData = interp.getDrainData();
+		this.drainData = getState(drains);
 
 		SwitchPoint.invalidateAll(new SwitchPoint[]{sp1, sp2});
 

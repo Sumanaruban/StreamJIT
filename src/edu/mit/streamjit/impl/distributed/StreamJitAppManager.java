@@ -127,10 +127,7 @@ public class StreamJitAppManager {
 
 	Reconfigurer reconfigurer(Buffer tailBuffer) {
 		if (Options.seamlessReconfig) {
-			if (app.stateful)
-				return new SeamlessStatefulReconfigurer();
-			else
-				return new SeamlessStatelessReconfigurer(tailBuffer);
+			return new SeamlessStatefulReconfigurer();
 		}
 		return new PauseResumeReconfigurer();
 	}

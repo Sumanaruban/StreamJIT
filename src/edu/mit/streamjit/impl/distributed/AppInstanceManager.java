@@ -114,6 +114,7 @@ public class AppInstanceManager {
 	public void drainingStarted(boolean isFinal) {
 		appManager.app.eLogger.bEvent("draining");
 		headTailHandler.stopHead(isFinal);
+		headTailHandler.waitToStopHead();
 	}
 
 	public void drainingFinished(boolean isFinal) {
