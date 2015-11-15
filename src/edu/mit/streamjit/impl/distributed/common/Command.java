@@ -53,6 +53,12 @@ public enum Command implements CTRLRMessageElement {
 		public void process(CommandProcessor commandProcessor) {
 			commandProcessor.processSTOP();
 		}
+	},
+	START_CHANNELS {
+		@Override
+		public void process(CommandProcessor commandProcessor) {
+			commandProcessor.processSTART_CHANNELS();
+		}
 	};
 
 	@Override
@@ -76,5 +82,6 @@ public enum Command implements CTRLRMessageElement {
 
 		public void processSTOP();
 
+		public void processSTART_CHANNELS();
 	}
 }

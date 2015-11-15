@@ -150,6 +150,8 @@ public class AppInstanceManager {
 	void startChannels() {
 		headTailHandler.startHead();
 		headTailHandler.startTail();
+		appManager.controller.sendToAll(new CTRLRMessageElementHolder(
+				Command.START_CHANNELS, appInstId()));
 	}
 
 	void start() {

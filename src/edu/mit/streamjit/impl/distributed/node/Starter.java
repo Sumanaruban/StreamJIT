@@ -97,6 +97,9 @@ final class Starter2 implements Starter {
 
 	@Override
 	public void startChannels() {
+		// [2015-11-15] TODO: This logic may not be needed as I have separated
+		// communication establishment process from starting an appInst. See
+		// Command.START_CHANNELS and related changes.
 		if (!isChannelsStarted) {
 			be.startChannels();
 			isChannelsStarted = true;

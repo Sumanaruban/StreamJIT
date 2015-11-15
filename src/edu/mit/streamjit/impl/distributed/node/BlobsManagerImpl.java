@@ -261,9 +261,6 @@ public class BlobsManagerImpl implements BlobsManager {
 	 */
 	public void start() {
 		for (BlobExecuter be : blobExecuters.values())
-			be.starter.startChannels();
-
-		for (BlobExecuter be : blobExecuters.values())
 			be.starter.start();
 
 		if (monitorBuffers && monBufs == null) {
@@ -274,14 +271,16 @@ public class BlobsManagerImpl implements BlobsManager {
 	}
 
 	public void runInitSchedule(InitSchedule initSchedule) {
-		for (BlobExecuter be : blobExecuters.values())
-			be.starter.startChannels();
-
 		for (BlobExecuter be : blobExecuters.values()) {
 			Token blobID = be.blobID;
 			int steadyRunCount = initSchedule.steadyRunCount.get(blobID);
 			be.starter.runInitSchedule(steadyRunCount);
 		}
+	}
+
+	void startChannels() {
+		for (BlobExecuter be : blobExecuters.values())
+			be.starter.startChannels();
 	}
 
 	/**
@@ -377,6 +376,12 @@ public class BlobsManagerImpl implements BlobsManager {
 			stop();
 			System.out.println("StraemJit app stopped...");
 			sendToController(AppStatus.STOPPED);
+		}
+
+		@Override
+		public void processSTART_CHANNELS() {
+			startChannels();
+			System.out.println("Establishing communication channels...");
 		}
 	}
 
