@@ -151,18 +151,12 @@ public class BlobsManagerImpl implements BlobsManager {
 	 * Drain the blob identified by the token.
 	 */
 	public void drain(Token blobID, DrainDataAction drainDataAction) {
-		for (BlobExecuter be : blobExecuters.values()) {
-			if (be.getBlobID().equals(blobID)) {
-				if (Options.doDraininNewThread)
-					be.drainer.doDrain(drainDataAction,
-							drainDataAction != DrainDataAction.DISCARD);
-				else
-					be.drainer.doDrain(drainDataAction);
-				return;
-			}
-		}
-		throw new IllegalArgumentException(String.format(
-				"No blob with blobID %s", blobID));
+		BlobExecuter be = getBE(blobID);
+		if (Options.doDraininNewThread)
+			be.drainer.doDrain(drainDataAction,
+					drainDataAction != DrainDataAction.DISCARD);
+		else
+			be.drainer.doDrain(drainDataAction);
 	}
 
 	public CommandProcessor getCommandProcessor() {
@@ -175,6 +169,15 @@ public class BlobsManagerImpl implements BlobsManager {
 
 	public CTRLCompilationInfoProcessor getCompilationInfoProcessor() {
 		return compInfoProcessor;
+	}
+
+	private BlobExecuter getBE(Token blobID) {
+		for (BlobExecuter be : blobExecuters.values()) {
+			if (be.getBlobID().equals(blobID))
+				return be;
+		}
+		throw new IllegalArgumentException(String.format(
+				"No blob with blobID %s", blobID));
 	}
 
 	public void reqDrainedData(Set<Token> blobSet) {
