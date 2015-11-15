@@ -102,6 +102,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
+				aim.startChannels();
 				if (appManager.prevAIM != null) {
 					mLogger.bEvent("intermediateDraining");
 					boolean intermediateDraining = appManager
@@ -139,7 +140,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		 * Start the execution of the StreamJit application.
 		 */
 		private void start(AppInstanceManager aim) {
-			aim.startChannels();
 			aim.start();
 		}
 
