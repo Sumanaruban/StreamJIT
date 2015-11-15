@@ -68,7 +68,6 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 				waitForDuplication();
 				graphSchedule = aim.graphSchedule;
 				sendData();
-				sendRemining();
 				stopSuper(isFinal);
 			}
 		};
@@ -87,6 +86,7 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 			send(data, read);
 			flowControl();
 		}
+		sendRemining();
 	}
 
 	private void flowControl() {
