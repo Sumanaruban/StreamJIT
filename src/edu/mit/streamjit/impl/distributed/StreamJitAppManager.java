@@ -542,6 +542,7 @@ public class StreamJitAppManager {
 
 	private class SeamlessStatefulReconfigurer implements Reconfigurer {
 		public int reconfigure(AppInstance appinst) {
+			System.out.println("SeamlessStatefulReconfigurer...");
 			AppInstanceManager aim = createNewAIM(appinst);
 			reset();
 			preCompilation(aim, drainDataSize1());
@@ -550,6 +551,11 @@ public class StreamJitAppManager {
 
 			if (isCompiled) {
 				if (prevAIM != null) {
+					mLogger.bEvent("intermediateDraining");
+					boolean intermediateDraining = intermediateDraining(prevAIM);
+					mLogger.eEvent("intermediateDraining");
+					if (!intermediateDraining)
+						return 1;
 					// TODO : Should send node specific DrainData. Don't send
 					// the full drain data to all node.
 					CTRLCompilationInfo initialState = new CTRLCompilationInfo.InitialState(
@@ -561,13 +567,6 @@ public class StreamJitAppManager {
 			} else {
 				aim.drainingFinished(false);
 			}
-
-			System.out.println("SeamlessStatefulReconfigurer...");
-			mLogger.bEvent("intermediateDraining");
-			boolean intermediateDraining = intermediateDraining(curAIM);
-			mLogger.eEvent("intermediateDraining");
-			if (!intermediateDraining)
-				return 1;
 
 			if (profiler != null) {
 				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
