@@ -25,7 +25,7 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
-import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -49,13 +49,9 @@ public class DistributedDrainer extends AbstractDrainer {
 	@Override
 	protected void drain(Token blobID, DrainDataAction drainDataAction) {
 		// System.out.println("Drain requested to blob " + blobID);
-		if (!appinst.blobtoMachineMap.containsKey(blobID))
-			throw new IllegalArgumentException(blobID
-					+ " not found in the blobtoMachineMap");
-		int nodeID = appinst.blobtoMachineMap.get(blobID);
-		appInstManager.appManager.controller.send(nodeID,
-				new CTRLRMessageElementHolder(new CTRLRDrainElement.DoDrain(
-						blobID, drainDataAction), appInstManager.appInstId()));
+		CTRLRMessageElement me = new CTRLRDrainElement.DoDrain(blobID,
+				drainDataAction);
+		appInstManager.sendToBlob(blobID, me);
 	}
 
 	@Override

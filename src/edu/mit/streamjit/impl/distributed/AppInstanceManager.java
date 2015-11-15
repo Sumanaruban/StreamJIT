@@ -44,6 +44,7 @@ import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcesso
 import edu.mit.streamjit.impl.distributed.common.SNMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.common.SystemInfo;
+import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.CollectionUtils;
@@ -238,6 +239,23 @@ public class AppInstanceManager {
 		}
 		return drainDataSizes;
 	}
+
+	/**
+	 * Sends the message @param me to the {@link StreamNode} on which the blob
+	 * with id=@param blobID is running.
+	 * 
+	 * @param blobID
+	 * @param me
+	 */
+	void sendToBlob(Token blobID, CTRLRMessageElement me) {
+		if (!appInst.blobtoMachineMap.containsKey(blobID))
+			throw new IllegalArgumentException(blobID
+					+ " not found in the blobtoMachineMap");
+		int nodeID = appInst.blobtoMachineMap.get(blobID);
+		appManager.controller.send(nodeID, new CTRLRMessageElementHolder(me,
+				appInstId()));
+	}
+
 	/**
 	 * {@link AppStatusProcessor} at {@link Controller} side.
 	 * 
