@@ -22,12 +22,10 @@
 package edu.mit.streamjit.impl.distributed;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.CompiledStream;
@@ -38,8 +36,9 @@ import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
+import edu.mit.streamjit.impl.distributed.SeamlessReconfigurer.SeamlessStatefulReconfigurer;
+import edu.mit.streamjit.impl.distributed.SeamlessReconfigurer.SeamlessStatelessReconfigurer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
-import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor.ConfigType;
@@ -50,7 +49,6 @@ import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.SNTimeInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfoProcessorImpl;
-import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
@@ -128,9 +126,9 @@ public class StreamJitAppManager {
 	Reconfigurer reconfigurer(Buffer tailBuffer) {
 		if (Options.seamlessReconfig) {
 			if (app.stateful)
-				return new SeamlessStatefulReconfigurer();
+				return new SeamlessStatefulReconfigurer(this);
 			else
-				return new SeamlessStatelessReconfigurer(tailBuffer);
+				return new SeamlessStatelessReconfigurer(this, tailBuffer);
 		}
 		return new PauseResumeReconfigurer(this);
 	}
@@ -268,7 +266,7 @@ public class StreamJitAppManager {
 		}
 	}
 
-	private void preCompilation(AppInstanceManager currentAim,
+	void preCompilation(AppInstanceManager currentAim,
 			ImmutableMap<Token, Integer> drainDataSize) {
 		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
 		logger.compilationStarted();
@@ -387,183 +385,5 @@ public class StreamJitAppManager {
 		public void drainingFinished(boolean isFinal, AppInstanceManager aim);
 
 		public void stop();
-	}
-
-	private class SeamlessStatelessReconfigurer implements Reconfigurer {
-
-		private final TailBufferMerger tailMerger;
-
-		private final Thread tailMergerThread;
-
-		SeamlessStatelessReconfigurer(Buffer tailBuffer) {
-			tailMerger = new TailBufferMergerStateless(tailBuffer);
-			tailMergerThread = createAndStartTailMergerThread();
-		}
-
-		public int reconfigure(AppInstance appinst) {
-			System.out.println("SeamlessStatelessReconfigurer...");
-			AppInstanceManager aim = createNewAIM(appinst);
-			reset();
-			preCompilation(aim, prevAIM);
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim);
-			boolean isCompiled = aim.postCompilation();
-
-			if (isCompiled) {
-				startInit(aim);
-				aim.start();
-				mLogger.bEvent("intermediateDraining");
-				boolean intermediateDraining = intermediateDraining(prevAIM);
-				mLogger.eEvent("intermediateDraining");
-				if (!intermediateDraining)
-					new IllegalStateException(
-							"IntermediateDraining of prevAIM failed.")
-							.printStackTrace();
-			} else {
-				aim.drainingFinished(false);
-			}
-
-			if (profiler != null) {
-				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-						.getConfiguration());
-				profiler.logger().newConfiguration(cfgPrefix);
-			}
-			Utils.printMemoryStatus();
-			if (aim.isRunning)
-				return 0;
-			else
-				return 2;
-		}
-
-		ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
-			ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap
-					.builder();
-			builder.put(app.headToken, app.bufferMap.get(app.headToken));
-			// TODO: skipCount = 0.
-			builder.put(app.tailToken, tailMerger.registerAppInst(appInstId, 0));
-			return builder.build();
-		}
-
-		/**
-		 * Start the execution of the StreamJit application.
-		 */
-		private void startInit(AppInstanceManager aim) {
-			aim.headTailHandler.startHead();
-			aim.headTailHandler.startTail();
-			aim.runInitSchedule();
-		}
-
-		@Override
-		public int starterType() {
-			return 2;
-		}
-
-		@Override
-		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
-			if (!isFinal) {
-				tailMerger.switchBuf();
-				tailMerger.unregisterAppInst(aim.appInstId());
-			}
-		}
-
-		@Override
-		public void stop() {
-			tailMerger.stop();
-			try {
-				tailMergerThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		private Thread createAndStartTailMergerThread() {
-			Thread t = new Thread(tailMerger.getRunnable(),
-					"TailBufferMergerStateless");
-			t.start();
-			return t;
-		}
-	}
-
-	private class SeamlessStatefulReconfigurer implements Reconfigurer {
-		public int reconfigure(AppInstance appinst) {
-			System.out.println("SeamlessStatefulReconfigurer...");
-			AppInstanceManager aim = createNewAIM(appinst);
-			reset();
-			preCompilation(aim, drainDataSize1());
-			aim.headTailHandler.setupHeadTail(app.bufferMap, aim);
-			boolean isCompiled = aim.postCompilation();
-
-			if (isCompiled) {
-				if (prevAIM != null) {
-					mLogger.bEvent("intermediateDraining");
-					boolean intermediateDraining = intermediateDraining(prevAIM);
-					mLogger.eEvent("intermediateDraining");
-					if (!intermediateDraining)
-						return 1;
-					// TODO : Should send node specific DrainData. Don't send
-					// the full drain data to all node.
-					CTRLCompilationInfo initialState = new CTRLCompilationInfo.InitialState(
-							prevAIM.appInst.drainData);
-					controller.sendToAll(new CTRLRMessageElementHolder(
-							initialState, aim.appInst.id));
-				}
-				start(aim);
-			} else {
-				aim.drainingFinished(false);
-			}
-
-			if (profiler != null) {
-				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-						.getConfiguration());
-				profiler.logger().newConfiguration(cfgPrefix);
-			}
-			Utils.printMemoryStatus();
-			if (aim.isRunning) {
-				aim.requestDDsizes();
-				return 0;
-			} else
-				return 2;
-		}
-		/**
-		 * Start the execution of the StreamJit application.
-		 */
-		private void start(AppInstanceManager aim) {
-			aim.headTailHandler.startHead();
-			aim.headTailHandler.startTail();
-			aim.start();
-		}
-
-		@Override
-		public int starterType() {
-			return 1;
-		}
-
-		@Override
-		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
-		}
-
-		@Override
-		public void stop() {
-		}
-
-		ImmutableMap<Token, Integer> drainDataSize1() {
-			if (prevAIM == null)
-				return null;
-			return prevAIM.getDDsizes();
-		}
-
-		ImmutableMap<Token, Integer> drainDataSize() {
-			if (prevAIM == null)
-				return null;
-			if (prevAIM.appInst.drainData == null)
-				return null;
-			ImmutableMap.Builder<Token, Integer> sizeBuilder = ImmutableMap
-					.builder();
-			for (Map.Entry<Token, ImmutableList<Object>> en : prevAIM.appInst.drainData
-					.getData().entrySet()) {
-				// System.out.println(en.getKey() + "=" + en.getValue().size());
-				sizeBuilder.put(en.getKey(), en.getValue().size());
-			}
-			return sizeBuilder.build();
-		}
 	}
 }
