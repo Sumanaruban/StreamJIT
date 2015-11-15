@@ -139,8 +139,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		 * Start the execution of the StreamJit application.
 		 */
 		private void start(AppInstanceManager aim) {
-			aim.headTailHandler.startHead();
-			aim.headTailHandler.startTail();
+			aim.startChannels();
 			aim.start();
 		}
 
@@ -217,8 +216,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		 * Start the execution of the StreamJit application.
 		 */
 		private void startInit(AppInstanceManager aim) {
-			aim.headTailHandler.startHead();
-			aim.headTailHandler.startTail();
+			aim.startChannels();
 			aim.runInitSchedule();
 		}
 

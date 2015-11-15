@@ -69,8 +69,7 @@ class PauseResumeReconfigurer implements Reconfigurer {
 	 * Start the execution of the StreamJit application.
 	 */
 	private void start(AppInstanceManager aim) {
-		aim.headTailHandler.startHead();
-		aim.headTailHandler.startTail();
+		aim.startChannels();
 		aim.start();
 	}
 

@@ -147,6 +147,11 @@ public class AppInstanceManager {
 		return isCompiled;
 	}
 
+	void startChannels() {
+		headTailHandler.startHead();
+		headTailHandler.startTail();
+	}
+
 	void start() {
 		if (isRunning)
 			throw new IllegalStateException(String.format(
