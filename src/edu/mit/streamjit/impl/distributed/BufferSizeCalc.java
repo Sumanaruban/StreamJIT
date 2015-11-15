@@ -82,10 +82,13 @@ public class BufferSizeCalc {
 				.build();
 		if (printFinalBufSizes)
 			printFinalSizes(minInfo, finalInputBuf);
-		Pair<Integer, Integer> p = steadyStateRates(minInfo, appInst);
+		ImmutableMap.Builder<Token, Integer> steadyRunCount = new ImmutableMap.Builder<>();
+		Pair<Integer, Integer> p = calculateSteadyStateRates(minInfo, appInst,
+				steadyRunCount);
 		return new GraphSchedule(finalInputBuf,
 				steadyRunCountDuringInit.build(), totalGraphInDuringInit,
-				totalGraphOutDuringInit, p.first, p.second);
+				totalGraphOutDuringInit, steadyRunCount.build(), p.first,
+				p.second);
 	}
 
 	private static int totalGraphInDuringInit(AppInstance appInst,
@@ -114,7 +117,7 @@ public class BufferSizeCalc {
 		int multiplier = appInst.multiplier;
 		if (app.steadyIn < 0 || app.steadyOut < 0) {
 			Pair<Integer, Integer> p = calculateSteadyStateRates(minInfo,
-					appInst);
+					appInst, new ImmutableMap.Builder<>());
 			app.steadyIn = p.first / multiplier;
 			app.steadyOut = p.second / multiplier;
 			verifyRates(app, multiplier, p);
@@ -146,7 +149,8 @@ public class BufferSizeCalc {
 	 * Calculates the total graph's steady state input and output.
 	 */
 	private static Pair<Integer, Integer> calculateSteadyStateRates(
-			MinInfo minInfo, AppInstance appInst) {
+			MinInfo minInfo, AppInstance appInst,
+			ImmutableMap.Builder<Token, Integer> steadyRunCount) {
 		int steadyIn = -1;
 		int steadyOut = -1;
 		Pair<Token, Token> p = getGlobalOutTokens(appInst);
@@ -159,6 +163,7 @@ public class BufferSizeCalc {
 				minInfo);
 		for (Token blob : appInst.blobGraph.getBlobIds()) {
 			int steadyRun = variables.get(blob).value();
+			steadyRunCount.put(blob, steadyRun);
 			// System.out.println("Steady run factor of blob " + blob.toString()
 			// + " is " + steadyRun);
 			if (blob.equals(globalInToken))
@@ -395,21 +400,27 @@ public class BufferSizeCalc {
 		 * in order to initialize the whole graph.
 		 */
 		public final ImmutableMap<Token, Integer> steadyRunCountDuringInit;
-
 		public final int totalInDuringInit;
 		public final int totalOutDuringInit;
 
+		/**
+		 * This map contains each blob's steady run counts in order to fire the
+		 * whole graph once.
+		 */
+		public final ImmutableMap<Token, Integer> steadyRunCount;
 		public final int steadyIn;
 		public final int steadyOut;
 
 		GraphSchedule(ImmutableMap<Token, Integer> bufferSizes,
 				ImmutableMap<Token, Integer> steadyRunCountDuringInit,
-				int totalInDuringInit, int totalOutDuringInit, int steadyIn,
+				int totalInDuringInit, int totalOutDuringInit,
+				ImmutableMap<Token, Integer> steadyRunCount, int steadyIn,
 				int steadyOut) {
 			this.bufferSizes = bufferSizes;
 			this.steadyRunCountDuringInit = steadyRunCountDuringInit;
 			this.totalInDuringInit = totalInDuringInit;
 			this.totalOutDuringInit = totalOutDuringInit;
+			this.steadyRunCount = steadyRunCount;
 			this.steadyIn = steadyIn;
 			this.steadyOut = steadyOut;
 		}
