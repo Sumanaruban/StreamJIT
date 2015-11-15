@@ -16,18 +16,19 @@ import edu.mit.streamjit.util.ConfigurationUtils;
 
 public abstract class SeamlessReconfigurer implements Reconfigurer {
 
+	protected final StreamJitAppManager appManager;
+
+	protected final EventTimeLogger mLogger;
+
+	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager) {
+		this.appManager = streamJitAppManager;
+		this.mLogger = appManager.mLogger;
+	}
+
 	static class SeamlessStatefulReconfigurer extends SeamlessReconfigurer {
 
-		private final StreamJitAppManager appManager;
-
-		private final EventTimeLogger mLogger;
-
-		/**
-		 * @param streamJitAppManager
-		 */
 		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager) {
-			this.appManager = streamJitAppManager;
-			this.mLogger = appManager.mLogger;
+			super(streamJitAppManager);
 		}
 
 		public int reconfigure(AppInstance appinst) {
@@ -117,18 +118,13 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	static class SeamlessStatelessReconfigurer extends SeamlessReconfigurer {
 
-		/**
-		 * 
-		 */
-		private final StreamJitAppManager appManager;
-
 		private final TailBufferMerger tailMerger;
 
 		private final Thread tailMergerThread;
 
 		SeamlessStatelessReconfigurer(StreamJitAppManager streamJitAppManager,
 				Buffer tailBuffer) {
-			this.appManager = streamJitAppManager;
+			super(streamJitAppManager);
 			tailMerger = new TailBufferMergerStateless(tailBuffer);
 			tailMergerThread = createAndStartTailMergerThread();
 		}
@@ -144,10 +140,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			if (isCompiled) {
 				startInit(aim);
 				aim.start();
-				appManager.mLogger.bEvent("intermediateDraining");
+				mLogger.bEvent("intermediateDraining");
 				boolean intermediateDraining = appManager
 						.intermediateDraining(appManager.prevAIM);
-				appManager.mLogger.eEvent("intermediateDraining");
+				mLogger.eEvent("intermediateDraining");
 				if (!intermediateDraining)
 					new IllegalStateException(
 							"IntermediateDraining of prevAIM failed.")
