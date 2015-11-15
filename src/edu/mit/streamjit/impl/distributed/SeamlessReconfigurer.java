@@ -14,21 +14,83 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
+/**
+ * TODO: This class could be improved in object oriented design aspect.
+ * Currently, it distinguishes runs different types of {@link TailBufferMerger}
+ * based on a boolean flag.
+ * 
+ * @author sumanan
+ * @since 15 Nov, 2015
+ */
 public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	protected final StreamJitAppManager appManager;
 
 	protected final EventTimeLogger mLogger;
 
-	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager) {
+	private final TailBufferMerger tailMerger;
+
+	private final Thread tailMergerThread;
+
+	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
+			Buffer tailBuffer, boolean needSeamlessTailMerger) {
 		this.appManager = streamJitAppManager;
 		this.mLogger = appManager.mLogger;
+		tailMerger = tailMerger(tailBuffer, needSeamlessTailMerger);
+		tailMergerThread = createAndStartTailMergerThread(needSeamlessTailMerger);
+	}
+
+	@Override
+	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
+		if (!isFinal) {
+			tailMerger.switchBuf();
+			tailMerger.unregisterAppInst(aim.appInstId());
+		}
+	}
+
+	private TailBufferMerger tailMerger(Buffer tailBuffer,
+			boolean needSeamlessTailMerger) {
+		if (needSeamlessTailMerger)
+			return new TailBufferMergerStateless(tailBuffer);
+		return new TailBufferMergerPauseResume(tailBuffer);
+	}
+
+	@Override
+	public void stop() {
+		tailMerger.stop();
+		if (tailMergerThread != null)
+			try {
+				tailMergerThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+	}
+
+	private Thread createAndStartTailMergerThread(boolean needSeamlessTailMerger) {
+		if (needSeamlessTailMerger) {
+			Thread t = new Thread(tailMerger.getRunnable(),
+					"TailBufferMergerStateless");
+			t.start();
+			return t;
+		}
+		return null;
+	}
+
+	ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
+		ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap.builder();
+		builder.put(appManager.app.headToken,
+				appManager.app.bufferMap.get(appManager.app.headToken));
+		// TODO: skipCount = 0.
+		builder.put(appManager.app.tailToken,
+				tailMerger.registerAppInst(appInstId, 0));
+		return builder.build();
 	}
 
 	static class SeamlessStatefulReconfigurer extends SeamlessReconfigurer {
 
-		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager) {
-			super(streamJitAppManager);
+		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager,
+				Buffer tailBuffer) {
+			super(streamJitAppManager, tailBuffer, false);
 		}
 
 		public int reconfigure(AppInstance appinst) {
@@ -36,7 +98,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, drainDataSize1());
-			aim.headTailHandler.setupHeadTail(appManager.app.bufferMap, aim);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
@@ -72,6 +134,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			} else
 				return 2;
 		}
+
 		/**
 		 * Start the execution of the StreamJit application.
 		 */
@@ -84,14 +147,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		@Override
 		public int starterType() {
 			return 1;
-		}
-
-		@Override
-		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
-		}
-
-		@Override
-		public void stop() {
 		}
 
 		ImmutableMap<Token, Integer> drainDataSize1() {
@@ -118,15 +173,9 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	static class SeamlessStatelessReconfigurer extends SeamlessReconfigurer {
 
-		private final TailBufferMerger tailMerger;
-
-		private final Thread tailMergerThread;
-
 		SeamlessStatelessReconfigurer(StreamJitAppManager streamJitAppManager,
 				Buffer tailBuffer) {
-			super(streamJitAppManager);
-			tailMerger = new TailBufferMergerStateless(tailBuffer);
-			tailMergerThread = createAndStartTailMergerThread();
+			super(streamJitAppManager, tailBuffer, true);
 		}
 
 		public int reconfigure(AppInstance appinst) {
@@ -164,17 +213,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				return 2;
 		}
 
-		ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
-			ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap
-					.builder();
-			builder.put(appManager.app.headToken,
-					appManager.app.bufferMap.get(appManager.app.headToken));
-			// TODO: skipCount = 0.
-			builder.put(appManager.app.tailToken,
-					tailMerger.registerAppInst(appInstId, 0));
-			return builder.build();
-		}
-
 		/**
 		 * Start the execution of the StreamJit application.
 		 */
@@ -187,31 +225,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		@Override
 		public int starterType() {
 			return 2;
-		}
-
-		@Override
-		public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
-			if (!isFinal) {
-				tailMerger.switchBuf();
-				tailMerger.unregisterAppInst(aim.appInstId());
-			}
-		}
-
-		@Override
-		public void stop() {
-			tailMerger.stop();
-			try {
-				tailMergerThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		private Thread createAndStartTailMergerThread() {
-			Thread t = new Thread(tailMerger.getRunnable(),
-					"TailBufferMergerStateless");
-			t.start();
-			return t;
 		}
 	}
 }
