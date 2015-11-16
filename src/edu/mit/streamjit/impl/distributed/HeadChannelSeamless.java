@@ -37,7 +37,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	private volatile int stopCalled;
 	private final EventTimeLogger eLogger;
 
-	private final CountDownLatch latch;
+	private volatile CountDownLatch latch;
 	volatile boolean canWrite;
 
 	int count;
@@ -62,8 +62,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
-			EventTimeLogger eLogger, boolean waitForDuplication,
-			Counter tailCounter, AppInstanceManager aim) {
+			EventTimeLogger eLogger, Counter tailCounter, AppInstanceManager aim) {
 		name = "HeadChannelSeamless " + bufferTokenName;
 		this.conProvider = conProvider;
 		this.conInfo = conInfo;
@@ -72,7 +71,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		this.eLogger = eLogger;
 		count = 0;
 		canWrite = false;
-		latch = latch(waitForDuplication);
 		this.tailCounter = tailCounter;
 		this.aim = aim;
 	}
@@ -96,10 +94,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		};
 	}
 
-	private CountDownLatch latch(boolean waitForDuplication) {
-		if (waitForDuplication)
-			return new CountDownLatch(1);
-		return null;
+	public void duplicationEnabled() {
+		latch = new CountDownLatch(1);
 	}
 
 	public void sendData() {

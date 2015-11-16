@@ -131,7 +131,7 @@ class HeadTailHandler {
 
 		if (needSeamless)
 			headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
-					app.eLogger, false, tailCounter, aim);
+					app.eLogger, tailCounter, aim);
 		else {
 			if (headconInfo instanceof TCPConnectionInfo)
 				headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,
