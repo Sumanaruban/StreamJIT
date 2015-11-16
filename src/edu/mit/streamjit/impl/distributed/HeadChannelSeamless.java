@@ -1,10 +1,14 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
+import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
@@ -207,5 +211,18 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 
 	private void stopSuper(boolean isFinal) {
 		super.stop(isFinal);
+	}
+
+	private void requestState() {
+		int i = expectedFiring();
+		int reqStateAt = i + 50;
+		for (Map.Entry<Token, Integer> en : graphSchedule.steadyRunCount
+				.entrySet()) {
+			Token blobID = en.getKey();
+			int steadyRun = en.getValue();
+			CTRLRMessageElement me = new CTRLCompilationInfo.RequestState(blobID,
+					reqStateAt * steadyRun);
+			aim.sendToBlob(blobID, me);
+		}
 	}
 }
