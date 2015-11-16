@@ -191,4 +191,8 @@ class HeadTailHandler {
 			}
 		}
 	}
+
+	HeadChannelSeamless headChannelSeamless() {
+		return (HeadChannelSeamless) headChannel;
+	}
 }
