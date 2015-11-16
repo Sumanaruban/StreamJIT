@@ -267,8 +267,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				.entrySet()) {
 			Token blobID = en.getKey();
 			int steadyRun = en.getValue();
+			int steadyDuringInit = graphSchedule.steadyRunCountDuringInit
+					.get(blobID);
 			CTRLRMessageElement me = new CTRLCompilationInfo.RequestState(
-					blobID, reqStateAt * steadyRun);
+					blobID, reqStateAt * steadyRun + steadyDuringInit);
 			aim.sendToBlob(blobID, me);
 		}
 		return reqStateAt;
