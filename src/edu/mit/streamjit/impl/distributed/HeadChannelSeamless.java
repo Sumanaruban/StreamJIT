@@ -244,4 +244,8 @@ public class HeadChannelSeamless {
 			}
 		}
 	}
+
+	public String name() {
+		return name;
+	}
 }
