@@ -191,11 +191,13 @@ public class HeadChannelSeamless {
 	}
 
 	private void send(final Object[] data, int items) {
-		int written = 0;
+		int totalWritten = 0;
+		int written;
 		try {
-			while (written < items) {
-				written += connection.writeObjects(data, written, items
-						- written);
+			while (totalWritten < items) {
+				written = connection.writeObjects(data, totalWritten, items
+						- totalWritten);
+				totalWritten += written;
 				if (written == 0) {
 					try {
 						// TODO: Verify this sleep time.
@@ -208,7 +210,7 @@ public class HeadChannelSeamless {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
-		count += written;
+		count += totalWritten;
 	}
 
 	protected void fillUnprocessedData() {
