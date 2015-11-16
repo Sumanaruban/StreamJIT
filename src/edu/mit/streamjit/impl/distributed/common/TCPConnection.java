@@ -118,6 +118,17 @@ public class TCPConnection implements Connection {
 		}
 	}
 
+	@Override
+	public int writeObjects(Object[] data, int offset, int length)
+			throws IOException {
+		int written = 0;
+		while (written < length) {
+			writeObject(data[offset++]);
+			++written;
+		}
+		return written;
+	}
+
 	public final void closeConnection() {
 		isconnected = false;
 		try {

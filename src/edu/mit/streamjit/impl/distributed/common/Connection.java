@@ -67,6 +67,22 @@ public interface Connection {
 	public void writeObject(Object obj) throws IOException;
 
 	/**
+	 * Writes up to length data items from the given array beginning at offset
+	 * into the connection.
+	 * 
+	 * @param data
+	 *            the array to read from
+	 * @param offset
+	 *            the offset to begin reading from
+	 * @param length
+	 *            the number of data items to write
+	 * @return the number of data items written (between 0 and length,
+	 *         inclusive)
+	 */
+	public int writeObjects(Object[] data, int offset, int length)
+			throws IOException;
+
+	/**
 	 * Close the connection. This function is responsible for all kind of
 	 * resource cleanup. </p>throws exception if failed. So no return value
 	 * needed.

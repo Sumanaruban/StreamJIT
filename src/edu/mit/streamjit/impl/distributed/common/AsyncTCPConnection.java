@@ -86,8 +86,8 @@ public class AsyncTCPConnection implements Connection {
 		 */
 	}
 
-	public int write(Object[] data, int offset, int length) throws IOException {
-
+	public int writeObjects(Object[] data, int offset, int length)
+			throws IOException {
 		final ObjectOutputStream objOS = this.ooStream;
 		final ByteBufferArrayOutputStream bBAos = this.bBAos;
 
@@ -801,7 +801,7 @@ public class AsyncTCPConnection implements Connection {
 
 		public int write(Object[] data, int offset, int length) {
 			try {
-				return con.write(data, offset, length);
+				return con.writeObjects(data, offset, length);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
