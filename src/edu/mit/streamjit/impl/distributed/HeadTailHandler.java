@@ -127,7 +127,7 @@ class HeadTailHandler {
 		ConnectionProvider c = controller.getConProvider();
 		String name = "headChannel - " + app.headToken.toString();
 
-		headChannel = new HeadChannelSeamless(b, c, headconInfo, name, 0,
+		headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
 				app.eLogger, false, tailCounter, aim);
 		// if (headconInfo instanceof TCPConnectionInfo)
 		// headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,

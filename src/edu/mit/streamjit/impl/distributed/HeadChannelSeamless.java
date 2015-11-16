@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import com.google.common.collect.ImmutableList;
+
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
+import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Connection;
@@ -20,7 +23,7 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  * @author sumanan
  * @since 12 Nov, 2015
  */
-public class HeadChannelSeamless {
+public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	private Connection connection;
 
@@ -244,5 +247,30 @@ public class HeadChannelSeamless {
 
 	public String name() {
 		return name;
+	}
+
+	@Override
+	public ImmutableList<Object> getUnprocessedData() {
+		return null;
+	}
+
+	@Override
+	public Connection getConnection() {
+		return null;
+	}
+
+	@Override
+	public ConnectionInfo getConnectionInfo() {
+		return null;
+	}
+
+	@Override
+	public Buffer getBuffer() {
+		return null;
+	}
+
+	@Override
+	public void stop(boolean isFinal) {
+		stop();
 	}
 }
