@@ -98,7 +98,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, drainDataSize1());
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
+					true);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
@@ -182,7 +183,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, appManager.prevAIM);
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
+					true);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {

@@ -11,11 +11,13 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.BufferWriteCounter;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph;
+import edu.mit.streamjit.impl.distributed.common.AsyncTCPConnection.AsyncTCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
@@ -65,7 +67,7 @@ class HeadTailHandler {
 	 * @param bufferMap
 	 */
 	void setupHeadTail(ImmutableMap<Token, Buffer> bufferMap,
-			AppInstanceManager aim) {
+			AppInstanceManager aim, boolean needSeamless) {
 		Map<Token, ConnectionInfo> conInfoMap = aim.conInfoMap;
 		int multiplier = aim.appInst.multiplier;
 		ConnectionInfo tailconInfo = conInfoMap.get(app.tailToken);
@@ -82,7 +84,7 @@ class HeadTailHandler {
 		Buffer tb = bufferMap.get(app.tailToken);
 		BufferWriteCounter bc = new BufferWriteCounter(tb);
 		tailChannel = tailChannel(bc, tailconInfo, skipCount, aim.appInst);
-		setHead(conInfoMap, bufferMap, aim, bc);
+		setHead(conInfoMap, bufferMap, aim, bc, needSeamless);
 	}
 
 	TailChannel tailChannel(Buffer buffer, ConnectionInfo conInfo,
@@ -112,7 +114,7 @@ class HeadTailHandler {
 
 	private void setHead(Map<Token, ConnectionInfo> conInfoMap,
 			ImmutableMap<Token, Buffer> bufferMap, AppInstanceManager aim,
-			Counter tailCounter) {
+			Counter tailCounter, boolean needSeamless) {
 		ConnectionInfo headconInfo = conInfoMap.get(app.headToken);
 		assert headconInfo != null : "No head connection info exists in conInfoMap";
 		assert headconInfo.getSrcID() == controller.controllerNodeID
@@ -127,16 +129,20 @@ class HeadTailHandler {
 		ConnectionProvider c = controller.getConProvider();
 		String name = "headChannel - " + app.headToken.toString();
 
-		headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
-				app.eLogger, false, tailCounter, aim);
-		// if (headconInfo instanceof TCPConnectionInfo)
-		// headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,
-		// name, 0, app.eLogger);
-		// else if (headconInfo instanceof AsyncTCPConnectionInfo)
-		// headChannel = new HeadChannel.AsyncHeadChannel(b, c, headconInfo,
-		// name, 0, app.eLogger);
-		// else
-		// throw new IllegalStateException("Head ConnectionInfo doesn't match");
+		if (needSeamless)
+			headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
+					app.eLogger, false, tailCounter, aim);
+		else {
+			if (headconInfo instanceof TCPConnectionInfo)
+				headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,
+						name, 0, app.eLogger);
+			else if (headconInfo instanceof AsyncTCPConnectionInfo)
+				headChannel = new HeadChannel.AsyncHeadChannel(b, c,
+						headconInfo, name, 0, app.eLogger);
+			else
+				throw new IllegalStateException(
+						"Head ConnectionInfo doesn't match");
+		}
 	}
 
 	void startHead() {

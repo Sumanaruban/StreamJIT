@@ -44,7 +44,7 @@ class PauseResumeReconfigurer implements Reconfigurer {
 		AppInstanceManager aim = appManager.createNewAIM(appinst);
 		appManager.reset();
 		appManager.preCompilation(aim, appManager.prevAIM);
-		aim.headTailHandler.setupHeadTail(appManager.app.bufferMap, aim);
+		aim.headTailHandler.setupHeadTail(appManager.app.bufferMap, aim, false);
 		boolean isCompiled = aim.postCompilation();
 
 		if (isCompiled) {
