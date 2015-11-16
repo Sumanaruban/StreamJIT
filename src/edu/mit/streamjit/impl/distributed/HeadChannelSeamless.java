@@ -150,14 +150,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		int reminder = (count - graphSchedule.totalInDuringInit)
 				% graphSchedule.steadyIn;
 		int residue = graphSchedule.steadyIn - reminder;
-		int itemsToRead;
-		int itemsSent = 0;
-		while (itemsSent < residue) {
-			itemsToRead = Math.min(data.length, residue - itemsSent);
-			int read = readBuffer.read(data, 0, itemsToRead);
-			send(data, read);
-			itemsSent += read;
-		}
+		send(residue);
 	}
 
 	private void waitForDuplication() {
@@ -167,6 +160,19 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 			latch.await();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void send(int itemsToSend) {
+		if (itemsToSend < 0)
+			throw new IllegalStateException("Items < 0. Items = " + itemsToSend);
+		int itemsToRead;
+		int itemsSent = 0;
+		while (itemsSent < itemsToSend) {
+			itemsToRead = Math.min(data.length, itemsToSend - itemsSent);
+			int read = readBuffer.read(data, 0, itemsToRead);
+			send(data, read);
+			itemsSent += read;
 		}
 	}
 
