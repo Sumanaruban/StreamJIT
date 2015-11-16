@@ -1,5 +1,6 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
@@ -9,9 +10,9 @@ import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
+import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
-import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
@@ -19,10 +20,11 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  * @author sumanan
  * @since 12 Nov, 2015
  */
-public class HeadChannelSeamless extends AsyncOutputChannel {
+public class HeadChannelSeamless {
+
+	private Connection connection;
 
 	final Buffer readBuffer;
-	Buffer writeBuffer;
 
 	final int dataLength = 10000;
 	final Object[] data = new Object[dataLength];
@@ -44,13 +46,22 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 
 	private final int debugLevel = 0;
 
+	private final ConnectionProvider conProvider;
+
+	private final ConnectionInfo conInfo;
+
+	private final String name;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
-			ConnectionInfo conInfo, String bufferTokenName, int debugLevel,
+			ConnectionInfo conInfo, String bufferTokenName,
 			EventTimeLogger eLogger, boolean waitForDuplication,
 			Counter tailCounter, AppInstanceManager aim) {
-		super(conProvider, conInfo, bufferTokenName, debugLevel);
-		readBuffer = buffer;
+		name = "HeadChannelSeamless " + bufferTokenName;
+		this.conProvider = conProvider;
+		this.conInfo = conInfo;
+		isFinal = false;
 		stopCalled = false;
+		readBuffer = buffer;
 		this.eLogger = eLogger;
 		count = 0;
 		canWrite = false;
@@ -59,20 +70,16 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 		this.aim = aim;
 	}
 
-	@Override
 	public Runnable getRunnable() {
-		final Runnable supperRunnable = super.getRunnable();
 		return new Runnable() {
 			@Override
 			public void run() {
 				eLogger.bEvent("initialization");
-				supperRunnable.run();
-				writeBuffer = getBuffer();
+				makeConnection();
 				canWrite = true;
 				waitForDuplication();
 				graphSchedule = aim.graphSchedule;
 				sendData();
-				stopSuper(isFinal);
 			}
 		};
 	}
@@ -185,16 +192,21 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 
 	private void send(final Object[] data, int items) {
 		int written = 0;
-		while (written < items) {
-			written += writeBuffer.write(data, written, items - written);
-			if (written == 0) {
-				try {
-					// TODO: Verify this sleep time.
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		try {
+			while (written < items) {
+				written += connection.writeObjects(data, written, items
+						- written);
+				if (written == 0) {
+					try {
+						// TODO: Verify this sleep time.
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 			}
+		} catch (IOException ex) {
+			ex.printStackTrace();
 		}
 		count += written;
 	}
@@ -203,14 +215,9 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 		throw new Error("Method not implemented");
 	}
 
-	@Override
 	public void stop(boolean isFinal) {
 		this.isFinal = isFinal;
 		this.stopCalled = true;
-	}
-
-	private void stopSuper(boolean isFinal) {
-		super.stop(isFinal);
 	}
 
 	private void requestState() {
@@ -220,9 +227,19 @@ public class HeadChannelSeamless extends AsyncOutputChannel {
 				.entrySet()) {
 			Token blobID = en.getKey();
 			int steadyRun = en.getValue();
-			CTRLRMessageElement me = new CTRLCompilationInfo.RequestState(blobID,
-					reqStateAt * steadyRun);
+			CTRLRMessageElement me = new CTRLCompilationInfo.RequestState(
+					blobID, reqStateAt * steadyRun);
 			aim.sendToBlob(blobID, me);
+		}
+	}
+
+	private void makeConnection() {
+		if (connection == null || !connection.isStillConnected()) {
+			try {
+				connection = conProvider.getConnection(conInfo);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
