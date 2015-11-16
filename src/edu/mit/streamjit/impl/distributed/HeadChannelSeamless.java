@@ -32,7 +32,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	final int dataLength = 10000;
 	final Object[] data = new Object[dataLength];
 
-	private volatile boolean stopCalled;
+	private volatile int stopCalled;
 	private final EventTimeLogger eLogger;
 
 	private final CountDownLatch latch;
@@ -54,6 +54,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	private final String name;
 
+	HeadChannelSeamless next;
+
+	int duplicationCount;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
 			EventTimeLogger eLogger, boolean waitForDuplication,
@@ -61,7 +65,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		name = "HeadChannelSeamless " + bufferTokenName;
 		this.conProvider = conProvider;
 		this.conInfo = conInfo;
-		stopCalled = false;
+		stopCalled = 0;
 		readBuffer = buffer;
 		this.eLogger = eLogger;
 		count = 0;
@@ -81,6 +85,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				waitForDuplication();
 				graphSchedule = aim.graphSchedule;
 				sendData();
+				duplicateSend(duplicationCount, next);
 			}
 		};
 	}
@@ -93,7 +98,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	public void sendData() {
 		int read = 1;
-		while (!stopCalled) {
+		while (stopCalled == 0) {
 			read = readBuffer.read(data, 0, data.length);
 			send(data, read);
 			flowControl();
@@ -105,7 +110,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		int expectedFiring = expectedFiring();
 		int currentFiring = 0;
 		while ((expectedFiring - (currentFiring = currentFiring()) > 1000)
-				&& !stopCalled) {
+				&& stopCalled == 0) {
 			try {
 				// TODO: Need to tune this sleep time.
 				Thread.sleep(500);
@@ -164,7 +169,9 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		}
 	}
 
-	public void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
+	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
+		if (stopCalled != 1)
+			return;
 		int itemsToRead;
 		int itemsDuplicated = 0;
 		while (itemsDuplicated < duplicationCount) {
@@ -179,6 +186,15 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		next.latch.countDown();
 	}
 
+	public void duplicateAndStop(int duplicationCount, HeadChannelSeamless next) {
+		this.duplicationCount = duplicationCount;
+		this.next = next;
+		this.stopCalled = 1;
+	}
+
+	/**
+	 * TODO: Replace this polling with a {@link CountDownLatch}.
+	 */
 	private void waitToWrite() {
 		while (!canWrite) {
 			System.out
@@ -219,7 +235,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	}
 
 	public void stop() {
-		this.stopCalled = true;
+		this.stopCalled = 2;
 	}
 
 	private void requestState() {
