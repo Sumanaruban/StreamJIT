@@ -3,6 +3,7 @@ package edu.mit.streamjit.impl.distributed.common;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
+import edu.mit.streamjit.impl.blob.DrainData;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -85,9 +86,27 @@ public abstract class CompilationInfo implements SNMessageElement {
 		}
 	}
 
+	public static final class State extends CompilationInfo {
+		private static final long serialVersionUID = 1L;
+
+		public final Token blobID;
+		public final DrainData drainData;
+
+		public State(Token blobID, DrainData drainData) {
+			this.blobID = blobID;
+			this.drainData = drainData;
+		}
+
+		@Override
+		public void process(CompilationInfoProcessor cip) {
+			cip.process(this);
+		}
+	}
+
 	public interface CompilationInfoProcessor {
 		public void process(BufferSizes bufferSizes);
 		public void process(InitScheduleCompleted initScheduleCompleted);
 		public void process(DrainDataSizes ddSizes);
+		public void process(State state);
 	}
 }
