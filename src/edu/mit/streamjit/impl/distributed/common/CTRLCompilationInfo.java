@@ -59,11 +59,39 @@ public abstract class CTRLCompilationInfo implements CTRLRMessageElement {
 		}
 	}
 
+	/**
+	 * @author sumanan
+	 * @since 16 Nov, 2015
+	 */
+	public static final class RequestState extends CTRLCompilationInfo {
+
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * Requests a blob to send its state at #sendStateAt'th firing
+		 * (adjustCount).
+		 */
+		public final int sendStateAt;
+
+		public final Token blobID;
+
+		public RequestState(Token blobID, int sendStateAt) {
+			this.blobID = blobID;
+			this.sendStateAt = sendStateAt;
+		}
+
+		@Override
+		public void process(CTRLCompilationInfoProcessor cip) {
+			cip.process(this);
+		}
+	}
+
 	public interface CTRLCompilationInfoProcessor {
 		public void process(FinalBufferSizes finalBufferSizes);
 		public void process(InitSchedule InitSchedule);
 		public void process(InitialState cfgDD);
 		public void process(DDSizes ddSizes);
+		public void process(RequestState requestState);
 	}
 
 	/**

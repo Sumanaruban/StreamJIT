@@ -47,6 +47,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.DDSizes;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.FinalBufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitSchedule;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.InitialState;
+import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.RequestState;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
@@ -454,6 +455,10 @@ public class BlobsManagerImpl implements BlobsManager {
 			}, sizeList);
 
 			sendToController(new DrainDataSizes(streamNode.getNodeID(), sizeMap));
+		}
+
+		@Override
+		public void process(RequestState requestState) {
 		}
 	}
 
