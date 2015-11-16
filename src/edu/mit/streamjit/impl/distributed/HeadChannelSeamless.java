@@ -85,7 +85,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				waitForDuplication();
 				graphSchedule = aim.graphSchedule;
 				sendData();
-				duplicateSend(duplicationCount, next);
+				if (stopCalled == 1)
+					duplicateSend(duplicationCount, next);
+				else if (stopCalled == 2)
+					reqStateDuplicateAndStop();
 				closeConnection();
 			}
 		};
@@ -177,8 +180,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	}
 
 	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
-		if (stopCalled != 1)
-			return;
 		int itemsToRead;
 		int itemsDuplicated = 0;
 		while (itemsDuplicated < duplicationCount) {
@@ -197,6 +198,21 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		this.duplicationCount = duplicationCount;
 		this.next = next;
 		this.stopCalled = 1;
+	}
+
+	public void reqStateDuplicateAndStop(int duplicationCount,
+			HeadChannelSeamless next) {
+		this.duplicationCount = duplicationCount;
+		this.next = next;
+		this.stopCalled = 2;
+	}
+
+	private void reqStateDuplicateAndStop() {
+		int reqStateAt = requestState();
+		int items = reqStateAt * graphSchedule.steadyIn
+				+ graphSchedule.totalInDuringInit - count;
+		send(items);
+		duplicateSend(50 * graphSchedule.steadyIn, next);
 	}
 
 	/**
@@ -240,12 +256,11 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	protected void fillUnprocessedData() {
 		throw new Error("Method not implemented");
 	}
-
 	public void stop() {
-		this.stopCalled = 2;
+		this.stopCalled = 3;
 	}
 
-	private void requestState() {
+	private int requestState() {
 		int i = expectedFiring();
 		int reqStateAt = i + 50;
 		for (Map.Entry<Token, Integer> en : graphSchedule.steadyRunCount
@@ -256,6 +271,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 					blobID, reqStateAt * steadyRun);
 			aim.sendToBlob(blobID, me);
 		}
+		return reqStateAt;
 	}
 
 	private void makeConnection() {
