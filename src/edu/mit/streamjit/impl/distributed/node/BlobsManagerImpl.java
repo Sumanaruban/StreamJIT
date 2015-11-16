@@ -53,6 +53,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.State;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -459,6 +460,10 @@ public class BlobsManagerImpl implements BlobsManager {
 
 		@Override
 		public void process(RequestState requestState) {
+			Token blobID = requestState.blobID;
+			BlobExecuter be = getBE(blobID);
+			((Compiler2BlobHost) be.blob).requestState(
+					requestState.sendStateAt, new StateCallback(blobID));
 		}
 	}
 
@@ -479,8 +484,14 @@ public class BlobsManagerImpl implements BlobsManager {
 	}
 
 	public class StateCallback {
-		public void sendState(DrainData state) {
+		private final Token blobID;
 
+		StateCallback(Token blobID) {
+			this.blobID = blobID;
+		}
+
+		public void sendState(DrainData state) {
+			sendToController(new State(blobID, state));
 		}
 	}
 }
