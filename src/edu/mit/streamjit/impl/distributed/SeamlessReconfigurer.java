@@ -76,13 +76,12 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		return null;
 	}
 
-	ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
+	ImmutableMap<Token, Buffer> bufferMap(int appInstId, int skipCount) {
 		ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap.builder();
 		builder.put(appManager.app.headToken,
 				appManager.app.bufferMap.get(appManager.app.headToken));
-		// TODO: skipCount = 0.
 		builder.put(appManager.app.tailToken,
-				tailMerger.registerAppInst(appInstId, 0));
+				tailMerger.registerAppInst(appInstId, skipCount));
 		return builder.build();
 	}
 
@@ -90,7 +89,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager,
 				Buffer tailBuffer) {
-			super(streamJitAppManager, tailBuffer, false);
+			super(streamJitAppManager, tailBuffer, true);
 		}
 
 		public int reconfigure(AppInstance appinst) {
@@ -98,23 +97,24 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, drainDataSize1());
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
-					true);
+			aim.headTailHandler.setupHeadTail(
+					bufferMap(aim.appInstId(), skipCount()), aim, true);
+			if (appManager.prevAIM != null) {
+				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
+						.headChannelSeamless();
+				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
+						.headChannelSeamless();
+				prevHeadChnl.reqStateDuplicateAndStop(curHeadChnl);
+			}
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
 				aim.startChannels();
 				if (appManager.prevAIM != null) {
-					mLogger.bEvent("intermediateDraining");
-					boolean intermediateDraining = appManager
-							.intermediateDraining(appManager.prevAIM);
-					mLogger.eEvent("intermediateDraining");
-					if (!intermediateDraining)
-						return 1;
 					// TODO : Should send node specific DrainData. Don't send
 					// the full drain data to all node.
 					CTRLCompilationInfo initialState = new CTRLCompilationInfo.InitialState(
-							appManager.prevAIM.appInst.drainData);
+							appManager.prevAIM.getState());
 					appManager.controller
 							.sendToAll(new CTRLRMessageElementHolder(
 									initialState, aim.appInst.id));
@@ -122,6 +122,15 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				start(aim);
 			} else {
 				aim.drainingFinished(false);
+			}
+
+			if (appManager.prevAIM != null) {
+				mLogger.bEvent("intermediateDraining");
+				boolean intermediateDraining = appManager
+						.intermediateDraining(appManager.prevAIM);
+				mLogger.eEvent("intermediateDraining");
+				if (!intermediateDraining)
+					return 1;
 			}
 
 			if (appManager.profiler != null) {
@@ -169,6 +178,13 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			}
 			return sizeBuilder.build();
 		}
+
+		int skipCount() {
+			if (appManager.prevAIM == null)
+				return 0;
+			return HeadChannelSeamless.duplicationFiring
+					* appManager.prevAIM.graphSchedule.steadyOut;
+		}
 	}
 
 	static class SeamlessStatelessReconfigurer extends SeamlessReconfigurer {
@@ -183,8 +199,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, appManager.prevAIM);
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
-					true);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId(), 0),
+					aim, true);
 			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
