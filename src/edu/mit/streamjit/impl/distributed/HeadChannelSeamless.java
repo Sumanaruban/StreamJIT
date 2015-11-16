@@ -30,7 +30,6 @@ public class HeadChannelSeamless {
 	final Object[] data = new Object[dataLength];
 
 	private volatile boolean stopCalled;
-	private volatile boolean isFinal;
 	private final EventTimeLogger eLogger;
 
 	private final CountDownLatch latch;
@@ -59,7 +58,6 @@ public class HeadChannelSeamless {
 		name = "HeadChannelSeamless " + bufferTokenName;
 		this.conProvider = conProvider;
 		this.conInfo = conInfo;
-		isFinal = false;
 		stopCalled = false;
 		readBuffer = buffer;
 		this.eLogger = eLogger;
@@ -217,8 +215,7 @@ public class HeadChannelSeamless {
 		throw new Error("Method not implemented");
 	}
 
-	public void stop(boolean isFinal) {
-		this.isFinal = isFinal;
+	public void stop() {
 		this.stopCalled = true;
 	}
 
