@@ -86,6 +86,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				graphSchedule = aim.graphSchedule;
 				sendData();
 				duplicateSend(duplicationCount, next);
+				closeConnection();
 			}
 		};
 	}
@@ -258,6 +259,14 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+
+	private void closeConnection() {
+		try {
+			connection.softClose();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
