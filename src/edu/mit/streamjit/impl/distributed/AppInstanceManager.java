@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
+import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
@@ -28,6 +29,7 @@ import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.InitScheduleCompleted;
+import edu.mit.streamjit.impl.distributed.common.CompilationInfo.State;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Error;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
@@ -70,6 +72,8 @@ public class AppInstanceManager {
 	boolean isRunning = false;
 
 	private ImmutableMap<Token, Integer> drainDataSizes = null;
+
+	private DrainData states = null;
 
 	/**
 	 * TODO: An AppInstance can have three states about compilation:
@@ -219,6 +223,12 @@ public class AppInstanceManager {
 				appInstId()));
 	}
 
+	/**
+	 * TODO: Like {@link #getState()}, drainDataSizes building task could be
+	 * delegated to SN receiver threads.
+	 * 
+	 * @return
+	 */
 	ImmutableMap<Token, Integer> getDDsizes() {
 		if (drainDataSizes == null) {
 			ciP.waitforDDSizes();
@@ -238,6 +248,15 @@ public class AppInstanceManager {
 			}, sizeList);
 		}
 		return drainDataSizes;
+	}
+
+	void requestState() {
+		throw new IllegalStateException("Method not implemented");
+	}
+
+	DrainData getState() {
+		ciP.waitforStates();
+		return states;
 	}
 
 	/**
@@ -361,6 +380,9 @@ public class AppInstanceManager {
 			bufSizeLatch = new CountDownLatch(noOfnodes);
 			ddSizes = new ConcurrentHashMap<>();
 			ddSizesLatch = new CountDownLatch(noOfnodes);
+			stateMap = new ConcurrentHashMap<>();
+			stateLatch = new CountDownLatch(appInst.blobGraph.getBlobIds()
+					.size());
 		}
 
 		// BufferSizes related variables and methods.
@@ -428,6 +450,35 @@ public class AppInstanceManager {
 				if (!ddSizes.containsKey(nodeID)) {
 					throw new AssertionError(
 							"Not all Stream nodes have sent the buffer size info");
+				}
+			}
+		}
+
+		// State related variables and methods.
+		private Map<Token, DrainData> stateMap;
+		private CountDownLatch stateLatch;
+
+		@Override
+		public synchronized void process(State state) {
+			this.stateMap.put(state.blobID, state.drainData);
+			if (states == null)
+				states = state.drainData;
+			else
+				states = states.merge(state.drainData);
+			stateLatch.countDown();
+		}
+
+		private void waitforStates() {
+			try {
+				stateLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			for (Token blobID : appInst.blobGraph.getBlobIds()) {
+				if (!stateMap.containsKey(blobID)) {
+					throw new AssertionError(
+							"Not all blobs have sent their state");
 				}
 			}
 		}
