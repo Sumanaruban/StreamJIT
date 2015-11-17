@@ -142,6 +142,7 @@ public class AppInstanceManager {
 	 * @return <code>true</code> iff the compilation process is success.
 	 */
 	boolean postCompilation() {
+		appManager.mLogger.bEvent("postCompilation");
 		sendDeadlockfreeBufSizes();
 		if (apStsPro.compilationError)
 			isCompiled = false;
@@ -149,6 +150,7 @@ public class AppInstanceManager {
 			isCompiled = apStsPro.waitForCompilation();
 		appManager.app.eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
+		appManager.mLogger.eEvent("postCompilation");
 		return isCompiled;
 	}
 
