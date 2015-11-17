@@ -157,12 +157,20 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 		newTuningRound(blobSet, cfgPrefix);
 	}
 
+	/*
+	 * (non-Javadoc) We need to call the compile() method in a new thread in
+	 * order to increase the responsiveness of the SN thread. Otherwise, the
+	 * CTRLCompilationInfo.RequestState message send by the controller will be
+	 * delivered to the blobs very lately. By the time blobs receive the
+	 * RequestState message, they would be several iterations ahead from the
+	 * state requested count.
+	 */
 	@Override
 	public void process(String json, ConfigType type,
 			ImmutableMap<Token, Integer> initialDrainDataBufferSizes) {
 		Configuration cfg = Jsonifiers.fromJson(json, Configuration.class);
 		CreationLogic creationLogic = creationLogic(cfg,
 				initialDrainDataBufferSizes);
-		compile(cfg, creationLogic);
+		new Thread(() -> compile(cfg, creationLogic)).start();
 	}
 }
