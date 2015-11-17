@@ -92,7 +92,8 @@ class HeadTailHandler {
 		String appName = app.name;
 		int steadyCount = Options.outputCount;
 		int debugLevel = 0;
-		String bufferTokenName = "tailChannel - " + app.tailToken.toString();
+		String bufferTokenName = String.format("TC-%s - %d",
+				app.tailToken.toString(), appinst.id);
 		ConnectionProvider conProvider = controller.getConProvider();
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
 				.getConfiguration());
@@ -127,7 +128,8 @@ class HeadTailHandler {
 
 		Buffer b = bufferMap.get(app.headToken);
 		ConnectionProvider c = controller.getConProvider();
-		String name = "headChannel - " + app.headToken.toString();
+		String name = String.format("HC-%s - %d", app.headToken.toString(),
+				aim.appInst.id);
 
 		if (needSeamless)
 			headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
