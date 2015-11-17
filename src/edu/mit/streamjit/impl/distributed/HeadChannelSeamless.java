@@ -111,7 +111,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	private void flowControl() {
 		int expectedFiring = expectedFiring();
 		int currentFiring = 0;
-		while ((expectedFiring - (currentFiring = currentFiring()) > 1000)
+		while ((expectedFiring - (currentFiring = currentFiring()) > 5000)
 				&& stopCalled == 0) {
 			try {
 				// TODO: Need to tune this sleep time.
@@ -259,7 +259,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	private int requestState() {
 		int i = expectedFiring();
-		int reqStateAt = i + 50;
+		int reqStateAt = i + 500;
 		for (Map.Entry<Token, Integer> en : graphSchedule.steadyRunCount
 				.entrySet()) {
 			Token blobID = en.getKey();
