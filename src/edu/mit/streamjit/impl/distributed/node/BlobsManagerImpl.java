@@ -141,8 +141,8 @@ public class BlobsManagerImpl implements BlobsManager {
 		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl(blobSet);
 		this.bufferManager = new GlobalBufferManager(blobSet, streamNode,
 				appInstId);
-		this.affinityManager = new AffinityManagers.EmptyAffinityManager();
-
+		this.affinityManager = new AffinityManagers.EqualAffinityManager(
+				blobSet.size());
 		this.appName = appName;
 		bufferManager.initialise();
 		if (bufferManager.isbufferSizesReady())
