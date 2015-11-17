@@ -209,6 +209,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				+ graphSchedule.totalInDuringInit - count;
 		send(items);
 		duplicateSend(duplicationFiring * graphSchedule.steadyIn, next);
+		new DrainerThread().start();
 	}
 
 	/**
@@ -317,5 +318,15 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	@Override
 	public void stop(boolean isFinal) {
 		stop();
+	}
+
+	class DrainerThread extends Thread {
+		DrainerThread() {
+			super(String.format("DrainerThread - %d", aim.appInst.id));
+		}
+
+		public void run() {
+			aim.drainer.drainIntermediate();
+		}
 	}
 }

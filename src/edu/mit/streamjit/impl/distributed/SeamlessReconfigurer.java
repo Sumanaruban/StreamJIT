@@ -125,15 +125,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				aim.drainingFinished(false);
 			}
 
-			if (appManager.prevAIM != null) {
-				mLogger.bEvent("intermediateDraining");
-				boolean intermediateDraining = appManager
-						.intermediateDraining(appManager.prevAIM);
-				mLogger.eEvent("intermediateDraining");
-				if (!intermediateDraining)
-					return 1;
-			}
-
 			if (appManager.profiler != null) {
 				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
 						.getConfiguration());
