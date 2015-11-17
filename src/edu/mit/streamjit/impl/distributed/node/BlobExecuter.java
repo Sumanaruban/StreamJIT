@@ -90,9 +90,10 @@ class BlobExecuter {
 		String baseName = getName(blob);
 		for (int i = 0; i < blob.getCoreCount(); i++) {
 			String name = String.format("%s - %d", baseName, i);
-			blobThreads.add(new BlobThread2(blob.getCoreCode(i), this, name,
-					blobsManagerImpl.affinityManager.getAffinity(blob, i),
-					i == 0));
+			blobThreads
+					.add(new BlobThread2(blob.getCoreCode(i), this, name,
+							blobsManagerImpl.affinityManager.getAffinity(t, i),
+							i == 0));
 		}
 
 		if (blobThreads.size() < 1)
