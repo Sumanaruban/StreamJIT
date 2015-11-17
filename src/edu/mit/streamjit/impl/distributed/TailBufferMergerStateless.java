@@ -180,16 +180,27 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private void skip(final Buffer readBuffer, int skipCount) {
 		int expected = skipCount;
-		int min1, min2;
+		int min1, min2, readBufSize;
 		while (expected > 0) {
-			min1 = Math.min(readBuffer.size(), expected);
+			readBufSize = readBuffer.size();
+			if (readBufSize == 0) {
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				continue;
+			}
+			min1 = Math.min(readBufSize, expected);
 			min2 = Math.min(min1, intermediateArray.length);
 			expected -= readBuffer.read(intermediateArray, 0, min2);
 		}
 
 		if (expected != 0)
-			throw new IllegalStateException(String.format(
-					"expected = %d. variable expected must be 0.", expected));
+			throw new IllegalStateException(
+					String.format(
+							"expected = %d. The variable expected must be 0.",
+							expected));
 	}
 
 	private static class AppInstBufInfo {
