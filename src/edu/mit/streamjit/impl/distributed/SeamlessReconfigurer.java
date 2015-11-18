@@ -85,6 +85,13 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		return builder.build();
 	}
 
+	int skipCount() {
+		if (appManager.prevAIM == null)
+			return 0;
+		return HeadChannelSeamless.duplicationFiring
+				* appManager.prevAIM.graphSchedule.steadyOut;
+	}
+
 	static class SeamlessStatefulReconfigurer extends SeamlessReconfigurer {
 
 		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager,
@@ -169,13 +176,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				sizeBuilder.put(en.getKey(), en.getValue().size());
 			}
 			return sizeBuilder.build();
-		}
-
-		int skipCount() {
-			if (appManager.prevAIM == null)
-				return 0;
-			return HeadChannelSeamless.duplicationFiring
-					* appManager.prevAIM.graphSchedule.steadyOut;
 		}
 	}
 
