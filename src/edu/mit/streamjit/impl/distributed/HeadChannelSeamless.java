@@ -25,7 +25,7 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  */
 public class HeadChannelSeamless implements BoundaryOutputChannel {
 
-	public static final int duplicationFiring = 50;
+	public static final int duplicationFiring = 500;
 
 	private Connection connection;
 
@@ -89,6 +89,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 					duplicateSend(duplicationCount, next);
 				else if (stopCalled == 2)
 					reqStateDuplicateAndStop();
+				if (stopCalled == 1 || stopCalled == 2)
+					new DrainerThread().start();
 				closeConnection();
 			}
 		};
@@ -209,7 +211,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				+ graphSchedule.totalInDuringInit - count;
 		send(items);
 		duplicateSend(duplicationFiring * graphSchedule.steadyIn, next);
-		new DrainerThread().start();
 	}
 
 	/**
