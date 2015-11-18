@@ -42,13 +42,18 @@ public class AffinityManagers {
 	 */
 	public static class OneCoreAffinityManager implements AffinityManager {
 
-		int i = 0;
+		int currentCoreToAllocate = 0;
+
+		private final int totalCores = Runtime.getRuntime()
+				.availableProcessors();
 
 		Map<Token, Integer> blobCoreMap = new HashMap<>();
 		@Override
 		public ImmutableSet<Integer> getAffinity(Token blobID, int coreCode) {
-			if (!blobCoreMap.containsKey(blobID))
-				blobCoreMap.put(blobID, i++);
+			if (!blobCoreMap.containsKey(blobID)) {
+				int c = currentCoreToAllocate++ % totalCores;
+				blobCoreMap.put(blobID, c);
+			}
 			return ImmutableSet.of(blobCoreMap.get(blobID));
 		}
 	}
