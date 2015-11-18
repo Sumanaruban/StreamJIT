@@ -106,6 +106,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			appManager.preCompilation(aim, drainDataSize1());
 			aim.headTailHandler.setupHeadTail(
 					bufferMap(aim.appInstId(), skipCount()), aim, true);
+			boolean isCompiled = aim.postCompilation();
 			if (appManager.prevAIM != null) {
 				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
 						.headChannelSeamless();
@@ -114,7 +115,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				curHeadChnl.duplicationEnabled();
 				prevHeadChnl.reqStateDuplicateAndStop(curHeadChnl);
 			}
-			boolean isCompiled = aim.postCompilation();
 
 			if (isCompiled) {
 				aim.startChannels();
@@ -129,6 +129,9 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				}
 				start(aim);
 			} else {
+				// TODO : [2015-11-18]
+				// This calling causes java.lang.NullPointerException at
+				// edu.mit.streamjit.impl.distributed.HeadTailHandler.waitToStopHead(HeadTailHandler.java:167)
 				aim.drainingFinished(false);
 			}
 
