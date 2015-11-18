@@ -194,21 +194,24 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, appManager.prevAIM);
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId(), 0),
-					aim, true);
+			aim.headTailHandler.setupHeadTail(
+					bufferMap(aim.appInstId(), skipCount()), aim, true);
 			boolean isCompiled = aim.postCompilation();
+			if (appManager.prevAIM != null) {
+				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
+						.headChannelSeamless();
+				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
+						.headChannelSeamless();
+				curHeadChnl.duplicationEnabled();
+				prevHeadChnl.duplicateAndStop(
+						HeadChannelSeamless.duplicationFiring
+								* prevHeadChnl.graphSchedule.steadyIn,
+						curHeadChnl);
+			}
 
 			if (isCompiled) {
 				startInit(aim);
 				aim.start();
-				mLogger.bEvent("intermediateDraining");
-				boolean intermediateDraining = appManager
-						.intermediateDraining(appManager.prevAIM);
-				mLogger.eEvent("intermediateDraining");
-				if (!intermediateDraining)
-					new IllegalStateException(
-							"IntermediateDraining of prevAIM failed.")
-							.printStackTrace();
 			} else {
 				aim.drainingFinished(false);
 			}
@@ -224,7 +227,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			else
 				return 2;
 		}
-
 		/**
 		 * Start the execution of the StreamJit application.
 		 */
