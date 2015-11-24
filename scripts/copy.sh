@@ -5,9 +5,9 @@
 #This script is useful when doing experiments in a cluster.
 #----------------------------------------------------------------------------------
 
-if [ "$#" -ne 5 ]; then
-	echo "Illegal number of parameters. 5 arguments must be passed"
-	echo "copy.sh <app> <fromID> <toID> <mainClass> <noOfnodes>"
+if [ "$#" -ne 6 ]; then
+	echo "Illegal number of parameters. 6 arguments must be passed"
+	echo "copy.sh <app> <fromID> <toID> <mainClass> <noOfnodes> <branch>"
 	exit
 fi
 
@@ -17,6 +17,7 @@ fromID=${args[1]}
 toID=${args[2]}
 mainClass=${args[3]}
 nodes=${args[4]}
+branch=${args[5]}
 
 fromDir=$app$fromID
 toDir=$app$toID
@@ -38,5 +39,5 @@ cd $toDir
 mv $fromDir.jar $toDir.jar
 rm *.sh
 cd ..
-./setup.sh $toDir $mainClass $nodes
+./setup.sh $toDir $mainClass $nodes $branch
 
