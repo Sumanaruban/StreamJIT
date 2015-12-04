@@ -3,6 +3,7 @@ package edu.mit.streamjit.impl.distributed.node;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -126,8 +127,14 @@ public class AffinityManagers {
 
 		final int totalThreads;
 
+		/**
+		 * Free cores in each socket.
+		 */
+		final Map<Integer, Integer> freeCoresMap;
+
 		CoreCodeAffinityManager(ImmutableSet<Blob> blobSet) {
 			this.blobSet = blobSet;
+			freeCoresMap = freeCores();
 			totalThreads = totalThreads(blobSet);
 			assignmentTable = assign();
 		}
@@ -146,7 +153,16 @@ public class AffinityManagers {
 
 		private ImmutableTable<Token, Integer, Integer> assign() {
 			Map<Blob, Integer> coresPerBlob = coresPerBlob();
+
 			return null;
+		}
+
+		Map<Integer, Integer> freeCores() {
+			Map<Integer, Integer> m = new HashMap<Integer, Integer>(
+					Machine.sockets);
+			for (int i = 0; i < Machine.sockets; i++)
+				m.put(i, Machine.coresPerSocket);
+			return m;
 		}
 
 		private Map<Blob, Integer> coresPerBlob() {
@@ -195,16 +211,125 @@ public class AffinityManagers {
 		}
 
 		Map<Blob, Set<Integer>> coresForBlob(Map<Blob, Integer> coresPerBlob) {
-			int core = 0;
-			return null;
+			Map<Blob, Set<Integer>> socketBlobAssignment = new HashMap<>();
+
+			for (int i = 0; i < Machine.sockets; i++) {
+				for (int j = Machine.coresPerSocket; j > 0; j--) {
+					List<Map<Blob, Integer>> subsets = new ArrayList<>();
+					List<Map.Entry<Blob, Integer>> list = new ArrayList<>(
+							coresPerBlob.entrySet());
+					ss(list, list.size(), new HashMap<>(), j, subsets);
+					if (subsets.size() > 0) {
+						Set<Blob> blobs = subsets.get(0).keySet();
+						socketBlobAssignment(i, subsets.get(0),
+								socketBlobAssignment);
+						for (Blob b : blobs)
+							coresPerBlob.remove(b);
+						break;
+					}
+				}
+			}
+			if (coresPerBlob.size() != 0)
+				breakBlobs(coresPerBlob, socketBlobAssignment);
+			return socketBlobAssignment;
+		}
+
+		private void breakBlobs(Map<Blob, Integer> coresPerBlob,
+				Map<Blob, Set<Integer>> socketBlobAssignment) {
+			for (Map.Entry<Blob, Integer> en : coresPerBlob.entrySet()) {
+				for (int i = en.getValue();; i++) {
+					List<Map<Integer, Integer>> subsets = new ArrayList<>();
+					List<Map.Entry<Integer, Integer>> list = new ArrayList<>(
+							freeCoresMap.entrySet());
+					ss(list, list.size(), new HashMap<>(), i, subsets);
+					if (subsets.size() > 0) {
+						subsets.sort((m1, m2) -> Integer.compare(m1.size(),
+								m2.size()));
+						Map<Integer, Integer> m = subsets.get(0);
+						int required = en.getValue();
+						Set<Integer> s = new HashSet<Integer>();
+						for (Map.Entry<Integer, Integer> e : m.entrySet()) {
+							int a = Math.max(required, e.getValue());
+							s.addAll(cores(e.getValue(), a));
+							required -= a;
+						}
+						socketBlobAssignment.put(en.getKey(), s);
+						break;
+					}
+				}
+			}
+		}
+
+		void socketBlobAssignment(int socket, Map<Blob, Integer> subset,
+				Map<Blob, Set<Integer>> socketBlobAssignment) {
+			int totalJobs = 0;
+			for (int i : subset.values())
+				totalJobs += i;
+			if (totalJobs > Machine.coresPerSocket)
+				throw new IllegalStateException(
+						String.format(
+								"Total jobs(%d) assigned to the processor(%d) is greater than the available cores(%d)",
+								totalJobs, socket, Machine.coresPerSocket));
+
+			for (Map.Entry<Blob, Integer> en : subset.entrySet()) {
+				socketBlobAssignment.put(en.getKey(),
+						cores(socket, en.getValue()));
+			}
+		}
+
+		Set<Integer> cores(int socket, int noOfCores) {
+			int socketStart = socket * Machine.coresPerSocket;
+			int freeCores = freeCoresMap.get(socket);
+			if (noOfCores > freeCores)
+				throw new IllegalStateException(String.format(
+						"Socket(%d): noOfCores(%d) > availableFreeCores(%d)",
+						socket, noOfCores, freeCores));
+			Set<Integer> s = new HashSet<>();
+			int freeCoreStart = Machine.coresPerSocket - freeCores;
+			for (int i = 0; i < noOfCores; i++)
+				s.add(socketStart + freeCoreStart++);
+			freeCoresMap.replace(socket, freeCores - noOfCores);
+			return s;
+		}
+
+		/**
+		 * Finds subset sums.
+		 * 
+		 * @param list
+		 * @param n
+		 * @param subset
+		 * @param sum
+		 * @param subsets
+		 */
+		static <T> void ss(List<Map.Entry<T, Integer>> list, int n,
+				Map<T, Integer> subset, int sum, List<Map<T, Integer>> subsets) {
+
+			if (sum == 0) {
+				printAns(subset);
+				subsets.add(subset);
+				return;
+			}
+
+			if (n == 0)
+				return;
+
+			if (list.get(n - 1).getValue() <= sum) {
+				ss(list, n - 1, new HashMap<>(subset), sum, subsets);
+				Map.Entry<T, Integer> en = list.get(n - 1);
+				subset.put(en.getKey(), en.getValue());
+				ss(list, n - 1, new HashMap<>(subset), sum - en.getValue(),
+						subsets);
+			} else {
+				ss(list, n - 1, new HashMap<>(subset), sum, subsets);
+			}
 		}
 
 		/**
 		 * If hyper threading is enabled, Linux first enumerates all physical
 		 * cores without considering the hyper threading and then enumerates the
-		 * hyper threaded (virtual) cores. E.g, On Lanka05, a machine which has
-		 * two sockets, 12 cores per socket, and hyper threading enabled, lists
-		 * the cores as follows
+		 * hyper threaded (virtual) cores. E.g, On Lanka05 (it has two sockets,
+		 * 12 cores per socket, and hyper threading enabled), Linux lists the
+		 * cores as follows
 		 * <ol>
 		 * <li>node0 CPU(s): 0-11,24-35
 		 * <li>node1 CPU(s): 12-23,36-47
@@ -247,6 +372,12 @@ public class AffinityManagers {
 								"Assignment 1 : Assigned cores(%d) > Machine.physicalCores(%d)",
 								core, Machine.physicalCores));
 			return builder.build();
+		}
+
+		static <T> void printAns(Map<T, Integer> subset) {
+			for (Map.Entry i : subset.entrySet())
+				System.out.print(i.getValue() + " ");
+			System.out.println();
 		}
 	}
 }
