@@ -123,7 +123,7 @@ public class AffinityManagers {
 
 		final Set<Blob> blobSet;
 
-		final ImmutableTable<Token, Integer, Integer> assignmentTable;
+		final ImmutableTable<Blob, Integer, Integer> assignmentTable;
 
 		final int totalThreads;
 
@@ -137,6 +137,7 @@ public class AffinityManagers {
 			freeCoresMap = freeCores();
 			totalThreads = totalThreads(blobSet);
 			assignmentTable = assign();
+			printTable(assignmentTable);
 		}
 
 		@Override
@@ -151,11 +152,25 @@ public class AffinityManagers {
 			return threads;
 		}
 
-		private ImmutableTable<Token, Integer, Integer> assign() {
+		private ImmutableTable<Blob, Integer, Integer> assign() {
 			Map<Blob, Integer> coresPerBlob = coresPerBlob();
 			Map<Blob, Set<Integer>> coresForBlob = coresForBlob(coresPerBlob);
 
-			return null;
+			ImmutableTable.Builder<Blob, Integer, Integer> tBuilder = ImmutableTable
+					.builder();
+			for (Map.Entry<Blob, Set<Integer>> en : coresForBlob.entrySet()) {
+				Blob b = en.getKey();
+				List<Integer> cores = new ArrayList<Integer>(en.getValue());
+				for (int i = 0; i < b.getCoreCount(); i++) {
+					int coreIndex = i % cores.size();
+					int round = i / cores.size();
+					int coreID = round % 2 == 0 ? cores.get(coreIndex)
+							: getCorrespondingVirtualCoreID(cores
+									.get(coreIndex));
+					tBuilder.put(b, i, coreID);
+				}
+			}
+			return tBuilder.build();
 		}
 
 		Map<Integer, Integer> freeCores() {
@@ -183,6 +198,8 @@ public class AffinityManagers {
 
 		private void assignRemainingCores(Map<Blob, Integer> coresPerBlob,
 				int remainingCores) {
+			if (remainingCores < 1)
+				return;
 			List<Blob> blobList = new ArrayList<>(blobSet);
 			Collections.sort(
 					blobList,
@@ -239,6 +256,8 @@ public class AffinityManagers {
 				Map<Blob, Set<Integer>> socketBlobAssignment) {
 			for (Map.Entry<Blob, Integer> en : coresPerBlob.entrySet()) {
 				for (int i = en.getValue();; i++) {
+					if (i > 5000)
+						System.out.println("sddddddddd");
 					List<Map<Integer, Integer>> subsets = new ArrayList<>();
 					List<Map.Entry<Integer, Integer>> list = new ArrayList<>(
 							freeCoresMap.entrySet());
@@ -306,7 +325,7 @@ public class AffinityManagers {
 				Map<T, Integer> subset, int sum, List<Map<T, Integer>> subsets) {
 
 			if (sum == 0) {
-				printAns(subset);
+				// printAns(subset);
 				subsets.add(subset);
 				return;
 			}
@@ -379,6 +398,18 @@ public class AffinityManagers {
 			for (Map.Entry i : subset.entrySet())
 				System.out.print(i.getValue() + " ");
 			System.out.println();
+		}
+	}
+
+	static void printTable(
+			ImmutableTable<Blob, Integer, Integer> assignmentTable) {
+		for (Blob b : assignmentTable.rowKeySet()) {
+			System.out.print(b + " :-");
+			for (int i = 0; i < b.getCoreCount(); i++) {
+				System.out.print(assignmentTable.get(b, i) + " ");
+			}
+			System.out.println();
+
 		}
 	}
 }
