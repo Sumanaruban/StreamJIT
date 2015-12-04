@@ -121,7 +121,7 @@ public class AffinityManagers {
 
 	public static class CoreCodeAffinityManager implements AffinityManager {
 
-		final ImmutableSet<Blob> blobSet;
+		final Set<Blob> blobSet;
 
 		final ImmutableTable<Token, Integer, Integer> assignmentTable;
 
@@ -132,7 +132,7 @@ public class AffinityManagers {
 		 */
 		final Map<Integer, Integer> freeCoresMap;
 
-		CoreCodeAffinityManager(ImmutableSet<Blob> blobSet) {
+		CoreCodeAffinityManager(Set<Blob> blobSet) {
 			this.blobSet = blobSet;
 			freeCoresMap = freeCores();
 			totalThreads = totalThreads(blobSet);
@@ -144,7 +144,7 @@ public class AffinityManagers {
 			return ImmutableSet.of(assignmentTable.get(blobID, coreCode));
 		}
 
-		private int totalThreads(ImmutableSet<Blob> blobSet) {
+		private int totalThreads(Set<Blob> blobSet) {
 			int threads = 0;
 			for (Blob b : blobSet)
 				threads += b.getCoreCount();
