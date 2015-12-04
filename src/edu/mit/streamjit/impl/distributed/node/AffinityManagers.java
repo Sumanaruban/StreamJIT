@@ -153,6 +153,7 @@ public class AffinityManagers {
 
 		private ImmutableTable<Token, Integer, Integer> assign() {
 			Map<Blob, Integer> coresPerBlob = coresPerBlob();
+			Map<Blob, Set<Integer>> coresForBlob = coresForBlob(coresPerBlob);
 
 			return null;
 		}
@@ -249,8 +250,8 @@ public class AffinityManagers {
 						int required = en.getValue();
 						Set<Integer> s = new HashSet<Integer>();
 						for (Map.Entry<Integer, Integer> e : m.entrySet()) {
-							int a = Math.max(required, e.getValue());
-							s.addAll(cores(e.getValue(), a));
+							int a = Math.min(required, e.getValue());
+							s.addAll(cores(e.getKey(), a));
 							required -= a;
 						}
 						socketBlobAssignment.put(en.getKey(), s);
