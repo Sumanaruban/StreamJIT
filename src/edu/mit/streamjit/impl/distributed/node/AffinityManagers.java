@@ -210,6 +210,7 @@ public class AffinityManagers {
 		 */
 		private Map<Blob, Integer> proportionalAllocation() {
 			Map<Blob, Integer> coresPerBlob = new HashMap<>();
+			Set<Blob> unsatisfiedBlobs = new HashSet<>();
 			int allocatedCores = 0;
 			for (Blob b : blobSet) {
 				int coreCode = b.getCoreCount();
@@ -217,17 +218,19 @@ public class AffinityManagers {
 						/ totalThreads);
 				coresPerBlob.put(b, p);
 				allocatedCores += p;
+				if (coreCode > p)
+					unsatisfiedBlobs.add(b);
 			}
 			int remainingCores = Machine.physicalCores - allocatedCores;
-			assignRemainingCores(coresPerBlob, remainingCores);
+			assignRemainingCores(coresPerBlob, remainingCores, unsatisfiedBlobs);
 			return coresPerBlob;
 		}
 
 		private void assignRemainingCores(Map<Blob, Integer> coresPerBlob,
-				int remainingCores) {
+				int remainingCores, Set<Blob> unsatisfiedBlobs) {
 			if (remainingCores < 1)
 				return;
-			List<Blob> blobList = new ArrayList<>(blobSet);
+			List<Blob> blobList = new ArrayList<>(unsatisfiedBlobs);
 			Collections.sort(
 					blobList,
 					(b1, b2) -> Integer.compare(b1.getCoreCount(),
