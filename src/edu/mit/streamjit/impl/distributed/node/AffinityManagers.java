@@ -255,8 +255,8 @@ public class AffinityManagers {
 			for (Blob b : blobList) {
 				if (remainingCores == 0)
 					break;
-				int p = coresPerBlob.remove(b);
-				coresPerBlob.put(b, p + 1);
+				int p = coresPerBlob.get(b);
+				coresPerBlob.replace(b, p + 1);
 				remainingCores--;
 			}
 		}
