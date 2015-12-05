@@ -124,7 +124,7 @@ public class AffinityManagers {
 
 		private final ImmutableTable<Blob, Integer, Integer> assignmentTable;
 
-		private final int totalThreads;
+		private final int totalRequiredCores;
 
 		/**
 		 * Free cores in each socket.
@@ -134,7 +134,7 @@ public class AffinityManagers {
 		CoreCodeAffinityManager(Set<Blob> blobSet) {
 			this.blobSet = blobSet;
 			freeCoresMap = freeCores();
-			totalThreads = totalThreads(blobSet);
+			totalRequiredCores = totalRequiredCores(blobSet);
 			assignmentTable = assign();
 			printTable(assignmentTable);
 		}
@@ -144,11 +144,11 @@ public class AffinityManagers {
 			return ImmutableSet.of(assignmentTable.get(blobID, coreCode));
 		}
 
-		private int totalThreads(Set<Blob> blobSet) {
-			int threads = 0;
+		private int totalRequiredCores(Set<Blob> blobSet) {
+			int cores = 0;
 			for (Blob b : blobSet)
-				threads += b.getCoreCount();
-			return threads;
+				cores += b.getCoreCount();
+			return cores;
 		}
 
 		private ImmutableTable<Blob, Integer, Integer> assign() {
@@ -184,7 +184,7 @@ public class AffinityManagers {
 			int free = currentFreeCores();
 			if (blobSet.size() >= free)
 				return OneCorePerBlob();
-			else if (totalThreads > free)
+			else if (totalRequiredCores > free)
 				return proportionalAllocation();
 			else
 				return FullAllocation();
@@ -231,7 +231,7 @@ public class AffinityManagers {
 			for (Blob b : blobSet) {
 				int coreCode = b.getCoreCount();
 				int p = Math.max(1, (coreCode * Machine.physicalCores)
-						/ totalThreads);
+						/ totalRequiredCores);
 				coresPerBlob.put(b, p);
 				allocatedCores += p;
 				if (coreCode > p)
@@ -260,7 +260,8 @@ public class AffinityManagers {
 			}
 		}
 
-		private Map<Blob, Set<Integer>> coresForBlob(Map<Blob, Integer> coresPerBlob) {
+		private Map<Blob, Set<Integer>> coresForBlob(
+				Map<Blob, Integer> coresPerBlob) {
 			Map<Blob, Set<Integer>> coresForBlob = new HashMap<>();
 
 			for (int i = 0; i < Machine.sockets; i++) {
@@ -333,8 +334,8 @@ public class AffinityManagers {
 			return req;
 		}
 
-		private void socketBlobAssignment(int socket, Map<Blob, Integer> subset,
-				Map<Blob, Set<Integer>> coresForBlob) {
+		private void socketBlobAssignment(int socket,
+				Map<Blob, Integer> subset, Map<Blob, Set<Integer>> coresForBlob) {
 			int totalJobs = 0;
 			for (int i : subset.values())
 				totalJobs += i;
