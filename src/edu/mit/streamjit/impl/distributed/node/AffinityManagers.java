@@ -436,17 +436,17 @@ public class AffinityManagers {
 				System.out.print(i.getValue() + " ");
 			System.out.println();
 		}
-	}
 
-	static void printTable(
-			ImmutableTable<Blob, Integer, Integer> assignmentTable) {
-		for (Blob b : assignmentTable.rowKeySet()) {
-			System.out.print(b + " :-");
-			for (int i = 0; i < b.getCoreCount(); i++) {
-				System.out.print(assignmentTable.get(b, i) + " ");
+		static void printTable(
+				ImmutableTable<Blob, Integer, Integer> assignmentTable) {
+			for (Blob b : assignmentTable.rowKeySet()) {
+				System.out.print(b + " :-");
+				for (int i = 0; i < b.getCoreCount(); i++) {
+					System.out.print(assignmentTable.get(b, i) + " ");
+				}
+				System.out.println();
+
 			}
-			System.out.println();
-
 		}
 	}
 }
