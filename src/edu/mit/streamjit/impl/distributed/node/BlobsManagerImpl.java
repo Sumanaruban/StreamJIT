@@ -141,12 +141,24 @@ public class BlobsManagerImpl implements BlobsManager {
 		this.compInfoProcessor = new CTRLCompilationInfoProcessorImpl(blobSet);
 		this.bufferManager = new GlobalBufferManager(blobSet, streamNode,
 				appInstId);
-		this.affinityManager = new AffinityManagers.EqualAffinityManager(
-				blobSet.size());
+		this.affinityManager = affinityManager(blobSet);
 		this.appName = appName;
 		bufferManager.initialise();
 		if (bufferManager.isbufferSizesReady())
 			createBEs(blobSet);
+	}
+
+	private AffinityManager affinityManager(Set<Blob> blobSet) {
+		switch (Options.AffinityManager) {
+			case 0 :
+				return new AffinityManagers.EmptyAffinityManager();
+			case 1 :
+				return new AffinityManagers.OneCoreAffinityManager();
+			case 2 :
+				return new AffinityManagers.EqualAffinityManager(blobSet.size());
+			default :
+				return new AffinityManagers.CoreCodeAffinityManager(blobSet);
+		}
 	}
 
 	/**

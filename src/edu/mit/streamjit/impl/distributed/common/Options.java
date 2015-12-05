@@ -17,6 +17,11 @@ import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.TailChannels;
 import edu.mit.streamjit.impl.distributed.TailChannels.BlockingTailChannel1;
 import edu.mit.streamjit.impl.distributed.TailChannels.BlockingTailChannel2;
+import edu.mit.streamjit.impl.distributed.node.AffinityManager;
+import edu.mit.streamjit.impl.distributed.node.AffinityManagers.CoreCodeAffinityManager;
+import edu.mit.streamjit.impl.distributed.node.AffinityManagers.EmptyAffinityManager;
+import edu.mit.streamjit.impl.distributed.node.AffinityManagers.EqualAffinityManager;
+import edu.mit.streamjit.impl.distributed.node.AffinityManagers.OneCoreAffinityManager;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.tuner.OnlineTuner;
 import edu.mit.streamjit.tuner.TCPTuner;
@@ -171,6 +176,19 @@ public final class Options {
 	public static final int tuningRounds;
 
 	/**
+	 * Type of {@link AffinityManager} to use.
+	 * <ol>
+	 * <li>0 - {@link EmptyAffinityManager}.
+	 * <li>1 - {@link OneCoreAffinityManager}.
+	 * <li>2 - {@link EqualAffinityManager}.
+	 * <li>3 - {@link CoreCodeAffinityManager}.
+	 * <li>Other integers - {@link CoreCodeAffinityManager}.
+	 * </ol>
+	 * 
+	 */
+	public static final int AffinityManager;
+
+	/**
 	 * Large multiplier -> Large compilation time and Large waiting time.
 	 */
 	public static final int multiplierMaxValue;
@@ -274,6 +292,7 @@ public final class Options {
 				.getProperty("seamlessReconfig"));
 		DDActionFINISH = Boolean.parseBoolean(prop
 				.getProperty("DDActionFINISH"));
+		AffinityManager = Integer.parseInt(prop.getProperty("AffinityManager"));
 	}
 
 	public static Properties getProperties() {
@@ -312,6 +331,7 @@ public final class Options {
 		setProperty(prop, "dumpDrainData", dumpDrainData);
 		setProperty(prop, "seamlessReconfig", seamlessReconfig);
 		setProperty(prop, "DDActionFINISH", DDActionFINISH);
+		setProperty(prop, "AffinityManager", AffinityManager);
 		return prop;
 	}
 
