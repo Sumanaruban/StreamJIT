@@ -276,7 +276,7 @@ public class AffinityManagers {
 		}
 
 		Map<Blob, Set<Integer>> coresForBlob(Map<Blob, Integer> coresPerBlob) {
-			Map<Blob, Set<Integer>> socketBlobAssignment = new HashMap<>();
+			Map<Blob, Set<Integer>> coresForBlob = new HashMap<>();
 
 			for (int i = 0; i < Machine.sockets; i++) {
 				for (int j = Machine.coresPerSocket; j > 0; j--) {
@@ -286,8 +286,7 @@ public class AffinityManagers {
 					ss(list, list.size(), new HashMap<>(), j, subsets, true);
 					if (subsets.size() > 0) {
 						Set<Blob> blobs = subsets.get(0).keySet();
-						socketBlobAssignment(i, subsets.get(0),
-								socketBlobAssignment);
+						socketBlobAssignment(i, subsets.get(0), coresForBlob);
 						for (Blob b : blobs)
 							coresPerBlob.remove(b);
 						break;
@@ -296,8 +295,8 @@ public class AffinityManagers {
 			}
 
 			if (coresPerBlob.size() != 0)
-				breakBlobs(coresPerBlob, socketBlobAssignment);
-			return socketBlobAssignment;
+				breakBlobs(coresPerBlob, coresForBlob);
+			return coresForBlob;
 		}
 
 		private void reInializeFreeCoreMap() {
@@ -306,7 +305,7 @@ public class AffinityManagers {
 		}
 
 		private void breakBlobs(Map<Blob, Integer> coresPerBlob,
-				Map<Blob, Set<Integer>> socketBlobAssignment) {
+				Map<Blob, Set<Integer>> coresForBlob) {
 			for (Map.Entry<Blob, Integer> en : coresPerBlob.entrySet()) {
 				if (currentFreeCores() == 0)
 					reInializeFreeCoreMap();
@@ -328,7 +327,7 @@ public class AffinityManagers {
 							s.addAll(cores(e.getKey(), a));
 							required -= a;
 						}
-						socketBlobAssignment.put(en.getKey(), s);
+						coresForBlob.put(en.getKey(), s);
 						break;
 					}
 				}
@@ -350,7 +349,7 @@ public class AffinityManagers {
 		}
 
 		void socketBlobAssignment(int socket, Map<Blob, Integer> subset,
-				Map<Blob, Set<Integer>> socketBlobAssignment) {
+				Map<Blob, Set<Integer>> coresForBlob) {
 			int totalJobs = 0;
 			for (int i : subset.values())
 				totalJobs += i;
@@ -361,8 +360,7 @@ public class AffinityManagers {
 								totalJobs, socket, Machine.coresPerSocket));
 
 			for (Map.Entry<Blob, Integer> en : subset.entrySet()) {
-				socketBlobAssignment.put(en.getKey(),
-						cores(socket, en.getValue()));
+				coresForBlob.put(en.getKey(), cores(socket, en.getValue()));
 			}
 		}
 
