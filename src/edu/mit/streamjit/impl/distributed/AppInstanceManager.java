@@ -122,7 +122,6 @@ public class AppInstanceManager {
 	}
 
 	public void drainingFinished(boolean isFinal) {
-		isRunning = false;
 		headTailHandler.waitToStopHead();
 		headTailHandler.stopTail(isFinal);
 		headTailHandler.waitToStopTail();
@@ -133,6 +132,7 @@ public class AppInstanceManager {
 		System.out.println(String.format(
 				"%s: Draining Finished. Draining time = %dms.", toString(),
 				time));
+		isRunning = false;
 	}
 
 	/**
