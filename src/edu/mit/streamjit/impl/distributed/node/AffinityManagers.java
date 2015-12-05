@@ -236,7 +236,7 @@ public class AffinityManagers {
 					List<Map<Blob, Integer>> subsets = new ArrayList<>();
 					List<Map.Entry<Blob, Integer>> list = new ArrayList<>(
 							coresPerBlob.entrySet());
-					ss(list, list.size(), new HashMap<>(), j, subsets);
+					ss(list, list.size(), new HashMap<>(), j, subsets, true);
 					if (subsets.size() > 0) {
 						Set<Blob> blobs = subsets.get(0).keySet();
 						socketBlobAssignment(i, subsets.get(0),
@@ -265,11 +265,11 @@ public class AffinityManagers {
 					reInializeFreeCoreMap();
 				for (int i = en.getValue();; i++) {
 					if (i > 5000)
-						System.out.println("sddddddddd");
+						System.out.println("dddddddddddddddddddd");
 					List<Map<Integer, Integer>> subsets = new ArrayList<>();
 					List<Map.Entry<Integer, Integer>> list = new ArrayList<>(
 							freeCoresMap.entrySet());
-					ss(list, list.size(), new HashMap<>(), i, subsets);
+					ss(list, list.size(), new HashMap<>(), i, subsets, false);
 					if (subsets.size() > 0) {
 						subsets.sort((m1, m2) -> Integer.compare(m1.size(),
 								m2.size()));
@@ -335,35 +335,46 @@ public class AffinityManagers {
 		}
 
 		/**
-		 * Finds subset sums.
+		 * Finds subsetsums. The original code was copied from
+		 * http://www.edufyme.com/code/?id=45c48cce2e2d7fbdea1afc51c7c6ad26.
 		 * 
-		 * @param list
-		 * @param n
-		 * @param subset
-		 * @param sum
-		 * @param subsets
+		 * I added an additional parameter (boolean firstSubSet) to stop
+		 * exploring too many subsets. If the flag is true, it returns only the
+		 * very first subset.
+		 * 
 		 */
-		static <T> void ss(List<Map.Entry<T, Integer>> list, int n,
-				Map<T, Integer> subset, int sum, List<Map<T, Integer>> subsets) {
+		static <T> boolean ss(List<Map.Entry<T, Integer>> list, int n,
+				Map<T, Integer> subset, int sum, List<Map<T, Integer>> subsets,
+				boolean firstSubSet) {
 
 			if (sum == 0) {
 				// printAns(subset);
 				subsets.add(subset);
-				return;
+				return firstSubSet;
 			}
 
 			if (n == 0)
-				return;
+				return false;
 
+			boolean ret;
 			if (list.get(n - 1).getValue() <= sum) {
-				ss(list, n - 1, new HashMap<>(subset), sum, subsets);
+				ret = ss(list, n - 1, new HashMap<>(subset), sum, subsets,
+						firstSubSet);
+				if (ret)
+					return true;
 				Map.Entry<T, Integer> en = list.get(n - 1);
 				subset.put(en.getKey(), en.getValue());
-				ss(list, n - 1, new HashMap<>(subset), sum - en.getValue(),
-						subsets);
+				ret = ss(list, n - 1, new HashMap<>(subset),
+						sum - en.getValue(), subsets, firstSubSet);
+				if (ret)
+					return true;
 			} else {
-				ss(list, n - 1, new HashMap<>(subset), sum, subsets);
+				ret = ss(list, n - 1, new HashMap<>(subset), sum, subsets,
+						firstSubSet);
+				if (ret)
+					return true;
 			}
+			return false;
 		}
 
 		/**
