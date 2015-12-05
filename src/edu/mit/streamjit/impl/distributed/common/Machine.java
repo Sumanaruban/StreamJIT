@@ -31,6 +31,7 @@ public final class Machine {
 
 	static {
 		Properties prop = loadProperties();
+		int availP = Runtime.getRuntime().availableProcessors();
 		CPUs = Integer.parseInt(prop.getProperty("CPUs"));
 		threadsPerCore = Integer.parseInt(prop.getProperty("threadsPerCore"));
 		sockets = Integer.parseInt(prop.getProperty("sockets"));
@@ -40,6 +41,11 @@ public final class Machine {
 					String.format(
 							"Machine details does not match. sockets(%d) * coresPerSocket(%d) * threadsPerCore(%d) != CPUs(%d)",
 							sockets, coresPerSocket, threadsPerCore, CPUs));
+		if (availP < CPUs)
+			throw new IllegalStateException(
+					String.format(
+							"Available processors(%d) on this machine is lesser than number of CPUs(%d) asked to use.",
+							availP, CPUs));
 		isHTEnabled = !(threadsPerCore == 1);
 		physicalCores = sockets * coresPerSocket;
 	}
