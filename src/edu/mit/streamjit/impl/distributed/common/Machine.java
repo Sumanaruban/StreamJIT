@@ -63,7 +63,7 @@ public final class Machine {
 		Properties prop = new Properties();
 		InputStream input = null;
 		try {
-			input = new FileInputStream("machine.properties");
+			input = new FileInputStream("../machine.properties");
 			prop.load(input);
 		} catch (IOException ex) {
 			System.err.println("Failed to load machine.properties");
@@ -78,7 +78,7 @@ public final class Machine {
 	public static void storeProperties() {
 		OutputStream output = null;
 		try {
-			output = new FileOutputStream("machine.properties");
+			output = new FileOutputStream("../machine.properties");
 			Properties prop = getProperties();
 			prop.store(output, null);
 		} catch (IOException io) {
