@@ -182,6 +182,33 @@ public class AffinityManagers {
 		}
 
 		private Map<Blob, Integer> coresPerBlob() {
+			if (totalThreads > currentFreeCores())
+				return proportionalAllocation();
+			else
+				return FullAllocation();
+		}
+
+		/**
+		 * Use this allocation if the total physical cores are more or equal
+		 * than the total required cores.
+		 * 
+		 * @return
+		 */
+		private Map<Blob, Integer> FullAllocation() {
+			Map<Blob, Integer> coresPerBlob = new HashMap<>();
+			for (Blob b : blobSet) {
+				coresPerBlob.put(b, b.getCoreCount());
+			}
+			return coresPerBlob;
+		}
+
+		/**
+		 * Use this allocation if the total physical cores are lesser than the
+		 * total required cores.
+		 * 
+		 * @return
+		 */
+		private Map<Blob, Integer> proportionalAllocation() {
 			Map<Blob, Integer> coresPerBlob = new HashMap<>();
 			int allocatedCores = 0;
 			for (Blob b : blobSet) {
