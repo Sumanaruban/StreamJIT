@@ -15,7 +15,6 @@ import com.google.common.collect.ImmutableTable;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.distributed.common.Machine;
-import edu.mit.streamjit.impl.distributed.common.Utils;
 
 /**
  * Various implementations of the interface {@link AffinityManager}.
@@ -261,20 +260,6 @@ public class AffinityManagers {
 			}
 		}
 
-		private ImmutableTable<Token, Integer, Integer> assignment(
-				Map<Blob, Integer> coresPerBlob) {
-			int core = 0;
-			ImmutableTable.Builder<Token, Integer, Integer> builder = ImmutableTable
-					.builder();
-			for (Blob b : blobSet) {
-				Token blobId = Utils.getBlobID(b);
-				int cores = coresPerBlob.get(b);
-				int coreCodes = b.getCoreCount();
-
-			}
-			return builder.build();
-		}
-
 		Map<Blob, Set<Integer>> coresForBlob(Map<Blob, Integer> coresPerBlob) {
 			Map<Blob, Set<Integer>> coresForBlob = new HashMap<>();
 
@@ -444,32 +429,6 @@ public class AffinityManagers {
 			if (Machine.isHTEnabled)
 				return physicalCoreID + Machine.physicalCores;
 			return physicalCoreID;
-		}
-
-		/**
-		 * Uses only physical cores. Dedicated physical core for each coreCode
-		 * of each blob.
-		 * 
-		 * @return
-		 */
-		private ImmutableTable<Token, Integer, Integer> assignment1() {
-			System.out.println("Core Assignment 1");
-			int core = 0;
-			ImmutableTable.Builder<Token, Integer, Integer> builder = ImmutableTable
-					.builder();
-			for (Blob b : blobSet) {
-				Token blobId = Utils.getBlobID(b);
-				for (int coreCode = 0; coreCode < b.getCoreCount(); coreCode++) {
-					builder.put(blobId, coreCode, core++);
-				}
-			}
-
-			if (core > Machine.physicalCores)
-				throw new IllegalStateException(
-						String.format(
-								"Assignment 1 : Assigned cores(%d) > Machine.physicalCores(%d)",
-								core, Machine.physicalCores));
-			return builder.build();
 		}
 
 		static <T> void printAns(Map<T, Integer> subset) {
