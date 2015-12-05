@@ -120,16 +120,16 @@ public class AffinityManagers {
 
 	public static class CoreCodeAffinityManager implements AffinityManager {
 
-		final Set<Blob> blobSet;
+		private final Set<Blob> blobSet;
 
-		final ImmutableTable<Blob, Integer, Integer> assignmentTable;
+		private final ImmutableTable<Blob, Integer, Integer> assignmentTable;
 
-		final int totalThreads;
+		private final int totalThreads;
 
 		/**
 		 * Free cores in each socket.
 		 */
-		final Map<Integer, Integer> freeCoresMap;
+		private final Map<Integer, Integer> freeCoresMap;
 
 		CoreCodeAffinityManager(Set<Blob> blobSet) {
 			this.blobSet = blobSet;
@@ -172,7 +172,7 @@ public class AffinityManagers {
 			return tBuilder.build();
 		}
 
-		Map<Integer, Integer> freeCores() {
+		private Map<Integer, Integer> freeCores() {
 			Map<Integer, Integer> m = new HashMap<Integer, Integer>(
 					Machine.sockets);
 			for (int i = 0; i < Machine.sockets; i++)
@@ -260,7 +260,7 @@ public class AffinityManagers {
 			}
 		}
 
-		Map<Blob, Set<Integer>> coresForBlob(Map<Blob, Integer> coresPerBlob) {
+		private Map<Blob, Set<Integer>> coresForBlob(Map<Blob, Integer> coresPerBlob) {
 			Map<Blob, Set<Integer>> coresForBlob = new HashMap<>();
 
 			for (int i = 0; i < Machine.sockets; i++) {
@@ -319,21 +319,21 @@ public class AffinityManagers {
 			}
 		}
 
-		int currentFreeCores() {
+		private int currentFreeCores() {
 			int free = 0;
 			for (int i : freeCoresMap.values())
 				free += i;
 			return free;
 		}
 
-		int requiredCores(Map<Blob, Integer> coresPerBlob) {
+		private int requiredCores(Map<Blob, Integer> coresPerBlob) {
 			int req = 0;
 			for (int i : coresPerBlob.values())
 				req += i;
 			return req;
 		}
 
-		void socketBlobAssignment(int socket, Map<Blob, Integer> subset,
+		private void socketBlobAssignment(int socket, Map<Blob, Integer> subset,
 				Map<Blob, Set<Integer>> coresForBlob) {
 			int totalJobs = 0;
 			for (int i : subset.values())
@@ -349,7 +349,7 @@ public class AffinityManagers {
 			}
 		}
 
-		Set<Integer> cores(int socket, int noOfCores) {
+		private Set<Integer> cores(int socket, int noOfCores) {
 			int socketStart = socket * Machine.coresPerSocket;
 			int freeCores = freeCoresMap.get(socket);
 			if (noOfCores > freeCores)
@@ -373,7 +373,7 @@ public class AffinityManagers {
 		 * very first subset.
 		 * 
 		 */
-		static <T> boolean ss(List<Map.Entry<T, Integer>> list, int n,
+		private static <T> boolean ss(List<Map.Entry<T, Integer>> list, int n,
 				Map<T, Integer> subset, int sum, List<Map<T, Integer>> subsets,
 				boolean firstSubSet) {
 
@@ -431,13 +431,13 @@ public class AffinityManagers {
 			return physicalCoreID;
 		}
 
-		static <T> void printAns(Map<T, Integer> subset) {
+		private static <T> void printAns(Map<T, Integer> subset) {
 			for (Map.Entry i : subset.entrySet())
 				System.out.print(i.getValue() + " ");
 			System.out.println();
 		}
 
-		static void printTable(
+		private static void printTable(
 				ImmutableTable<Blob, Integer, Integer> assignmentTable) {
 			for (Blob b : assignmentTable.rowKeySet()) {
 				System.out.print(b + " :-");
