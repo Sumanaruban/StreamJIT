@@ -45,7 +45,7 @@ public class AFManagersTester {
 		int blobs = 3 + r.nextInt(maxBlobs);
 		Set<Blob> s = new HashSet<>(blobs);
 		for (int i = 0; i < blobs; i++)
-			s.add(new DBlob(5 + r.nextInt(maxCoreCode - 5), i));
+			s.add(new DBlob(r.nextInt(maxCoreCode + 1), i));
 		return s;
 	}
 
