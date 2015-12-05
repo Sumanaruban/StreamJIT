@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableTable;
 import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.distributed.common.Machine;
+import edu.mit.streamjit.impl.distributed.common.Utils;
 
 /**
  * Various implementations of the interface {@link AffinityManager}.
@@ -126,6 +127,8 @@ public class AffinityManagers {
 
 		private final int totalRequiredCores;
 
+		private final Map<Token, Blob> blobIdBlobMap;
+
 		/**
 		 * Free cores in each socket.
 		 */
@@ -135,13 +138,15 @@ public class AffinityManagers {
 			this.blobSet = blobSet;
 			freeCoresMap = freeCores();
 			totalRequiredCores = totalRequiredCores(blobSet);
+			blobIdBlobMap = blobIdBlobMap(blobSet);
 			assignmentTable = assign();
 			printTable(assignmentTable);
 		}
 
 		@Override
 		public ImmutableSet<Integer> getAffinity(Token blobID, int coreCode) {
-			return ImmutableSet.of(assignmentTable.get(blobID, coreCode));
+			Blob b = blobIdBlobMap.get(blobID);
+			return ImmutableSet.of(assignmentTable.get(b, coreCode));
 		}
 
 		private int totalRequiredCores(Set<Blob> blobSet) {
@@ -149,6 +154,18 @@ public class AffinityManagers {
 			for (Blob b : blobSet)
 				cores += b.getCoreCount();
 			return cores;
+		}
+
+		private Map<Token, Blob> blobIdBlobMap(Set<Blob> blobSet) {
+			Map<Token, Blob> m = new HashMap<>();
+			for (Blob b : blobSet) {
+				if (b.getInputs() == null) // Skip if the blob is
+											// AFManagersTester.DBlob().
+					continue;
+				Token blobID = Utils.getBlobID(b);
+				m.put(blobID, b);
+			}
+			return m;
 		}
 
 		private ImmutableTable<Blob, Integer, Integer> assign() {
