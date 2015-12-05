@@ -247,14 +247,22 @@ public class AffinityManagers {
 					}
 				}
 			}
+
 			if (coresPerBlob.size() != 0)
 				breakBlobs(coresPerBlob, socketBlobAssignment);
 			return socketBlobAssignment;
 		}
 
+		private void reInializeFreeCoreMap() {
+			for (int i = 0; i < Machine.sockets; i++)
+				freeCoresMap.put(i, Machine.coresPerSocket);
+		}
+
 		private void breakBlobs(Map<Blob, Integer> coresPerBlob,
 				Map<Blob, Set<Integer>> socketBlobAssignment) {
 			for (Map.Entry<Blob, Integer> en : coresPerBlob.entrySet()) {
+				if (currentFreeCores() == 0)
+					reInializeFreeCoreMap();
 				for (int i = en.getValue();; i++) {
 					if (i > 5000)
 						System.out.println("sddddddddd");
@@ -278,6 +286,20 @@ public class AffinityManagers {
 					}
 				}
 			}
+		}
+
+		int currentFreeCores() {
+			int free = 0;
+			for (int i : freeCoresMap.values())
+				free += i;
+			return free;
+		}
+
+		int requiredCores(Map<Blob, Integer> coresPerBlob) {
+			int req = 0;
+			for (int i : coresPerBlob.values())
+				req += i;
+			return req;
 		}
 
 		void socketBlobAssignment(int socket, Map<Blob, Integer> subset,
