@@ -226,13 +226,7 @@ public abstract class AbstractDrainer {
 		}
 		drainingDone(this.state == DrainerState.FINAL);
 		logger.drainingFinished("Intermediate");
-		logger.drainDataCollectionStarted();
-		try {
-			drainDataHandler.awaitDrainData();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		logger.drainDataCollectionFinished("");
+		drainDataHandler.awaitDrainData();
 		return true;
 	}
 
@@ -253,13 +247,7 @@ public abstract class AbstractDrainer {
 			e.printStackTrace();
 		}
 		logger.drainingFinished("Intermediate");
-		logger.drainDataCollectionStarted();
-		try {
-			drainDataHandler.awaitDrainData();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		logger.drainDataCollectionFinished("");
+		drainDataHandler.awaitDrainData();
 		// TODO : Even after the final draining, we can clear some more
 		// intermediate data by running an Interpreter blob.
 		// StreamJitApp.minimizeDrainData() does this job. Uncomment the
@@ -514,13 +502,18 @@ public abstract class AbstractDrainer {
 		 * the all received DrainData and set the combined DrainData to
 		 * {@link StreamJitApp#drainData}.
 		 * 
-		 * @throws InterruptedException
 		 */
-		public final void awaitDrainData() throws InterruptedException {
+		public final void awaitDrainData() {
+			logger.drainDataCollectionStarted();
 			if (Options.useDrainData) {
-				drainDataLatch.await();
+				try {
+					drainDataLatch.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				appinst.drainData = drainDataHandler.getDrainData();
 			}
+			logger.drainDataCollectionFinished("");
 		}
 
 		public final void newSNDrainData(SNDrainedData snDrainedData) {
