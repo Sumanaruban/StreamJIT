@@ -22,6 +22,8 @@
 package edu.mit.streamjit.impl.distributed;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -89,6 +91,8 @@ public class StreamJitAppManager {
 
 	public final Reconfigurer reconfigurer;
 
+	private final Map<Integer, AppInstanceManager> AIMs = new HashMap<>();
+
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
 			ConnectionManager conManager, TimeLogger logger, Buffer tailBuffer) {
 		noOfnodes = controller.getAllNodeIDs().size();
@@ -134,13 +138,11 @@ public class StreamJitAppManager {
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {
-		if (curAIM.appInstId() == appInstId)
-			return curAIM;
-		else if (prevAIM != null && prevAIM.appInstId() == appInstId)
-			return prevAIM;
-		else
+		AppInstanceManager aim = AIMs.get(appInstId);
+		if (aim == null)
 			throw new IllegalStateException(String.format(
 					"No AppInstanceManager with ID=%d exists", appInstId));
+		return aim;
 	}
 
 	public MasterProfiler getProfiler() {
@@ -162,7 +164,15 @@ public class StreamJitAppManager {
 
 		prevAIM = curAIM;
 		curAIM = new AppInstanceManager(appinst, logger, this);
+		AIMs.put(curAIM.appInstId(), curAIM);
 		return curAIM;
+	}
+
+	private void removeAIM(int appInstId) {
+		AIMs.remove(appInstId);
+		System.out.println(String.format(
+				"AIM-%d has been removed. Total live AIMs are %d", appInstId,
+				AIMs.size()));
 	}
 
 	// TODO:seamless.
@@ -201,17 +211,18 @@ public class StreamJitAppManager {
 		if (aim == null)
 			return true;
 
+		boolean ret = true;
 		if (aim.isRunning) {
-			boolean ret = aim.drainer.drainIntermediate();
+			ret = aim.drainer.drainIntermediate();
 			if (Options.useDrainData && Options.dumpDrainData) {
 				String cfgPrefix = ConfigurationUtils
 						.getConfigPrefix(aim.appInst.configuration);
 				DrainData dd = aim.appInst.drainData;
 				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
 			}
-			return ret;
-		} else
-			return true;
+		}
+		removeAIM(aim.appInstId());
+		return ret;
 	}
 
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
