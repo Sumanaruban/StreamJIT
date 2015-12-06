@@ -169,7 +169,8 @@ public class StreamJitAppManager {
 	}
 
 	private void removeAIM(int appInstId) {
-		AIMs.remove(appInstId);
+		AppInstanceManager aim = AIMs.remove(appInstId);
+		aim.releaseAllResources();
 		System.out.println(String.format(
 				"AIM-%d has been removed. Total live AIMs are %d", appInstId,
 				AIMs.size()));
@@ -193,6 +194,8 @@ public class StreamJitAppManager {
 	}
 
 	public long getFixedOutputTime(long timeout) throws InterruptedException {
+		if (prevAIM != null)
+			prevAIM.waitToStop();
 		long time = curAIM.headTailHandler.tailChannel
 				.getFixedOutputTime(timeout);
 		if (curAIM.apStsPro.error) {

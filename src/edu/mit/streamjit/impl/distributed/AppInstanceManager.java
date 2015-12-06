@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
@@ -93,6 +95,8 @@ public class AppInstanceManager {
 	Map<Token, ConnectionInfo> conInfoMap;
 
 	final HeadTailHandler headTailHandler;
+
+	private final CountDownLatch latch = new CountDownLatch(1);
 
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
@@ -259,6 +263,21 @@ public class AppInstanceManager {
 	DrainData getState() {
 		ciP.waitforStates();
 		return states;
+	}
+
+	void releaseAllResources() {
+		latch.countDown();
+	}
+
+	void waitToStop() {
+		Stopwatch s = Stopwatch.createStarted();
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		System.out.println(String.format("AIM-%d. waitToStop time = %dms",
+				appInstId(), s.elapsed(TimeUnit.MILLISECONDS)));
 	}
 
 	/**
