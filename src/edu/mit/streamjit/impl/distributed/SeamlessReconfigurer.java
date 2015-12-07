@@ -10,6 +10,7 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager.Reconfigurer;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
@@ -32,10 +33,15 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	private final Thread tailMergerThread;
 
+	private final EventTimeLogger reconfigEvntLogger;
+
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
 			Buffer tailBuffer, boolean needSeamlessTailMerger) {
 		this.appManager = streamJitAppManager;
 		this.mLogger = appManager.mLogger;
+		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
+				appManager.app.name, "Reconfigurer", false,
+				Options.throughputMeasurementPeriod >= 1000);
 		tailMerger = tailMerger(tailBuffer, needSeamlessTailMerger);
 		tailMergerThread = createAndStartTailMergerThread(needSeamlessTailMerger);
 	}
@@ -46,6 +52,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			tailMerger.switchBuf();
 			tailMerger.unregisterAppInst(aim.appInstId());
 		}
+		event("F-" + aim.appInstId());
 	}
 
 	private TailBufferMerger tailMerger(Buffer tailBuffer,
@@ -92,6 +99,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				* appManager.prevAIM.graphSchedule.steadyOut;
 	}
 
+	protected void event(String eventName) {
+		reconfigEvntLogger.logEvent(eventName, 0);
+	}
+
 	static class SeamlessStatefulReconfigurer extends SeamlessReconfigurer {
 
 		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager,
@@ -101,6 +112,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 		public int reconfigure(AppInstance appinst) {
 			System.out.println("SeamlessStatefulReconfigurer...");
+			event("Cfg" + appinst.id);
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, drainDataSize1());
@@ -128,6 +140,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 									initialState, aim.appInst.id));
 				}
 				start(aim);
+				event("S-" + appinst.id);
 			} else {
 				// TODO : [2015-11-18]
 				// This calling causes java.lang.NullPointerException at
@@ -240,4 +253,5 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			return 2;
 		}
 	}
+
 }
