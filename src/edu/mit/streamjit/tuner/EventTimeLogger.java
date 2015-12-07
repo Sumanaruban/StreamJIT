@@ -91,7 +91,13 @@ public interface EventTimeLogger {
 
 		private final OutputStreamWriter osWriter;
 		private final Map<String, Event> events;
-		final Ticker ticker = new NanoTicker();
+		final Ticker ticker;
+
+		/**
+		 * If this flag is <code>true</code>, {@link EventTimeLogger} logs the
+		 * system's upTime in seconds; logs in milliseconds otherwise.
+		 */
+		private final boolean reportInSeconds;
 
 		private RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
 
@@ -102,9 +108,14 @@ public interface EventTimeLogger {
 		 *            be used by multiple threads. EventTimeLoggerImpl use
 		 *            {@link ConcurrentHashMap} to store events in true case;
 		 *            uses {@link HashMap} otherwise.
+		 * @param reportInSeconds
+		 *            If this flag is <code>true</code>, {@link EventTimeLogger}
+		 *            logs the system's upTime in seconds; logs in milliseconds
+		 *            otherwise.
 		 */
-		public EventTimeLoggerImpl(OutputStream os, boolean needSynchronized) {
-			this(getOSWriter(os), needSynchronized);
+		public EventTimeLoggerImpl(OutputStream os, boolean needSynchronized,
+				boolean reportInSeconds) {
+			this(getOSWriter(os), needSynchronized, reportInSeconds);
 		}
 
 		/**
@@ -115,14 +126,23 @@ public interface EventTimeLogger {
 		 *            be used by multiple threads. EventTimeLoggerImpl use
 		 *            {@link ConcurrentHashMap} to store events in true case;
 		 *            uses {@link HashMap} otherwise.
+		 * @param reportInSeconds
+		 *            If this flag is <code>true</code>, {@link EventTimeLogger}
+		 *            logs the system's upTime in seconds; logs in milliseconds
+		 *            otherwise.
 		 */
 		public EventTimeLoggerImpl(OutputStreamWriter osWriter,
-				boolean needSynchronized) {
+				boolean needSynchronized, boolean reportInSeconds) {
 			this.osWriter = osWriter;
+			this.reportInSeconds = reportInSeconds;
 			if (needSynchronized)
 				this.events = new ConcurrentHashMap<>();
 			else
 				this.events = new HashMap<>();
+			if (reportInSeconds)
+				ticker = new MilliTicker();
+			else
+				ticker = new NanoTicker();
 			write("Event\t\t\tUptime\t\telapsedtime\n");
 			write("====================================================\n");
 		}
@@ -176,6 +196,8 @@ public interface EventTimeLogger {
 		}
 
 		private void write(String eventName, long uptime, long elapsedMills) {
+			if (reportInSeconds)
+				uptime = uptime / 1000;
 			write(String.format("%-22s\t%-12d\t%d\n", eventName, uptime,
 					elapsedMills));
 		}
@@ -221,12 +243,16 @@ public interface EventTimeLogger {
 		 *            be used by multiple threads. EventTimeLoggerImpl use
 		 *            {@link ConcurrentHashMap} to store events in true case;
 		 *            uses {@link HashMap} otherwise.
+		 * @param reportInSeconds
+		 *            If this flag is <code>true</code>, {@link EventTimeLogger}
+		 *            logs the system's upTime in seconds; logs in milliseconds
+		 *            otherwise.
 		 */
 		public FileEventTimeLogger(String appName, String fileNameSuffix,
-				boolean needSynchronized) {
+				boolean needSynchronized, boolean reportInSeconds) {
 			super(Utils.fileWriter(appName,
 					String.format("eventTime_%s.txt", fileNameSuffix)),
-					needSynchronized);
+					needSynchronized, reportInSeconds);
 		}
 	}
 
@@ -240,9 +266,14 @@ public interface EventTimeLogger {
 		 *            be used by multiple threads. EventTimeLoggerImpl use
 		 *            {@link ConcurrentHashMap} to store events in true case;
 		 *            uses {@link HashMap} otherwise.
+		 * @param reportInSeconds
+		 *            If this flag is <code>true</code>, {@link EventTimeLogger}
+		 *            logs the system's upTime in seconds; logs in milliseconds
+		 *            otherwise.
 		 */
-		public PrintEventTimeLogger(boolean needSynchronized) {
-			super(System.out, needSynchronized);
+		public PrintEventTimeLogger(boolean needSynchronized,
+				boolean reportInSeconds) {
+			super(System.out, needSynchronized, reportInSeconds);
 		}
 	}
 

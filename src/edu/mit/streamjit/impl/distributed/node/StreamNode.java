@@ -289,7 +289,7 @@ public class StreamNode extends Thread {
 			return;
 		if (Options.logEventTime)
 			this.eventTimeLogger = new EventTimeLogger.FileEventTimeLogger(
-					appName, this.tostString(), true);
+					appName, this.tostString(), true, false);
 		else
 			this.eventTimeLogger = new EventTimeLogger.NoEventTimeLogger();
 	}
