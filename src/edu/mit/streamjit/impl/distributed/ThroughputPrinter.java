@@ -55,6 +55,14 @@ public class ThroughputPrinter {
 
 	private final String fileName;
 
+	/**
+	 * If the {@link Options#throughputMeasurementPeriod} is in second range, We
+	 * write the time values in second format in the time column of the output
+	 * file, instead of milliseconds. This will make the throughput graph
+	 * generation easier.
+	 */
+	private final boolean isTimeInSeconds;
+
 	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
 			String cfgPrefix) {
 		this(counter, appName, eLogger, cfgPrefix, "throughput.txt");
@@ -66,6 +74,7 @@ public class ThroughputPrinter {
 		this.appName = appName;
 		this.eLogger = eLogger;
 		this.fileName = fileName;
+		this.isTimeInSeconds = Options.throughputMeasurementPeriod >= 1000;
 		printThroughput(cfgPrefix);
 	}
 
@@ -109,8 +118,11 @@ public class ThroughputPrinter {
 	}
 
 	private void newThroughput(int currentCount, double throughput) {
-		String msg = String.format("%d\t\t%d\t\t%.2f\n", rb.getUptime(),
-				currentCount, throughput);
+		long upTime = rb.getUptime();
+		if (isTimeInSeconds)
+			upTime = upTime / 1000;
+		String msg = String.format("%d\t\t%d\t\t%.2f\n", upTime, currentCount,
+				throughput);
 		try {
 			writer.write(msg);
 			// writer.flush();
@@ -158,7 +170,10 @@ public class ThroughputPrinter {
 		boolean alreadyExists = f.exists();
 		writer = Utils.fileWriter(appName, fileName, true);
 		if (!alreadyExists) {
-			String colHeader = "Time(ms)\t\tCurrentCount\t\tThroughput(items/s)\n";
+			String timeUnit = isTimeInSeconds ? "s" : "ms";
+			String colHeader = String.format(
+					"Time(%s)\t\tCurrentCount\t\tThroughput(items/s)\n",
+					timeUnit);
 			write(colHeader);
 		}
 		write(String.format(
