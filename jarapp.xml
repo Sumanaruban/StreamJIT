@@ -17,6 +17,11 @@
 		project.setProperty('mainclass', arr[arr.length -1]);
 	 </script>
 
+	<script language="javascript">
+		arr = project.getProperty('SNList').split(',');
+		project.setProperty('numOfSNs', arr[0]);
+	 </script>
+
 	<target name="exportApp.jar" description="Exports ${app}.jar">
 		<jar destfile="${app}.jar" filesetmanifest="mergewithoutmain">
 			<manifest>
