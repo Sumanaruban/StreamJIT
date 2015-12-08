@@ -2,6 +2,7 @@
 <!--Sumanan, sumanan@mit.edu, 15-12-2014 -->
 <project default="exportAll" name="StreamJIT" basedir="/media/sumanan/D/StreamJit11/streamjit">
 	<property file="jarapp.properties" />
+	<property name="app" value="${appDir}${appDirID}" />
 	<!--property name="app" value="NestedSplitJoin" /-->
 	<!--property name="mainclasspath" value="edu.mit.streamjit.test.sanity.nestedsplitjoinexample.NestedSplitJoin" /-->
 	<!-- If you want, you can hard code your username and the password as plain 
