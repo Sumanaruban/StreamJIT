@@ -15,6 +15,7 @@ import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.ThroughputGraphGenerator;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.util.ConfigurationUtils;
@@ -136,7 +137,7 @@ public class OnlineTuner implements Runnable {
 			mLogger.eEvent("terminate");
 		}
 		mLogger.bEvent("tuningFinished");
-		tuningFinished();
+		tuningFinished(round);
 		mLogger.eEvent("tuningFinished");
 	}
 
@@ -214,7 +215,7 @@ public class OnlineTuner implements Runnable {
 		new Verifier(configurer).verifyTuningTimes(cfgPrefixes);
 	}
 
-	private void tuningFinished() {
+	private void tuningFinished(int round) {
 		// TODO: seamless
 		/*
 		 * try { configurer.drainer.dumpDraindataStatistics(); } catch
@@ -229,6 +230,13 @@ public class OnlineTuner implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		if (round < 25)
+			try {
+				ThroughputGraphGenerator.summarize(app.name);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 	}
 
 	private static class OpenTunerListener implements Runnable {
