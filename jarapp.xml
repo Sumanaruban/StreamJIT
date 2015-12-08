@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--Sumanan, sumanan@mit.edu, 15-12-2014 -->
 <project default="exportAll" name="StreamJIT" basedir="/media/sumanan/D/StreamJit11/streamjit">
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
 	<property file="jarapp.properties" />
 	<property name="app" value="${appDir}${appDirID}" />
 	<!--property name="app" value="NestedSplitJoin" /-->
@@ -106,8 +107,30 @@
 		<!--echo message="Password: ${password}" /-->
 	</target>
 
-	<target name="remotesetup" depends="sendtoLanka, createDownloadScript">
+	<target name="remotesetup" depends="sendtoLanka, copy">
 		<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}" password="${password}" command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/setup.sh ${app} ${streamGraphName} ${numOfSNs} ${branch}" />
+		 <antcall target="createDownloadScript"/>
+	</target>
+
+	<target name="copy">
+		<var name="toID" value="${appDirID}" />
+		<for list="${SNList}" param="SN">
+			<sequential>
+				<echo>StreamNodes @{SN}</echo>
+				<if>
+					<not>
+						<equals arg1="${numOfSNs}" arg2="@{SN}" />
+					</not>
+					<then>
+						<math result="toID" operand1="${toID}" operation="+"
+							operand2="1" datatype="int" />
+						<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}"
+							password="${password}"
+							command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/copy.sh ${appDir} ${appDirID} ${toID} ${streamGraphName} @{SN} ${branch}" />
+					</then>
+				</if>
+			</sequential>
+		</for>
 	</target>
 
 	<!--http://www.vogella.com/tutorials/ApacheAnt/article.html-->
