@@ -27,8 +27,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	protected final StreamJitAppManager appManager;
 
-	protected final EventTimeLogger mLogger;
-
 	private final TailBufferMerger tailMerger;
 
 	private final Thread tailMergerThread;
@@ -38,7 +36,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
 			Buffer tailBuffer, boolean needSeamlessTailMerger) {
 		this.appManager = streamJitAppManager;
-		this.mLogger = appManager.mLogger;
 		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
 				appManager.app.name, "Reconfigurer", false,
 				Options.throughputMeasurementPeriod >= 1000);
