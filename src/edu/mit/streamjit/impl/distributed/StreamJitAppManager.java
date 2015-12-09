@@ -54,7 +54,6 @@ import edu.mit.streamjit.impl.distributed.common.SNTimeInfoProcessorImpl;
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.DrainDataUtils;
 
@@ -87,8 +86,6 @@ public class StreamJitAppManager {
 
 	final int noOfnodes;
 
-	final EventTimeLogger mLogger;
-
 	public final Reconfigurer reconfigurer;
 
 	private final Map<Integer, AppInstanceManager> AIMs = new HashMap<>();
@@ -105,7 +102,6 @@ public class StreamJitAppManager {
 		this.ep = new ErrorProcessorImpl();
 
 		appDrainer = new AppDrainer();
-		this.mLogger = app.eLogger;
 		this.reconfigurer = reconfigurer(tailBuffer);
 		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
 		profiler = setupProfiler();
