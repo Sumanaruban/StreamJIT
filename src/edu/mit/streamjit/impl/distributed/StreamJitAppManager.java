@@ -267,7 +267,7 @@ public class StreamJitAppManager {
 			drainDataMap = previousAim.appInst.getDrainData();
 		System.out.println("drainDataMap.size() = " + drainDataMap.size());
 		logger.compilationStarted();
-		currentAim.bEvent("compilation");
+		currentAim.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString1(jsonStirng,
 					ConfigType.DYNAMIC, drainDataMap.get(nodeID));
@@ -280,7 +280,7 @@ public class StreamJitAppManager {
 			ImmutableMap<Token, Integer> drainDataSize) {
 		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
 		logger.compilationStarted();
-		currentAim.bEvent("compilation");
+		currentAim.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString.ConfigurationString2(
 					jsonStirng, ConfigType.DYNAMIC, drainDataSize);

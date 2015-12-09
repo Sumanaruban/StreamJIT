@@ -51,6 +51,8 @@ import edu.mit.streamjit.impl.distributed.common.SystemInfo;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.tuner.EventTimeLogger.PrefixedEventTimeLogger;
 import edu.mit.streamjit.util.CollectionUtils;
 
 /**
@@ -98,11 +100,15 @@ public class AppInstanceManager {
 
 	private final CountDownLatch latch = new CountDownLatch(1);
 
+	public final EventTimeLogger eLogger;
+
 	AppInstanceManager(AppInstance appInst, TimeLogger logger,
 			StreamJitAppManager appManager) {
 		this.appInst = appInst;
 		this.appManager = appManager;
 		this.logger = logger;
+		this.eLogger = new PrefixedEventTimeLogger(appInst.app.eLogger,
+				new Integer(appInst.id).toString());
 		// TODO:
 		// Read this. Don't let the "this" reference escape during construction
 		// http://www.ibm.com/developerworks/java/library/j-jtp0618/
@@ -121,7 +127,7 @@ public class AppInstanceManager {
 	}
 
 	public void drainingStarted(boolean isFinal) {
-		bEvent("draining");
+		eLogger.bEvent("draining");
 		headTailHandler.stopHead(isFinal);
 	}
 
@@ -132,7 +138,7 @@ public class AppInstanceManager {
 		conInfoMap = null;
 		appManager.drainingFinished(isFinal, this);
 
-		long time = eEvent("draining");
+		long time = eLogger.eEvent("draining");
 		System.out.println(String.format(
 				"%s: Draining Finished. Draining time = %dms.", toString(),
 				time));
@@ -146,15 +152,15 @@ public class AppInstanceManager {
 	 * @return <code>true</code> iff the compilation process is success.
 	 */
 	boolean postCompilation() {
-		bEvent("postCompilation");
+		eLogger.bEvent("postCompilation");
 		sendDeadlockfreeBufSizes();
 		if (apStsPro.compilationError)
 			isCompiled = false;
 		else
 			isCompiled = apStsPro.waitForCompilation();
-		eEvent("compilation");
+		eLogger.eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
-		eEvent("postCompilation");
+		eLogger.eEvent("postCompilation");
 		return isCompiled;
 	}
 
@@ -294,22 +300,6 @@ public class AppInstanceManager {
 		int nodeID = appInst.blobtoMachineMap.get(blobID);
 		appManager.controller.send(nodeID, new CTRLRMessageElementHolder(me,
 				appInstId()));
-	}
-
-	void bEvent(String eventName) {
-		appInst.app.eLogger.bEvent(eventName(eventName));
-	}
-
-	long eEvent(String eventName) {
-		return appInst.app.eLogger.eEvent(eventName(eventName));
-	}
-
-	void logEvent(String eventName, long elapsedMills) {
-		appInst.app.eLogger.logEvent(eventName(eventName), elapsedMills);
-	}
-
-	private String eventName(String eventName) {
-		return appInstId() + "-" + eventName;
 	}
 
 	/**
@@ -452,7 +442,7 @@ public class AppInstanceManager {
 
 		@Override
 		public void process(InitScheduleCompleted initScheduleCompleted) {
-			logEvent(String.format("InitSchedule-%s",
+			eLogger.logEvent(String.format("InitSchedule-%s",
 					initScheduleCompleted.blobID),
 					initScheduleCompleted.timeMills);
 			initScheduleLatch.countDown();
