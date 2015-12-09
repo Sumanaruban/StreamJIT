@@ -135,7 +135,7 @@ public class ThroughputPrinter {
 		isPrevNoOutput = false;
 		long noOutputPeriod = TimeUnit.MILLISECONDS.convert(currentNano
 				- noOutputStartTime, TimeUnit.NANOSECONDS);
-		if (noOutputPeriod > tolerablenoOutputPeriod)
+		if (eLogger != null && noOutputPeriod > tolerablenoOutputPeriod)
 			eLogger.logEvent("noOutput", noOutputPeriod);
 	}
 
