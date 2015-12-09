@@ -121,7 +121,7 @@ public class AppInstanceManager {
 	}
 
 	public void drainingStarted(boolean isFinal) {
-		appManager.app.eLogger.bEvent("draining");
+		bEvent("draining");
 		headTailHandler.stopHead(isFinal);
 	}
 
@@ -132,7 +132,7 @@ public class AppInstanceManager {
 		conInfoMap = null;
 		appManager.drainingFinished(isFinal, this);
 
-		long time = appManager.app.eLogger.eEvent("draining");
+		long time = eEvent("draining");
 		System.out.println(String.format(
 				"%s: Draining Finished. Draining time = %dms.", toString(),
 				time));
@@ -146,15 +146,15 @@ public class AppInstanceManager {
 	 * @return <code>true</code> iff the compilation process is success.
 	 */
 	boolean postCompilation() {
-		appManager.mLogger.bEvent("postCompilation");
+		bEvent("postCompilation");
 		sendDeadlockfreeBufSizes();
 		if (apStsPro.compilationError)
 			isCompiled = false;
 		else
 			isCompiled = apStsPro.waitForCompilation();
-		appManager.app.eLogger.eEvent("compilation");
+		eEvent("compilation");
 		logger.compilationFinished(isCompiled, "");
-		appManager.mLogger.eEvent("postCompilation");
+		eEvent("postCompilation");
 		return isCompiled;
 	}
 
@@ -294,6 +294,22 @@ public class AppInstanceManager {
 		int nodeID = appInst.blobtoMachineMap.get(blobID);
 		appManager.controller.send(nodeID, new CTRLRMessageElementHolder(me,
 				appInstId()));
+	}
+
+	void bEvent(String eventName) {
+		appInst.app.eLogger.bEvent(eventName(eventName));
+	}
+
+	long eEvent(String eventName) {
+		return appInst.app.eLogger.eEvent(eventName(eventName));
+	}
+
+	void logEvent(String eventName, long elapsedMills) {
+		appInst.app.eLogger.logEvent(eventName(eventName), elapsedMills);
+	}
+
+	private String eventName(String eventName) {
+		return appInstId() + "-" + eventName;
 	}
 
 	/**
@@ -436,7 +452,7 @@ public class AppInstanceManager {
 
 		@Override
 		public void process(InitScheduleCompleted initScheduleCompleted) {
-			appInst.app.eLogger.logEvent(String.format("InitSchedule-%s",
+			logEvent(String.format("InitSchedule-%s",
 					initScheduleCompleted.blobID),
 					initScheduleCompleted.timeMills);
 			initScheduleLatch.countDown();
