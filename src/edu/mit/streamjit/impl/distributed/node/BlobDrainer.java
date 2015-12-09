@@ -94,14 +94,14 @@ class BlobDrainer {
 			drained();
 
 		drainState = 1;
-		be.bEvent("inChnlManager.waitToStop");
+		be.eLogger.bEvent("inChnlManager.waitToStop");
 		be.inChnlManager.stop(drainDataAction);
 		// TODO: [2014-03-14] I commented following line to avoid one dead
 		// lock case when draining. Deadlock 5 and 6.
 		// [2014-09-17] Lets waitToStop() if drain data is required.
 		if (drainDataAction != DrainDataAction.DISCARD)
 			be.inChnlManager.waitToStop();
-		be.eEvent("inChnlManager.waitToStop");
+		be.eLogger.eEvent("inChnlManager.waitToStop");
 
 		for (LocalBuffer buf : be.outputLocalBuffers.values()) {
 			buf.drainingStarted(drainDataAction);
@@ -128,10 +128,10 @@ class BlobDrainer {
 			bt.requestStop();
 		}
 
-		be.bEvent("outChnlManager.waitToStop");
+		be.eLogger.bEvent("outChnlManager.waitToStop");
 		be.outChnlManager.stop(drainDataAction == DrainDataAction.FINISH);
 		be.outChnlManager.waitToStop();
-		be.eEvent("outChnlManager.waitToStop");
+		be.eLogger.eEvent("outChnlManager.waitToStop");
 
 		if (drainState > 3)
 			return;
@@ -174,12 +174,12 @@ class BlobDrainer {
 		ImmutableMap<Token, BoundaryInputChannel> inputChannels = be.inChnlManager
 				.inputChannelsMap();
 
-		be.bEvent("inChnlManager.waitToStop");
+		be.eLogger.bEvent("inChnlManager.waitToStop");
 		// In a proper system the following line should be called inside
 		// doDrain(), just after inChnlManager.stop(). Read the comment
 		// in doDrain().
 		be.inChnlManager.waitToStop();
-		be.eEvent("inChnlManager.waitToStop");
+		be.eLogger.eEvent("inChnlManager.waitToStop");
 
 		for (Token t : blob.getInputs()) {
 			if (inputChannels.containsKey(t)) {
@@ -298,21 +298,21 @@ class BlobDrainer {
 		private void updateDrainTime() {
 			sw.stop();
 			long time = sw.elapsed(TimeUnit.MILLISECONDS);
-			be.logEvent("-draining", time);
+			be.eLogger.logEvent("-draining", time);
 			blobsManagerImpl.sendToController(new SNTimeInfo.DrainingTime(
 					be.blobID, time));
 		}
 
 		private void logBlobExecutionStatistics() {
 			ExecutionStatistics es = blob.getExecutionStatistics();
-			be.eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n",
-					be.blobID + "-initTime", 0, es.initTime));
-			be.eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n",
-					be.blobID + "-adjustTime", 0, es.adjustTime));
-			be.eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n",
-					be.blobID + "-adjustCount", 0, es.adjustCount));
-			be.eventTimeLogger.log(String.format("%-22s\t%-12d\t%d\n",
-					be.blobID + "-drainTime", 0, es.drainTime));
+			be.eLogger.log(String.format("%-22s\t%-12d\t%d\n", be.blobID
+					+ "-initTime", 0, es.initTime));
+			be.eLogger.log(String.format("%-22s\t%-12d\t%d\n", be.blobID
+					+ "-adjustTime", 0, es.adjustTime));
+			be.eLogger.log(String.format("%-22s\t%-12d\t%d\n", be.blobID
+					+ "-adjustCount", 0, es.adjustCount));
+			be.eLogger.log(String.format("%-22s\t%-12d\t%d\n", be.blobID
+					+ "-drainTime", 0, es.drainTime));
 		}
 
 		@Override

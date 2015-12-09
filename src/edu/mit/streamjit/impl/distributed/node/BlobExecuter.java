@@ -26,6 +26,7 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputCh
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.tuner.EventTimeLogger.PrefixedEventTimeLogger;
 import edu.mit.streamjit.util.affinity.Affinity;
 
 /**
@@ -69,7 +70,7 @@ class BlobExecuter {
 
 	final Starter starter;
 
-	final EventTimeLogger eventTimeLogger;
+	final EventTimeLogger eLogger;
 
 	final BlobDrainer drainer;
 
@@ -78,7 +79,7 @@ class BlobExecuter {
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels,
 			int starterType) {
 		this.blobsManagerImpl = blobsManagerImpl;
-		this.eventTimeLogger = blobsManagerImpl.streamNode.eventTimeLogger;
+		this.eLogger = eventTimeLogger();
 		this.crashed = new AtomicBoolean(false);
 		this.blob = blob;
 		this.blobThreads = new HashSet<>();
@@ -107,6 +108,12 @@ class BlobExecuter {
 
 	public Token getBlobID() {
 		return blobID;
+	}
+
+	private EventTimeLogger eventTimeLogger() {
+		return new PrefixedEventTimeLogger(
+				blobsManagerImpl.streamNode.eventTimeLogger,
+				blobsManagerImpl.appInstId + "-" + blobID);
 	}
 
 	/**
@@ -202,34 +209,18 @@ class BlobExecuter {
 			}
 		}
 
-		bEvent("inChnlManager.waitToStop");
+		eLogger.bEvent("inChnlManager.waitToStop");
 		inChnlManager.waitToStop();
-		eEvent("inChnlManager.waitToStop");
-		bEvent("outChnlManager.waitToStop");
+		eLogger.eEvent("inChnlManager.waitToStop");
+		eLogger.bEvent("outChnlManager.waitToStop");
 		outChnlManager.waitToStop();
-		eEvent("outChnlManager.waitToStop");
+		eLogger.eEvent("outChnlManager.waitToStop");
 
 		if (this.blobsManagerImpl.monBufs != null)
 			this.blobsManagerImpl.monBufs.stopMonitoring();
 		if (drainer.executorService != null
 				&& !drainer.executorService.isTerminated())
 			drainer.executorService.shutdownNow();
-	}
-
-	void bEvent(String eventName) {
-		eventTimeLogger.bEvent(eventName(eventName));
-	}
-
-	long eEvent(String eventName) {
-		return eventTimeLogger.eEvent(eventName(eventName));
-	}
-
-	void logEvent(String eventName, long elapsedMills) {
-		eventTimeLogger.logEvent(eventName(eventName), elapsedMills);
-	}
-
-	private String eventName(String eventName) {
-		return blobsManagerImpl.appInstId + "-" + blobID + "-" + eventName;
 	}
 
 	Starter starter(int starterType) {
@@ -310,7 +301,7 @@ class BlobExecuter {
 			if (!stopping) {
 				long time = sw.elapsed(TimeUnit.MILLISECONDS);
 				long avgMills = time / meassureCount;
-				logEvent("-firing", avgMills);
+				eLogger.logEvent("-firing", avgMills);
 			}
 		}
 	}

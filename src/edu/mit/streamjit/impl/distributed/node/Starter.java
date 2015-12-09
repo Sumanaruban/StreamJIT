@@ -81,14 +81,14 @@ final class Starter2 implements Starter {
 	public void initScheduleRun(BlobThread2 bt) throws InterruptedException,
 			IOException {
 		if (bt.logTime)
-			be.bEvent("initScheduleRun");
+			be.eLogger.bEvent("initScheduleRun");
 		for (int i = 0; i < steadyRunCount + 1; i++) {
 			if (bt.stopping)
 				break;
 			bt.coreCode.run();
 		}
 		if (bt.logTime) {
-			long time = be.eEvent("initScheduleRun");
+			long time = be.eLogger.eEvent("initScheduleRun");
 			SNMessageElement me = new InitScheduleCompleted(be.blobID, time);
 			be.blobsManagerImpl.sendToController(me);
 		}
