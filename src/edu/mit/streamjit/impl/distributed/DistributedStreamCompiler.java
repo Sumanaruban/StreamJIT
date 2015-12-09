@@ -310,7 +310,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		Buffer b;
 		if (measureThroughput) {
 			BufferWriteCounter bc = new BufferWriteCounter(tailBuffer);
-			tp = new ThroughputPrinter(bc, app.name, app.eLogger,
+			tp = new ThroughputPrinter(bc, app.name, null,
 					"DistributedStreamCompiler", "tailBuffer.txt");
 			b = bc;
 		} else {
