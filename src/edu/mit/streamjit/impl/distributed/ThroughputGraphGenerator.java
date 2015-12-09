@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.util.TimeLogProcessor;
 
 /**
@@ -22,6 +23,7 @@ public class ThroughputGraphGenerator {
 	public static void summarize(String appName) throws IOException {
 		File summaryDir = new File(String.format("%s%ssummary", appName,
 				File.separator));
+		Utils.createDir(summaryDir.getPath());
 		File f = createTotalStatsPlotFile(summaryDir, appName);
 		TimeLogProcessor.plot(summaryDir, f);
 	}
