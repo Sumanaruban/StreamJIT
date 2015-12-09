@@ -217,15 +217,19 @@ class BlobExecuter {
 	}
 
 	void bEvent(String eventName) {
-		eventTimeLogger.bEvent(blobID + eventName);
+		eventTimeLogger.bEvent(eventName(eventName));
 	}
 
 	long eEvent(String eventName) {
-		return eventTimeLogger.eEvent(blobID + eventName);
+		return eventTimeLogger.eEvent(eventName(eventName));
 	}
 
 	void logEvent(String eventName, long elapsedMills) {
-		eventTimeLogger.logEvent(blobID + eventName, elapsedMills);
+		eventTimeLogger.logEvent(eventName(eventName), elapsedMills);
+	}
+
+	private String eventName(String eventName) {
+		return blobsManagerImpl.appInstId + "-" + blobID + "-" + eventName;
 	}
 
 	Starter starter(int starterType) {
