@@ -19,6 +19,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
 /**
@@ -83,12 +84,13 @@ class HeadTailHandler {
 		int skipCount = Math.max(Options.outputCount, multiplier * 5);
 		Buffer tb = bufferMap.get(app.tailToken);
 		BufferWriteCounter bc = new BufferWriteCounter(tb);
-		tailChannel = tailChannel(bc, tailconInfo, skipCount, aim.appInst);
+		tailChannel = tailChannel(bc, tailconInfo, skipCount, aim.appInst,
+				aim.eLogger);
 		setHead(conInfoMap, bufferMap, aim, bc, needSeamless);
 	}
 
 	TailChannel tailChannel(Buffer buffer, ConnectionInfo conInfo,
-			int skipCount, AppInstance appinst) {
+			int skipCount, AppInstance appinst, EventTimeLogger eLogger) {
 		String appName = app.name;
 		int steadyCount = Options.outputCount;
 		int debugLevel = 0;
@@ -101,15 +103,15 @@ class HeadTailHandler {
 			case 1 :
 				return new TailChannels.BlockingTailChannel1(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
+						skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			case 3 :
 				return new TailChannels.BlockingTailChannel3(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
+						skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			default :
 				return new TailChannels.BlockingTailChannel2(buffer,
 						conProvider, conInfo, bufferTokenName, debugLevel,
-						skipCount, steadyCount, appName, cfgPrefix, app.eLogger);
+						skipCount, steadyCount, appName, cfgPrefix, eLogger);
 		}
 	}
 
@@ -133,14 +135,14 @@ class HeadTailHandler {
 
 		if (needSeamless)
 			headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
-					app.eLogger, tailCounter, aim);
+					aim.eLogger, tailCounter, aim);
 		else {
 			if (headconInfo instanceof TCPConnectionInfo)
 				headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,
-						name, 0, app.eLogger);
+						name, 0, aim.eLogger);
 			else if (headconInfo instanceof AsyncTCPConnectionInfo)
 				headChannel = new HeadChannel.AsyncHeadChannel(b, c,
-						headconInfo, name, 0, app.eLogger);
+						headconInfo, name, 0, aim.eLogger);
 			else
 				throw new IllegalStateException(
 						"Head ConnectionInfo doesn't match");
