@@ -277,6 +277,53 @@ public interface EventTimeLogger {
 		}
 	}
 
+	/**
+	 * This is just a decorator class of EventTimeLogger to log the events with
+	 * a prefix.
+	 * 
+	 * @author sumanan
+	 * @since 9 Dec, 2015
+	 */
+	public static class PrefixedEventTimeLogger implements EventTimeLogger {
+		final EventTimeLogger eLogger;
+		final String prefix;
+		public PrefixedEventTimeLogger(EventTimeLogger eLogger, String prefix) {
+			this.eLogger = eLogger;
+			this.prefix = prefix;
+		}
+
+		public void bEvent(String eventName) {
+			eLogger.bEvent(eventName(eventName));
+		}
+
+		public long eEvent(String eventName) {
+			return eLogger.eEvent(eventName(eventName));
+		}
+
+		public void logEvent(String eventName, long elapsedMills) {
+			eLogger.logEvent(eventName(eventName), elapsedMills);
+		}
+
+		private String eventName(String eventName) {
+			return prefix + "-" + eventName;
+		}
+
+		@Override
+		public void bTuningRound(String cfgPrefix) {
+			eLogger.bTuningRound(cfgPrefix);
+		}
+
+		@Override
+		public void eTuningRound(String cfgPrefix) {
+			eLogger.eTuningRound(cfgPrefix);
+		}
+
+		@Override
+		public void log(String message) {
+			eLogger.log(message);
+		}
+	}
+
 	static class Event {
 
 		private final String name;
