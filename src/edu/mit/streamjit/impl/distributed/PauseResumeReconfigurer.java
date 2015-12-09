@@ -2,7 +2,6 @@ package edu.mit.streamjit.impl.distributed;
 
 import edu.mit.streamjit.impl.distributed.StreamJitAppManager.Reconfigurer;
 import edu.mit.streamjit.impl.distributed.common.Utils;
-import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
 /**
@@ -22,22 +21,17 @@ class PauseResumeReconfigurer implements Reconfigurer {
 	 */
 	private final StreamJitAppManager appManager;
 
-	private final EventTimeLogger mLogger;
-
 	/**
 	 * @param streamJitAppManager
 	 */
 	PauseResumeReconfigurer(StreamJitAppManager streamJitAppManager) {
 		this.appManager = streamJitAppManager;
-		this.mLogger = appManager.mLogger;
 	}
 
 	public int reconfigure(AppInstance appinst) {
 		System.out.println("PauseResumeReconfigurer...");
-		mLogger.bEvent("intermediateDraining");
 		boolean intermediateDraining = appManager
 				.intermediateDraining(appManager.curAIM);
-		mLogger.eEvent("intermediateDraining");
 		if (!intermediateDraining)
 			return 1;
 
