@@ -79,9 +79,10 @@ class BlobExecuter {
 			ImmutableMap<Token, BoundaryOutputChannel> outputChannels,
 			int starterType) {
 		this.blobsManagerImpl = blobsManagerImpl;
+		this.blobID = t;
+		this.blob = blob;
 		this.eLogger = eventTimeLogger();
 		this.crashed = new AtomicBoolean(false);
-		this.blob = blob;
 		this.blobThreads = new HashSet<>();
 		assert blob.getInputs().containsAll(inputChannels.keySet());
 		assert blob.getOutputs().containsAll(outputChannels.keySet());
@@ -101,7 +102,6 @@ class BlobExecuter {
 		if (blobThreads.size() < 1)
 			throw new IllegalStateException("No blobs to execute");
 
-		this.blobID = t;
 		this.starter = starter(starterType);
 		this.drainer = new BlobDrainer(this);
 	}
