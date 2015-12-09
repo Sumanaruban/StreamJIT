@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.ThroughputGraphGenerator;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
@@ -42,6 +43,12 @@ public class Verifier implements Runnable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
+		try {
+			ThroughputGraphGenerator.summarize(appName);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
