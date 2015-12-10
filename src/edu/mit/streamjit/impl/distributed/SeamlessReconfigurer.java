@@ -201,6 +201,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 		public int reconfigure(AppInstance appinst) {
 			System.out.println("SeamlessStatelessReconfigurer...");
+			event("Cfg" + appinst.id);
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, appManager.prevAIM);
@@ -222,6 +223,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			if (isCompiled) {
 				startInit(aim);
 				aim.start();
+				event("S-" + appinst.id);
 			} else {
 				aim.drainingFinished(false);
 			}
