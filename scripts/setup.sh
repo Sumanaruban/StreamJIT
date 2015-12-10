@@ -46,6 +46,10 @@ get_prop(){
 	grep  "^${2}=" ${1}| sed "s%${2}=\(.*\)%\1%"
 }
 
+set_prop(){
+	sed -i 's:^[ \t]*'${2}'[ \t]*=\([ \t]*.*\)$:'${2}'='${3}':' ${1}
+}
+
 function copyOTScripts(){
         parent="/data/scratch/sumanan/lib/opentuner"
         dir="Adjbuf"
