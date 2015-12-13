@@ -41,11 +41,14 @@ import edu.mit.streamjit.impl.distributed.runtimer.ListenerSocket;
  */
 public class ConnectionFactory {
 
+	private static final boolean printDebugMsg = false;
+
 	public static TCPConnection getConnection(String serverAddress, int portNo,
 			boolean needSync) throws IOException {
 		Ipv4Validator validator = Ipv4Validator.getInstance();
-		System.out.println("Trying to make a connection with - "
-				+ serverAddress + "/" + portNo);
+		if (printDebugMsg)
+			System.out.println("Trying to make a connection with - "
+					+ serverAddress + "/" + portNo);
 		if (!validator.isValid(serverAddress))
 			throw new IllegalArgumentException("Invalid Server IP address");
 
@@ -114,8 +117,10 @@ public class ConnectionFactory {
 
 		ssc = AsynchronousServerSocketChannel.open().bind(isa);
 		Future<AsynchronousSocketChannel> accepted = ssc.accept();
-		System.out.println("Waiting for asynchronous socket connection @ port "
-				+ portNo);
+		if (printDebugMsg)
+			System.out
+					.println("Waiting for asynchronous socket connection @ port "
+							+ portNo);
 		try {
 			sc2 = accepted.get();
 		} catch (InterruptedException | ExecutionException ex) {
