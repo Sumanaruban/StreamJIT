@@ -123,7 +123,7 @@ public class AffinityManagers {
 
 		private final Set<Blob> blobSet;
 
-		private final ImmutableTable<Blob, Integer, Integer> assignmentTable;
+		private final ImmutableTable<Token, Integer, Integer> assignmentTable;
 
 		private final int totalRequiredCores;
 
@@ -145,8 +145,7 @@ public class AffinityManagers {
 
 		@Override
 		public ImmutableSet<Integer> getAffinity(Token blobID, int coreCode) {
-			Blob b = blobIdBlobMap.get(blobID);
-			return ImmutableSet.of(assignmentTable.get(b, coreCode));
+			return ImmutableSet.of(assignmentTable.get(blobID, coreCode));
 		}
 
 		private int totalRequiredCores(Set<Blob> blobSet) {
@@ -159,23 +158,21 @@ public class AffinityManagers {
 		private Map<Token, Blob> blobIdBlobMap(Set<Blob> blobSet) {
 			Map<Token, Blob> m = new HashMap<>();
 			for (Blob b : blobSet) {
-				if (b.getInputs() == null) // Skip if the blob is
-											// AFManagersTester.DBlob().
-					continue;
 				Token blobID = Utils.getBlobID(b);
 				m.put(blobID, b);
 			}
 			return m;
 		}
 
-		private ImmutableTable<Blob, Integer, Integer> assign() {
+		private ImmutableTable<Token, Integer, Integer> assign() {
 			Map<Blob, Integer> coresPerBlob = coresPerBlob();
 			Map<Blob, Set<Integer>> coresForBlob = coresForBlob(coresPerBlob);
 
-			ImmutableTable.Builder<Blob, Integer, Integer> tBuilder = ImmutableTable
+			ImmutableTable.Builder<Token, Integer, Integer> tBuilder = ImmutableTable
 					.builder();
 			for (Map.Entry<Blob, Set<Integer>> en : coresForBlob.entrySet()) {
 				Blob b = en.getKey();
+				Token t = Utils.getBlobID(b);
 				List<Integer> cores = new ArrayList<Integer>(en.getValue());
 				for (int i = 0; i < b.getCoreCount(); i++) {
 					int coreIndex = i % cores.size();
@@ -183,7 +180,7 @@ public class AffinityManagers {
 					int coreID = round % 2 == 0 ? cores.get(coreIndex)
 							: getCorrespondingVirtualCoreID(cores
 									.get(coreIndex));
-					tBuilder.put(b, i, coreID);
+					tBuilder.put(t, i, coreID);
 				}
 			}
 			return tBuilder.build();
@@ -455,15 +452,15 @@ public class AffinityManagers {
 			System.out.println();
 		}
 
-		private static void printTable(
-				ImmutableTable<Blob, Integer, Integer> assignmentTable) {
-			for (Blob b : assignmentTable.rowKeySet()) {
-				System.out.print(b + " :-");
+		private void printTable(
+				ImmutableTable<Token, Integer, Integer> assignmentTable) {
+			for (Token t : assignmentTable.rowKeySet()) {
+				Blob b = blobIdBlobMap.get(t);
+				System.out.print(t + " :-");
 				for (int i = 0; i < b.getCoreCount(); i++) {
 					System.out.print(assignmentTable.get(b, i) + " ");
 				}
 				System.out.println();
-
 			}
 		}
 	}

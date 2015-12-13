@@ -7,11 +7,18 @@ import java.util.Set;
 
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob;
+import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.distributed.common.Machine;
 
 /**
+ * [13-12-2015] I changed CoreCodeAffinityManager to deal with {@link Token}s
+ * instead of {@link Blob}s. After that change, this class is broken as
+ * {@link DBlob#getInputs()}s returns null. Use reflection to access the private
+ * constructor of Token class and create {@link Token} without upstream and
+ * downstream workers.
+ * 
  * @author sumanan
  * @since 5 Dec, 2015
  */
