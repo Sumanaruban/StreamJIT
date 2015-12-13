@@ -1,6 +1,8 @@
 package edu.mit.streamjit.impl.distributed;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -24,6 +26,7 @@ public class ThroughputGraphGenerator {
 		File summaryDir = new File(String.format("%s%ssummary", appName,
 				File.separator));
 		Utils.createDir(summaryDir.getPath());
+		// processTp(appName, summaryDir);
 		File f = createTotalStatsPlotFile(summaryDir, appName);
 		TimeLogProcessor.plot(summaryDir, f);
 	}
@@ -55,8 +58,7 @@ public class ThroughputGraphGenerator {
 		writer.write("#set yrange [0:*]\n");
 
 		writer.write(String.format(
-				"stats \"%s\" using 3 prefix \"Throughput\" noout\n",
-				tpFile));
+				"stats \"%s\" using 3 prefix \"Throughput\" noout\n", tpFile));
 		writer.write("endPoint= 3*Throughput_max/4" + "\n");
 
 		writer.write(String.format(
@@ -70,5 +72,41 @@ public class ThroughputGraphGenerator {
 						tpFile));
 		writer.close();
 		return plotfile;
+	}
+
+	private static void processTp(String appName, File outDir)
+			throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(
+				String.format("%s%stailBuffer.txt", appName, File.separator)));
+		File outFile = new File(outDir, "tail.txt");
+		FileWriter writer = new FileWriter(outFile, false);
+		String line;
+		while ((line = reader.readLine()) != null) {
+			String[] arr = line.split("\t");
+			if (arr.length < 3)
+				continue;
+
+			String t = arr[0].trim();
+			int time = 0;
+			try {
+				time = (int) Double.parseDouble(t);
+			} catch (Exception e) {
+				continue;
+			}
+
+			String tp = arr[4].trim();
+			int val = 0;
+			try {
+				val = (int) Double.parseDouble(tp);
+			} catch (Exception e) {
+				continue;
+			}
+
+			String data = String.format("%s\t%s\t%d\n", arr[0], arr[2], val);
+			writer.write(data);
+		}
+		writer.flush();
+		reader.close();
+		writer.close();
 	}
 }
