@@ -39,6 +39,8 @@ import edu.mit.streamjit.impl.distributed.node.BlobExecuter.BlobThread2;
  */
 class BlobDrainer {
 
+	private final boolean printDebugMsg = false;
+
 	final BlobExecuter be;
 	volatile int drainState;
 	DrainDataAction drainDataAction;
@@ -78,7 +80,8 @@ class BlobDrainer {
 	}
 
 	void doDrain(DrainDataAction drainDataAction) {
-		// System.out.println("Blob " + blobID + "is doDrain");
+		if (printDebugMsg)
+			System.out.println("Blob " + be.blobID + "is doDrain");
 		this.drainDataAction = drainDataAction;
 
 		/*
@@ -112,13 +115,15 @@ class BlobDrainer {
 			drainState = 2;
 			this.blob.drain(dcb);
 		}
-		// System.out.println("Blob " + blobID +
-		// "this.blob.drain(dcb); passed");
+		if (printDebugMsg)
+			System.out.println("Blob " + be.blobID
+					+ "this.blob.drain(dcb); passed");
 		blobsManagerImpl.doDrainLastBlobActions(this);
 	}
 
 	void drained() {
-		// System.out.println("Blob " + blobID + "drained at beg");
+		if (printDebugMsg)
+			System.out.println("Blob " + be.blobID + "drained at beg");
 		if (drainState < 3)
 			drainState = 3;
 		else
@@ -139,7 +144,8 @@ class BlobDrainer {
 		drainState = 4;
 		SNMessageElement drained = new SNDrainElement.Drained(be.blobID);
 		blobsManagerImpl.sendToController(drained);
-		// System.out.println("Blob " + blobID + "is drained at mid");
+		if (printDebugMsg)
+			System.out.println("Blob " + be.blobID + "is drained at mid");
 
 		if (drainDataAction != DrainDataAction.DISCARD) {
 			SNMessageElement me;
@@ -149,17 +155,19 @@ class BlobDrainer {
 				me = getSNDrainData();
 
 			blobsManagerImpl.sendToController(me);
-			// System.out.println(blobID + " DrainData has been sent");
+			if (printDebugMsg)
+				System.out.println(be.blobID + " DrainData has been sent");
 			drainState = 6;
-			// System.out.println("**********************************");
+			if (printDebugMsg)
+				System.out.println("**********************************");
 		}
 
 		be.blob = null;
 		this.blob = null;
 		blobsManagerImpl.drainedLastBlobActions();
-		// printDrainedStatus();
+		if (printDebugMsg)
+			printDrainedStatus();
 	}
-
 	private SNDrainedData getSNDrainData() {
 		if (this.blob == null)
 			return getEmptyDrainData();
