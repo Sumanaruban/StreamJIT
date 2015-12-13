@@ -271,12 +271,12 @@ public abstract class AbstractDrainer {
 
 	public final void awaitDrainedIntrmdiate() throws InterruptedException {
 		intermediateLatch.await();
+		// intermediateLatch.await(100, TimeUnit.SECONDS);
 
 		// The following while loop is added just for debugging purpose. To
 		// activate the following while loop code snippet, comment the above
-		// [intermediateLatch.await()] line.
+		// [intermediateLatch.await()] line. Change the sleep time as per need.
 		while (intermediateLatch.getCount() != 0) {
-			Thread.sleep(3000);
 			System.out.println("****************************************");
 			for (BlobNode bn : blobGraph.blobNodes.values()) {
 				switch (bn.drainState.get()) {
@@ -305,6 +305,7 @@ public abstract class AbstractDrainer {
 				}
 			}
 			System.out.println("****************************************");
+			Thread.sleep(100000);
 		}
 	}
 
