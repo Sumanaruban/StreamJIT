@@ -31,5 +31,6 @@ else
 	mv $appDir/$mainClass/verify.txt $appDir/$mainClass/verify.dd
 	rm $appDir/$mainClass/*.txt
 	mv $appDir/$mainClass/verify.dd $appDir/$mainClass/verify.txt
+	rm $appDir/$mainClass/*.dot
 fi
 
