@@ -458,7 +458,7 @@ public class AffinityManagers {
 				Blob b = blobIdBlobMap.get(t);
 				System.out.print(t + " :-");
 				for (int i = 0; i < b.getCoreCount(); i++) {
-					System.out.print(assignmentTable.get(b, i) + " ");
+					System.out.print(assignmentTable.get(t, i) + " ");
 				}
 				System.out.println();
 			}
