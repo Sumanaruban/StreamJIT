@@ -125,14 +125,15 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 	}
 
 	private void compile(Configuration cfg, CreationLogic creationLogic) {
-		System.out
-				.println("------------------------------------------------------------");
-		System.out.println("New Configuration.....");
 		int appInstId = (int) cfg.getExtraData("appInstId");
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(cfg
 				.getSubconfiguration("blobConfigs"));
 		ImmutableSet<Blob> blobSet = blobCreator.getBlobs(cfg, creationLogic,
 				appInstId);
+		System.out
+				.println(String
+						.format("-------------------------New Configuration - %d-------------------------\n",
+								appInstId));
 		if (blobSet != null) {
 			Map<Token, ConnectionInfo> conInfoMap = (Map<Token, ConnectionInfo>) cfg
 					.getExtraData(GlobalConstants.CONINFOMAP);
