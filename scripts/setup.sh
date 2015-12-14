@@ -69,10 +69,10 @@ function copyOTScripts(){
 #of online tuning python scripts. I'm adding 4th argument to automatically copy the
 #correct scripts based on the branch. Remove this change once everything is settled,
 #including the function copyOTScripts.
-if [ "$#" -ne 4 ]; then
+if [ "$#" -lt 4 ]; then
 	echo "Illegal number of parameters"
-	echo "4 arguments must be passed"
-	echo "setup.sh <app> <mainClass> <noOfnodes> <branch>"
+	echo "At least 4 arguments must be passed"
+	echo "setup.sh <app> <mainClass> <noOfnodes> <branch> [run<true|false>]"
 	exit
 fi
 
@@ -81,6 +81,7 @@ app=${args[0]}
 mainClass=${args[1]}
 nodes=${args[2]}
 branch=${args[3]}
+run=${args[4]}
 totalNodes=$((nodes + 1))
 snInstances=1
 
@@ -90,6 +91,10 @@ if [ "$debug" = true ] ; then
 	nodes=1
 fi
 
+if ["$run" = ""]; then
+	run=true
+fi
+
 cd /data/scratch/sumanan
 creatdirs $app			# Changes the current working directory(CWD) as well.
 mv "optionsLanka.properties" "options.properties"
@@ -97,4 +102,8 @@ createCTRLRSh $app $mainClass $totalNodes
 createSNSh $app $nodes
 copyOTScripts $branch
 cp ../run.sh run.sh
-./run.sh $snInstances
+
+if [ "$run" = true ] ; then
+	./run.sh $snInstances
+fi
+

@@ -108,7 +108,7 @@
 	</target>
 
 	<target name="remotesetup" depends="sendtoLanka, copy">
-		<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}" password="${password}" command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/setup.sh ${app} ${streamGraphName} ${numOfSNs} ${branch}" />
+		<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}" password="${password}" command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/setup.sh ${app} ${streamGraphName} ${numOfSNs} ${branch} ${run}" />
 		 <antcall target="createDownloadScript"/>
 	</target>
 
@@ -126,7 +126,7 @@
 							operand2="1" datatype="int" />
 						<sshexec trust="true" host="lanka.csail.mit.edu" username="${username}"
 							password="${password}"
-							command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/copy.sh ${appDir} ${appDirID} ${toID} ${streamGraphName} @{SN} ${branch}" />
+							command="source ~/.bash_profile &amp;&amp; /data/scratch/${username}/copy.sh ${appDir} ${appDirID} ${toID} ${streamGraphName} @{SN} ${branch} ${run}" />
 					</then>
 				</if>
 			</sequential>
