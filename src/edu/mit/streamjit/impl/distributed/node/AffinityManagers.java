@@ -452,13 +452,15 @@ public class AffinityManagers {
 			System.out.println();
 		}
 
-		private void printTable(
+		private static void printTable(
 				ImmutableTable<Token, Integer, Integer> assignmentTable) {
-			for (Token t : assignmentTable.rowKeySet()) {
-				Blob b = blobIdBlobMap.get(t);
+			for (Map.Entry<Token, Map<Integer, Integer>> row : assignmentTable
+					.rowMap().entrySet()) {
+				Token t = row.getKey();
 				System.out.print(t + " :-");
-				for (int i = 0; i < b.getCoreCount(); i++) {
-					System.out.print(assignmentTable.get(t, i) + " ");
+				for (Map.Entry<Integer, Integer> en : row.getValue().entrySet()) {
+					System.out.print(String.format("%d-%d, ", en.getKey(),
+							en.getValue()));
 				}
 				System.out.println();
 			}
