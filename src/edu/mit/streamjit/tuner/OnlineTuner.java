@@ -99,9 +99,10 @@ public class OnlineTuner implements Runnable {
 				String cfgPrefix = ConfigurationUtils
 						.getConfigPrefix(newconfig.configuration);
 
-				System.out.println(String.format(
-						"---------------------%s-------------------------",
-						cfgPrefix));
+				System.out
+						.println(String
+								.format("---------------------Tuning-%s-------------------------",
+										cfgPrefix));
 
 				mLogger.eEvent("newCfg");
 				mLogger.bEvent("reconfigure");

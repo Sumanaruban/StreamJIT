@@ -172,7 +172,9 @@ public class Verifier implements Runnable {
 	 */
 	private List<Long> evaluateConfig(Configuration cfg) {
 		String cfgPrefix = ConfigurationUtils.getConfigPrefix(cfg);
-		System.out.println("Evaluating " + cfgPrefix);
+		System.out.println(String.format(
+				"---------------------Evaluating-%s-------------------------",
+				cfgPrefix));
 		int count = Options.evaluationCount;
 		List<Long> runningTime = new ArrayList<>(count);
 		Pair<Boolean, Integer> ret;
