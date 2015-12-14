@@ -82,6 +82,14 @@ mainClass=${args[1]}
 nodes=${args[2]}
 branch=${args[3]}
 totalNodes=$((nodes + 1))
+snInstances=1
+
+debug=true
+if [ "$debug" = true ] ; then
+	snInstances=$nodes
+	nodes=1
+fi
+
 cd /data/scratch/sumanan
 creatdirs $app			# Changes the current working directory(CWD) as well.
 mv "optionsLanka.properties" "options.properties"
@@ -89,4 +97,4 @@ createCTRLRSh $app $mainClass $totalNodes
 createSNSh $app $nodes
 copyOTScripts $branch
 cp ../run.sh run.sh
-./run.sh
+./run.sh $snInstances

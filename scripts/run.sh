@@ -40,6 +40,12 @@ function verifyIP(){
 	fi
 }
 
+args=("$@")
+snInstances=${args[0]}
+if ["$snInstances" = ""]; then
+	snInstances=1
+fi
+
 out=$(sbatch controller.sh) #start the controller.
 echo $out
 
@@ -51,4 +57,8 @@ ip=$(($nodeid+10))	#In Lanka cluster, a node's ip address is 128.30.116.[Node nu
 			#Here $ip variable contains only the last byte of the ip address.
 echo $ip
 verifyIP
-sbatch streamnode.sh $ip
+
+for (( c=0; c<$snInstances; c++ ))
+do
+   sbatch streamnode.sh $ip
+done
