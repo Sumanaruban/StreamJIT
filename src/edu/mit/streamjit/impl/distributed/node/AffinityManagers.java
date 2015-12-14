@@ -1,5 +1,12 @@
 package edu.mit.streamjit.impl.distributed.node;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 
@@ -16,6 +24,7 @@ import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.distributed.common.Machine;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.util.ConfigurationUtils;
 
 /**
  * Various implementations of the interface {@link AffinityManager}.
@@ -464,6 +473,89 @@ public class AffinityManagers {
 				}
 				System.out.println();
 			}
+		}
+
+		public void dumpAffinityTable(String appName, String namePrefix,
+				long streamNodeID) {
+			if (assignmentTable == null)
+				return;
+			AffinityTable at = new AffinityTable(assignmentTable);
+			try {
+				File dir = new File(String.format("%s%s%s", appName,
+						File.separator, ConfigurationUtils.configDir));
+				if (!dir.exists())
+					if (!dir.mkdirs()) {
+						System.err.println("Make directory failed");
+						return;
+					}
+				File file = new File(dir, String.format("%s_%d.at", namePrefix,
+						streamNodeID));
+				FileOutputStream fout = new FileOutputStream(file, false);
+				ObjectOutputStream oos = new ObjectOutputStream(fout);
+				oos.writeObject(at);
+				oos.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * @author sumanan
+	 * @since 15 Dec, 2015
+	 */
+	public static class FileAffinityManager implements AffinityManager {
+
+		private final ImmutableTable<Token, Integer, Integer> assignmentTable;
+
+		FileAffinityManager(String appName, String namePrefix, long streamNodeID) {
+			String atFilePath = String.format("%s%s%s%s%s_%d.at", appName,
+					File.separator, ConfigurationUtils.configDir,
+					File.separator, namePrefix, streamNodeID);
+			AffinityTable at = null;
+			try {
+				FileInputStream fin = new FileInputStream(atFilePath);
+				ObjectInputStream ois = new ObjectInputStream(fin);
+				at = (AffinityTable) ois.readObject();
+				ois.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+			assignmentTable = at.assignmentTable;
+			CoreCodeAffinityManager.printTable(assignmentTable);
+		}
+
+		@Override
+		public ImmutableSet<Integer> getAffinity(Token blobID, int coreCode) {
+			return ImmutableSet.of(assignmentTable.get(blobID, coreCode));
+		}
+	}
+
+	public static class AffinityTable implements Serializable {
+		private static final long serialVersionUID = 1L;
+		private transient ImmutableTable<Token, Integer, Integer> assignmentTable;
+
+		public AffinityTable(
+				ImmutableTable<Token, Integer, Integer> assignmentTable) {
+			this.assignmentTable = assignmentTable;
+		}
+
+		private void writeObject(ObjectOutputStream oos) throws IOException {
+			oos.defaultWriteObject();
+			oos.writeObject(assignmentTable.rowMap());
+		}
+
+		private void readObject(ObjectInputStream ois) throws IOException,
+				ClassNotFoundException {
+			ois.defaultReadObject();
+			ImmutableMap<Token, Map<Integer, Integer>> map = (ImmutableMap<Token, Map<Integer, Integer>>) ois
+					.readObject();
+			ImmutableTable.Builder<Token, Integer, Integer> builder = ImmutableTable
+					.builder();
+			for (Map.Entry<Token, Map<Integer, Integer>> e1 : map.entrySet())
+				for (Map.Entry<Integer, Integer> e2 : e1.getValue().entrySet())
+					builder.put(e1.getKey(), e2.getKey(), e2.getValue());
+			assignmentTable = builder.build();
 		}
 	}
 }

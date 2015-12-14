@@ -156,11 +156,20 @@ public class BlobsManagerImpl implements BlobsManager {
 				return new AffinityManagers.OneCoreAffinityManager();
 			case 2 :
 				return new AffinityManagers.EqualAffinityManager(blobSet.size());
-			default :
-				return new AffinityManagers.CoreCodeAffinityManager(blobSet);
+			case 4 :
+				return new AffinityManagers.FileAffinityManager(appName,
+						new Integer(appInstId).toString(),
+						streamNode.getNodeID());
+			default : {
+				AffinityManagers.CoreCodeAffinityManager am = new AffinityManagers.CoreCodeAffinityManager(
+						blobSet);
+				// am.dumpAffinityTable(appName,
+				// new Integer(appInstId).toString(),
+				// streamNode.getNodeID());
+				return am;
+			}
 		}
 	}
-
 	/**
 	 * Drain the blob identified by the token.
 	 */
