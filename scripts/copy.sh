@@ -40,5 +40,6 @@ cd $toDir
 mv $fromDir.jar $toDir.jar
 rm *.sh
 cd ..
+./clean.sh $toDir $mainClass
 ./setup.sh $toDir $mainClass $nodes $branch $run
 
