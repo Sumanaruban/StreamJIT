@@ -135,6 +135,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		this.appInstId = appInstId;
 		this.starterType = starterType;
 		this.cfgPrefix = cfgPrefix;
+		this.appName = appName;
 
 		this.cmdProcessor = new CommandProcessorImpl();
 		this.drainProcessor = new CTRLRDrainProcessorImpl();
@@ -142,7 +143,6 @@ public class BlobsManagerImpl implements BlobsManager {
 		this.bufferManager = new GlobalBufferManager(blobSet, streamNode,
 				appInstId);
 		this.affinityManager = affinityManager(blobSet);
-		this.appName = appName;
 		bufferManager.initialise();
 		if (bufferManager.isbufferSizesReady())
 			createBEs(blobSet);
