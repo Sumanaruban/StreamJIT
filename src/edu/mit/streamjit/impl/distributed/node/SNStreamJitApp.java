@@ -42,6 +42,7 @@ public class SNStreamJitApp {
 	public final Worker<?, ?> source;
 	private final StreamNode streamNode;
 	public final int starterType;
+	public final String appName;
 
 	SNStreamJitApp(String json, StreamNode streamNode) {
 		this.streamNode = streamNode;
@@ -54,8 +55,7 @@ public class SNStreamJitApp {
 
 		this.conProvider = new ConnectionProvider(streamNode.getNodeID(),
 				networkInfo);
-		String appName = (String) staticConfig
-				.getExtraData(GlobalConstants.APP_NAME);
+		appName = (String) staticConfig.getExtraData(GlobalConstants.APP_NAME);
 		streamNode.createEventTimeLogger(appName);
 		topLevelClass = (String) staticConfig
 				.getExtraData(GlobalConstants.TOPLEVEL_WORKER_NAME);

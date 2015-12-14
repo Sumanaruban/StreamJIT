@@ -139,7 +139,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 					.getExtraData(GlobalConstants.CONINFOMAP);
 
 			BlobsManagerImpl bm = new BlobsManagerImpl(blobSet, conInfoMap,
-					streamNode, app.conProvider, app.topLevelClass, appInstId,
+					streamNode, app.conProvider, app.appName, appInstId,
 					app.starterType, cfgPrefix);
 			CTRLRMessageVisitorImpl mv = new CTRLRMessageVisitorImpl(
 					streamNode, bm, appInstId);
