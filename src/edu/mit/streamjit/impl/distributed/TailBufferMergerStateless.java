@@ -153,7 +153,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 			copyToTailBuffer(readBuffer);
 	}
 
-	public void switchBuf() {
+	public void startMerge() {
 		if (switchBuf)
 			throw new IllegalStateException("switchBuf==false expected.");
 		switchBuf = true;

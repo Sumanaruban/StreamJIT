@@ -53,9 +53,10 @@ public interface TailBufferMerger {
 	public void unregisterAppInst(int appInstId);
 
 	/**
-	 * When 2 {@link AppInstance}s are registered, {@link StreamJitAppManager}
-	 * can call this method to switch from one {@link AppInstance}'s output to
-	 * another.
+	 * When 2 {@link AppInstance}s are registered, this method can be called to
+	 * inform {@link TailBufferMerger} to merge the outputs from both
+	 * {@link AppInstance}s. How the outputs are merged depends on the
+	 * {@link TailBufferMerger}'s implementation.
 	 */
-	public void switchBuf();
+	public void startMerge();
 }

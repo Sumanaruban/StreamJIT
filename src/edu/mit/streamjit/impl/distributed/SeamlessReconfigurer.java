@@ -46,7 +46,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	@Override
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 		if (!isFinal) {
-			tailMerger.switchBuf();
+			tailMerger.startMerge();
 			tailMerger.unregisterAppInst(aim.appInstId());
 		}
 		event("F-" + aim.appInstId());

@@ -48,6 +48,6 @@ public class TailBufferMergerPauseResume implements TailBufferMerger {
 	}
 
 	@Override
-	public void switchBuf() {
+	public void startMerge() {
 	}
 }
