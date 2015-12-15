@@ -92,7 +92,7 @@ class HeadTailHandler {
 		setHead(conInfoMap, bufferMap, aim, bc, needSeamless);
 	}
 
-	TailChannel tailChannel(Buffer buffer, ConnectionInfo conInfo,
+	TailChannel tailChannel(BufferWriteCounter buffer, ConnectionInfo conInfo,
 			int skipCount, AppInstance appinst, EventTimeLogger eLogger) {
 		String appName = app.name;
 		int steadyCount = Options.outputCount;

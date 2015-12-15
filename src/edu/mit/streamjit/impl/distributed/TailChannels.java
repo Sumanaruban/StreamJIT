@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.common.BufferWriteCounter;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
@@ -141,12 +142,12 @@ public class TailChannels {
 		 *            to get this amount of outputs ( after skipping skipCount
 		 *            number of outputs at the beginning).
 		 */
-		public AbstractBlockingTailChannel(Buffer buffer,
+		public AbstractBlockingTailChannel(BufferWriteCounter bwc,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
 				int steadyCount, String appName, String cfgPrefix,
 				EventTimeLogger eLogger) {
-			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel);
+			super(bwc, conProvider, conInfo, bufferTokenName, debugLevel);
 			this.skipCount = skipCount;
 			this.totalCount = steadyCount + skipCount;
 			count = 0;
@@ -242,12 +243,12 @@ public class TailChannels {
 		 *            to get this amount of outputs ( after skipping skipCount
 		 *            number of outputs at the beginning).
 		 */
-		public BlockingTailChannel1(Buffer buffer,
+		public BlockingTailChannel1(BufferWriteCounter bwc,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
 				int steadyCount, String appName, String cfgPrefix,
 				EventTimeLogger eLogger) {
-			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
+			super(bwc, conProvider, conInfo, bufferTokenName, debugLevel,
 					skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			steadyLatch = new CountDownLatch(1);
 			skipLatch = new CountDownLatch(1);
@@ -366,12 +367,12 @@ public class TailChannels {
 		 *            to get this amount of outputs ( after skipping skipCount
 		 *            number of outputs at the beginning).
 		 */
-		public BlockingTailChannel2(Buffer buffer,
+		public BlockingTailChannel2(BufferWriteCounter bwc,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
 				int steadyCount, String appName, String cfgPrefix,
 				EventTimeLogger eLogger) {
-			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
+			super(bwc, conProvider, conInfo, bufferTokenName, debugLevel,
 					skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			stopWatch = Stopwatch.createUnstarted();
 			skipLatch = new CountDownLatch(1);
@@ -472,12 +473,12 @@ public class TailChannels {
 		 */
 		private final int noOutputTimeLimit = Options.noOutputTimeLimit;
 
-		public BlockingTailChannel3(Buffer buffer,
+		public BlockingTailChannel3(BufferWriteCounter bwc,
 				ConnectionProvider conProvider, ConnectionInfo conInfo,
 				String bufferTokenName, int debugLevel, int skipCount,
 				int steadyCount, String appName, String cfgPrefix,
 				EventTimeLogger eLogger) {
-			super(buffer, conProvider, conInfo, bufferTokenName, debugLevel,
+			super(bwc, conProvider, conInfo, bufferTokenName, debugLevel,
 					skipCount, steadyCount, appName, cfgPrefix, eLogger);
 			stopWatch = Stopwatch.createUnstarted();
 		}
