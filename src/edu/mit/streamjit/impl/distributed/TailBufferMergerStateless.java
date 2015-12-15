@@ -43,7 +43,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private volatile boolean stopCalled;
 
-	private volatile boolean switchBuf;
+	private volatile boolean merge;
 
 	private final CountDownLatch latch = new CountDownLatch(1);
 
@@ -75,7 +75,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 				waitForCurBuf();
 				while (!stopCalled) {
 					copyToTailBuffer(curBuf);
-					if (switchBuf) {
+					if (merge) {
 						switchBuffers();
 					}
 				}
@@ -113,7 +113,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	public void unregisterAppInst(int appInstId) {
 		// TODO: Busy waiting. Consider using phaser.
-		// while (switchBuf);
+		// while (merge);
 		switchBufPhaser.arriveAndAwaitAdvance();
 		if (prevBuf == null)
 			throw new IllegalStateException("prevBuf != null expected.");
@@ -144,7 +144,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		prevBuf = curBuf;
 		curBuf = nextBuf;
 		nextBuf = null;
-		switchBuf = false;
+		merge = false;
 		switchBufPhaser.arrive();
 	}
 
@@ -154,9 +154,9 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 	}
 
 	public void startMerge() {
-		if (switchBuf)
-			throw new IllegalStateException("switchBuf==false expected.");
-		switchBuf = true;
+		if (merge)
+			throw new IllegalStateException("merge==false expected.");
+		merge = true;
 	}
 
 	public void stop() {
