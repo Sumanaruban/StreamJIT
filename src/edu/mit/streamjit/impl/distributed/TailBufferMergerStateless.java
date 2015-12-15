@@ -12,7 +12,9 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 
 /**
- * {@link TailBufferMerger} for state-less seam-less reconfiguration process.
+ * {@link TailBufferMerger} for seam-less reconfiguration process. Always skips
+ * skioCount amount of data from the new graph and switch to the new graph only
+ * after the old graph is drained.
  * 
  * @author sumanan
  * @since 28 Oct, 2015
