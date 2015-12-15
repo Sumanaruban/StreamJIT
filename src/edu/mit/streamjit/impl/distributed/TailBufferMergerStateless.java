@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Phaser;
 
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
@@ -44,6 +45,8 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private final CountDownLatch latch = new CountDownLatch(1);
 
+	private final Phaser switchBufPhaser = new Phaser();
+
 	private final Queue<Buffer> freeBufferQueue;
 
 	private final Map<Buffer, AppInstBufInfo> appInstBufInfos;
@@ -53,6 +56,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		this.stopCalled = false;
 		this.appInstBufInfos = new ConcurrentHashMap<>();
 		freeBufferQueue = createFreeBufferQueue();
+		switchBufPhaser.bulkRegister(2);
 	}
 
 	private Queue<Buffer> createFreeBufferQueue() {
@@ -107,7 +111,8 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	public void unregisterAppInst(int appInstId) {
 		// TODO: Busy waiting. Consider using phaser.
-		while (switchBuf);
+		// while (switchBuf);
+		switchBufPhaser.arriveAndAwaitAdvance();
 		if (prevBuf == null)
 			throw new IllegalStateException("prevBuf != null expected.");
 
@@ -138,6 +143,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		curBuf = nextBuf;
 		nextBuf = null;
 		switchBuf = false;
+		switchBufPhaser.arrive();
 	}
 
 	private void copyFully(final Buffer readBuffer) {
