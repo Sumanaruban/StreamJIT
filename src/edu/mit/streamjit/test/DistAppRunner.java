@@ -51,10 +51,16 @@ public final class DistAppRunner {
 	}
 
 	private static void startSNs(int noOfNodes) throws IOException {
-		for (int i = 1; i < noOfNodes; i++)
-			new ProcessBuilder("xterm", "-e", "java", "-jar", "StreamNode.jar")
-					.start();
-		// new ProcessBuilder("java", "-jar", "StreamNode.jar").start();
+		for (int i = 1; i < noOfNodes; i++) {
+			// new ProcessBuilder("xterm", "-e", "java", "-jar",
+			// "StreamNode.jar")
+			// .start();
+			// new ProcessBuilder("java", "-jar", "StreamNode.jar").start();
+
+			ProcessBuilder gnomePB = new ProcessBuilder("gnome-terminal", "-e",
+					"java -jar StreamNode.jar");
+			gnomePB.start();
+		}
 	}
 
 	/**
