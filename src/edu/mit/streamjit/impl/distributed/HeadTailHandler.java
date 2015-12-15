@@ -64,6 +64,9 @@ class HeadTailHandler {
 	/**
 	 * Setup the headchannel and tailchannel.
 	 * 
+	 * [15-12-2015] TODO: needSeamless flag was added as a quick hack. Remove
+	 * this flag and refactor this class in a OOP/OOD way.
+	 * 
 	 * @param cfg
 	 * @param bufferMap
 	 */
