@@ -11,6 +11,7 @@ import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.BufferWriteCounter;
+import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
@@ -107,7 +108,7 @@ public class TailChannels {
 
 		protected final int totalCount;
 
-		protected int count;
+		private final Counter counter;
 
 		/**
 		 * {@link #releaseAndInitilize()} and {@link #reset()} methods set the
@@ -150,7 +151,8 @@ public class TailChannels {
 			super(bwc, conProvider, conInfo, bufferTokenName, debugLevel);
 			this.skipCount = skipCount;
 			this.totalCount = steadyCount + skipCount;
-			count = 0;
+			this.counter = bwc;
+			countAtReset = 0;
 			this.cfgPrefix = cfgPrefix;
 			if (Options.tune == 0) {
 				// TODO: Leaks this object from the constructor. May cause
@@ -180,7 +182,8 @@ public class TailChannels {
 
 		@Override
 		public int count() {
-			return count + countAtReset;
+			// return count + countAtReset;
+			return counter.count();
 		}
 
 		protected long normalizedTime(int count, long time) {
@@ -207,9 +210,13 @@ public class TailChannels {
 			if (throughputPrinter != null) {
 				String msg = String.format(
 						"Reporting-%s.cfg,time=%d,TotalCount=%d\n", cfgPrefix,
-						time, count);
+						time, countAfterReset());
 				throughputPrinter.write(msg);
 			}
+		}
+
+		protected int countAfterReset() {
+			return counter.count() - countAtReset;
 		}
 	}
 
@@ -259,16 +266,15 @@ public class TailChannels {
 		@Override
 		public void receiveData() {
 			super.receiveData();
-			if (count == 0)
+			if (count() == 1)
 				eLogger.eEvent("initialization");
-			count++;
 
-			if (skipLatchUp && count > skipCount) {
+			if (skipLatchUp && countAfterReset() > skipCount) {
 				skipLatch.countDown();
 				skipLatchUp = false;
 			}
 
-			if (steadyLatchUp && count > totalCount) {
+			if (steadyLatchUp && countAfterReset() > totalCount) {
 				steadyLatch.countDown();
 				steadyLatchUp = false;
 			}
@@ -290,7 +296,7 @@ public class TailChannels {
 			steadyLatch.await();
 			stopwatch.stop();
 			long time = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-			int cnt = count;
+			int cnt = countAfterReset();
 			reportingTime(time);
 			return normalizedTime(cnt, time);
 		}
@@ -312,7 +318,7 @@ public class TailChannels {
 
 			stopwatch.stop();
 			long time = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-			int cnt = count;
+			int cnt = countAfterReset();
 			reportingTime(time);
 			return normalizedTime(cnt, time);
 		}
@@ -321,8 +327,7 @@ public class TailChannels {
 		 * Releases all latches, and re-initializes the latches and counters.
 		 */
 		protected void releaseAndInitilize() {
-			countAtReset += count;
-			count = 0;
+			countAtReset = count();
 			skipLatch.countDown();
 			skipLatch = new CountDownLatch(1);
 			skipLatchUp = true;
@@ -334,8 +339,7 @@ public class TailChannels {
 		public void reset() {
 			steadyLatch.countDown();
 			skipLatch.countDown();
-			countAtReset += count;
-			count = 0;
+			countAtReset = count();
 		}
 	}
 
@@ -382,16 +386,15 @@ public class TailChannels {
 		@Override
 		public void receiveData() {
 			super.receiveData();
-			if (count == 0)
+			if (count() == 1)
 				eLogger.eEvent("initialization");
-			count++;
 
-			if (skipLatchUp && count > skipCount) {
+			if (skipLatchUp && countAfterReset() > skipCount) {
 				skipLatch.countDown();
 				skipLatchUp = false;
 			}
 
-			if (stopWatch.isRunning() && count > totalCount) {
+			if (stopWatch.isRunning() && countAfterReset() > totalCount) {
 				stopWatch.stop();
 			}
 		}
@@ -412,7 +415,7 @@ public class TailChannels {
 			while (stopWatch.isRunning())
 				Thread.sleep(250);
 			long time = stopWatch.elapsed(TimeUnit.MILLISECONDS);
-			int cnt = count;
+			int cnt = countAfterReset();
 			reportingTime(time);
 			return normalizedTime(cnt, time);
 		}
@@ -433,7 +436,7 @@ public class TailChannels {
 			}
 
 			long time = stopWatch.elapsed(TimeUnit.MILLISECONDS);
-			int cnt = count;
+			int cnt = countAfterReset();
 			reportingTime(time);
 			return normalizedTime(cnt, time);
 		}
@@ -442,8 +445,7 @@ public class TailChannels {
 		 * Releases all latches, and re-initializes the latches and counters.
 		 */
 		protected void releaseAndInitilize() {
-			countAtReset += count;
-			count = 0;
+			countAtReset = count();
 			skipLatch.countDown();
 			skipLatch = new CountDownLatch(1);
 			skipLatchUp = true;
@@ -453,8 +455,7 @@ public class TailChannels {
 		public void reset() {
 			stopWatch.reset();
 			skipLatch.countDown();
-			countAtReset += count;
-			count = 0;
+			countAtReset = count();
 		}
 	}
 
@@ -486,9 +487,8 @@ public class TailChannels {
 		@Override
 		public void receiveData() {
 			super.receiveData();
-			if (count == 0)
+			if (count() == 1)
 				eLogger.eEvent("initialization");
-			count++;
 		}
 
 		@Override
@@ -499,10 +499,10 @@ public class TailChannels {
 			stopWatch.start();
 			while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < skipMills)
 				Thread.sleep(1);
-			int startCount = count;
+			int startCount = countAfterReset();
 			while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < (skipMills + steadyMills))
 				Thread.sleep(1);
-			int endCount = count;
+			int endCount = countAfterReset();
 			System.err.println(String.format("startCount=%d, endCount=%d",
 					startCount, endCount));
 			long time = fixedtime(endCount - startCount);
@@ -512,10 +512,10 @@ public class TailChannels {
 
 		private boolean waitForFirstOutput() throws InterruptedException {
 			Stopwatch sw = Stopwatch.createStarted();
-			while (count < 1
+			while (countAfterReset() < 1
 					&& sw.elapsed(TimeUnit.MILLISECONDS) < noOutputTimeLimit)
 				Thread.sleep(1);
-			return count > 0;
+			return countAfterReset() > 0;
 		}
 
 		public long fixedtime(int cnt) {
@@ -535,14 +535,12 @@ public class TailChannels {
 		@Override
 		public void reset() {
 			stopWatch.reset();
-			countAtReset += count;
-			count = 0;
+			countAtReset = count();
 		}
 
 		@Override
 		protected void releaseAndInitilize() {
-			countAtReset += count;
-			count = 0;
+			countAtReset = count();
 			stopWatch.reset();
 		}
 	}
