@@ -60,6 +60,13 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	int duplicationCount;
 
+	/**
+	 * As the result of input duplication, the current graph and the next graph
+	 * will generate duplicate output as well. This index tells the duplicate
+	 * output's starting point.
+	 */
+	int duplicateOutputIndex;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
 			EventTimeLogger eLogger, Counter tailCounter, AppInstanceManager aim) {
@@ -143,6 +150,12 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		return firing;
 	}
 
+	private int expectedOutput() {
+		int out = expectedFiring() * graphSchedule.steadyOut
+				+ graphSchedule.totalOutDuringInit;
+		return out;
+	}
+
 	private int currentFiring() {
 		int firing = (tailCounter.count() - graphSchedule.totalOutDuringInit)
 				/ graphSchedule.steadyOut;
@@ -180,6 +193,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 	}
 
 	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
+		duplicateOutputIndex = expectedOutput();
 		int itemsToRead;
 		int itemsDuplicated = 0;
 		while (itemsDuplicated < duplicationCount) {
