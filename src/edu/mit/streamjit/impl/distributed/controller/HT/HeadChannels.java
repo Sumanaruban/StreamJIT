@@ -40,7 +40,7 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  * @author Sumanan sumanan@mit.edu
  * @since Oct 21, 2013
  */
-public class HeadChannel {
+public class HeadChannels {
 
 	public static class TCPHeadChannel extends BlockingOutputChannel {
 

@@ -52,7 +52,7 @@ import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputPrinter;
-import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannel.HeadBuffer;
+import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels.HeadBuffer;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.AppDrainer;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.CommunicationManager.CommunicationType;

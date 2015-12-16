@@ -18,7 +18,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
-import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannel;
+import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels;
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannel;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels;
@@ -145,10 +145,10 @@ class HeadTailHandler {
 					aim.eLogger, tailCounter, aim);
 		else {
 			if (headconInfo instanceof TCPConnectionInfo)
-				headChannel = new HeadChannel.TCPHeadChannel(b, c, headconInfo,
+				headChannel = new HeadChannels.TCPHeadChannel(b, c, headconInfo,
 						name, 0, aim.eLogger);
 			else if (headconInfo instanceof AsyncTCPConnectionInfo)
-				headChannel = new HeadChannel.AsyncHeadChannel(b, c,
+				headChannel = new HeadChannels.AsyncHeadChannel(b, c,
 						headconInfo, name, 0, aim.eLogger);
 			else
 				throw new IllegalStateException(
