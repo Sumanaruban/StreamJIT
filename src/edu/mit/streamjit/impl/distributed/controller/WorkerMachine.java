@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.mit.streamjit.impl.distributed;
+package edu.mit.streamjit.impl.distributed.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,14 +29,13 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.*;
-
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.common.Workers;
-import edu.mit.streamjit.impl.distributed.PartitionManager.AbstractPartitionManager;
+import edu.mit.streamjit.impl.distributed.controller.PartitionManager.AbstractPartitionManager;
 
 /**
  * This class implements one type of search space. Adds "worker to machine"

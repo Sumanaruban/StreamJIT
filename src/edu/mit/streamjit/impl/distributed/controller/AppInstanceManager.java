@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed;
+package edu.mit.streamjit.impl.distributed.controller;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +18,6 @@ import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
-import edu.mit.streamjit.impl.distributed.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.AppStatus.AppStatusProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
@@ -48,6 +47,7 @@ import edu.mit.streamjit.impl.distributed.common.SNException.SNExceptionProcesso
 import edu.mit.streamjit.impl.distributed.common.SNMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo;
 import edu.mit.streamjit.impl.distributed.common.SystemInfo;
+import edu.mit.streamjit.impl.distributed.controller.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;

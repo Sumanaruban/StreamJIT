@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed;
+package edu.mit.streamjit.impl.distributed.controller;
 
 import java.util.Map;
 
@@ -7,11 +7,11 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.distributed.StreamJitAppManager.Reconfigurer;
 import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 

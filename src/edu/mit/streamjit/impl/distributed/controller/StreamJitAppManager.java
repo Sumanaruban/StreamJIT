@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.mit.streamjit.impl.distributed;
+package edu.mit.streamjit.impl.distributed.controller;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,8 +38,6 @@ import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
 import edu.mit.streamjit.impl.common.TimeLogger;
-import edu.mit.streamjit.impl.distributed.SeamlessReconfigurer.SeamlessStatefulReconfigurer;
-import edu.mit.streamjit.impl.distributed.SeamlessReconfigurer.SeamlessStatelessReconfigurer;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
@@ -51,6 +49,8 @@ import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfo.SNTimeInfoProcessor;
 import edu.mit.streamjit.impl.distributed.common.SNTimeInfoProcessorImpl;
+import edu.mit.streamjit.impl.distributed.controller.SeamlessReconfigurer.SeamlessStatefulReconfigurer;
+import edu.mit.streamjit.impl.distributed.controller.SeamlessReconfigurer.SeamlessStatelessReconfigurer;
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;

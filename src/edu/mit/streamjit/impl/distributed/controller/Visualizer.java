@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed;
+package edu.mit.streamjit.impl.distributed.controller;
 
 import java.io.BufferedReader;
 import java.io.File;

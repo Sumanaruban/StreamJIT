@@ -23,7 +23,7 @@ package edu.mit.streamjit.impl.distributed.common;
 
 import java.io.Serializable;
 
-import edu.mit.streamjit.impl.distributed.AppInstance;
+import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 
 public interface SNMessageElement extends Serializable {
 

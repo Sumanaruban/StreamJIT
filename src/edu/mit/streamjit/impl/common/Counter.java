@@ -1,7 +1,7 @@
 package edu.mit.streamjit.impl.common;
 
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.distributed.ThroughputPrinter;
+import edu.mit.streamjit.impl.distributed.controller.ThroughputPrinter;
 
 /**
  * Interface to count number of data items received or sent.

@@ -25,7 +25,7 @@ import edu.mit.streamjit.util.json.Jsonifiers;
 
 /**
  * Represents a StreamJit application at {@link StreamNode} side. Controller
- * uses {@link edu.mit.streamjit.impl.distributed.StreamJitApp}, which keeps
+ * uses {@link edu.mit.streamjit.impl.distributed.controller.StreamJitApp}, which keeps
  * more details about the application. We can possibly have a base class and two
  * different children to represent apps at controller side and stream node side.
  * For the moment, lets have it separately.

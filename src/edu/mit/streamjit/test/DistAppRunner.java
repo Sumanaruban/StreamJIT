@@ -12,7 +12,7 @@ import edu.mit.streamjit.api.Input;
 import edu.mit.streamjit.api.OneToOneElement;
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.StreamCompiler;
-import edu.mit.streamjit.impl.distributed.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.controller.DistributedStreamCompiler;
 import edu.mit.streamjit.test.Benchmark.Dataset;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio.FMRadioBenchmarkProvider;
 

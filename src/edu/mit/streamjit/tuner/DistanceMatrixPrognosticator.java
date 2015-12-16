@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import edu.mit.streamjit.impl.common.Configuration;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.FullParameterSummary;
 import edu.mit.streamjit.tuner.ConfigurationAnalyzer.ParamType;
 

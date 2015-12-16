@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.mit.streamjit.impl.distributed;
+package edu.mit.streamjit.impl.distributed.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,10 +49,10 @@ import edu.mit.streamjit.impl.common.InputBufferFactory;
 import edu.mit.streamjit.impl.common.OutputBufferFactory;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.Workers;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
-import edu.mit.streamjit.impl.distributed.HeadChannel.HeadBuffer;
-import edu.mit.streamjit.impl.distributed.StreamJitAppManager.AppDrainer;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.controller.HeadChannel.HeadBuffer;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.AppDrainer;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.CommunicationManager.CommunicationType;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;

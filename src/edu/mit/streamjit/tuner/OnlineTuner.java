@@ -12,12 +12,12 @@ import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.TimeLogger;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
-import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.ThroughputGraphGenerator;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.controller.ThroughputGraphGenerator;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.TimeLogProcessor;

@@ -23,7 +23,7 @@ package edu.mit.streamjit.impl.distributed.common;
 
 import java.io.Serializable;
 
-import edu.mit.streamjit.impl.distributed.AppInstance;
+import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 

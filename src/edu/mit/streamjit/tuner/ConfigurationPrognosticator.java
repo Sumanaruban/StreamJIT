@@ -5,9 +5,9 @@ import java.io.OutputStreamWriter;
 
 import com.google.common.collect.ImmutableList;
 
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
-import edu.mit.streamjit.impl.distributed.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 
 /**
  * Prognosticates a {@link NewConfiguration} given by the OpenTuner and tell

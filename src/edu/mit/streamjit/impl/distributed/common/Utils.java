@@ -50,12 +50,12 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.IOInfo;
 import edu.mit.streamjit.impl.common.Workers;
-import edu.mit.streamjit.impl.distributed.AppInstance;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager;
-import edu.mit.streamjit.impl.distributed.HotSpotTuning;
-import edu.mit.streamjit.impl.distributed.PartitionManager;
-import edu.mit.streamjit.impl.distributed.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.controller.AppInstance;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.controller.HotSpotTuning;
+import edu.mit.streamjit.impl.distributed.controller.PartitionManager;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
