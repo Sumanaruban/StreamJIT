@@ -24,7 +24,7 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  * @author sumanan
  * @since 12 Nov, 2015
  */
-public class HeadChannelSeamless implements BoundaryOutputChannel {
+public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private static final int duplicationFiring = 500;
 
@@ -348,5 +348,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		public void run() {
 			aim.intermediateDraining();
 		}
+	}
+
+	@Override
+	public int count() {
+		return count;
 	}
 }
