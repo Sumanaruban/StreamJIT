@@ -92,7 +92,7 @@ public class AppInstanceManager {
 	 */
 	boolean isCompiled = false;
 
-	GraphSchedule graphSchedule;
+	private GraphSchedule graphSchedule;
 
 	Map<Token, ConnectionInfo> conInfoMap;
 
@@ -284,6 +284,10 @@ public class AppInstanceManager {
 		}
 		System.out.println(String.format("AIM-%d. waitToStop time = %dms",
 				appInstId(), s.elapsed(TimeUnit.MILLISECONDS)));
+	}
+
+	public GraphSchedule graphSchedule() {
+		return graphSchedule;
 	}
 
 	/**

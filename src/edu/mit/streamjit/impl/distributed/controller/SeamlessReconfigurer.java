@@ -97,7 +97,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		if (appManager.prevAIM == null)
 			return 0;
 		return HeadChannelSeamless.duplicationFiring
-				* appManager.prevAIM.graphSchedule.steadyOut;
+				* appManager.prevAIM.graphSchedule().steadyOut;
 	}
 
 	protected void event(String eventName) {
@@ -218,10 +218,11 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
 						.headChannelSeamless();
 				curHeadChnl.duplicationEnabled();
-				prevHeadChnl.duplicateAndStop(
-						HeadChannelSeamless.duplicationFiring
-								* appManager.prevAIM.graphSchedule.steadyIn,
-						curHeadChnl);
+				prevHeadChnl
+						.duplicateAndStop(
+								HeadChannelSeamless.duplicationFiring
+										* appManager.prevAIM.graphSchedule().steadyIn,
+								curHeadChnl);
 			}
 
 			if (isCompiled) {

@@ -91,7 +91,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 				makeConnection();
 				canWrite = true;
 				waitForDuplication();
-				graphSchedule = aim.graphSchedule;
+				graphSchedule = aim.graphSchedule();
 				sendData();
 				if (stopCalled == 1)
 					duplicateSend(duplicationCount, next);
