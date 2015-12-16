@@ -342,7 +342,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 		}
 
 		public void run() {
-			aim.appManager.intermediateDraining(aim);
+			aim.intermediateDraining();
 		}
 	}
 }

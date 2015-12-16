@@ -30,8 +30,9 @@ class PauseResumeReconfigurer implements Reconfigurer {
 
 	public int reconfigure(AppInstance appinst) {
 		System.out.println("PauseResumeReconfigurer...");
-		boolean intermediateDraining = appManager
-				.intermediateDraining(appManager.curAIM);
+		boolean intermediateDraining = true;
+		if (appManager.curAIM != null)
+			intermediateDraining = appManager.curAIM.intermediateDraining();
 		if (!intermediateDraining)
 			return 1;
 

@@ -54,6 +54,8 @@ import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.tuner.EventTimeLogger.PrefixedEventTimeLogger;
 import edu.mit.streamjit.util.CollectionUtils;
+import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.DrainDataUtils;
 
 /**
  * This class is responsible to manage an {@link AppInstance} including
@@ -143,6 +145,27 @@ public class AppInstanceManager {
 				"%s: Draining Finished. Draining time = %dms.", toString(),
 				time));
 		isRunning = false;
+	}
+
+	/**
+	 * Performs intermediate draining.
+	 * 
+	 * @return <code>true</code> iff the draining is success or the application
+	 *         is not running currently.
+	 */
+	public boolean intermediateDraining() {
+		boolean ret = true;
+		if (isRunning) {
+			ret = drainer.drainIntermediate();
+			if (Options.useDrainData && Options.dumpDrainData) {
+				String cfgPrefix = ConfigurationUtils
+						.getConfigPrefix(appInst.configuration);
+				DrainData dd = appInst.drainData;
+				DrainDataUtils.dumpDrainData(dd, appInst.app.name, cfgPrefix);
+			}
+		}
+		appManager.removeAIM(appInstId());
+		return ret;
 	}
 
 	/**

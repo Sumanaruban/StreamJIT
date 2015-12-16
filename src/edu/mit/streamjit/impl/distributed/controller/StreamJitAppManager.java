@@ -54,8 +54,6 @@ import edu.mit.streamjit.impl.distributed.controller.SeamlessReconfigurer.Seamle
 import edu.mit.streamjit.impl.distributed.profiler.MasterProfiler;
 import edu.mit.streamjit.impl.distributed.profiler.ProfilerCommand;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.util.ConfigurationUtils;
-import edu.mit.streamjit.util.DrainDataUtils;
 
 /**
  * @author Sumanan sumanan@mit.edu
@@ -164,7 +162,7 @@ public class StreamJitAppManager {
 		return curAIM;
 	}
 
-	private void removeAIM(int appInstId) {
+	void removeAIM(int appInstId) {
 		AppInstanceManager aim = AIMs.remove(appInstId);
 		aim.releaseAllResources();
 		System.out.println(String.format(
@@ -198,30 +196,6 @@ public class StreamJitAppManager {
 			return -1l;
 		}
 		return time;
-	}
-
-	/**
-	 * Performs intermediate draining.
-	 * 
-	 * @return <code>true</code> iff the draining is success or the application
-	 *         is not running currently.
-	 */
-	public boolean intermediateDraining(AppInstanceManager aim) {
-		if (aim == null)
-			return true;
-
-		boolean ret = true;
-		if (aim.isRunning) {
-			ret = aim.drainer.drainIntermediate();
-			if (Options.useDrainData && Options.dumpDrainData) {
-				String cfgPrefix = ConfigurationUtils
-						.getConfigPrefix(aim.appInst.configuration);
-				DrainData dd = aim.appInst.drainData;
-				DrainDataUtils.dumpDrainData(dd, app.name, cfgPrefix);
-			}
-		}
-		removeAIM(aim.appInstId());
-		return ret;
 	}
 
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
