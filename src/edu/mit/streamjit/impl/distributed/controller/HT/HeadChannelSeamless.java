@@ -26,7 +26,7 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  */
 public class HeadChannelSeamless implements BoundaryOutputChannel {
 
-	public static final int duplicationFiring = 500;
+	private static final int duplicationFiring = 500;
 
 	private Connection connection;
 
@@ -287,6 +287,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 			aim.sendToBlob(blobID, me);
 		}
 		return reqStateAt;
+	}
+
+	public static int duplicationFiring() {
+		return duplicationFiring;
 	}
 
 	private void makeConnection() {
