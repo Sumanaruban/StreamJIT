@@ -15,8 +15,8 @@ import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager;
-import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputGraphGenerator;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
@@ -128,7 +128,7 @@ public class OnlineTuner implements Runnable {
 					tuner.writeLine("exit");
 					break;
 				}
-				mLogger.eTuningRound(cfgPrefix);
+				mLogger.bTuningRound(new Integer(round).toString());
 			}
 
 		} catch (IOException e) {
@@ -247,7 +247,6 @@ public class OnlineTuner implements Runnable {
 		private final OpenTuner tuner;
 		private final String appName;
 		private final Reconfigurer configurer;
-		private NewConfiguration finalConfig = null;
 
 		private OpenTunerListener(OpenTuner tuner, String appName,
 				Reconfigurer configurer) {
@@ -270,8 +269,6 @@ public class OnlineTuner implements Runnable {
 						break;
 					} else if (cfgJson.equals("Completed")) {
 						cfgJson = tuner.readLine();
-						finalConfig = newcfgJson(cfgJson);
-						stopFlag.set(true);
 					}
 					NewConfiguration newcfg = newcfgJson(cfgJson);
 					newConfiguration(newcfg);
@@ -287,12 +284,9 @@ public class OnlineTuner implements Runnable {
 			NewConfiguration newCfg = null;
 			if (openTunerStopped.get())
 				return null;
-			while ((newCfg = cfgQueue.poll()) == null) {
+			while ((newCfg = cfgQueue.poll()) == null)
 				if (openTunerStopped.get())
 					return null;
-				if (finalConfig != null)
-					return finalConfig;
-			}
 			return newCfg;
 		}
 
