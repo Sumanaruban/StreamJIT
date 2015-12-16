@@ -293,7 +293,7 @@ public class AppInstanceManager {
 	 * @param blobID
 	 * @param me
 	 */
-	void sendToBlob(Token blobID, CTRLRMessageElement me) {
+	public void sendToBlob(Token blobID, CTRLRMessageElement me) {
 		if (!appInst.blobtoMachineMap.containsKey(blobID))
 			throw new IllegalArgumentException(blobID
 					+ " not found in the blobtoMachineMap");

@@ -12,6 +12,10 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessag
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
+import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
+import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
+import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMergerPauseResume;
+import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMergerStateless;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
@@ -216,7 +220,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				curHeadChnl.duplicationEnabled();
 				prevHeadChnl.duplicateAndStop(
 						HeadChannelSeamless.duplicationFiring
-								* prevHeadChnl.graphSchedule.steadyIn,
+								* appManager.prevAIM.graphSchedule.steadyIn,
 						curHeadChnl);
 			}
 

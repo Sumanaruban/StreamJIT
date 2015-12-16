@@ -13,8 +13,8 @@ import java.util.Properties;
 
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.distributed.common.Options;
-import edu.mit.streamjit.impl.distributed.controller.ThroughputGraphGenerator;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputGraphGenerator;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.TimeLogProcessor;

@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed.controller;
+package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import java.util.Map;
 import java.util.Queue;
@@ -53,7 +53,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private final Map<Buffer, AppInstBufInfo> appInstBufInfos;
 
-	TailBufferMergerStateless(Buffer tailBuffer) {
+	public TailBufferMergerStateless(Buffer tailBuffer) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		this.appInstBufInfos = new ConcurrentHashMap<>();

@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed.controller;
+package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import java.io.IOException;
 import java.util.Map;
@@ -15,6 +15,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
+import edu.mit.streamjit.impl.distributed.controller.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.controller.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
@@ -337,7 +338,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel {
 
 	class DrainerThread extends Thread {
 		DrainerThread() {
-			super(String.format("DrainerThread - %d", aim.appInst.id));
+			super(String.format("DrainerThread - %d", aim.appInstId()));
 		}
 
 		public void run() {

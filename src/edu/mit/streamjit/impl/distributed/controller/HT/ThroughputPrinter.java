@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed.controller;
+package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -68,8 +68,8 @@ public class ThroughputPrinter {
 		this(counter, appName, eLogger, cfgPrefix, "throughput.txt");
 	}
 
-	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
-			String cfgPrefix, String fileName) {
+	public ThroughputPrinter(Counter counter, String appName,
+			EventTimeLogger eLogger, String cfgPrefix, String fileName) {
 		this.counter = counter;
 		this.appName = appName;
 		this.eLogger = eLogger;
@@ -146,7 +146,7 @@ public class ThroughputPrinter {
 		}
 	}
 
-	void stop() {
+	public void stop() {
 		if (scheduledExecutorService != null)
 			scheduledExecutorService.shutdown();
 		if (writer != null)

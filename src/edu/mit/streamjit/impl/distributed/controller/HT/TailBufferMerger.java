@@ -1,6 +1,9 @@
-package edu.mit.streamjit.impl.distributed.controller;
+package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.distributed.controller.AppInstance;
+import edu.mit.streamjit.impl.distributed.controller.AppInstanceManager;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager;
 
 /**
  * Interface to merge two different {@link AppInstance}s' outputs together and

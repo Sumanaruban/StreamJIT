@@ -1,4 +1,4 @@
-package edu.mit.streamjit.impl.distributed.controller;
+package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import java.io.File;
 import java.io.FileWriter;
