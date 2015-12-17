@@ -55,8 +55,12 @@ public interface TailBufferMerger {
 	 * inform {@link TailBufferMerger} to merge the outputs from both
 	 * {@link AppInstance}s. How the outputs are merged depends on the
 	 * {@link TailBufferMerger}'s implementation.
+	 * 
+	 * @param duplicateOutputIndex
 	 */
 	public void startMerge();
+
+	public void startMerge(int duplicateOutputIndex);
 
 	public BufferProvider bufferProvider();
 

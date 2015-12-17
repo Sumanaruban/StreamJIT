@@ -48,6 +48,10 @@ public class TailBufferMergerPauseResume implements TailBufferMerger {
 	}
 
 	@Override
+	public void startMerge(int duplicateOutputIndex) {
+	}
+
+	@Override
 	public BufferProvider bufferProvider() {
 		return bufProvider;
 	}

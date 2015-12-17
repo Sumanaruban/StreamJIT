@@ -62,12 +62,6 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		stopCalled = true;
 	}
 
-	public void startMerge() {
-		if (merge)
-			throw new IllegalStateException("merge==false expected.");
-		merge = true;
-	}
-
 	@Override
 	public void newAppInst(HeadTail ht, int skipCount) {
 		Buffer b = ht.tailBuffer;

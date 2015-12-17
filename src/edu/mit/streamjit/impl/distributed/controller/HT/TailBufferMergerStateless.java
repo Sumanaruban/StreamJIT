@@ -58,6 +58,15 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 		prevBuf = null;
 	}
 
+	public void startMerge() {
+		if (merge)
+			throw new IllegalStateException("merge==false expected.");
+		merge = true;
+	}
+
+	public void startMerge(int duplicateOutputIndex) {
+	}
+
 	private void switchBuffers() {
 		if (prevBuf != null)
 			throw new IllegalStateException("prevBuf == null expected.");
