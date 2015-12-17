@@ -68,9 +68,12 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	 */
 	int duplicateOutputIndex;
 
+	private final TailBufferMerger tbMerger;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
-			EventTimeLogger eLogger, Counter tailCounter, AppInstanceManager aim) {
+			EventTimeLogger eLogger, Counter tailCounter,
+			AppInstanceManager aim, TailBufferMerger tbMerger) {
 		name = "HeadChannelSeamless " + bufferTokenName;
 		this.conProvider = conProvider;
 		this.conInfo = conInfo;
@@ -81,6 +84,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		canWrite = false;
 		this.tailCounter = tailCounter;
 		this.aim = aim;
+		this.tbMerger = tbMerger;
 	}
 
 	public Runnable getRunnable() {
@@ -195,6 +199,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
 		duplicateOutputIndex = expectedOutput();
+		tbMerger.startMerge(duplicateOutputIndex);
 		int itemsToRead;
 		int itemsDuplicated = 0;
 		while (itemsDuplicated < duplicationCount) {

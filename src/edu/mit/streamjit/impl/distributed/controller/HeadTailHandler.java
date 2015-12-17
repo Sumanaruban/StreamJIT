@@ -21,6 +21,7 @@ import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels;
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadTail;
+import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannel;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
@@ -78,7 +79,8 @@ class HeadTailHandler {
 	 * @param bufferMap
 	 */
 	void setupHeadTail(ImmutableMap<Token, Buffer> bufferMap,
-			AppInstanceManager aim, boolean needSeamless) {
+			AppInstanceManager aim, boolean needSeamless,
+			TailBufferMerger tbMerger) {
 		Map<Token, ConnectionInfo> conInfoMap = aim.conInfoMap;
 		int multiplier = aim.appInst.multiplier;
 		ConnectionInfo tailconInfo = conInfoMap.get(app.tailToken);
@@ -100,7 +102,7 @@ class HeadTailHandler {
 		builder.tailCounter(bc);
 		tailChannel = tailChannel(bc, tailconInfo, skipCount, aim.appInst,
 				aim.eLogger);
-		setHead(conInfoMap, bufferMap, aim, bc, needSeamless);
+		setHead(conInfoMap, bufferMap, aim, bc, needSeamless, tbMerger);
 		headTail = builder.build();
 	}
 
@@ -132,7 +134,7 @@ class HeadTailHandler {
 
 	private void setHead(Map<Token, ConnectionInfo> conInfoMap,
 			ImmutableMap<Token, Buffer> bufferMap, AppInstanceManager aim,
-			Counter tailCounter, boolean needSeamless) {
+			Counter tailCounter, boolean needSeamless, TailBufferMerger tbMerger) {
 		ConnectionInfo headconInfo = conInfoMap.get(app.headToken);
 		assert headconInfo != null : "No head connection info exists in conInfoMap";
 		assert headconInfo.getSrcID() == controller.controllerNodeID
@@ -150,11 +152,11 @@ class HeadTailHandler {
 
 		if (needSeamless)
 			headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
-					aim.eLogger, tailCounter, aim);
+					aim.eLogger, tailCounter, aim, tbMerger);
 		else {
 			if (headconInfo instanceof TCPConnectionInfo)
-				headChannel = new HeadChannels.TCPHeadChannel(b, c, headconInfo,
-						name, 0, aim.eLogger);
+				headChannel = new HeadChannels.TCPHeadChannel(b, c,
+						headconInfo, name, 0, aim.eLogger);
 			else if (headconInfo instanceof AsyncTCPConnectionInfo)
 				headChannel = new HeadChannels.AsyncHeadChannel(b, c,
 						headconInfo, name, 0, aim.eLogger);

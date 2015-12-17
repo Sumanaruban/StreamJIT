@@ -60,8 +60,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		AppInstanceManager aim = appManager.createNewAIM(appinst);
 		appManager.reset();
 		preCompilation(aim);
-		aim.headTailHandler
-				.setupHeadTail(bufferMap(aim.appInstId()), aim, true);
+		aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
+				true, tailMerger);
 		tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
 		boolean isCompiled = aim.postCompilation();
 		if (appManager.prevAIM != null) {
