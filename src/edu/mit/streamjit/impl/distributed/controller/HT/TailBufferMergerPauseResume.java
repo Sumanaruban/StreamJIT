@@ -11,13 +11,10 @@ import edu.mit.streamjit.impl.blob.Buffer;
  */
 public class TailBufferMergerPauseResume implements TailBufferMerger {
 
-	/**
-	 * Final output buffer that is created from {@link Output}<O> output.
-	 */
-	private final Buffer tailBuffer;
+	private final BufferProvider bufProvider;
 
 	public TailBufferMergerPauseResume(Buffer tailBuffer) {
-		this.tailBuffer = tailBuffer;
+		bufProvider = new BufferProvider1(tailBuffer);
 	}
 
 	@Override
@@ -34,20 +31,41 @@ public class TailBufferMergerPauseResume implements TailBufferMerger {
 	}
 
 	@Override
-	public Buffer registerAppInst(int appInstId, int skipCount) {
+	public void newAppInst(HeadTail ht, int skipCount) {
 		if (skipCount != 0)
 			throw new IllegalStateException(
 					String.format(
 							"skipCount=0 expected for PauseResume reconfiguration. Received skipCount=%d",
 							skipCount));
-		return tailBuffer;
 	}
 
 	@Override
-	public void unregisterAppInst(int appInstId) {
+	public void appInstStopped(int appInstId) {
 	}
 
 	@Override
 	public void startMerge() {
+	}
+
+	@Override
+	public BufferProvider bufferProvider() {
+		return bufProvider;
+	}
+
+	private class BufferProvider1 implements BufferProvider {
+
+		/**
+		 * Final output buffer that is created from {@link Output}<O> output.
+		 */
+		private final Buffer tailBuffer;
+
+		BufferProvider1(Buffer tailBuffer) {
+			this.tailBuffer = tailBuffer;
+		}
+
+		@Override
+		public Buffer newBuffer() {
+			return tailBuffer;
+		}
 	}
 }

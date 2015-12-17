@@ -32,28 +32,23 @@ public interface TailBufferMerger {
 
 	/**
 	 * At every reconfiguration, {@link StreamJitAppManager} must register the
-	 * new {@link AppInstance} with {@link TailBufferMerger} and get a new
-	 * {@link Buffer} for that particular {@link AppInstance}'s
-	 * {@link TailChannel}.
+	 * new {@link AppInstance} with {@link TailBufferMerger}.
 	 * 
-	 * @param appInstId
-	 *            id of the {@link AppInstance}.
+	 * @param ht
+	 *            {@link HeadTail} info of the new {@link AppInstance}
 	 * @param skipCount
 	 *            Number of outputs of the {@link AppInstance} (with
 	 *            id=appInstId) that should be discarded.
-	 * @return A {@link Buffer} that must be used by {@link AppInstance}s for
-	 *         their {@link TailChannel}s.
 	 */
-	public Buffer registerAppInst(int appInstId, int skipCount);
+	public void newAppInst(HeadTail ht, int skipCount);
 
 	/**
 	 * Once an {@link AppInstance} is drained, {@link StreamJitAppManager} must
-	 * unregister it from {@link TailBufferMerger} in order to release the
-	 * allocated {@link Buffer}.
+	 * call this method to release all allocated resources.
 	 * 
 	 * @param appInstId
 	 */
-	public void unregisterAppInst(int appInstId);
+	public void appInstStopped(int appInstId);
 
 	/**
 	 * When 2 {@link AppInstance}s are registered, this method can be called to
@@ -62,4 +57,11 @@ public interface TailBufferMerger {
 	 * {@link TailBufferMerger}'s implementation.
 	 */
 	public void startMerge();
+
+	public BufferProvider bufferProvider();
+
+	public interface BufferProvider {
+
+		Buffer newBuffer();
+	}
 }

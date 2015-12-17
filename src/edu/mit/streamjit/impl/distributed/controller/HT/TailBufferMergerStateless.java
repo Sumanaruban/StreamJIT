@@ -24,7 +24,7 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 	/**
 	 * TODO: Determine this buffer size correctly.
 	 */
-	private final int bufSize = 100_000;
+	private static final int bufSize = 100_000;
 
 	/**
 	 * Final output buffer that is created from {@link Output}<O> output.
@@ -49,23 +49,16 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private final Phaser switchBufPhaser = new Phaser();
 
-	private final Queue<Buffer> freeBufferQueue;
-
 	private final Map<Buffer, AppInstBufInfo> appInstBufInfos;
+
+	private final BufferProvider1 bufProvider;
 
 	public TailBufferMergerStateless(Buffer tailBuffer) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		this.appInstBufInfos = new ConcurrentHashMap<>();
-		freeBufferQueue = createFreeBufferQueue();
 		switchBufPhaser.bulkRegister(2);
-	}
-
-	private Queue<Buffer> createFreeBufferQueue() {
-		Queue<Buffer> q = new ArrayBlockingQueue<>(2);
-		q.add(new ConcurrentArrayBuffer(bufSize));
-		q.add(new ConcurrentArrayBuffer(bufSize));
-		return q;
+		bufProvider = new BufferProvider1();
 	}
 
 	public Runnable getRunnable() {
@@ -94,11 +87,10 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		}
 	}
 
-	public Buffer registerAppInst(int appInstId, int skipCount) {
-		Buffer b = freeBufferQueue.poll();
-		if (b == null)
-			throw new IllegalStateException("freeBufferQueue is empty.");
-		AppInstBufInfo a = new AppInstBufInfo(appInstId, b, skipCount);
+	@Override
+	public void newAppInst(HeadTail ht, int skipCount) {
+		Buffer b = ht.tailBuffer;
+		AppInstBufInfo a = new AppInstBufInfo(ht.appInstId, b, skipCount);
 		appInstBufInfos.put(b, a);
 		if (curBuf == null) {
 			curBuf = b;
@@ -108,10 +100,9 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 				throw new IllegalStateException("nextBuf == null expected.");
 			nextBuf = b;
 		}
-		return b;
 	}
 
-	public void unregisterAppInst(int appInstId) {
+	public void appInstStopped(int appInstId) {
 		// TODO: Busy waiting. Consider using phaser.
 		// while (merge);
 		switchBufPhaser.arriveAndAwaitAdvance();
@@ -128,8 +119,8 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 							"AppInstIds mismatch. ID of the prevBuf = %d, ID passed = %d.",
 							a.appInstId, appInstId));
 
-		freeBufferQueue.add(a.buf);
 		appInstBufInfos.remove(prevBuf);
+		bufProvider.reclaimedBuffer(a.buf);
 		prevBuf = null;
 	}
 
@@ -161,6 +152,11 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	public void stop() {
 		stopCalled = true;
+	}
+
+	@Override
+	public BufferProvider bufferProvider() {
+		return bufProvider;
 	}
 
 	/**
@@ -220,6 +216,34 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 			this.appInstId = appInstId;
 			this.buf = buf;
 			this.skipCount = skipCount;
+		}
+	}
+
+	private class BufferProvider1 implements BufferProvider {
+
+		private final Queue<Buffer> freeBufferQueue;
+
+		BufferProvider1() {
+			freeBufferQueue = createFreeBufferQueue();
+		}
+
+		private Queue<Buffer> createFreeBufferQueue() {
+			Queue<Buffer> q = new ArrayBlockingQueue<>(2);
+			q.add(new ConcurrentArrayBuffer(bufSize));
+			q.add(new ConcurrentArrayBuffer(bufSize));
+			return q;
+		}
+
+		@Override
+		public Buffer newBuffer() {
+			Buffer b = freeBufferQueue.poll();
+			if (b == null)
+				throw new IllegalStateException("freeBufferQueue is empty.");
+			return b;
+		}
+
+		public void reclaimedBuffer(Buffer buf) {
+			freeBufferQueue.add(buf);
 		}
 	}
 }

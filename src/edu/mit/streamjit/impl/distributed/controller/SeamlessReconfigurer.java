@@ -14,6 +14,7 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
+import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger.BufferProvider;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMergerPauseResume;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMergerStateless;
 import edu.mit.streamjit.tuner.EventTimeLogger;
@@ -31,11 +32,13 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	protected final StreamJitAppManager appManager;
 
-	private final TailBufferMerger tailMerger;
+	protected final TailBufferMerger tailMerger;
 
 	private final Thread tailMergerThread;
 
 	private final EventTimeLogger reconfigEvntLogger;
+
+	BufferProvider bufProvider;
 
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
 			Buffer tailBuffer, boolean needSeamlessTailMerger) {
@@ -44,6 +47,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				appManager.app.name, "Reconfigurer", false,
 				Options.throughputMeasurementPeriod >= 1000);
 		tailMerger = tailMerger(tailBuffer, needSeamlessTailMerger);
+		bufProvider = tailMerger.bufferProvider();
 		tailMergerThread = createAndStartTailMergerThread(needSeamlessTailMerger);
 	}
 
@@ -51,7 +55,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 		if (!isFinal) {
 			tailMerger.startMerge();
-			tailMerger.unregisterAppInst(aim.appInstId());
+			tailMerger.appInstStopped(aim.appInstId());
 		}
 		event("F-" + aim.appInstId());
 	}
@@ -84,12 +88,11 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		return null;
 	}
 
-	ImmutableMap<Token, Buffer> bufferMap(int appInstId, int skipCount) {
+	ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
 		ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap.builder();
 		builder.put(appManager.app.headToken,
 				appManager.app.bufferMap.get(appManager.app.headToken));
-		builder.put(appManager.app.tailToken,
-				tailMerger.registerAppInst(appInstId, skipCount));
+		builder.put(appManager.app.tailToken, bufProvider.newBuffer());
 		return builder.build();
 	}
 
@@ -117,8 +120,9 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, drainDataSize1());
-			aim.headTailHandler.setupHeadTail(
-					bufferMap(aim.appInstId(), skipCount()), aim, true);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
+					true);
+			tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
 			boolean isCompiled = aim.postCompilation();
 			if (appManager.prevAIM != null) {
 				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
@@ -209,8 +213,9 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
 			appManager.preCompilation(aim, appManager.prevAIM);
-			aim.headTailHandler.setupHeadTail(
-					bufferMap(aim.appInstId(), skipCount()), aim, true);
+			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
+					true);
+			tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
 			boolean isCompiled = aim.postCompilation();
 			if (appManager.prevAIM != null) {
 				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
@@ -256,5 +261,4 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			return 2;
 		}
 	}
-
 }
