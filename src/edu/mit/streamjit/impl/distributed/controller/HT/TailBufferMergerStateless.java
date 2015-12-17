@@ -1,15 +1,12 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Phaser;
 
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 
 /**
  * {@link TailBufferMerger} for seam-less reconfiguration process. Always skips
@@ -19,12 +16,7 @@ import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
  * @author sumanan
  * @since 28 Oct, 2015
  */
-public class TailBufferMergerStateless implements TailBufferMerger {
-
-	/**
-	 * TODO: Determine this buffer size correctly.
-	 */
-	private static final int bufSize = 100_000;
+public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 
 	/**
 	 * Final output buffer that is created from {@link Output}<O> output.
@@ -51,14 +43,11 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 
 	private final Map<Buffer, AppInstBufInfo> appInstBufInfos;
 
-	private final BufferProvider1 bufProvider;
-
 	public TailBufferMergerStateless(Buffer tailBuffer) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		this.appInstBufInfos = new ConcurrentHashMap<>();
 		switchBufPhaser.bulkRegister(2);
-		bufProvider = new BufferProvider1();
 	}
 
 	public Runnable getRunnable() {
@@ -154,11 +143,6 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 		stopCalled = true;
 	}
 
-	@Override
-	public BufferProvider bufferProvider() {
-		return bufProvider;
-	}
-
 	/**
 	 * TODO: We can do few of assertion checks in side this method. But I'm
 	 * avoiding this in order to keep the method simple and elegant. If any bug
@@ -216,34 +200,6 @@ public class TailBufferMergerStateless implements TailBufferMerger {
 			this.appInstId = appInstId;
 			this.buf = buf;
 			this.skipCount = skipCount;
-		}
-	}
-
-	private class BufferProvider1 implements BufferProvider {
-
-		private final Queue<Buffer> freeBufferQueue;
-
-		BufferProvider1() {
-			freeBufferQueue = createFreeBufferQueue();
-		}
-
-		private Queue<Buffer> createFreeBufferQueue() {
-			Queue<Buffer> q = new ArrayBlockingQueue<>(2);
-			q.add(new ConcurrentArrayBuffer(bufSize));
-			q.add(new ConcurrentArrayBuffer(bufSize));
-			return q;
-		}
-
-		@Override
-		public Buffer newBuffer() {
-			Buffer b = freeBufferQueue.poll();
-			if (b == null)
-				throw new IllegalStateException("freeBufferQueue is empty.");
-			return b;
-		}
-
-		public void reclaimedBuffer(Buffer buf) {
-			freeBufferQueue.add(buf);
 		}
 	}
 }
