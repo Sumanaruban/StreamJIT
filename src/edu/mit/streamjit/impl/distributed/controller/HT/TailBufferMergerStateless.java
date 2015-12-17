@@ -1,7 +1,5 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 
 import edu.mit.streamjit.impl.blob.Buffer;
@@ -16,17 +14,10 @@ import edu.mit.streamjit.impl.blob.Buffer;
  */
 public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 
-	private Buffer prevBuf;
-	private Buffer curBuf;
-	private Buffer nextBuf;
-
 	private final Phaser switchBufPhaser = new Phaser();
-
-	private final Map<Buffer, AppInstBufInfo> appInstBufInfos;
 
 	public TailBufferMergerStateless(Buffer tailBuffer) {
 		super(tailBuffer);
-		this.appInstBufInfos = new ConcurrentHashMap<>();
 		switchBufPhaser.bulkRegister(2);
 	}
 
@@ -43,21 +34,6 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 				}
 			}
 		};
-	}
-
-	@Override
-	public void newAppInst(HeadTail ht, int skipCount) {
-		Buffer b = ht.tailBuffer;
-		AppInstBufInfo a = new AppInstBufInfo(ht.appInstId, ht, skipCount);
-		appInstBufInfos.put(b, a);
-		if (curBuf == null) {
-			curBuf = b;
-			latch.countDown();
-		} else {
-			if (nextBuf != null)
-				throw new IllegalStateException("nextBuf == null expected.");
-			nextBuf = b;
-		}
 	}
 
 	public void appInstStopped(int appInstId) {

@@ -1,7 +1,9 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 import edu.mit.streamjit.api.Output;
@@ -38,10 +40,17 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected volatile boolean merge;
 
+	protected Buffer prevBuf;
+	protected Buffer curBuf;
+	protected Buffer nextBuf;
+
+	protected final Map<Buffer, AppInstBufInfo> appInstBufInfos;
+
 	public TailBufferMergerSeamless(Buffer tailBuffer) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		bufProvider = new BufferProvider1();
+		this.appInstBufInfos = new ConcurrentHashMap<>();
 	}
 
 	@Override
@@ -57,6 +66,21 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		if (merge)
 			throw new IllegalStateException("merge==false expected.");
 		merge = true;
+	}
+
+	@Override
+	public void newAppInst(HeadTail ht, int skipCount) {
+		Buffer b = ht.tailBuffer;
+		AppInstBufInfo a = new AppInstBufInfo(ht.appInstId, ht, skipCount);
+		appInstBufInfos.put(b, a);
+		if (curBuf == null) {
+			curBuf = b;
+			latch.countDown();
+		} else {
+			if (nextBuf != null)
+				throw new IllegalStateException("nextBuf == null expected.");
+			nextBuf = b;
+		}
 	}
 
 	/**
