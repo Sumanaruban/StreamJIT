@@ -224,7 +224,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			event("Cfg" + appinst.id);
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
-			appManager.preCompilation(aim, appManager.prevAIM);
+			preCompilation(aim);
 			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
 					true);
 			tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
@@ -235,16 +235,12 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
 						.headChannelSeamless();
 				curHeadChnl.duplicationEnabled();
-				prevHeadChnl.duplicateAndStop(
-						HeadChannelSeamless.duplicationFiring()
-								* appManager.prevAIM.graphSchedule().steadyIn,
-						curHeadChnl);
+				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
 			}
 
 			if (isCompiled) {
-				startInit(aim);
-				aim.start();
-				event("S-" + appinst.id);
+				compiled(aim);
+				event("S-" + aim.appInstId());
 			} else {
 				aim.drainingFinished(false);
 			}
@@ -260,6 +256,24 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			else
 				return 2;
 		}
+
+		private void preCompilation(AppInstanceManager aim) {
+			appManager.preCompilation(aim, appManager.prevAIM);
+		}
+
+		private void compiled(AppInstanceManager aim) {
+			startInit(aim);
+			aim.start();
+		}
+
+		private void connectWithPrevHeadChnl(HeadChannelSeamless prevHeadChnl,
+				HeadChannelSeamless curHeadChnl) {
+			prevHeadChnl.duplicateAndStop(
+					HeadChannelSeamless.duplicationFiring()
+							* appManager.prevAIM.graphSchedule().steadyIn,
+					curHeadChnl);
+		}
+
 		/**
 		 * Start the execution of the StreamJit application.
 		 */
