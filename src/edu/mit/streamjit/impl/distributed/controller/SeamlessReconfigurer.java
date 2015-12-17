@@ -154,7 +154,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			}
 			Utils.printMemoryStatus();
 			if (aim.isRunning) {
-				aim.requestDDsizes();
+				aimRunning(aim);
 				return 0;
 			} else
 				return 2;
@@ -180,6 +180,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 						initialState, aim.appInst.id));
 			}
 			start(aim);
+		}
+
+		private void aimRunning(AppInstanceManager aim) {
+			aim.requestDDsizes();
 		}
 
 		/**
@@ -256,9 +260,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				appManager.profiler.logger().newConfiguration(cfgPrefix);
 			}
 			Utils.printMemoryStatus();
-			if (aim.isRunning)
+			if (aim.isRunning) {
+				aimRunning(aim);
 				return 0;
-			else
+			} else
 				return 2;
 		}
 
@@ -277,6 +282,9 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 					HeadChannelSeamless.duplicationFiring()
 							* appManager.prevAIM.graphSchedule().steadyIn,
 					curHeadChnl);
+		}
+
+		private void aimRunning(AppInstanceManager aim) {
 		}
 
 		/**
