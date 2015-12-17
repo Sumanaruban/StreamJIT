@@ -119,7 +119,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			event("Cfg" + appinst.id);
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
-			appManager.preCompilation(aim, drainDataSize1());
+			preCompilation(aim);
 			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
 					true);
 			tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
@@ -130,22 +130,12 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
 						.headChannelSeamless();
 				curHeadChnl.duplicationEnabled();
-				prevHeadChnl.reqStateDuplicateAndStop(curHeadChnl);
+				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
 			}
 
 			if (isCompiled) {
-				aim.startChannels();
-				if (appManager.prevAIM != null) {
-					// TODO : Should send node specific DrainData. Don't send
-					// the full drain data to all node.
-					CTRLCompilationInfo initialState = new CTRLCompilationInfo.InitialState(
-							appManager.prevAIM.getState());
-					appManager.controller
-							.sendToAll(new CTRLRMessageElementHolder(
-									initialState, aim.appInst.id));
-				}
-				start(aim);
-				event("S-" + appinst.id);
+				compiled(aim);
+				event("S-" + aim.appInstId());
 			} else {
 				// TODO : [2015-11-18]
 				// This calling causes java.lang.NullPointerException at
@@ -164,6 +154,28 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				return 0;
 			} else
 				return 2;
+		}
+
+		private void preCompilation(AppInstanceManager aim) {
+			appManager.preCompilation(aim, drainDataSize1());
+		}
+
+		private void connectWithPrevHeadChnl(HeadChannelSeamless prevHeadChnl,
+				HeadChannelSeamless curHeadChnl) {
+			prevHeadChnl.reqStateDuplicateAndStop(curHeadChnl);
+		}
+
+		private void compiled(AppInstanceManager aim) {
+			aim.startChannels();
+			if (appManager.prevAIM != null) {
+				// TODO : Should send node specific DrainData. Don't send
+				// the full drain data to all node.
+				CTRLCompilationInfo initialState = new CTRLCompilationInfo.InitialState(
+						appManager.prevAIM.getState());
+				appManager.controller.sendToAll(new CTRLRMessageElementHolder(
+						initialState, aim.appInst.id));
+			}
+			start(aim);
 		}
 
 		/**
