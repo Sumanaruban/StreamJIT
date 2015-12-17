@@ -48,7 +48,7 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 	@Override
 	public void newAppInst(HeadTail ht, int skipCount) {
 		Buffer b = ht.tailBuffer;
-		AppInstBufInfo a = new AppInstBufInfo(ht.appInstId, b, skipCount);
+		AppInstBufInfo a = new AppInstBufInfo(ht.appInstId, ht, skipCount);
 		appInstBufInfos.put(b, a);
 		if (curBuf == null) {
 			curBuf = b;
@@ -71,14 +71,14 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 		if (a == null)
 			throw new IllegalStateException("No AppInstance found for prevBuf");
 
-		if (a.appInstId != appInstId)
+		if (a.appInstId() != appInstId)
 			throw new IllegalStateException(
 					String.format(
 							"AppInstIds mismatch. ID of the prevBuf = %d, ID passed = %d.",
-							a.appInstId, appInstId));
+							a.appInstId(), appInstId));
 
 		appInstBufInfos.remove(prevBuf);
-		bufProvider.reclaimedBuffer(a.buf);
+		bufProvider.reclaimedBuffer(a.tailBuf());
 		prevBuf = null;
 	}
 
@@ -89,7 +89,7 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 			throw new IllegalStateException("nextBuf != null expected.");
 		AppInstBufInfo a = appInstBufInfos.get(nextBuf);
 		copyFully(curBuf);
-		skip(a.buf, a.skipCount);
+		skip(a.tailBuf(), a.skipCount);
 		prevBuf = curBuf;
 		curBuf = nextBuf;
 		nextBuf = null;
@@ -128,14 +128,20 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 	}
 
 	private static class AppInstBufInfo {
-		private final int appInstId;
-		private final Buffer buf;
+		private final HeadTail ht;
 		private final int skipCount;
 
-		AppInstBufInfo(int appInstId, Buffer buf, int skipCount) {
-			this.appInstId = appInstId;
-			this.buf = buf;
+		AppInstBufInfo(int appInstId, HeadTail ht, int skipCount) {
+			this.ht = ht;
 			this.skipCount = skipCount;
+		}
+
+		Buffer tailBuf() {
+			return ht.tailBuffer;
+		}
+
+		int appInstId() {
+			return ht.appInstId;
 		}
 	}
 }
