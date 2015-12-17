@@ -93,7 +93,7 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		}
 	}
 
-	class BufferProvider1 implements BufferProvider {
+	static class BufferProvider1 implements BufferProvider {
 
 		private final Queue<Buffer> freeBufferQueue;
 
@@ -118,6 +118,24 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 		public void reclaimedBuffer(Buffer buf) {
 			freeBufferQueue.add(buf);
+		}
+	}
+
+	static class AppInstBufInfo {
+		private final HeadTail ht;
+		public final int skipCount;
+
+		AppInstBufInfo(int appInstId, HeadTail ht, int skipCount) {
+			this.ht = ht;
+			this.skipCount = skipCount;
+		}
+
+		Buffer tailBuf() {
+			return ht.tailBuffer;
+		}
+
+		int appInstId() {
+			return ht.appInstId;
 		}
 	}
 }

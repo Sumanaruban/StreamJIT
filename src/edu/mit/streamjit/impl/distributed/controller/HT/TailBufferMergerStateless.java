@@ -126,22 +126,4 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 							"expected = %d. The variable expected must be 0.",
 							expected));
 	}
-
-	private static class AppInstBufInfo {
-		private final HeadTail ht;
-		private final int skipCount;
-
-		AppInstBufInfo(int appInstId, HeadTail ht, int skipCount) {
-			this.ht = ht;
-			this.skipCount = skipCount;
-		}
-
-		Buffer tailBuf() {
-			return ht.tailBuffer;
-		}
-
-		int appInstId() {
-			return ht.appInstId;
-		}
-	}
 }
