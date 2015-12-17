@@ -140,7 +140,7 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 	}
 
 	static class AppInstBufInfo {
-		private final HeadTail ht;
+		final HeadTail ht;
 		public final int skipCount;
 
 		AppInstBufInfo(int appInstId, HeadTail ht, int skipCount) {
