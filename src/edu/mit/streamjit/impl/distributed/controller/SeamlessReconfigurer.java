@@ -40,8 +40,11 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	BufferProvider bufProvider;
 
+	protected final String name;
+
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
-			Buffer tailBuffer, boolean needSeamlessTailMerger) {
+			Buffer tailBuffer, boolean needSeamlessTailMerger, String name) {
+		this.name = name;
 		this.appManager = streamJitAppManager;
 		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
 				appManager.app.name, "Reconfigurer", false,
@@ -111,11 +114,12 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager,
 				Buffer tailBuffer) {
-			super(streamJitAppManager, tailBuffer, true);
+			super(streamJitAppManager, tailBuffer, true,
+					"SeamlessStatefulReconfigurer");
 		}
 
 		public int reconfigure(AppInstance appinst) {
-			System.out.println("SeamlessStatefulReconfigurer...");
+			System.out.println(name + "...");
 			event("Cfg" + appinst.id);
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
@@ -216,11 +220,12 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 		SeamlessStatelessReconfigurer(StreamJitAppManager streamJitAppManager,
 				Buffer tailBuffer) {
-			super(streamJitAppManager, tailBuffer, true);
+			super(streamJitAppManager, tailBuffer, true,
+					"SeamlessStatelessReconfigurer");
 		}
 
 		public int reconfigure(AppInstance appinst) {
-			System.out.println("SeamlessStatelessReconfigurer...");
+			System.out.println(name + "...");
 			event("Cfg" + appinst.id);
 			AppInstanceManager aim = appManager.createNewAIM(appinst);
 			appManager.reset();
