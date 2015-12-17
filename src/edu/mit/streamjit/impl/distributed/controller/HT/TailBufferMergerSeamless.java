@@ -2,7 +2,9 @@ package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
 
@@ -19,13 +21,76 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected final BufferProvider1 bufProvider;
 
-	public TailBufferMergerSeamless() {
+	/**
+	 * Final output buffer that is created from {@link Output}<O> output.
+	 */
+	protected final Buffer tailBuffer;
+
+	/**
+	 * {@link Buffer}'s bulk reading and writing interface methods expect an
+	 * Object array to be passed.
+	 */
+	protected final Object[] intermediateArray = new Object[bufSize];
+
+	protected volatile boolean stopCalled;
+
+	protected final CountDownLatch latch = new CountDownLatch(1);
+
+	protected volatile boolean merge;
+
+	public TailBufferMergerSeamless(Buffer tailBuffer) {
+		this.tailBuffer = tailBuffer;
+		this.stopCalled = false;
 		bufProvider = new BufferProvider1();
 	}
 
 	@Override
 	public BufferProvider bufferProvider() {
 		return bufProvider;
+	}
+
+	public void stop() {
+		stopCalled = true;
+	}
+
+	public void startMerge() {
+		if (merge)
+			throw new IllegalStateException("merge==false expected.");
+		merge = true;
+	}
+
+	/**
+	 * TODO: We can do few of assertion checks in side this method. But I'm
+	 * avoiding this in order to keep the method simple and elegant. If any bug
+	 * occurs, do assertion checks to ensure the
+	 * {@link Buffer#read(Object[], int, int)}'s and
+	 * {@link Buffer#write(Object[], int, int)}'s return values are as expected.
+	 * 
+	 * @param readBuffer
+	 */
+	protected void copyToTailBuffer(final Buffer readBuffer) {
+		int size = Math.min(readBuffer.size(), intermediateArray.length);
+		readBuffer.read(intermediateArray, 0, size);
+		int written = 0;
+		while (written < size) {
+			written += tailBuffer.write(intermediateArray, written, size
+					- written);
+			// TODO: just for debugging. Remove this later.
+			if (written != size)
+				System.err
+						.println("TailBufferMerger.copyToTailBuffer: Unexpected.");
+		}
+	}
+
+	/**
+	 * wait for curBuf to be set.
+	 */
+	protected void waitForCurBuf() {
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	class BufferProvider1 implements BufferProvider {
