@@ -18,8 +18,9 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
-import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels;
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
+import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels;
+import edu.mit.streamjit.impl.distributed.controller.HT.HeadTail;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannel;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
@@ -60,6 +61,8 @@ class HeadTailHandler {
 
 	private Thread tailThread;
 
+	private HeadTail headTail;
+
 	public HeadTailHandler(Controller controller, StreamJitApp<?, ?> app) {
 		this.controller = controller;
 		this.app = app;
@@ -88,12 +91,17 @@ class HeadTailHandler {
 			throw new IllegalArgumentException(
 					"No tail buffer in the passed bufferMap.");
 
+		HeadTail.Builder builder = HeadTail.builder();
+		builder.appInstId(aim.appInstId());
 		int skipCount = Math.max(Options.outputCount, multiplier * 5);
 		Buffer tb = bufferMap.get(app.tailToken);
 		BufferWriteCounter bc = new BufferWriteCounter(tb);
+		builder.tailBuffer(tb);
+		builder.tailCounter(bc);
 		tailChannel = tailChannel(bc, tailconInfo, skipCount, aim.appInst,
 				aim.eLogger);
 		setHead(conInfoMap, bufferMap, aim, bc, needSeamless);
+		headTail = builder.build();
 	}
 
 	TailChannel tailChannel(BufferWriteCounter buffer, ConnectionInfo conInfo,
@@ -205,5 +213,9 @@ class HeadTailHandler {
 
 	HeadChannelSeamless headChannelSeamless() {
 		return (HeadChannelSeamless) headChannel;
+	}
+
+	public HeadTail headTail() {
+		return headTail;
 	}
 }
