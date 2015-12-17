@@ -54,6 +54,57 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		tailMergerThread = createAndStartTailMergerThread(needSeamlessTailMerger);
 	}
 
+	public int reconfigure(AppInstance appinst) {
+		System.out.println(name + "...");
+		event("Cfg" + appinst.id);
+		AppInstanceManager aim = appManager.createNewAIM(appinst);
+		appManager.reset();
+		preCompilation(aim);
+		aim.headTailHandler
+				.setupHeadTail(bufferMap(aim.appInstId()), aim, true);
+		tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
+		boolean isCompiled = aim.postCompilation();
+		if (appManager.prevAIM != null) {
+			HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
+					.headChannelSeamless();
+			HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
+					.headChannelSeamless();
+			curHeadChnl.duplicationEnabled();
+			connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
+		}
+
+		if (isCompiled) {
+			compiled(aim);
+			event("S-" + aim.appInstId());
+		} else {
+			// TODO : [2015-11-18]
+			// This calling causes java.lang.NullPointerException at
+			// edu.mit.streamjit.impl.distributed.HeadTailHandler.waitToStopHead(HeadTailHandler.java:167)
+			aim.drainingFinished(false);
+		}
+
+		if (appManager.profiler != null) {
+			String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
+					.getConfiguration());
+			appManager.profiler.logger().newConfiguration(cfgPrefix);
+		}
+		Utils.printMemoryStatus();
+		if (aim.isRunning) {
+			aimRunning(aim);
+			return 0;
+		} else
+			return 2;
+	}
+
+	protected abstract void aimRunning(AppInstanceManager aim);
+
+	protected abstract void compiled(AppInstanceManager aim);
+
+	protected abstract void connectWithPrevHeadChnl(
+			HeadChannelSeamless prevHeadChnl, HeadChannelSeamless curHeadChnl);
+
+	protected abstract void preCompilation(AppInstanceManager aim);
+
 	@Override
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
 		if (!isFinal) {
@@ -118,58 +169,17 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 					"SeamlessStatefulReconfigurer");
 		}
 
-		public int reconfigure(AppInstance appinst) {
-			System.out.println(name + "...");
-			event("Cfg" + appinst.id);
-			AppInstanceManager aim = appManager.createNewAIM(appinst);
-			appManager.reset();
-			preCompilation(aim);
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
-					true);
-			tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
-			boolean isCompiled = aim.postCompilation();
-			if (appManager.prevAIM != null) {
-				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
-						.headChannelSeamless();
-				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
-						.headChannelSeamless();
-				curHeadChnl.duplicationEnabled();
-				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
-			}
-
-			if (isCompiled) {
-				compiled(aim);
-				event("S-" + aim.appInstId());
-			} else {
-				// TODO : [2015-11-18]
-				// This calling causes java.lang.NullPointerException at
-				// edu.mit.streamjit.impl.distributed.HeadTailHandler.waitToStopHead(HeadTailHandler.java:167)
-				aim.drainingFinished(false);
-			}
-
-			if (appManager.profiler != null) {
-				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-						.getConfiguration());
-				appManager.profiler.logger().newConfiguration(cfgPrefix);
-			}
-			Utils.printMemoryStatus();
-			if (aim.isRunning) {
-				aimRunning(aim);
-				return 0;
-			} else
-				return 2;
-		}
-
-		private void preCompilation(AppInstanceManager aim) {
+		protected void preCompilation(AppInstanceManager aim) {
 			appManager.preCompilation(aim, drainDataSize1());
 		}
 
-		private void connectWithPrevHeadChnl(HeadChannelSeamless prevHeadChnl,
+		protected void connectWithPrevHeadChnl(
+				HeadChannelSeamless prevHeadChnl,
 				HeadChannelSeamless curHeadChnl) {
 			prevHeadChnl.reqStateDuplicateAndStop(curHeadChnl);
 		}
 
-		private void compiled(AppInstanceManager aim) {
+		protected void compiled(AppInstanceManager aim) {
 			aim.startChannels();
 			if (appManager.prevAIM != null) {
 				// TODO : Should send node specific DrainData. Don't send
@@ -182,7 +192,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			start(aim);
 		}
 
-		private void aimRunning(AppInstanceManager aim) {
+		protected void aimRunning(AppInstanceManager aim) {
 			aim.requestDDsizes();
 		}
 
@@ -228,55 +238,17 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 					"SeamlessStatelessReconfigurer");
 		}
 
-		public int reconfigure(AppInstance appinst) {
-			System.out.println(name + "...");
-			event("Cfg" + appinst.id);
-			AppInstanceManager aim = appManager.createNewAIM(appinst);
-			appManager.reset();
-			preCompilation(aim);
-			aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
-					true);
-			tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
-			boolean isCompiled = aim.postCompilation();
-			if (appManager.prevAIM != null) {
-				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
-						.headChannelSeamless();
-				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
-						.headChannelSeamless();
-				curHeadChnl.duplicationEnabled();
-				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
-			}
-
-			if (isCompiled) {
-				compiled(aim);
-				event("S-" + aim.appInstId());
-			} else {
-				aim.drainingFinished(false);
-			}
-
-			if (appManager.profiler != null) {
-				String cfgPrefix = ConfigurationUtils.getConfigPrefix(appinst
-						.getConfiguration());
-				appManager.profiler.logger().newConfiguration(cfgPrefix);
-			}
-			Utils.printMemoryStatus();
-			if (aim.isRunning) {
-				aimRunning(aim);
-				return 0;
-			} else
-				return 2;
-		}
-
-		private void preCompilation(AppInstanceManager aim) {
+		protected void preCompilation(AppInstanceManager aim) {
 			appManager.preCompilation(aim, appManager.prevAIM);
 		}
 
-		private void compiled(AppInstanceManager aim) {
+		protected void compiled(AppInstanceManager aim) {
 			startInit(aim);
 			aim.start();
 		}
 
-		private void connectWithPrevHeadChnl(HeadChannelSeamless prevHeadChnl,
+		protected void connectWithPrevHeadChnl(
+				HeadChannelSeamless prevHeadChnl,
 				HeadChannelSeamless curHeadChnl) {
 			prevHeadChnl.duplicateAndStop(
 					HeadChannelSeamless.duplicationFiring()
@@ -284,7 +256,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 					curHeadChnl);
 		}
 
-		private void aimRunning(AppInstanceManager aim) {
+		protected void aimRunning(AppInstanceManager aim) {
 		}
 
 		/**
