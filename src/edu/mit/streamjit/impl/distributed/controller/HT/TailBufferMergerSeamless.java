@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Phaser;
 
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
@@ -46,11 +47,14 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected final Map<Buffer, AppInstBufInfo> appInstBufInfos;
 
+	protected final Phaser switchBufPhaser = new Phaser();
+
 	public TailBufferMergerSeamless(Buffer tailBuffer) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		bufProvider = new BufferProvider1();
 		this.appInstBufInfos = new ConcurrentHashMap<>();
+		switchBufPhaser.bulkRegister(2);
 	}
 
 	@Override
@@ -75,6 +79,28 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 				throw new IllegalStateException("nextBuf == null expected.");
 			nextBuf = b;
 		}
+	}
+
+	public void appInstStopped(int appInstId) {
+		// TODO: Busy waiting. Consider using phaser.
+		// while (merge);
+		switchBufPhaser.arriveAndAwaitAdvance();
+		if (prevBuf == null)
+			throw new IllegalStateException("prevBuf != null expected.");
+
+		AppInstBufInfo a = appInstBufInfos.get(prevBuf);
+		if (a == null)
+			throw new IllegalStateException("No AppInstance found for prevBuf");
+
+		if (a.appInstId() != appInstId)
+			throw new IllegalStateException(
+					String.format(
+							"AppInstIds mismatch. ID of the prevBuf = %d, ID passed = %d.",
+							a.appInstId(), appInstId));
+
+		appInstBufInfos.remove(prevBuf);
+		bufProvider.reclaimedBuffer(a.tailBuf());
+		prevBuf = null;
 	}
 
 	/**
@@ -111,9 +137,51 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		}
 	}
 
+	protected void switchBuffers(int skipCount) {
+		copyFully(curBuf);
+		skip(nextBuf, skipCount);
+		prevBuf = curBuf;
+		curBuf = nextBuf;
+		nextBuf = null;
+		merge = false;
+		switchBufPhaser.arrive();
+	}
+
+	private void copyFully(final Buffer readBuffer) {
+		while (readBuffer.size() > 0)
+			copyToTailBuffer(readBuffer);
+	}
+
+	private void skip(final Buffer readBuffer, int skipCount) {
+		int expected = skipCount;
+		int min1, min2, readBufSize;
+		while (expected > 0) {
+			readBufSize = readBuffer.size();
+			if (readBufSize == 0) {
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				continue;
+			}
+			min1 = Math.min(readBufSize, expected);
+			min2 = Math.min(min1, intermediateArray.length);
+			expected -= readBuffer.read(intermediateArray, 0, min2);
+		}
+
+		if (expected != 0)
+			throw new IllegalStateException(
+					String.format(
+							"expected = %d. The variable expected must be 0.",
+							expected));
+	}
+
 	static class BufferProvider1 implements BufferProvider {
 
 		private final Queue<Buffer> freeBufferQueue;
+
+		private final Object[] intArray = new Object[bufSize];
 
 		BufferProvider1() {
 			freeBufferQueue = createFreeBufferQueue();
@@ -135,6 +203,9 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		}
 
 		public void reclaimedBuffer(Buffer buf) {
+			while (buf.size() > 0) {
+				buf.read(intArray, 0, intArray.length);
+			}
 			freeBufferQueue.add(buf);
 		}
 	}
