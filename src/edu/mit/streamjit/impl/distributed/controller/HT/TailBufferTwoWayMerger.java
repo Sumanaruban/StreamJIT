@@ -35,7 +35,7 @@ public class TailBufferTwoWayMerger extends TailBufferMergerSeamless {
 		AppInstBufInfo nextInfo = appInstBufInfos.get(nextBuf);
 		copyNonDuplicateOutput(curInfo.ht.tailCounter);
 		int curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
-		while (nextInfo.ht.tailCounter.count() <= curDupData) {
+		while ((nextInfo.ht.tailCounter.count() <= curDupData) && !stopCalled) {
 			copyToTailBuffer(curBuf);
 			curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
 		}
