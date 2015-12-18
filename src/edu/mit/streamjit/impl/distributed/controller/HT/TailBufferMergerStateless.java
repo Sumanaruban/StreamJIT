@@ -14,22 +14,6 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 
 	public TailBufferMergerStateless(Buffer tailBuffer) {
 		super(tailBuffer);
-
-	}
-
-	public Runnable getRunnable() {
-		return new Runnable() {
-			@Override
-			public void run() {
-				waitForCurBuf();
-				while (!stopCalled) {
-					copyToTailBuffer(curBuf);
-					if (merge) {
-						switchBuffers();
-					}
-				}
-			}
-		};
 	}
 
 	public void startMerge() {
@@ -39,6 +23,11 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 	}
 
 	public void startMerge(int duplicateOutputIndex) {
+	}
+
+	@Override
+	protected void merge() {
+		switchBuffers();
 	}
 
 	private void switchBuffers() {

@@ -49,12 +49,29 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected final Phaser switchBufPhaser = new Phaser();
 
+	protected abstract void merge();
+
 	public TailBufferMergerSeamless(Buffer tailBuffer) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		bufProvider = new BufferProvider1();
 		this.appInstBufInfos = new ConcurrentHashMap<>();
 		switchBufPhaser.bulkRegister(2);
+	}
+
+	public Runnable getRunnable() {
+		return new Runnable() {
+			@Override
+			public void run() {
+				waitForCurBuf();
+				while (!stopCalled) {
+					copyToTailBuffer(curBuf);
+					if (merge) {
+						merge();
+					}
+				}
+			}
+		};
 	}
 
 	@Override
