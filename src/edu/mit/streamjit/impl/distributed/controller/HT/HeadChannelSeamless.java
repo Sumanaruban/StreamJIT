@@ -70,6 +70,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final TailBufferMerger tbMerger;
 
+	private int flowControlGap = 5000;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
 			EventTimeLogger eLogger, Counter tailCounter,
@@ -125,7 +127,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	private void flowControl() {
 		int expectedFiring = expectedFiring();
 		int currentFiring = 0;
-		while ((expectedFiring - (currentFiring = currentFiring()) > 5000)
+		while ((expectedFiring - (currentFiring = currentFiring()) > flowControlGap)
 				&& stopCalled == 0) {
 			try {
 				// TODO: Need to tune this sleep time.
