@@ -175,7 +175,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	}
 
 	int calculateflowControlGap(int firing, long timeDuration) {
-		double firingRate = (double) firing / timeDuration;
+		double firingRate = (double) firing * 1000 / timeDuration;
 		int newFlowControl = (int) firingRate * fcTimeGap;
 		System.err.println("firingRate = " + firingRate);
 		System.err.println("newFlowControl = " + newFlowControl);
