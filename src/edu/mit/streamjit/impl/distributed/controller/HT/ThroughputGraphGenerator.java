@@ -55,11 +55,12 @@ public class ThroughputGraphGenerator {
 		writer.write("set grid ytics lc rgb \"#C0C0C0\"\n");
 		writer.write("set nokey\n");
 		writer.write("unset border\n");
-		writer.write("#set yrange [0:*]\n");
 
 		writer.write(String.format(
 				"stats \"%s\" using 3 prefix \"Throughput\" noout\n", tpFile));
-		writer.write("endPoint= 3*Throughput_max/4" + "\n");
+		writer.write("ymax=2*Throughput_max\n");
+		writer.write("set yrange [0:ymax]\n");
+		writer.write("endPoint= 3*ymax/4" + "\n");
 
 		writer.write(String.format(
 				"plot \"%s\" using 2:(endPoint) with impulses,\\",
