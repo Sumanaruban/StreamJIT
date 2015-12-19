@@ -16,6 +16,10 @@ public class TailBufferTwoWayMerger extends TailBufferMergerSeamless {
 	}
 
 	public void startMerge(int duplicateOutputIndex) {
+		if (debug) {
+			event("m..");
+			System.err.println(String.format("nextBufSize=%d", nextBuf.size()));
+		}
 		if (merge)
 			throw new IllegalStateException("merge==false expected.");
 		this.duplicateOutputIndex = duplicateOutputIndex;
@@ -28,13 +32,25 @@ public class TailBufferTwoWayMerger extends TailBufferMergerSeamless {
 	}
 
 	private void twoWayMerge() {
+		if (debug)
+			event("twm");
 		if (prevBuf != null)
 			throw new IllegalStateException("prevBuf == null expected.");
 		if (nextBuf == null)
 			throw new IllegalStateException("nextBuf != null expected.");
 		AppInstBufInfo curInfo = appInstBufInfos.get(curBuf);
 		AppInstBufInfo nextInfo = appInstBufInfos.get(nextBuf);
+		if (debug)
+			System.err.println(String.format(
+					"curAppInstCount - %d, duplicateOutputIndex - %d ",
+					curInfo.ht.tailCounter.count(), duplicateOutputIndex));
 		copyNonDuplicateOutput(curInfo.ht.tailCounter);
+		if (debug)
+			System.err
+					.println(String
+							.format(" copyNonDuplicateOutput curAppInstCount - %d, duplicateOutputIndex - %d ",
+									curInfo.ht.tailCounter.count(),
+									duplicateOutputIndex));
 		int curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
 		while ((nextInfo.ht.tailCounter.count() <= curDupData) && !stopCalled) {
 			copyToTailBuffer(curBuf);

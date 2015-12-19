@@ -13,8 +13,7 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  */
 public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 
-	public TailBufferMergerStateless(Buffer tailBuffer,
-			EventTimeLogger eLogger) {
+	public TailBufferMergerStateless(Buffer tailBuffer, EventTimeLogger eLogger) {
 		super(tailBuffer, eLogger);
 	}
 

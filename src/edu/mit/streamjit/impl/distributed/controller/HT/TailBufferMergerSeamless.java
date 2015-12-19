@@ -54,6 +54,8 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	private final EventTimeLogger eLogger;
 
+	protected static final boolean debug = false;
+
 	public TailBufferMergerSeamless(Buffer tailBuffer, EventTimeLogger eLogger) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
@@ -159,6 +161,8 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 	}
 
 	protected void switchBuffers(int skipCount) {
+		if (debug)
+			event("swb");
 		if (skipCount > 0)
 			skip(nextBuf, skipCount);
 		prevBuf = curBuf;
@@ -176,6 +180,10 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 	private void skip(final Buffer readBuffer, int skipCount) {
 		int expected = skipCount;
 		int min1, min2, readBufSize;
+		if (debug)
+			System.err.println(String.format(
+					"Skip: BufferSize=%d, skipCount=%d", readBuffer.size(),
+					skipCount));
 		while (expected > 0) {
 			readBufSize = readBuffer.size();
 			if (readBufSize == 0) {
@@ -228,6 +236,9 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		}
 
 		public void reclaimedBuffer(Buffer buf) {
+			if (debug)
+				System.err.println("reclaimedBuffer Buf Size is = "
+						+ buf.size());
 			while (buf.size() > 0) {
 				buf.read(intArray, 0, intArray.length);
 			}
