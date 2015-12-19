@@ -159,7 +159,8 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 	}
 
 	protected void switchBuffers(int skipCount) {
-		skip(nextBuf, skipCount);
+		if (skipCount > 0)
+			skip(nextBuf, skipCount);
 		prevBuf = curBuf;
 		curBuf = nextBuf;
 		nextBuf = null;
