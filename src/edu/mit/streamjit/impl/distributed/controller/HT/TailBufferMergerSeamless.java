@@ -10,6 +10,7 @@ import java.util.concurrent.Phaser;
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.ConcurrentArrayBuffer;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
  * @author sumanan
@@ -51,12 +52,15 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected abstract void merge();
 
-	public TailBufferMergerSeamless(Buffer tailBuffer) {
+	private final EventTimeLogger eLogger;
+
+	public TailBufferMergerSeamless(Buffer tailBuffer, EventTimeLogger eLogger) {
 		this.tailBuffer = tailBuffer;
 		this.stopCalled = false;
 		bufProvider = new BufferProvider1();
 		this.appInstBufInfos = new ConcurrentHashMap<>();
 		switchBufPhaser.bulkRegister(2);
+		this.eLogger = eLogger;
 	}
 
 	public Runnable getRunnable() {
@@ -192,6 +196,10 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 					String.format(
 							"expected = %d. The variable expected must be 0.",
 							expected));
+	}
+
+	protected void event(String eventName) {
+		eLogger.logEvent(eventName, 0);
 	}
 
 	static class BufferProvider1 implements BufferProvider {

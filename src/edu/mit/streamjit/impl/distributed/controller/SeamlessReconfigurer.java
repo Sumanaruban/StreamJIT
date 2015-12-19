@@ -117,7 +117,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	private TailBufferMerger tailMerger(Buffer tailBuffer,
 			boolean needSeamlessTailMerger) {
 		if (needSeamlessTailMerger)
-			return new TailBufferMergerStateless(tailBuffer);
+			return new TailBufferTwoWayMerger(tailBuffer, reconfigEvntLogger);
 		return new TailBufferMergerPauseResume(tailBuffer);
 	}
 

@@ -2,13 +2,14 @@ package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 
 public class TailBufferTwoWayMerger extends TailBufferMergerSeamless {
 
 	private int duplicateOutputIndex;
 
-	TailBufferTwoWayMerger(Buffer tailBuffer) {
-		super(tailBuffer);
+	public TailBufferTwoWayMerger(Buffer tailBuffer, EventTimeLogger eLogger) {
+		super(tailBuffer, eLogger);
 	}
 
 	public void startMerge() {

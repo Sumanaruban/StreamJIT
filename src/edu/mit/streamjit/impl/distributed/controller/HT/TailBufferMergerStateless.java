@@ -1,6 +1,7 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
  * {@link TailBufferMerger} for seam-less reconfiguration process. Always skips
@@ -12,8 +13,9 @@ import edu.mit.streamjit.impl.blob.Buffer;
  */
 public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 
-	public TailBufferMergerStateless(Buffer tailBuffer) {
-		super(tailBuffer);
+	public TailBufferMergerStateless(Buffer tailBuffer,
+			EventTimeLogger eLogger) {
+		super(tailBuffer, eLogger);
 	}
 
 	public void startMerge() {
