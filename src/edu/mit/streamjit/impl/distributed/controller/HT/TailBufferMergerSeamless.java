@@ -159,7 +159,6 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 	}
 
 	protected void switchBuffers(int skipCount) {
-		copyFully(curBuf);
 		skip(nextBuf, skipCount);
 		prevBuf = curBuf;
 		curBuf = nextBuf;
@@ -168,7 +167,7 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 		switchBufPhaser.arrive();
 	}
 
-	private void copyFully(final Buffer readBuffer) {
+	protected void copyFully(final Buffer readBuffer) {
 		while (readBuffer.size() > 0)
 			copyToTailBuffer(readBuffer);
 	}

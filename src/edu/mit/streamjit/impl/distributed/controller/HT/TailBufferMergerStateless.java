@@ -38,6 +38,7 @@ public class TailBufferMergerStateless extends TailBufferMergerSeamless {
 		if (nextBuf == null)
 			throw new IllegalStateException("nextBuf != null expected.");
 		AppInstBufInfo a = appInstBufInfos.get(nextBuf);
+		copyFully(curBuf);
 		switchBuffers(a.skipCount);
 	}
 }
