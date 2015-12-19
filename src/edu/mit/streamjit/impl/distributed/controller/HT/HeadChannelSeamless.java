@@ -213,6 +213,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	}
 
 	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
+		duplicateFlowControl(3);
 		duplicateOutputIndex = expectedOutput();
 		tbMerger.startMerge(duplicateOutputIndex);
 		int itemsToRead;
@@ -227,6 +228,40 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			itemsDuplicated += read;
 		}
 		next.latch.countDown();
+	}
+
+	/**
+	 * TODO: Replication of {@link #flowControl()}. I copied because it checks
+	 * stopCalled == 0 condition. Join both methods by adding few flags.
+	 */
+	private void duplicateFlowControl(int timeGap) {
+		int expectedFiring = expectedFiring();
+		int currentFiring = 0;
+		int firingGap = 0;
+		while ((expectedFiring - (currentFiring = currentFiring()) > firingGap)) {
+			long sleepMills = timeGap * 300; // 30% of time gap.
+			try {
+				Thread.sleep(sleepMills);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			firingGap = calculateflowControlGap(
+					currentFiring() - currentFiring, sleepMills, timeGap);
+
+			if (debugLevel > 0)
+				System.out
+						.println(String
+								.format("flowControl : expectedFiring - %d, currentFiring = %d",
+										expectedFiring, currentFiring));
+		}
+
+		if (debugLevel > 0) {
+			System.out.println(String.format(
+					"flowControl : expectedFiring - %d, currentFiring = %d",
+					expectedFiring, currentFiring));
+			System.out.println("flowControl Over................");
+		}
 	}
 
 	public void duplicateAndStop(int duplicationCount, HeadChannelSeamless next) {
