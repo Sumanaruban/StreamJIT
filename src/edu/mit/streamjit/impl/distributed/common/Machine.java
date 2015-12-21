@@ -27,8 +27,6 @@ public final class Machine {
 
 	public static final boolean isHTEnabled;
 
-	public static final int physicalCores;
-
 	static {
 		Properties prop = loadProperties();
 		int availP = Runtime.getRuntime().availableProcessors();
@@ -47,7 +45,6 @@ public final class Machine {
 							"Available processors(%d) on this machine is lesser than number of CPUs(%d) asked to use.",
 							availP, CPUs));
 		isHTEnabled = !(threadsPerCore == 1);
-		physicalCores = sockets * coresPerSocket;
 	}
 
 	public static Properties getProperties() {

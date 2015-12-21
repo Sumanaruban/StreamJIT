@@ -130,6 +130,9 @@ public class AffinityManagers {
 
 	public static class CoreCodeAffinityManager implements AffinityManager {
 
+		public static final int physicalCores = Machine.sockets
+				* Machine.coresPerSocket;
+
 		private final Set<Blob> blobSet;
 
 		private final ImmutableTable<Token, Integer, Integer> assignmentTable;
@@ -253,14 +256,14 @@ public class AffinityManagers {
 			int allocatedCores = 0;
 			for (Blob b : blobSet) {
 				int coreCode = b.getCoreCount();
-				int p = Math.max(1, (coreCode * Machine.physicalCores)
+				int p = Math.max(1, (coreCode * physicalCores)
 						/ totalRequiredCores);
 				coresPerBlob.put(b, p);
 				allocatedCores += p;
 				if (coreCode > p)
 					unsatisfiedBlobs.add(b);
 			}
-			int remainingCores = Machine.physicalCores - allocatedCores;
+			int remainingCores = physicalCores - allocatedCores;
 			assignRemainingCores(coresPerBlob, remainingCores, unsatisfiedBlobs);
 			return coresPerBlob;
 		}
@@ -446,12 +449,12 @@ public class AffinityManagers {
 		 * @return
 		 */
 		private int getCorrespondingVirtualCoreID(int physicalCoreID) {
-			if (physicalCoreID >= Machine.physicalCores)
+			if (physicalCoreID >= physicalCores)
 				throw new IllegalArgumentException(String.format(
 						"physicalCoreID(%d) >= Machine.physicalCores(%d)",
-						physicalCoreID, Machine.physicalCores));
+						physicalCoreID, physicalCores));
 			if (Machine.isHTEnabled)
-				return physicalCoreID + Machine.physicalCores;
+				return physicalCoreID + physicalCores;
 			return physicalCoreID;
 		}
 
