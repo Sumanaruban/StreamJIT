@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -505,6 +506,77 @@ public class AffinityManagers {
 
 	/**
 	 * @author sumanan
+	 * @since 21 Dec, 2015
+	 */
+	public static class AllParallelAffinityManager implements AffinityManager {
+
+		private final Set<Blob> blobSet;
+
+		private final ImmutableTable<Token, Integer, Integer> assignmentTable;
+
+		private final List<Processor> processorList;
+
+		AllParallelAffinityManager(Set<Blob> blobSet) {
+			this.blobSet = blobSet;
+			this.processorList = processorList();
+			assignmentTable = assign();
+			// printTable(assignmentTable);
+		}
+
+		@Override
+		public ImmutableSet<Integer> getAffinity(Token blobID, int coreCode) {
+			return ImmutableSet.of(assignmentTable.get(blobID, coreCode));
+		}
+
+		private ImmutableTable<Token, Integer, Integer> assign() {
+			ImmutableTable.Builder<Token, Integer, Integer> tBuilder = ImmutableTable
+					.builder();
+			for (Blob b : blobSet) {
+				Token t = Utils.getBlobID(b);
+				Processor p = getMinProcessor();
+				for (int i = 0; i < b.getCoreCount(); i++)
+					tBuilder.put(t, i, p.newCore());
+			}
+			return tBuilder.build();
+		}
+
+		/**
+		 * @return Processor where minimum number of cores are used.
+		 */
+		private Processor getMinProcessor() {
+			Processor minProc = processorList.get(0);
+			for (Processor p : processorList) {
+				if (p.usedCores < minProc.usedCores)
+					minProc = p;
+			}
+			return minProc;
+		}
+
+		private List<Processor> processorList() {
+			List<Processor> pList = new LinkedList<>();
+			int coreIDStartPoint;
+			int virtualCoreIDStartPoint = -10000; // virtualCoreIDStartPoint of
+													// a machine. Just a
+													// negative value.
+			if (Machine.isHTEnabled)
+				virtualCoreIDStartPoint = Machine.sockets
+						* Machine.coresPerSocket;
+			int vCoreIDStartPoint;// virtualCoreIDStartPoint for a particular
+									// processor.
+			for (int pID = 0; pID < Machine.sockets; pID++) {
+				coreIDStartPoint = pID * Machine.coresPerSocket;
+				vCoreIDStartPoint = virtualCoreIDStartPoint + coreIDStartPoint;
+				Processor p = new Processor(pID, Machine.coresPerSocket,
+						Machine.isHTEnabled, coreIDStartPoint,
+						vCoreIDStartPoint);
+				pList.add(p);
+			}
+			return pList;
+		}
+	}
+
+	/**
+	 * @author sumanan
 	 * @since 15 Dec, 2015
 	 */
 	public static class FileAffinityManager implements AffinityManager {
@@ -559,6 +631,74 @@ public class AffinityManagers {
 				for (Map.Entry<Integer, Integer> e2 : e1.getValue().entrySet())
 					builder.put(e1.getKey(), e2.getKey(), e2.getValue());
 			assignmentTable = builder.build();
+		}
+	}
+
+	/**
+	 * Represents a processor.
+	 * 
+	 * @author sumanan
+	 * @since 21 Dec, 2015
+	 */
+	private static class Processor implements Comparable<Processor> {
+
+		final int id;
+
+		final int physicalCores;
+
+		final boolean isHTEnabled;
+
+		final int coreIDStartPoint;
+
+		final int virtualCoreIDStartPoint;
+
+		final int totalCores;
+
+		int usedCores = 0;
+
+		int curCore = 0;
+
+		Processor(int id, int physicalCores, boolean isHTEnabled,
+				int coreIDStartPoint, int virtualCoreIDStartPoint) {
+			this.id = id;
+			this.physicalCores = physicalCores;
+			this.isHTEnabled = isHTEnabled;
+			this.coreIDStartPoint = coreIDStartPoint;
+			this.virtualCoreIDStartPoint = virtualCoreIDStartPoint;
+			totalCores = isHTEnabled ? 2 * physicalCores : physicalCores;
+		}
+
+		int newCore() {
+			int c = curCore;
+			int offset;
+			if (c < physicalCores) {
+				offset = coreIDStartPoint;
+			} else {
+				if (!isHTEnabled)
+					throw new IllegalStateException(
+							String.format(
+									"No hyper threading, but c(%d) >= physicalCores(%d)",
+									c, physicalCores));
+				if (c >= 2 * physicalCores)
+					throw new IllegalStateException(String.format(
+							"c(%d) >= 2*physicalCores(%d)", c, physicalCores));
+				c = c - physicalCores;
+				offset = virtualCoreIDStartPoint;
+			}
+			incCurCore();
+			return offset + c;
+		}
+
+		private void incCurCore() {
+			usedCores++;
+			curCore++;
+			if (curCore == totalCores)
+				curCore = 0;
+		}
+
+		@Override
+		public int compareTo(Processor o) {
+			return Integer.compare(usedCores, o.usedCores);
 		}
 	}
 }
