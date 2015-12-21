@@ -520,7 +520,7 @@ public class AffinityManagers {
 			this.blobSet = blobSet;
 			this.processorList = processorList();
 			assignmentTable = assign();
-			// printTable(assignmentTable);
+			CoreCodeAffinityManager.printTable(assignmentTable);
 		}
 
 		@Override
