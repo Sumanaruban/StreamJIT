@@ -10,17 +10,19 @@ import java.util.Properties;
 import sun.misc.PerformanceLogger;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer;
 import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
-import edu.mit.streamjit.impl.distributed.controller.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.AllConnectionParams;
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.AsyncTCPNoParams;
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.BlockingTCPNoParams;
+import edu.mit.streamjit.impl.distributed.controller.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels.BlockingTailChannel1;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels.BlockingTailChannel2;
 import edu.mit.streamjit.impl.distributed.node.AffinityManager;
+import edu.mit.streamjit.impl.distributed.node.AffinityManagers.AllParallelAffinityManager;
 import edu.mit.streamjit.impl.distributed.node.AffinityManagers.CoreCodeAffinityManager;
 import edu.mit.streamjit.impl.distributed.node.AffinityManagers.EmptyAffinityManager;
 import edu.mit.streamjit.impl.distributed.node.AffinityManagers.EqualAffinityManager;
+import edu.mit.streamjit.impl.distributed.node.AffinityManagers.FileAffinityManager;
 import edu.mit.streamjit.impl.distributed.node.AffinityManagers.OneCoreAffinityManager;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.tuner.OnlineTuner;
@@ -182,6 +184,8 @@ public final class Options {
 	 * <li>1 - {@link OneCoreAffinityManager}.
 	 * <li>2 - {@link EqualAffinityManager}.
 	 * <li>3 - {@link CoreCodeAffinityManager}.
+	 * <li>4 - {@link AllParallelAffinityManager}.
+	 * <li>5 - {@link FileAffinityManager}.
 	 * <li>Other integers - {@link CoreCodeAffinityManager}.
 	 * </ol>
 	 * 

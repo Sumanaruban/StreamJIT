@@ -157,6 +157,8 @@ public class BlobsManagerImpl implements BlobsManager {
 			case 2 :
 				return new AffinityManagers.EqualAffinityManager(blobSet.size());
 			case 4 :
+				return new AffinityManagers.AllParallelAffinityManager(blobSet);
+			case 5 :
 				return new AffinityManagers.FileAffinityManager(appName,
 						new Integer(appInstId).toString(),
 						streamNode.getNodeID());
