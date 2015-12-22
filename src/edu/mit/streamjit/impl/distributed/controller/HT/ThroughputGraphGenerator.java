@@ -15,7 +15,7 @@ import edu.mit.streamjit.util.TimeLogProcessor;
  */
 public class ThroughputGraphGenerator {
 
-	private static final String tpFile = "../tailBuffer.txt";
+	private static String tpFile = "../tailBuffer.txt";
 	private static final String recfgEventFile = "../eventTime_Reconfigurer.txt";
 
 	public static void main(String[] args) throws IOException {
@@ -27,6 +27,7 @@ public class ThroughputGraphGenerator {
 				File.separator));
 		Utils.createDir(summaryDir.getPath());
 		// processTp(appName, summaryDir);
+		// newTPPeriod(3, appName, summaryDir);
 		File f = createTPPlotFile(summaryDir, appName, tpFile, recfgEventFile);
 		TimeLogProcessor.plot(summaryDir, f);
 	}
@@ -109,5 +110,52 @@ public class ThroughputGraphGenerator {
 		writer.flush();
 		reader.close();
 		writer.close();
+		tpFile = "tail.txt";
+	}
+
+	/**
+	 * @param period
+	 *            Period in seconds.
+	 * @param appName
+	 * @param outDir
+	 * @throws IOException
+	 */
+	private static void newTPPeriod(int period, String appName, File outDir)
+			throws IOException {
+		double[] vals = new double[period];
+		int i = 0;
+		BufferedReader reader = new BufferedReader(new FileReader(
+				String.format("%s%stailBuffer.txt", appName, File.separator)));
+		File outFile = new File(outDir, "tail.txt");
+		FileWriter writer = new FileWriter(outFile, false);
+		String line;
+		while ((line = reader.readLine()) != null) {
+			String[] arr = line.split("\t");
+			if (arr.length < 3)
+				continue;
+			String tp = arr[4].trim();
+			double val = 0;
+			try {
+				val = Double.parseDouble(tp);
+			} catch (Exception e) {
+				continue;
+			}
+
+			vals[i++] = val;
+			if (i == vals.length) {
+				double sum = 0;
+				for (double d : vals)
+					sum += d;
+				int avg = (int) sum / vals.length;
+				String data = String
+						.format("%s\t%s\t%d\n", arr[0], arr[2], avg);
+				writer.write(data);
+				i = 0;
+			}
+		}
+		writer.flush();
+		reader.close();
+		writer.close();
+		tpFile = "tail.txt";
 	}
 }
