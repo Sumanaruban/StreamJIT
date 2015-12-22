@@ -27,15 +27,15 @@ public class ThroughputGraphGenerator {
 				File.separator));
 		Utils.createDir(summaryDir.getPath());
 		// processTp(appName, summaryDir);
-		File f = createTotalStatsPlotFile(summaryDir, appName);
+		File f = createTPPlotFile(summaryDir, appName, tpFile, recfgEventFile);
 		TimeLogProcessor.plot(summaryDir, f);
 	}
 
 	/**
 	 * Creates plot file for {@link #ptotalFile}.
 	 */
-	private static File createTotalStatsPlotFile(File dir, String appName)
-			throws IOException {
+	private static File createTPPlotFile(File dir, String appName,
+			String tpfile, String cfgEventFile) throws IOException {
 		String title = TimeLogProcessor.getTitle(appName);
 		boolean pdf = true;
 		File plotfile = new File(dir, "throughput.plt");
@@ -57,20 +57,20 @@ public class ThroughputGraphGenerator {
 		writer.write("unset border\n");
 
 		writer.write(String.format(
-				"stats \"%s\" using 3 prefix \"Throughput\" noout\n", tpFile));
+				"stats \"%s\" using 3 prefix \"Throughput\" noout\n", tpfile));
 		writer.write("ymax=2*Throughput_max\n");
 		writer.write("set yrange [0:ymax]\n");
 		writer.write("endPoint= 3*ymax/4" + "\n");
 
-		writer.write(String.format(
-				"plot \"%s\" using 2:(endPoint) with impulses,\\",
-				recfgEventFile));
+		writer.write(String
+				.format("plot \"%s\" using 2:(endPoint) with impulses,\\",
+						cfgEventFile));
 		writer.write("\n");
 		writer.write("'' using 2:(endPoint):1 with labels rotate by 90 left font \"Times Italic,10\",\\");
 		writer.write("\n");
 		writer.write(String
 				.format("\"%s\" using 1:3 smooth unique title \"Throughput\" lc rgb \"blue\"\n",
-						tpFile));
+						tpfile));
 		writer.close();
 		return plotfile;
 	}
