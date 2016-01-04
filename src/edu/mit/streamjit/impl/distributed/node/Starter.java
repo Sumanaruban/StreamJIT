@@ -83,7 +83,7 @@ final class Starter2 implements Starter {
 		if (bt.logTime)
 			be.eLogger.bEvent("initScheduleRun");
 		for (int i = 0; i < steadyRunCount + 1; i++) {
-			if (bt.stopping)
+			if (bt.stopping == 2)
 				break;
 			bt.coreCode.run();
 		}

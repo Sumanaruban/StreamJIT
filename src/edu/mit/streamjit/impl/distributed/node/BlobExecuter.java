@@ -238,7 +238,7 @@ class BlobExecuter {
 
 		final Runnable coreCode;
 
-		volatile boolean stopping = false;
+		volatile int stopping = 0;
 
 		final boolean logTime;
 
@@ -252,19 +252,23 @@ class BlobExecuter {
 		}
 
 		public void requestStop() {
-			stopping = true;
+			stopping = 2;
 		}
 
 		@Override
 		public void run() {
-			if (cores != null && cores.size() > 0)
-				Affinity.setThreadAffinity(cores);
+			setAffinity();
 			try {
 				starter.initScheduleRun(this);
 				if (logTime)
 					logFiringTime();
-				while (!stopping) {
-					coreCode.run();
+				while (true) {
+					if (stopping == 0)
+						coreCode.run();
+					else if (stopping == 1)
+						setAffinity();
+					else
+						break;
 				}
 			} catch (Error | Exception e) {
 				System.out.println(Thread.currentThread().getName()
@@ -280,6 +284,12 @@ class BlobExecuter {
 			}
 		}
 
+		private void setAffinity() {
+			if (cores != null && cores.size() > 0)
+				Affinity.setThreadAffinity(cores);
+			stopping = 0;
+		}
+
 		private void logFiringTime() {
 			int meassureCount = 5;
 			// The very first coreCode.run() executes initCode which is single
@@ -287,18 +297,18 @@ class BlobExecuter {
 			// lets skip another few steadyCode executions before begin the
 			// measurement.
 			for (int i = 0; i < 10; i++) {
-				if (stopping)
+				if (stopping == 2)
 					break;
 				coreCode.run();
 			}
 
 			Stopwatch sw = Stopwatch.createStarted();
 			for (int i = 0; i < meassureCount; i++) {
-				if (stopping)
+				if (stopping == 2)
 					break;
 				coreCode.run();
 			}
-			if (!stopping) {
+			if (stopping != 2) {
 				long time = sw.elapsed(TimeUnit.MILLISECONDS);
 				long avgMills = time / meassureCount;
 				eLogger.logEvent("-firing", avgMills);
