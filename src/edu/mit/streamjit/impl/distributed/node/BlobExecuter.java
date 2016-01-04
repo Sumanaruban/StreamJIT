@@ -223,6 +223,12 @@ class BlobExecuter {
 			drainer.executorService.shutdownNow();
 	}
 
+	void updateAffinity(AffinityManager am) {
+		int i = 0;
+		for (BlobThread2 t : blobThreads)
+			t.updateAffinity(am.getAffinity(blobID, i++));
+	}
+
 	Starter starter(int starterType) {
 		if (starterType == 1)
 			return new Starter1(this);
@@ -232,7 +238,7 @@ class BlobExecuter {
 
 	final class BlobThread2 extends Thread {
 
-		private final Set<Integer> cores;
+		private Set<Integer> cores;
 
 		private final BlobExecuter be;
 
@@ -313,6 +319,11 @@ class BlobExecuter {
 				long avgMills = time / meassureCount;
 				eLogger.logEvent("-firing", avgMills);
 			}
+		}
+
+		private void updateAffinity(Set<Integer> cores) {
+			this.cores = cores;
+			stopping = 1;
 		}
 	}
 }

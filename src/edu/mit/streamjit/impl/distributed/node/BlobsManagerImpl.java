@@ -385,6 +385,28 @@ public class BlobsManagerImpl implements BlobsManager {
 	}
 
 	/**
+	 * @param coreUsage
+	 *            in percentage
+	 */
+	void updateAffinity(int coreUsage) {
+		int totalProcessors = Runtime.getRuntime().availableProcessors();
+		int totalCores = 1;
+		switch (coreUsage) {
+			case 50 :
+				totalProcessors = totalProcessors / 2;
+				break;
+			case 25 :
+				totalProcessors = totalProcessors / 4;
+				break;
+			default :
+				totalProcessors = 1;
+		}
+		AffinityManager am = new AffinityManagers.EqualAffinityManager(
+				blobExecuters.size(), totalCores);
+		for (BlobExecuter be : blobExecuters.values())
+			be.updateAffinity(am);
+	}
+	/**
 	 * {@link CommandProcessor} at {@link StreamNode} side.
 	 * 
 	 * @author Sumanan sumanan@mit.edu
