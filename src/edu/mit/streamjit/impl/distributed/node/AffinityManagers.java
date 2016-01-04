@@ -61,8 +61,15 @@ public class AffinityManagers {
 
 		int currentCoreToAllocate = 0;
 
-		private final int totalCores = Runtime.getRuntime()
-				.availableProcessors();
+		private final int totalCores;
+
+		public OneCoreAffinityManager() {
+			this(Runtime.getRuntime().availableProcessors());
+		}
+
+		public OneCoreAffinityManager(int totalCores) {
+			this.totalCores = totalCores;
+		}
 
 		Map<Token, Integer> blobCoreMap = new HashMap<>();
 		@Override
@@ -86,8 +93,7 @@ public class AffinityManagers {
 
 		private final int totalBlobs;
 
-		private final int totalCores = Runtime.getRuntime()
-				.availableProcessors();
+		private final int totalCores;
 
 		Map<Token, List<Integer>> blobCoreMap = new HashMap<>();
 
@@ -98,8 +104,13 @@ public class AffinityManagers {
 		int reminder;
 
 		EqualAffinityManager(int totalBlobs) {
+			this(totalBlobs, Runtime.getRuntime().availableProcessors());
+		}
+
+		EqualAffinityManager(int totalBlobs, int totalCores) {
 			if (totalBlobs == 0)
 				totalBlobs = 1;
+			this.totalCores = totalCores;
 			this.totalBlobs = totalBlobs;
 			coresPerBlob = totalCores / totalBlobs;
 			reminder = totalCores % totalBlobs;
