@@ -51,6 +51,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLCompilationInfo.RequestStat
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.CTRLRDrainProcessor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DoDrain;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainDataRequest;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.ReduceCore;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.DrainDataSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.State;
@@ -406,6 +407,7 @@ public class BlobsManagerImpl implements BlobsManager {
 		for (BlobExecuter be : blobExecuters.values())
 			be.updateAffinity(am);
 	}
+
 	/**
 	 * {@link CommandProcessor} at {@link StreamNode} side.
 	 * 
@@ -454,6 +456,11 @@ public class BlobsManagerImpl implements BlobsManager {
 		public void process(DrainDataRequest drnDataReq) {
 			System.err.println("Not expected in current situation");
 			// reqDrainedData(drnDataReq.blobsSet);
+		}
+
+		@Override
+		public void process(ReduceCore reduceCore) {
+			updateAffinity(reduceCore.coreUsage);
 		}
 	}
 

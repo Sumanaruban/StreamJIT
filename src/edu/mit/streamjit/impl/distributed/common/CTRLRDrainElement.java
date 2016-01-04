@@ -101,6 +101,24 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		}
 	}
 
+	public static final class ReduceCore extends CTRLRDrainElement {
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * Core usage in percentage.
+		 */
+		public final int coreUsage;
+
+		public ReduceCore(int coreUsage) {
+			this.coreUsage = coreUsage;
+		}
+
+		@Override
+		public void process(CTRLRDrainProcessor dp) {
+			dp.process(this);
+		}
+	}
+
 	/**
 	 * </p> As sub types of the {@link DrainElement} classes, not enums,
 	 * overloaded methods in DrainProcessor is enough. Jvm will automatically
@@ -113,5 +131,7 @@ public abstract class CTRLRDrainElement implements CTRLRMessageElement {
 		public void process(DrainDataRequest drnDataReq);
 
 		public void process(DoDrain drain);
+
+		public void process(ReduceCore reduceCore);
 	}
 }
