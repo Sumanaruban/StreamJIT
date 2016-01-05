@@ -1,7 +1,13 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
+import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
@@ -17,8 +23,20 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
 	private HeadChannelSeamless hcSeamless;
 
-	public DynamicTailBufferMerger(Buffer tailBuffer, EventTimeLogger eLogger) {
+	final ExecutorService executerSevce;
+
+	// TODO:Explore using Future.cancel() to stop the trimResources().
+	private volatile boolean stopTrimming = false;
+
+	Future<Void> trimResourceFuture;
+
+	public DynamicTailBufferMerger(Buffer tailBuffer, EventTimeLogger eLogger,
+			boolean resourceTrimming) {
 		super(tailBuffer, eLogger);
+		if (resourceTrimming)
+			executerSevce = Executors.newSingleThreadExecutor();
+		else
+			executerSevce = null;
 	}
 
 	public void startMerge() {
@@ -39,6 +57,7 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
 	@Override
 	protected void merge() {
+		stopTrimming = false;
 		if (debug)
 			event("twm");
 		if (prevBuf != null)
@@ -59,10 +78,12 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 									curInfo.ht.tailCounter.count(),
 									duplicateOutputIndex));
 		int curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
+		trimResources();
 		while ((nextInfo.ht.tailCounter.count() <= curDupData) && !stopCalled) {
 			copyToTailBuffer(curBuf);
 			curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
 		}
+		stopTrimming = true;
 		hcSeamless.stop(false);
 		switchBuffers(curDupData);
 	}
@@ -70,5 +91,47 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 	private void copyNonDuplicateOutput(Counter tailCounter) {
 		while ((tailCounter.count() - duplicateOutputIndex < 0) && !stopCalled)
 			copyToTailBuffer(curBuf);
+	}
+
+	private void trimResources() {
+		if (executerSevce != null) {
+			if (trimResourceFuture != null)
+				if (!trimResourceFuture.isDone()) {
+					throw new IllegalStateException(
+							"trimResourceFuture.isDone() == true");
+				}
+			trimResourceFuture = executerSevce.submit(trimResourceCallable());
+		}
+	}
+
+	private Callable<Void> trimResourceCallable() {
+		return new Callable<Void>() {
+			@Override
+			public Void call() throws Exception {
+				sleep(5);
+				if (stopTrimming)
+					return null;
+				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(50));
+
+				sleep(5);
+				if (stopTrimming)
+					return null;
+				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(25));
+
+				sleep(5);
+				if (stopTrimming)
+					return null;
+				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(1));
+				return null;
+			}
+
+			void sleep(int mills) {
+				try {
+					Thread.sleep(mills);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		};
 	}
 }

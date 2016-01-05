@@ -330,6 +330,14 @@ public class AppInstanceManager {
 	}
 
 	/**
+	 * @param me
+	 */
+	public void sendToAll(CTRLRMessageElement me) {
+		appManager.controller.sendToAll(new CTRLRMessageElementHolder(me,
+				appInstId()));
+	}
+
+	/**
 	 * {@link AppStatusProcessor} at {@link Controller} side.
 	 * 
 	 * @author Sumanan sumanan@mit.edu
