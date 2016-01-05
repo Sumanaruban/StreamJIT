@@ -216,7 +216,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
 		flowControl(3);
 		duplicateOutputIndex = expectedOutput();
-		tbMerger.startMerge(duplicateOutputIndex);
+		tbMerger.startMerge(duplicateOutputIndex, this);
 		int itemsToRead;
 		int itemsDuplicated = 0;
 		while (itemsDuplicated < duplicationCount && stopCalled != 3) {

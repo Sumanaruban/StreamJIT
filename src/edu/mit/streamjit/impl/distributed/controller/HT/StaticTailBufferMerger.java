@@ -1,6 +1,7 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
@@ -23,7 +24,8 @@ public class StaticTailBufferMerger extends TailBufferMergerSeamless {
 		merge = true;
 	}
 
-	public void startMerge(int duplicateOutputIndex) {
+	public void startMerge(int duplicateOutputIndex,
+			BoundaryOutputChannel hcSeamless) {
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 
 /**
  * {@link TailBufferMerger} for pause-resume reconfiguration process.
@@ -48,7 +49,8 @@ public class TailBufferMergerPauseResume implements TailBufferMerger {
 	}
 
 	@Override
-	public void startMerge(int duplicateOutputIndex) {
+	public void startMerge(int duplicateOutputIndex,
+			BoundaryOutputChannel hcSeamless) {
 	}
 
 	@Override

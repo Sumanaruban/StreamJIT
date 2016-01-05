@@ -1,6 +1,7 @@
 package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.impl.distributed.controller.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager;
@@ -60,7 +61,8 @@ public interface TailBufferMerger {
 	 */
 	public void startMerge();
 
-	public void startMerge(int duplicateOutputIndex);
+	public void startMerge(int duplicateOutputIndex,
+			BoundaryOutputChannel hcSeamless);
 
 	public BufferProvider bufferProvider();
 
