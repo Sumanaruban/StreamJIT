@@ -12,11 +12,11 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessag
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
+import edu.mit.streamjit.impl.distributed.controller.HT.DynamicTailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
+import edu.mit.streamjit.impl.distributed.controller.HT.StaticTailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger.BufferProvider;
-import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMergerPauseResume;
-import edu.mit.streamjit.impl.distributed.controller.HT.DynamicTailBufferMerger;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
@@ -43,15 +43,15 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	protected final String name;
 
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
-			Buffer tailBuffer, boolean needSeamlessTailMerger, String name) {
+			Buffer tailBuffer, boolean needDynamicTailMerger, String name) {
 		this.name = name;
 		this.appManager = streamJitAppManager;
 		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
 				appManager.app.name, "Reconfigurer", false,
 				Options.throughputMeasurementPeriod >= 1000);
-		tailMerger = tailMerger(tailBuffer, needSeamlessTailMerger);
+		tailMerger = tailMerger(tailBuffer, needDynamicTailMerger);
 		bufProvider = tailMerger.bufferProvider();
-		tailMergerThread = createAndStartTailMergerThread(needSeamlessTailMerger);
+		tailMergerThread = createAndStartTailMergerThread();
 	}
 
 	public int reconfigure(AppInstance appinst) {
@@ -115,10 +115,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	}
 
 	private TailBufferMerger tailMerger(Buffer tailBuffer,
-			boolean needSeamlessTailMerger) {
-		if (needSeamlessTailMerger)
+			boolean needDynamicTailMerger) {
+		if (needDynamicTailMerger)
 			return new DynamicTailBufferMerger(tailBuffer, reconfigEvntLogger);
-		return new TailBufferMergerPauseResume(tailBuffer);
+		return new StaticTailBufferMerger(tailBuffer, reconfigEvntLogger);
 	}
 
 	@Override
@@ -132,14 +132,11 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			}
 	}
 
-	private Thread createAndStartTailMergerThread(boolean needSeamlessTailMerger) {
-		if (needSeamlessTailMerger) {
-			Thread t = new Thread(tailMerger.getRunnable(),
-					"TailBufferMergerStateless");
-			t.start();
-			return t;
-		}
-		return null;
+	private Thread createAndStartTailMergerThread() {
+		Thread t = new Thread(tailMerger.getRunnable(),
+				"TailBufferMergerStateless");
+		t.start();
+		return t;
 	}
 
 	ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
