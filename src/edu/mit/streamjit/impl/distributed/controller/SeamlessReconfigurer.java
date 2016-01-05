@@ -42,14 +42,17 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	protected final String name;
 
+	protected final boolean adaptiveReconfig;
+
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
-			Buffer tailBuffer, boolean needDynamicTailMerger, String name) {
+			Buffer tailBuffer, boolean adaptiveReconfig, String name) {
 		this.name = name;
 		this.appManager = streamJitAppManager;
+		this.adaptiveReconfig = adaptiveReconfig;
 		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
 				appManager.app.name, "Reconfigurer", false,
 				Options.throughputMeasurementPeriod >= 1000);
-		tailMerger = tailMerger(tailBuffer, needDynamicTailMerger);
+		tailMerger = tailMerger(tailBuffer, adaptiveReconfig);
 		bufProvider = tailMerger.bufferProvider();
 		tailMergerThread = createAndStartTailMergerThread();
 	}
@@ -161,8 +164,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	static class SeamlessStatefulReconfigurer extends SeamlessReconfigurer {
 
 		SeamlessStatefulReconfigurer(StreamJitAppManager streamJitAppManager,
-				Buffer tailBuffer) {
-			super(streamJitAppManager, tailBuffer, true,
+				Buffer tailBuffer, boolean adaptiveReconfig) {
+			super(streamJitAppManager, tailBuffer, adaptiveReconfig,
 					"SeamlessStatefulReconfigurer");
 		}
 
@@ -173,10 +176,14 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		protected void connectWithPrevHeadChnl(
 				HeadChannelSeamless prevHeadChnl,
 				HeadChannelSeamless curHeadChnl) {
-			prevHeadChnl.reqStateDuplicateAndStop(
-					HeadChannelSeamless.duplicationFiring()
-							* appManager.prevAIM.graphSchedule().steadyIn,
-					curHeadChnl);
+			if (adaptiveReconfig)
+				prevHeadChnl.reqStateAndDuplicate(curHeadChnl);
+			else {
+				prevHeadChnl.reqStateDuplicateAndStop(
+						HeadChannelSeamless.duplicationFiring()
+								* appManager.prevAIM.graphSchedule().steadyIn,
+						curHeadChnl);
+			}
 		}
 
 		protected void compiled(AppInstanceManager aim) {
@@ -233,8 +240,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	static class SeamlessStatelessReconfigurer extends SeamlessReconfigurer {
 
 		SeamlessStatelessReconfigurer(StreamJitAppManager streamJitAppManager,
-				Buffer tailBuffer) {
-			super(streamJitAppManager, tailBuffer, true,
+				Buffer tailBuffer, boolean adaptiveReconfig) {
+			super(streamJitAppManager, tailBuffer, adaptiveReconfig,
 					"SeamlessStatelessReconfigurer");
 		}
 
@@ -251,10 +258,14 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		protected void connectWithPrevHeadChnl(
 				HeadChannelSeamless prevHeadChnl,
 				HeadChannelSeamless curHeadChnl) {
-			prevHeadChnl.duplicateAndStop(
-					HeadChannelSeamless.duplicationFiring()
-							* appManager.prevAIM.graphSchedule().steadyIn,
-					curHeadChnl);
+			if (adaptiveReconfig) {
+				prevHeadChnl.duplicate(curHeadChnl);
+			} else {
+				prevHeadChnl.duplicateAndStop(
+						HeadChannelSeamless.duplicationFiring()
+								* appManager.prevAIM.graphSchedule().steadyIn,
+						curHeadChnl);
+			}
 		}
 
 		protected void aimRunning(AppInstanceManager aim) {

@@ -14,6 +14,7 @@ import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.AllConnec
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.AsyncTCPNoParams;
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.BlockingTCPNoParams;
 import edu.mit.streamjit.impl.distributed.controller.DistributedStreamCompiler;
+import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels.BlockingTailChannel1;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels.BlockingTailChannel2;
@@ -242,10 +243,14 @@ public final class Options {
 
 	// Reconfiguration related options.
 	/**
-	 * If this flag is <code>true</code>, seamless reconfiguration will take
-	 * place; otherwise, pause-resume reconfiguration will take place.
+	 * Type of {@link Reconfigurer} to use.
+	 * <ol>
+	 * <li>0 - {@link PauseResumeReconfigurer}.
+	 * <li>1 - {@link EquationBasedReconfigurer}.
+	 * <li>2 - {@link AdaptiveReconfigurer}.
+	 * </ol>
 	 */
-	public static final boolean seamlessReconfig;
+	public static final int Reconfigurer;
 
 	static {
 		Properties prop = loadProperties();
@@ -292,8 +297,7 @@ public final class Options {
 		doDraininNewThread = Boolean.parseBoolean(prop
 				.getProperty("doDraininNewThread"));
 		dumpDrainData = Boolean.parseBoolean(prop.getProperty("dumpDrainData"));
-		seamlessReconfig = Boolean.parseBoolean(prop
-				.getProperty("seamlessReconfig"));
+		Reconfigurer = Integer.parseInt(prop.getProperty("Reconfigurer"));
 		DDActionFINISH = Boolean.parseBoolean(prop
 				.getProperty("DDActionFINISH"));
 		AffinityManager = Integer.parseInt(prop.getProperty("AffinityManager"));
@@ -333,7 +337,7 @@ public final class Options {
 		setProperty(prop, "logEventTime", logEventTime);
 		setProperty(prop, "doDraininNewThread", doDraininNewThread);
 		setProperty(prop, "dumpDrainData", dumpDrainData);
-		setProperty(prop, "seamlessReconfig", seamlessReconfig);
+		setProperty(prop, "Reconfigurer", Reconfigurer);
 		setProperty(prop, "DDActionFINISH", DDActionFINISH);
 		setProperty(prop, "AffinityManager", AffinityManager);
 		return prop;

@@ -122,13 +122,26 @@ public class StreamJitAppManager {
 	}
 
 	Reconfigurer reconfigurer(Buffer tailBuffer) {
-		if (Options.seamlessReconfig) {
-			if (app.stateful)
-				return new SeamlessStatefulReconfigurer(this, tailBuffer);
-			else
-				return new SeamlessStatelessReconfigurer(this, tailBuffer);
+		switch (Options.Reconfigurer) {
+			case 0 :
+				return new PauseResumeReconfigurer(this);
+			case 1 : {
+				if (app.stateful)
+					return new SeamlessStatefulReconfigurer(this, tailBuffer,
+							false);
+				else
+					return new SeamlessStatelessReconfigurer(this, tailBuffer,
+							false);
+			}
+			default : {
+				if (app.stateful)
+					return new SeamlessStatefulReconfigurer(this, tailBuffer,
+							true);
+				else
+					return new SeamlessStatelessReconfigurer(this, tailBuffer,
+							true);
+			}
 		}
-		return new PauseResumeReconfigurer(this);
 	}
 
 	public AppInstanceManager getAppInstManager(int appInstId) {
