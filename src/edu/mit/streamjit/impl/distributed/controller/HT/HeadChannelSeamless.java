@@ -105,8 +105,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 					duplicateSend(duplicationCount, next);
 				else if (stopCalled == 2) {
 					reqState();
-					duplicateSend(duplicationFiring * graphSchedule.steadyIn,
-							next);
+					duplicateSend(duplicationCount, next);
 				}
 				if (stopCalled == 1 || stopCalled == 2)
 					new DrainerThread().start();
@@ -114,7 +113,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			}
 		};
 	}
-
 	public void duplicationEnabled() {
 		latch = new CountDownLatch(1);
 	}
@@ -221,7 +219,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		tbMerger.startMerge(duplicateOutputIndex);
 		int itemsToRead;
 		int itemsDuplicated = 0;
-		while (itemsDuplicated < duplicationCount) {
+		while (itemsDuplicated < duplicationCount && stopCalled != 3) {
 			itemsToRead = Math.min(data.length, duplicationCount
 					- itemsDuplicated);
 			int read = readBuffer.read(data, 0, itemsToRead);
@@ -229,8 +227,16 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			next.waitToWrite();
 			next.send(data, read);
 			itemsDuplicated += read;
+			flowControl(3);
+			// next.flowControl(3);
 		}
 		next.latch.countDown();
+	}
+
+	public void duplicate(HeadChannelSeamless next) {
+		this.duplicationCount = Integer.MAX_VALUE;
+		this.next = next;
+		this.stopCalled = 1;
 	}
 
 	public void duplicateAndStop(int duplicationCount, HeadChannelSeamless next) {
@@ -239,7 +245,15 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		this.stopCalled = 1;
 	}
 
-	public void reqStateDuplicateAndStop(HeadChannelSeamless next) {
+	public void reqStateAndDuplicate(HeadChannelSeamless next) {
+		this.duplicationCount = Integer.MAX_VALUE;
+		this.next = next;
+		this.stopCalled = 2;
+	}
+
+	public void reqStateDuplicateAndStop(int duplicationCount,
+			HeadChannelSeamless next) {
+		this.duplicationCount = duplicationCount;
 		this.next = next;
 		this.stopCalled = 2;
 	}

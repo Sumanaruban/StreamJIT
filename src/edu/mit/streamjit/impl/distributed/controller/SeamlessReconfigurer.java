@@ -176,7 +176,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		protected void connectWithPrevHeadChnl(
 				HeadChannelSeamless prevHeadChnl,
 				HeadChannelSeamless curHeadChnl) {
-			prevHeadChnl.reqStateDuplicateAndStop(curHeadChnl);
+			prevHeadChnl.reqStateDuplicateAndStop(
+					HeadChannelSeamless.duplicationFiring()
+							* appManager.prevAIM.graphSchedule().steadyIn,
+					curHeadChnl);
 		}
 
 		protected void compiled(AppInstanceManager aim) {
