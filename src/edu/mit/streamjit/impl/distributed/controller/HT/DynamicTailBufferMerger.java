@@ -4,11 +4,18 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
-public class TailBufferTwoWayMerger extends TailBufferMergerSeamless {
+/**
+ * {@link TailBufferMerger} that performs dynamic switching. That is, skips to
+ * new graph whenever it catches the old graph's output.
+ * 
+ * @author sumanan
+ * @since 12 Nov, 2015
+ */
+public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
 	private int duplicateOutputIndex;
 
-	public TailBufferTwoWayMerger(Buffer tailBuffer, EventTimeLogger eLogger) {
+	public DynamicTailBufferMerger(Buffer tailBuffer, EventTimeLogger eLogger) {
 		super(tailBuffer, eLogger);
 	}
 

@@ -16,7 +16,7 @@ import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger.BufferProvider;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMergerPauseResume;
-import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferTwoWayMerger;
+import edu.mit.streamjit.impl.distributed.controller.HT.DynamicTailBufferMerger;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
@@ -117,7 +117,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 	private TailBufferMerger tailMerger(Buffer tailBuffer,
 			boolean needSeamlessTailMerger) {
 		if (needSeamlessTailMerger)
-			return new TailBufferTwoWayMerger(tailBuffer, reconfigEvntLogger);
+			return new DynamicTailBufferMerger(tailBuffer, reconfigEvntLogger);
 		return new TailBufferMergerPauseResume(tailBuffer);
 	}
 
