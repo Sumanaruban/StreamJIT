@@ -68,7 +68,8 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 			copyToTailBuffer(curBuf);
 			curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
 		}
-		switchBuffers(nextInfo.skipCount - curDupData);
+		hcSeamless.stop(false);
+		switchBuffers(curDupData);
 	}
 
 	private void copyNonDuplicateOutput(Counter tailCounter) {
