@@ -46,7 +46,10 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 	SeamlessReconfigurer(StreamJitAppManager streamJitAppManager,
 			Buffer tailBuffer, boolean adaptiveReconfig, String name) {
-		this.name = name;
+		if (adaptiveReconfig)
+			this.name = "Adaptive" + name;
+		else
+			this.name = name;
 		this.appManager = streamJitAppManager;
 		this.adaptiveReconfig = adaptiveReconfig;
 		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
