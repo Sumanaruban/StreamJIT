@@ -2,7 +2,6 @@ package edu.mit.streamjit.impl.distributed.controller.HT;
 
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
-import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
@@ -16,7 +15,7 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
 	private int duplicateOutputIndex;
 
-	private BoundaryOutputChannel hcSeamless;
+	private HeadChannelSeamless hcSeamless;
 
 	public DynamicTailBufferMerger(Buffer tailBuffer, EventTimeLogger eLogger) {
 		super(tailBuffer, eLogger);
@@ -26,7 +25,7 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 	}
 
 	public void startMerge(int duplicateOutputIndex,
-			BoundaryOutputChannel hcSeamless) {
+			HeadChannelSeamless hcSeamless) {
 		if (debug) {
 			event("m..");
 			System.err.println(String.format("nextBufSize=%d", nextBuf.size()));
