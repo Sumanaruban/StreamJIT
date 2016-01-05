@@ -103,8 +103,11 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				sendData();
 				if (stopCalled == 1)
 					duplicateSend(duplicationCount, next);
-				else if (stopCalled == 2)
-					reqStateDuplicateAndStop();
+				else if (stopCalled == 2) {
+					reqState();
+					duplicateSend(duplicationFiring * graphSchedule.steadyIn,
+							next);
+				}
 				if (stopCalled == 1 || stopCalled == 2)
 					new DrainerThread().start();
 				closeConnection();
@@ -275,12 +278,11 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		this.stopCalled = 2;
 	}
 
-	private void reqStateDuplicateAndStop() {
+	private void reqState() {
 		int reqStateAt = requestState();
 		int items = reqStateAt * graphSchedule.steadyIn
 				+ graphSchedule.totalInDuringInit - count;
 		send(items);
-		duplicateSend(duplicationFiring * graphSchedule.steadyIn, next);
 	}
 
 	/**
