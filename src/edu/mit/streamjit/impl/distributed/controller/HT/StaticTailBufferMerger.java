@@ -30,10 +30,6 @@ public class StaticTailBufferMerger extends TailBufferMergerSeamless {
 
 	@Override
 	protected void merge() {
-		switchBuffers();
-	}
-
-	private void switchBuffers() {
 		if (prevBuf != null)
 			throw new IllegalStateException("prevBuf == null expected.");
 		if (nextBuf == null)

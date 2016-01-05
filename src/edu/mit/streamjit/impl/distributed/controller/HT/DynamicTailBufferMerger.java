@@ -40,10 +40,6 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
 	@Override
 	protected void merge() {
-		twoWayMerge();
-	}
-
-	private void twoWayMerge() {
 		if (debug)
 			event("twm");
 		if (prevBuf != null)
