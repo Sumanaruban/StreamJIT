@@ -4,16 +4,16 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
- * {@link TailBufferMerger} for seam-less reconfiguration process. Always skips
- * skioCount amount of data from the new graph and switch to the new graph only
- * after the old graph is drained.
+ * {@link TailBufferMerger} that performs static switching. That is, always
+ * skips skioCount amount of data from the new graph and switch to the new graph
+ * only after the old graph is drained.
  * 
  * @author sumanan
  * @since 28 Oct, 2015
  */
-public class TailBufferMergerStateless extends TailBufferMergerSeamless {
+public class StaticTailBufferMerger extends TailBufferMergerSeamless {
 
-	public TailBufferMergerStateless(Buffer tailBuffer, EventTimeLogger eLogger) {
+	public StaticTailBufferMerger(Buffer tailBuffer, EventTimeLogger eLogger) {
 		super(tailBuffer, eLogger);
 	}
 
