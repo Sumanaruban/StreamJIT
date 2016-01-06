@@ -185,7 +185,7 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 			copyToTailBuffer(readBuffer);
 	}
 
-	private void skip(final Buffer readBuffer, int skipCount) {
+	protected void skip(final Buffer readBuffer, int skipCount) {
 		int expected = skipCount;
 		int min1, min2, readBufSize;
 		if (debug)
