@@ -37,4 +37,8 @@ public class StaticTailBufferMerger extends TailBufferMergerSeamless {
 		copyFully(curBuf);
 		switchBuffers(a.skipCount);
 	}
+
+	@Override
+	protected void stoping() {
+	}
 }

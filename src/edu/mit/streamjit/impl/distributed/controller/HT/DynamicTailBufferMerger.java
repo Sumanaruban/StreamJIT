@@ -134,4 +134,11 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 			}
 		};
 	}
+
+	@Override
+	protected void stoping() {
+		if (executerSevce != null)
+			executerSevce.shutdownNow();
+		System.out.println("DynamicTailBufferMerger: stoping.");
+	}
 }

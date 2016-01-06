@@ -52,6 +52,13 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected abstract void merge();
 
+	/**
+	 * This method will be called by TailBufferMergerSeamless to inform its sub
+	 * classes about the termination. Sub classes must release all resources
+	 * that they acquired when this method is called.
+	 */
+	protected abstract void stoping();
+
 	private final EventTimeLogger eLogger;
 
 	protected static final boolean debug = false;
@@ -76,6 +83,7 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 						merge();
 					}
 				}
+				stoping();
 			}
 		};
 	}
