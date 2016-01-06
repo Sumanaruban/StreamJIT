@@ -70,7 +70,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final TailBufferMerger tbMerger;
 
-	private int fcFiringGap = 5000;
+	private int fcFiringGap = 10;
 
 	private final int fcTimeGap = 10; // 10s
 
@@ -178,8 +178,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	int calculateflowControlGap(int firing, long timeDuration, int timeGap) {
 		double firingRate = (double) firing * 1000 / timeDuration;
 		int newFlowControl = (int) firingRate * timeGap;
-		System.err.println("firingRate = " + firingRate);
-		System.err.println("newFlowControl = " + newFlowControl);
+		if (debugLevel > 0) {
+			System.err.println("firingRate = " + firingRate);
+			System.err.println("newFlowControl = " + newFlowControl);
+		}
 		return newFlowControl;
 	}
 
