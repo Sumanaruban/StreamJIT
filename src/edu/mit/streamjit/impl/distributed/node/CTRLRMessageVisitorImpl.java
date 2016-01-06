@@ -70,7 +70,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	@Override
 	public void visit(Command streamJitCommand) {
 		if (blobsManager == null) {
-			System.err.println("No AppStatusProcessor processor.");
+			System.err.println(appInstId + " No CommandProcessor.");
 			return;
 		}
 		CommandProcessor cp = blobsManager.getCommandProcessor();
@@ -90,7 +90,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	@Override
 	public void visit(CTRLRDrainElement ctrlrDrainElement) {
 		if (blobsManager == null) {
-			System.err.println("No AppStatusProcessor processor.");
+			System.err.println(appInstId + " No DrainProcessor.");
 			return;
 		}
 		CTRLRDrainProcessor dp = blobsManager.getDrainProcessor();
@@ -105,7 +105,7 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 	@Override
 	public void visit(CTRLCompilationInfo ctrlCompilationInfo) {
 		if (blobsManager == null) {
-			System.err.println("No AppStatusProcessor processor.");
+			System.err.println(appInstId + " No CompilationInfoProcessor.");
 			return;
 		}
 		CTRLCompilationInfoProcessor cip = blobsManager
