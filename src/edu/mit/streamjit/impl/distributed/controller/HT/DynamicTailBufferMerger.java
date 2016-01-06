@@ -4,6 +4,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
 
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
@@ -29,6 +32,8 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 	private volatile boolean stopTrimming = false;
 
 	Future<Void> trimResourceFuture;
+
+	private volatile boolean timeout = false;
 
 	public DynamicTailBufferMerger(Buffer tailBuffer, EventTimeLogger eLogger,
 			boolean resourceTrimming) {
@@ -57,6 +62,8 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
 	@Override
 	protected void merge() {
+		int skipped = 0;
+		int nextCount = 0;
 		stopTrimming = false;
 		if (debug)
 			event("twm");
@@ -70,7 +77,10 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 			System.err.println(String.format(
 					"curAppInstCount - %d, duplicateOutputIndex - %d ",
 					curInfo.ht.tailCounter.count(), duplicateOutputIndex));
+		Stopwatch sw = Stopwatch.createStarted();
 		copyNonDuplicateOutput(curInfo.ht.tailCounter);
+		event(String.format("copy NonDuplicate Output time is %dms",
+				sw.elapsed(TimeUnit.MILLISECONDS)));
 		if (debug)
 			System.err
 					.println(String
@@ -79,13 +89,29 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 									duplicateOutputIndex));
 		int curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
 		trimResources();
-		while ((nextInfo.ht.tailCounter.count() <= curDupData) && !stopCalled) {
+		timeout = false;
+		while (((nextCount = nextInfo.ht.tailCounter.count()) <= curDupData)
+				&& !stopCalled && !timeout) {
 			copyToTailBuffer(curBuf);
 			curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
+			if (nextBuf.size() == nextBuf.capacity()) {
+				int s = Math.min(curDupData - skipped, nextBuf.size());
+				skip(nextBuf, s);
+				skipped += s;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (debug)
+				System.out.println(String.format(
+						"curDupData = %d, nextCount = %d", curDupData,
+						nextCount));
 		}
 		stopTrimming = true;
 		hcSeamless.stop(false);
-		switchBuffers(curDupData);
+		switchBuffers(curDupData - skipped);
 	}
 
 	private void copyNonDuplicateOutput(Counter tailCounter) {
@@ -108,20 +134,27 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 		return new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
-				sleep(5);
+				sleep(2000);
 				if (stopTrimming)
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(50));
+				System.out.println("Resource trimmed to half");
 
-				sleep(5);
+				sleep(2000);
 				if (stopTrimming)
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(25));
+				System.out.println("Resource trimmed to quater");
 
-				sleep(5);
+				sleep(2000);
 				if (stopTrimming)
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(1));
+				System.out.println("Resource trimmed to 1 core");
+				sleep(2000);
+				timeout = true;
+				System.err.println("DynamicTailBufMerge Time Out........");
+				event("TOut");
 				return null;
 			}
 
