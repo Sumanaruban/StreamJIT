@@ -164,7 +164,8 @@ public class AppInstanceManager {
 				DrainDataUtils.dumpDrainData(dd, appInst.app.name, cfgPrefix);
 			}
 		}
-		appManager.removeAIM(appInstId());
+		if (ret)
+			appManager.removeAIM(appInstId());
 		return ret;
 	}
 
