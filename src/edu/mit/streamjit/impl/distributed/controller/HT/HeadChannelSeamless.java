@@ -107,8 +107,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 					reqState();
 					duplicateSend(duplicationCount, next);
 				}
-				if (stopCalled == 1 || stopCalled == 2)
-					new DrainerThread().start();
+				// if (stopCalled == 1 || stopCalled == 2)
+				new DrainerThread().start();
 				closeConnection();
 			}
 		};
