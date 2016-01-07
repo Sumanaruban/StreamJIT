@@ -48,6 +48,8 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	protected final Map<Buffer, AppInstBufInfo> appInstBufInfos;
 
+	protected int duplicateOutputIndex = 0;
+
 	protected final Phaser switchBufPhaser = new Phaser();
 
 	protected abstract void merge();
@@ -129,6 +131,9 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 							"AppInstIds mismatch. ID of the prevBuf = %d, ID passed = %d.",
 							a.appInstId(), appInstId));
 
+		int redudantOutput = a.ht.tailCounter.count() - duplicateOutputIndex;
+		event(String.format("skipCount = %d, redudantOutput = %d", a.skipCount,
+				redudantOutput));
 		appInstBufInfos.remove(prevBuf);
 		bufProvider.reclaimedBuffer(a.tailBuf());
 		prevBuf = null;

@@ -25,6 +25,7 @@ public class StaticTailBufferMerger extends TailBufferMergerSeamless {
 
 	public void startMerge(int duplicateOutputIndex,
 			HeadChannelSeamless hcSeamless) {
+		this.duplicateOutputIndex = duplicateOutputIndex;
 	}
 
 	@Override

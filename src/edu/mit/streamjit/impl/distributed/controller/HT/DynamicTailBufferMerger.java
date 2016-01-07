@@ -22,8 +22,6 @@ import edu.mit.streamjit.tuner.EventTimeLogger;
  */
 public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 
-	private int duplicateOutputIndex;
-
 	private HeadChannelSeamless hcSeamless;
 
 	final ExecutorService executerSevce;
