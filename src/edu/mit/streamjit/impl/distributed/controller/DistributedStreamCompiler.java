@@ -21,6 +21,7 @@
  */
 package edu.mit.streamjit.impl.distributed.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,9 +52,10 @@ import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
-import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputPrinter;
-import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels.HeadBuffer;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.AppDrainer;
+import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannels.HeadBuffer;
+import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputGraphGenerator;
+import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputPrinter;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.runtimer.CommunicationManager.CommunicationType;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
@@ -173,6 +175,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 			Reconfigurer configurer = new Reconfigurer(manager, app,
 					cfgManager, logger);
 			tuneOrVerify(configurer, needTermination);
+		} else {
+			runFor(Options.boundaryChannelRatio, manager.appDrainer, app.name);
 		}
 		return cs;
 	}
@@ -193,7 +197,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	private <I, O> Configuration cfgFromFile(StreamJitApp<I, O> app,
 			Controller controller, Configuration defaultCfg) {
 		Configuration cfg1 = ConfigurationUtils.readConfiguration(app.name,
-				null);
+				new Integer(noOfnodes));
 		if (cfg1 == null) {
 			controller.closeAll();
 			throw new IllegalConfigurationException();
@@ -364,6 +368,26 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		} else {
 			throw new IllegalStateException(
 					"Neither OnlineTuner nor Verifer has been started.");
+		}
+	}
+
+	private void runFor(int seconds, final AppDrainer drainer, String appName) {
+		System.err
+				.println(String
+						.format("No tuning or no verification run. Going to run for %d seconds with fixed cfg.",
+								seconds));
+		try {
+			Thread.sleep(seconds * 1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		drainer.drainFinal(true);
+		System.out.println("Draining Called.");
+
+		try {
+			ThroughputGraphGenerator.summarize(appName);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
