@@ -153,7 +153,7 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(1));
 				System.out.println("Resource trimmed to 1 core");
-				sleep(sleepTime);
+				sleep(2 * sleepTime);
 				timeout = true;
 				System.err.println("DynamicTailBufMerge Time Out........");
 				event("TOut");
