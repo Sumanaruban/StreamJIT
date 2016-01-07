@@ -146,6 +146,8 @@ public class AppInstanceManager {
 				time));
 		isRunning = false;
 		eLogger.eEvent("totalRun");
+		appInst.app.eLogger.eEvent("overlap"); // Not this.eLogger. Bcoz it is
+												// PrefixedEventTimeLogger.
 	}
 
 	/**
@@ -206,6 +208,8 @@ public class AppInstanceManager {
 		System.out.println(String
 				.format("%s has started to run...", toString()));
 		eLogger.bEvent("totalRun");
+		appInst.app.eLogger.bEvent("overlap"); // Not this.eLogger. Bcoz it is
+												// PrefixedEventTimeLogger.
 	}
 
 	void runInitSchedule() {
