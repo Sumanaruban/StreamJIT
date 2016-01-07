@@ -510,13 +510,13 @@ public class TimeLogProcessor {
 	}
 
 	public static void processVerifycaionRun(String appName,
-			Map<String, Integer> cfgPrefixes) throws IOException {
+			List<Pair<String, Integer>> cfgPrefixes) throws IOException {
 		File summaryDir = new File(String.format("%s%ssummary", appName,
 				File.separator));
 		Utils.createDir(summaryDir.getPath());
-		for (String cfgPrefix : cfgPrefixes.keySet()) {
-			processVerifycaionRunTime(appName, summaryDir, cfgPrefix);
-			File f = createVerificationPlotFile(summaryDir, appName, cfgPrefix);
+		for (Pair<String, Integer> p : cfgPrefixes) {
+			processVerifycaionRunTime(appName, summaryDir, p.first);
+			File f = createVerificationPlotFile(summaryDir, appName, p.first);
 			plot(summaryDir, f);
 		}
 	}
