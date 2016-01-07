@@ -1,7 +1,9 @@
 package edu.mit.streamjit.impl.distributed.controller;
 
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
+import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
 /**
@@ -21,11 +23,16 @@ class PauseResumeReconfigurer implements Reconfigurer {
 	 */
 	private final StreamJitAppManager appManager;
 
+	private final EventTimeLogger reconfigEvntLogger;
+
 	/**
 	 * @param streamJitAppManager
 	 */
 	PauseResumeReconfigurer(StreamJitAppManager streamJitAppManager) {
 		this.appManager = streamJitAppManager;
+		this.reconfigEvntLogger = new EventTimeLogger.FileEventTimeLogger(
+				appManager.app.name, "Reconfigurer", false,
+				Options.throughputMeasurementPeriod >= 1000);
 	}
 
 	public int reconfigure(AppInstance appinst) {
@@ -45,6 +52,7 @@ class PauseResumeReconfigurer implements Reconfigurer {
 
 		if (isCompiled) {
 			start(aim);
+			event("S-" + aim.appInstId());
 		} else {
 			aim.drainingFinished(false);
 		}
@@ -76,9 +84,14 @@ class PauseResumeReconfigurer implements Reconfigurer {
 
 	@Override
 	public void drainingFinished(boolean isFinal, AppInstanceManager aim) {
+		event("F-" + aim.appInstId());
 	}
 
 	@Override
 	public void stop() {
+	}
+
+	protected void event(String eventName) {
+		reconfigEvntLogger.logEvent(eventName, 0);
 	}
 }
