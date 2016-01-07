@@ -42,7 +42,7 @@ function verifyIP(){
 
 args=("$@")
 snInstances=${args[0]}
-if ["$snInstances" = ""]; then
+if [ "$snInstances" = "" ]; then
 	snInstances=1
 fi
 

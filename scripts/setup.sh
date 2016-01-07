@@ -91,7 +91,7 @@ if [ "$debug" = true ] ; then
 	nodes=1
 fi
 
-if ["$run" = ""]; then
+if [ "$run" = "" ]; then
 	run=true
 fi
 
