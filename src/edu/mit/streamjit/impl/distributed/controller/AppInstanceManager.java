@@ -145,6 +145,7 @@ public class AppInstanceManager {
 				"%s: Draining Finished. Draining time = %dms.", toString(),
 				time));
 		isRunning = false;
+		eLogger.eEvent("totalRun");
 	}
 
 	/**
@@ -204,6 +205,7 @@ public class AppInstanceManager {
 		isRunning = true;
 		System.out.println(String
 				.format("%s has started to run...", toString()));
+		eLogger.bEvent("totalRun");
 	}
 
 	void runInitSchedule() {
