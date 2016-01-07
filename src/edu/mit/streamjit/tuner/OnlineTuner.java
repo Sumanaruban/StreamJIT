@@ -2,8 +2,8 @@ package edu.mit.streamjit.tuner;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -210,9 +210,9 @@ public class OnlineTuner implements Runnable {
 	}
 
 	private void verify() {
-		Map<String, Integer> cfgPrefixes = new HashMap<>();
-		cfgPrefixes.put("final", 0);
-		cfgPrefixes.put("hand", 0);
+		List<Pair<String, Integer>> cfgPrefixes = new ArrayList<>();
+		cfgPrefixes.add(new Pair<>("final", 0));
+		cfgPrefixes.add(new Pair<>("hand", 0));
 		new Verifier(configurer).verifyTuningTimes(cfgPrefixes);
 	}
 
