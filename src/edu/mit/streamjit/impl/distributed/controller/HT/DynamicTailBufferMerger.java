@@ -11,6 +11,7 @@ import com.google.common.base.Stopwatch;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
+import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
@@ -129,7 +130,9 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 	}
 
 	private Callable<Void> trimResourceCallable() {
-		int sleepTime = 2000;
+		// Just temporarily using Options.blobToNodeRatio to change the sleep
+		// time. Remove this later.
+		int sleepTime = Options.blobToNodeRatio;
 		return new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
