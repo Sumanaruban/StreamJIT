@@ -129,27 +129,28 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 	}
 
 	private Callable<Void> trimResourceCallable() {
+		int sleepTime = 2000;
 		return new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
-				sleep(2000);
+				sleep(sleepTime);
 				if (stopTrimming)
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(50));
 				System.out.println("Resource trimmed to half");
 
-				sleep(2000);
+				sleep(sleepTime);
 				if (stopTrimming)
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(25));
 				System.out.println("Resource trimmed to quater");
 
-				sleep(2000);
+				sleep(sleepTime);
 				if (stopTrimming)
 					return null;
 				hcSeamless.aim.sendToAll(new CTRLRDrainElement.ReduceCore(1));
 				System.out.println("Resource trimmed to 1 core");
-				sleep(2000);
+				sleep(sleepTime);
 				timeout = true;
 				System.err.println("DynamicTailBufMerge Time Out........");
 				event("TOut");
