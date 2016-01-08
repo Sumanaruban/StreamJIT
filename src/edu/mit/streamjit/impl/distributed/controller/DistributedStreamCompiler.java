@@ -176,7 +176,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 					cfgManager, logger);
 			tuneOrVerify(configurer, needTermination);
 		} else {
-			runFor(Options.boundaryChannelRatio, manager.appDrainer, app.name);
+			runFixedCfg(Options.boundaryChannelRatio, manager.appDrainer,
+					app.name);
 		}
 		return cs;
 	}
@@ -371,7 +372,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		}
 	}
 
-	private void runFor(int seconds, final AppDrainer drainer, String appName) {
+	private void runFixedCfg(int seconds, final AppDrainer drainer,
+			String appName) {
 		System.err
 				.println(String
 						.format("No tuning or no verification run. Going to run for %d seconds with fixed cfg.",
