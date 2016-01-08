@@ -86,10 +86,12 @@ public final class Options {
 	/**
 	 * Enables or disables tuning.
 	 * <ol>
-	 * 0 - No tuning. Uses an existing configuration file to run. In this case,
-	 * {@link PerformanceLogger} will measure the the time taken to generate
-	 * fixed number of outputs and log into FixedOutPut.txt. See
-	 * {@link TailChannels} for the file logging details.
+	 * 0 - No tuning; fixed configuration run. The fixed configuration should be
+	 * stored in the the "configurations" directory with the name of
+	 * "fixed_[appName].cfg". In this case of run, {@link PerformanceLogger}
+	 * will measure the time taken to generate fixed number of outputs and log
+	 * into FixedOutPut.txt. See {@link TailChannels} for the file logging
+	 * details.
 	 * <ol>
 	 * 1 - Tuning. OpenTuner will be started in this case.
 	 * <ol>
