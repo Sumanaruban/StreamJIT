@@ -194,10 +194,10 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		}
 	}
 
-	private <I, O> Configuration cfgFromFile(StreamJitApp<I, O> app,
+	private <I, O> Configuration fixedCfg(StreamJitApp<I, O> app,
 			Controller controller, Configuration defaultCfg) {
 		Configuration cfg1 = ConfigurationUtils.readConfiguration(app.name,
-				new Integer(noOfnodes));
+				"fixed");
 		if (cfg1 == null) {
 			controller.closeAll();
 			throw new IllegalConfigurationException();
@@ -342,7 +342,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 				throw new IllegalConfigurationException();
 			}
 		} else if (Options.tune == 0) {
-			this.cfg = cfgFromFile(app, controller, defaultCfg);
+			this.cfg = fixedCfg(app, controller, defaultCfg);
 		} else
 			this.cfg = defaultCfg;
 
