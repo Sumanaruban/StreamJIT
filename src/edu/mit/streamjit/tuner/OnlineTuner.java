@@ -60,7 +60,7 @@ public class OnlineTuner implements Runnable {
 
 	@Override
 	public void run() {
-		if (Options.tune == 1)
+		if (Options.run == 1)
 			tune();
 		else
 			System.err.println("Options.tune is not in tune mode.");

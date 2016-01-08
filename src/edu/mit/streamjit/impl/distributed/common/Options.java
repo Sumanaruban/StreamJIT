@@ -84,7 +84,7 @@ public final class Options {
 	public static final boolean singleNodeOnline;
 
 	/**
-	 * Enables or disables tuning.
+	 * Type of run. Currently 3 types of runs are in use.
 	 * <ol>
 	 * 0 - No tuning; fixed configuration run. The fixed configuration should be
 	 * stored in the the "configurations" directory with the name of
@@ -98,7 +98,7 @@ public final class Options {
 	 * 2 - Evaluate configuration files. ( compares final cfg with hand tuned
 	 * cfg. Both file should be presented in the running directory.
 	 */
-	public static final int tune;
+	public static final int run;
 
 	/**
 	 * Decides how to start the opentuner. In first 2 cases, controller starts
@@ -163,15 +163,15 @@ public final class Options {
 
 	/**
 	 * {@link OnlineTuner}'s verifier verifies the configurations if
-	 * {@link #tune}==2. evaluationCount determines the number of re runs for a
+	 * {@link #run}==2. evaluationCount determines the number of re runs for a
 	 * configuration. Default value is 2.
 	 */
 	public static final int evaluationCount;
 
 	/**
 	 * {@link OnlineTuner}'s verifier verifies the configurations if
-	 * {@link #tune}==2. verificationCount determines the number of re runs for
-	 * a set of configurations in the verify.txt. Default value is 1.
+	 * {@link #run}==2. verificationCount determines the number of re runs for a
+	 * set of configurations in the verify.txt. Default value is 1.
 	 */
 	public static final int verificationCount;
 
@@ -265,7 +265,7 @@ public final class Options {
 				.getProperty("needDrainDeadlockHandler"));
 		needProfiler = Boolean.parseBoolean(prop.getProperty("needProfiler"));
 		outputCount = Integer.parseInt(prop.getProperty("outputCount"));
-		tune = Integer.parseInt(prop.getProperty("tune"));
+		run = Integer.parseInt(prop.getProperty("run"));
 		tunerStartMode = Integer.parseInt(prop.getProperty("tunerStartMode"));
 		saveAllConfigurations = Boolean.parseBoolean(prop
 				.getProperty("saveAllConfigurations"));
@@ -310,7 +310,7 @@ public final class Options {
 		setProperty(prop, "tunerStartMode", tunerStartMode);
 		setProperty(prop, "useDrainData", useDrainData);
 		setProperty(prop, "needDrainDeadlockHandler", needDrainDeadlockHandler);
-		setProperty(prop, "tune", tune);
+		setProperty(prop, "run", run);
 		setProperty(prop, "saveAllConfigurations", saveAllConfigurations);
 		setProperty(prop, "outputCount", outputCount);
 		setProperty(prop, "useCompilerBlob", useCompilerBlob);

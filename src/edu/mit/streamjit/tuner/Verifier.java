@@ -202,7 +202,7 @@ public class Verifier implements Runnable {
 
 	@Override
 	public void run() {
-		if (Options.tune == 2) {
+		if (Options.run == 2) {
 			verify();
 			configurer.terminate();
 		} else

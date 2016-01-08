@@ -154,7 +154,7 @@ public class TailChannels {
 			this.counter = bwc;
 			countAtReset = 0;
 			this.cfgPrefix = cfgPrefix;
-			if (Options.tune == 0) {
+			if (Options.run == 0) {
 				// TODO: Leaks this object from the constructor. May cause
 				// subtle bugs. Re-factor it.
 				pLogger = new PerformanceLogger(this, appName);

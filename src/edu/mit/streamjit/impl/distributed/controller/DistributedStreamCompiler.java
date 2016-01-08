@@ -171,7 +171,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer,
 				tp);
 
-		if (Options.tune > 0 && this.cfg != null) {
+		if (Options.run > 0 && this.cfg != null) {
 			Reconfigurer configurer = new Reconfigurer(manager, app,
 					cfgManager, logger);
 			tuneOrVerify(configurer, needTermination);
@@ -342,7 +342,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 				controller.closeAll();
 				throw new IllegalConfigurationException();
 			}
-		} else if (Options.tune == 0) {
+		} else if (Options.run == 0) {
 			this.cfg = fixedCfg(app, controller, defaultCfg);
 		} else
 			this.cfg = defaultCfg;
@@ -360,10 +360,10 @@ public class DistributedStreamCompiler implements StreamCompiler {
 
 	private void tuneOrVerify(Reconfigurer configurer, boolean needTermination) {
 		Runnable r;
-		if (Options.tune == 1) {
+		if (Options.run == 1) {
 			r = new OnlineTuner(configurer, needTermination, this.cfg);
 			new Thread(r, "OnlineTuner").start();
-		} else if (Options.tune == 2) {
+		} else if (Options.run == 2) {
 			r = new Verifier(configurer);
 			new Thread(r, "Verifier").start();
 		} else {
