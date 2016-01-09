@@ -224,9 +224,9 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			itemsToRead = Math.min(data.length, duplicationCount
 					- itemsDuplicated);
 			int read = readBuffer.read(data, 0, itemsToRead);
-			send(data, read);
 			next.waitToWrite();
 			next.send(data, read);
+			send(data, read);
 			itemsDuplicated += read;
 			flowControl(3);
 			// next.flowControl(3);
