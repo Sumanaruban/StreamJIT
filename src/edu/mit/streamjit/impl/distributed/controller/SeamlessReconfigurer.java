@@ -70,16 +70,17 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				true, tailMerger);
 		tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
 		boolean isCompiled = aim.postCompilation();
-		if (appManager.prevAIM != null) {
-			HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
-					.headChannelSeamless();
-			HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
-					.headChannelSeamless();
-			curHeadChnl.duplicationEnabled();
-			connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
-		}
 
 		if (isCompiled) {
+			aim.startChannels();
+			if (appManager.prevAIM != null) {
+				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
+						.headChannelSeamless();
+				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
+						.headChannelSeamless();
+				curHeadChnl.duplicationEnabled();
+				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
+			}
 			compiled(aim);
 			event("S-" + aim.appInstId());
 		} else {
@@ -191,7 +192,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		}
 
 		protected void compiled(AppInstanceManager aim) {
-			aim.startChannels();
 			if (appManager.prevAIM != null) {
 				// TODO : Should send node specific DrainData. Don't send
 				// the full drain data to all node.
@@ -248,7 +248,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 
 		protected void compiled(AppInstanceManager aim) {
 			// aim.runInitSchedule();
-			aim.startChannels();
 			aim.start();
 		}
 
