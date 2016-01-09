@@ -70,7 +70,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final TailBufferMerger tbMerger;
 
-	private int fcFiringGap = 10;
+	private double firingRate = 10;
 
 	private final int fcTimeGap = 10; // 10s
 
@@ -130,6 +130,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	private void flowControl(int timeGap) {
 		int expectedFiring = expectedFiring();
 		int currentFiring = 0;
+		int fcFiringGap = (int) (firingRate * timeGap);
 		while ((expectedFiring - (currentFiring = currentFiring()) > fcFiringGap)
 				&& stopCalled != 3) {
 			long sleepMills = timeGap * 300; // 30% of time gap.
@@ -139,8 +140,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				e.printStackTrace();
 			}
 
-			fcFiringGap = calculateflowControlGap(currentFiring()
-					- currentFiring, sleepMills, timeGap);
+			firingRate = firingRate(currentFiring() - currentFiring, sleepMills);
+			fcFiringGap = (int) (firingRate * timeGap);
 
 			if (debugLevel > 0)
 				System.out
@@ -175,14 +176,12 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		return firing;
 	}
 
-	int calculateflowControlGap(int firing, long timeDuration, int timeGap) {
+	double firingRate(int firing, long timeDuration) {
 		double firingRate = (double) firing * 1000 / timeDuration;
-		int newFlowControl = (int) firingRate * timeGap;
 		if (debugLevel > 0) {
 			System.err.println("firingRate = " + firingRate);
-			System.err.println("newFlowControl = " + newFlowControl);
 		}
-		return newFlowControl;
+		return firingRate;
 	}
 
 	private void sendRemining() {
