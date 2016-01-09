@@ -113,9 +113,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			}
 		};
 	}
-	public void duplicationEnabled() {
-		latch = new CountDownLatch(1);
-	}
 
 	public void sendData() {
 		int read = 1;
@@ -125,6 +122,69 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			flowControl(fcTimeGap);
 		}
 		sendRemining();
+	}
+
+	private void send(final Object[] data, int items) {
+		int totalWritten = 0;
+		int written;
+		try {
+			while (totalWritten < items) {
+				written = connection.writeObjects(data, totalWritten, items
+						- totalWritten);
+				totalWritten += written;
+				if (written == 0) {
+					try {
+						// TODO: Verify this sleep time.
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+		count += totalWritten;
+	}
+
+	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
+		flowControl(3);
+		duplicateOutputIndex = expectedOutput();
+		tbMerger.startMerge(duplicateOutputIndex, this);
+		int itemsToRead;
+		int itemsDuplicated = 0;
+		while (itemsDuplicated < duplicationCount && stopCalled != 3) {
+			itemsToRead = Math.min(data.length, duplicationCount
+					- itemsDuplicated);
+			int read = readBuffer.read(data, 0, itemsToRead);
+			next.waitToWrite();
+			next.send(data, read);
+			send(data, read);
+			itemsDuplicated += read;
+			flowControl(3);
+			// next.flowControl(3);
+		}
+		next.latch.countDown();
+	}
+
+	private void sendRemining() {
+		int reminder = (count - graphSchedule.totalInDuringInit)
+				% graphSchedule.steadyIn;
+		int residue = graphSchedule.steadyIn - reminder;
+		send(residue);
+	}
+
+	private void send(int itemsToSend) {
+		if (itemsToSend < 0)
+			throw new IllegalStateException("Items < 0. Items = " + itemsToSend);
+		int itemsToRead;
+		int itemsSent = 0;
+		while (itemsSent < itemsToSend) {
+			itemsToRead = Math.min(data.length, itemsToSend - itemsSent);
+			int read = readBuffer.read(data, 0, itemsToRead);
+			send(data, read);
+			itemsSent += read;
+		}
 	}
 
 	private void flowControl(int timeGap) {
@@ -184,11 +244,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		return firingRate;
 	}
 
-	private void sendRemining() {
-		int reminder = (count - graphSchedule.totalInDuringInit)
-				% graphSchedule.steadyIn;
-		int residue = graphSchedule.steadyIn - reminder;
-		send(residue);
+	public void duplicationEnabled() {
+		latch = new CountDownLatch(1);
 	}
 
 	private void waitForDuplication() {
@@ -199,39 +256,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private void send(int itemsToSend) {
-		if (itemsToSend < 0)
-			throw new IllegalStateException("Items < 0. Items = " + itemsToSend);
-		int itemsToRead;
-		int itemsSent = 0;
-		while (itemsSent < itemsToSend) {
-			itemsToRead = Math.min(data.length, itemsToSend - itemsSent);
-			int read = readBuffer.read(data, 0, itemsToRead);
-			send(data, read);
-			itemsSent += read;
-		}
-	}
-
-	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
-		flowControl(3);
-		duplicateOutputIndex = expectedOutput();
-		tbMerger.startMerge(duplicateOutputIndex, this);
-		int itemsToRead;
-		int itemsDuplicated = 0;
-		while (itemsDuplicated < duplicationCount && stopCalled != 3) {
-			itemsToRead = Math.min(data.length, duplicationCount
-					- itemsDuplicated);
-			int read = readBuffer.read(data, 0, itemsToRead);
-			next.waitToWrite();
-			next.send(data, read);
-			send(data, read);
-			itemsDuplicated += read;
-			flowControl(3);
-			// next.flowControl(3);
-		}
-		next.latch.countDown();
 	}
 
 	public void duplicate(HeadChannelSeamless next) {
@@ -281,32 +305,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 	}
 
-	private void send(final Object[] data, int items) {
-		int totalWritten = 0;
-		int written;
-		try {
-			while (totalWritten < items) {
-				written = connection.writeObjects(data, totalWritten, items
-						- totalWritten);
-				totalWritten += written;
-				if (written == 0) {
-					try {
-						// TODO: Verify this sleep time.
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		count += totalWritten;
-	}
-
 	protected void fillUnprocessedData() {
 		throw new Error("Method not implemented");
 	}
+
 	public void stop() {
 		this.stopCalled = 3;
 	}
