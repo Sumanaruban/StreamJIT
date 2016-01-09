@@ -200,18 +200,11 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				appManager.controller.sendToAll(new CTRLRMessageElementHolder(
 						initialState, aim.appInst.id));
 			}
-			start(aim);
+			aim.start();
 		}
 
 		protected void aimRunning(AppInstanceManager aim) {
 			aim.requestDDsizes();
-		}
-
-		/**
-		 * Start the execution of the StreamJit application.
-		 */
-		private void start(AppInstanceManager aim) {
-			aim.start();
 		}
 
 		@Override
@@ -254,7 +247,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		}
 
 		protected void compiled(AppInstanceManager aim) {
-			// startInit(aim);
+			// aim.runInitSchedule();
 			aim.startChannels();
 			aim.start();
 		}
@@ -273,14 +266,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		}
 
 		protected void aimRunning(AppInstanceManager aim) {
-		}
-
-		/**
-		 * Start the execution of the StreamJit application.
-		 */
-		private void startInit(AppInstanceManager aim) {
-			aim.startChannels();
-			aim.runInitSchedule();
 		}
 
 		@Override
