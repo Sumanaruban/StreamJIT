@@ -38,7 +38,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	private volatile int stopCalled;
 	private final EventTimeLogger eLogger;
 
-	private volatile CountDownLatch latch;
+	private volatile CountDownLatch duplicationLatch;
 	volatile boolean canWrite;
 
 	int count;
@@ -164,7 +164,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			flowControl(3);
 			// next.flowControl(3);
 		}
-		next.latch.countDown();
+		next.duplicationLatch.countDown();
 	}
 
 	private void sendRemining() {
@@ -245,14 +245,14 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	}
 
 	public void duplicationEnabled() {
-		latch = new CountDownLatch(1);
+		duplicationLatch = new CountDownLatch(1);
 	}
 
 	private void waitForDuplication() {
-		if (latch == null)
+		if (duplicationLatch == null)
 			return;
 		try {
-			latch.await();
+			duplicationLatch.await();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
