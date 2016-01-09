@@ -82,7 +82,9 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 				while (!stopCalled) {
 					copyToTailBuffer(curBuf);
 					if (merge) {
+						eLogger.bEvent("merge time");
 						merge();
+						eLogger.eEvent("merge time");
 					}
 				}
 				stoping();
