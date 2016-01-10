@@ -100,9 +100,9 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			public void run() {
 				eLogger.bEvent("initialization");
 				makeConnection();
+				graphSchedule = aim.graphSchedule();
 				canWrite = true;
 				duplicator.initialDuplication();
-				graphSchedule = aim.graphSchedule();
 				sendData();
 				if (stopCalled == 1)
 					duplicator.duplicate(duplicationCount);
