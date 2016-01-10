@@ -74,7 +74,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final int fcTimeGap = 10; // 10s
 
-	public final Duplicator duplicator;
+	private final Duplicator duplicator;
 
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
@@ -248,6 +248,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		return firingRate;
 	}
 
+	public void duplicationEnabled() {
+		duplicator.duplicationEnabled();
+	}
+
 	public void duplicate(HeadChannelSeamless next) {
 		this.duplicationCount = Integer.MAX_VALUE;
 		this.next = next;
@@ -385,7 +389,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		return count;
 	}
 
-	public interface Duplicator {
+	private interface Duplicator {
 		void initialDuplication();
 		void duplicationEnabled();
 		void prevDupCompleted();
