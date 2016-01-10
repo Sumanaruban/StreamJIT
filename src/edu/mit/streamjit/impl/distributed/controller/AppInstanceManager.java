@@ -146,8 +146,10 @@ public class AppInstanceManager {
 				time));
 		isRunning = false;
 		eLogger.eEvent("totalRun");
-		appInst.app.eLogger.eEvent("overlap"); // Not this.eLogger. Bcoz it is
-												// PrefixedEventTimeLogger.
+		if (!isFinal)
+			appInst.app.eLogger.eEvent("overlap"); // Not this.eLogger. Bcoz it
+													// is
+													// PrefixedEventTimeLogger.
 	}
 
 	/**
