@@ -78,7 +78,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 						.headChannelSeamless();
 				HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
 						.headChannelSeamless();
-				curHeadChnl.duplicationEnabled();
+				curHeadChnl.duplicator.duplicationEnabled();
 				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
 			}
 			compiled(aim);

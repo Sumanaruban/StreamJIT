@@ -39,7 +39,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	private volatile int stopCalled;
 	private final EventTimeLogger eLogger;
 
-	private volatile CountDownLatch duplicationLatch;
 	volatile boolean canWrite;
 
 	int count;
@@ -75,6 +74,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final int fcTimeGap = 10; // 10s
 
+	public final Duplicator duplicator;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
 			EventTimeLogger eLogger, Counter tailCounter,
@@ -90,6 +91,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		this.tailCounter = tailCounter;
 		this.aim = aim;
 		this.tbMerger = tbMerger;
+		this.duplicator = new Duplicator2();
 	}
 
 	public Runnable getRunnable() {
@@ -99,14 +101,14 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				eLogger.bEvent("initialization");
 				makeConnection();
 				canWrite = true;
-				waitForDuplication();
+				duplicator.initialDuplication();
 				graphSchedule = aim.graphSchedule();
 				sendData();
 				if (stopCalled == 1)
-					duplicateSend(duplicationCount, next);
+					duplicator.duplicateSend(duplicationCount);
 				else if (stopCalled == 2) {
 					reqState();
-					duplicateSend(duplicationCount, next);
+					duplicator.duplicateSend(duplicationCount);
 				}
 				// if (stopCalled == 1 || stopCalled == 2)
 				new DrainerThread().start();
@@ -167,72 +169,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 		count += totalWritten;
 		return totalWritten;
-	}
-
-	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
-		flowControl(3);
-		duplicateOutputIndex = expectedOutput();
-		tbMerger.startMerge(duplicateOutputIndex, this);
-		int itemsToRead;
-		int itemsDuplicated = 0;
-		while (itemsDuplicated < duplicationCount && stopCalled != 3) {
-			itemsToRead = Math.min(data.length, duplicationCount
-					- itemsDuplicated);
-			int read = readBuffer.read(data, 0, itemsToRead);
-			next.waitToWrite();
-			next.send(data, read);
-			send(data, read);
-			itemsDuplicated += read;
-			flowControl(3);
-			// next.flowControl(3);
-		}
-		next.duplicationLatch.countDown();
-	}
-
-	private void limitedDuplicate(int duplicationCount,
-			HeadChannelSeamless next, int rate) {
-		flowControl(3);
-		duplicateOutputIndex = expectedOutput();
-		tbMerger.startMerge(duplicateOutputIndex, this);
-		DuplicateDataHandler dupDataHandler = DuplicateDataHandler
-				.getInstance();
-		int itemsToSend = 0;
-		int itemsDuplicated = 0;
-		for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
-			if (itemsDuplicated < duplicationCount && stopCalled != 3) {
-				DuplicateArrayContainer container = dupDataHandler.container(i);
-				if (!container.hasData.get())
-					container.fillContainer();
-				itemsToSend = Math.min(container.filledDataSize,
-						duplicationCount - itemsDuplicated);
-				int send = send(container.data, itemsToSend, rate);
-				itemsDuplicated += send;
-				container.readCompleted();
-			}
-		}
-		if (itemsDuplicated < duplicationCount && stopCalled != 3) {
-			System.err
-					.println("ERROR: DuplicateDataHandler.totalContainers is not enough");
-		}
-		dupDataHandler.duplicationCompleted();
-		next.duplicationLatch.countDown();
-	}
-
-	private void duplicateSend() {
-		DuplicateDataHandler dupDataHandler = DuplicateDataHandler
-				.getInstance();
-		for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
-			if (stopCalled == 0) {
-				DuplicateArrayContainer container = dupDataHandler.container(i);
-				if (!container.hasData.get())
-					container.fillContainer();
-				send(container.data, container.filledDataSize);
-				flowControl(fcTimeGap);
-				container.readCompleted();
-			}
-		}
-		dupDataHandler.duplicationCompleted();
-		next.duplicationLatch.countDown();
 	}
 
 	private void sendRemining() {
@@ -310,20 +246,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			System.err.println("firingRate = " + firingRate);
 		}
 		return firingRate;
-	}
-
-	public void duplicationEnabled() {
-		duplicationLatch = new CountDownLatch(1);
-	}
-
-	private void waitForDuplication() {
-		if (duplicationLatch == null)
-			return;
-		try {
-			duplicationLatch.await();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public void duplicate(HeadChannelSeamless next) {
@@ -461,5 +383,128 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	@Override
 	public int count() {
 		return count;
+	}
+
+	public interface Duplicator {
+		void initialDuplication();
+		void duplicationEnabled();
+		void prevDupCompleted();
+		void duplicateSend(int duplicationCount);
+	}
+
+	private class Duplicator1 implements Duplicator {
+
+		private volatile CountDownLatch duplicationLatch;
+
+		@Override
+		public void initialDuplication() {
+			waitForDuplication();
+		}
+
+		private void waitForDuplication() {
+			if (duplicationLatch == null)
+				return;
+			try {
+				duplicationLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void duplicationEnabled() {
+			duplicationLatch = new CountDownLatch(1);
+		}
+
+		@Override
+		public void prevDupCompleted() {
+			duplicationLatch.countDown();
+		}
+
+		@Override
+		public void duplicateSend(int duplicationCount) {
+			flowControl(3);
+			duplicateOutputIndex = expectedOutput();
+			tbMerger.startMerge(duplicateOutputIndex, HeadChannelSeamless.this);
+			int itemsToRead;
+			int itemsDuplicated = 0;
+			while (itemsDuplicated < duplicationCount && stopCalled != 3) {
+				itemsToRead = Math.min(data.length, duplicationCount
+						- itemsDuplicated);
+				int read = readBuffer.read(data, 0, itemsToRead);
+				next.waitToWrite();
+				next.send(data, read);
+				send(data, read);
+				itemsDuplicated += read;
+				flowControl(3);
+				// next.flowControl(3);
+			}
+			next.duplicator.prevDupCompleted();
+		}
+	}
+
+	private class Duplicator2 implements Duplicator {
+
+		@Override
+		public void initialDuplication() {
+			DuplicateDataHandler dupDataHandler = DuplicateDataHandler
+					.getInstance();
+			for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
+				if (stopCalled == 0) {
+					DuplicateArrayContainer container = dupDataHandler
+							.container(i);
+					if (!container.hasData.get())
+						container.fillContainer();
+					send(container.data, container.filledDataSize);
+					flowControl(fcTimeGap);
+					container.readCompleted();
+				}
+			}
+			dupDataHandler.duplicationCompleted();
+		}
+
+		@Override
+		public void duplicationEnabled() {
+		}
+
+		@Override
+		public void prevDupCompleted() {
+
+		}
+
+		@Override
+		public void duplicateSend(int duplicationCount) {
+			int rate = Math.max((int) (firingRate / 3), 1);
+			int itemRate = rate * graphSchedule.steadyIn;
+			limitedDuplicate(duplicationCount, itemRate);
+		}
+
+		private void limitedDuplicate(int duplicationCount, int rate) {
+			System.out.println("limitedDuplication. Items per sec = " + rate);
+			flowControl(3);
+			duplicateOutputIndex = expectedOutput();
+			tbMerger.startMerge(duplicateOutputIndex, HeadChannelSeamless.this);
+			DuplicateDataHandler dupDataHandler = DuplicateDataHandler
+					.getInstance();
+			int itemsToSend = 0;
+			int itemsDuplicated = 0;
+			for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
+				if (itemsDuplicated < duplicationCount && stopCalled != 3) {
+					DuplicateArrayContainer container = dupDataHandler
+							.container(i);
+					if (!container.hasData.get())
+						container.fillContainer();
+					itemsToSend = Math.min(container.filledDataSize,
+							duplicationCount - itemsDuplicated);
+					int send = send(container.data, itemsToSend, rate);
+					itemsDuplicated += send;
+					container.readCompleted();
+				}
+			}
+			if (itemsDuplicated < duplicationCount && stopCalled != 3) {
+				System.err
+						.println("ERROR: DuplicateDataHandler.totalContainers is not enough");
+			}
+			dupDataHandler.duplicationCompleted();
+		}
 	}
 }
