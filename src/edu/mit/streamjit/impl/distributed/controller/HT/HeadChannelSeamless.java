@@ -448,10 +448,14 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private class Duplicator2 implements Duplicator {
 
+		final DuplicateDataHandler dupDataHandler;
+
+		Duplicator2() {
+			dupDataHandler = DuplicateDataHandler.createInstance(readBuffer);
+		}
+
 		@Override
 		public void initialDuplication() {
-			DuplicateDataHandler dupDataHandler = DuplicateDataHandler
-					.getInstance();
 			for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
 				if (stopCalled == 0) {
 					DuplicateArrayContainer container = dupDataHandler
@@ -487,8 +491,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			flowControl(3);
 			duplicateOutputIndex = expectedOutput();
 			tbMerger.startMerge(duplicateOutputIndex, HeadChannelSeamless.this);
-			DuplicateDataHandler dupDataHandler = DuplicateDataHandler
-					.getInstance();
 			int itemsToSend = 0;
 			int itemsDuplicated = 0;
 			for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {

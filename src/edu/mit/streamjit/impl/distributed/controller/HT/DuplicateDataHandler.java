@@ -35,10 +35,6 @@ public class DuplicateDataHandler {
 		return myinstance;
 	}
 
-	public static DuplicateDataHandler getInstance() {
-		return myinstance;
-	}
-
 	private DuplicateDataHandler(Buffer buffer) {
 		this.readBuffer = buffer;
 		initializeContainers();
