@@ -17,6 +17,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.controller.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.controller.BufferSizeCalc.GraphSchedule;
+import edu.mit.streamjit.impl.distributed.controller.HT.DuplicateDataHandler.DuplicateArrayContainer;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
 /**
@@ -147,6 +148,27 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		count += totalWritten;
 	}
 
+	private int send(final Object[] data, int items, int rate) {
+		int totalWritten = 0;
+		int written;
+		int itemsToSend = 0;
+		try {
+			while (totalWritten < items && stopCalled != 3) {
+				Thread.sleep(950);
+				itemsToSend = Math.min(items - totalWritten, rate);
+				written = connection.writeObjects(data, totalWritten,
+						itemsToSend);
+				totalWritten += written;
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+		count += totalWritten;
+		return totalWritten;
+	}
+
 	private void duplicateSend(int duplicationCount, HeadChannelSeamless next) {
 		flowControl(3);
 		duplicateOutputIndex = expectedOutput();
@@ -164,6 +186,52 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			flowControl(3);
 			// next.flowControl(3);
 		}
+		next.duplicationLatch.countDown();
+	}
+
+	private void limitedDuplicate(int duplicationCount,
+			HeadChannelSeamless next, int rate) {
+		flowControl(3);
+		duplicateOutputIndex = expectedOutput();
+		tbMerger.startMerge(duplicateOutputIndex, this);
+		DuplicateDataHandler dupDataHandler = DuplicateDataHandler
+				.getInstance();
+		int itemsToSend = 0;
+		int itemsDuplicated = 0;
+		for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
+			if (itemsDuplicated < duplicationCount && stopCalled != 3) {
+				DuplicateArrayContainer container = dupDataHandler.container(i);
+				if (!container.hasData.get())
+					container.fillContainer();
+				itemsToSend = Math.min(container.filledDataSize,
+						duplicationCount - itemsDuplicated);
+				int send = send(container.data, itemsToSend, rate);
+				itemsDuplicated += send;
+				container.readCompleted();
+			}
+		}
+		if (itemsDuplicated < duplicationCount && stopCalled != 3) {
+			System.err
+					.println("ERROR: DuplicateDataHandler.totalContainers is not enough");
+		}
+		dupDataHandler.duplicationCompleted();
+		next.duplicationLatch.countDown();
+	}
+
+	private void duplicateSend() {
+		DuplicateDataHandler dupDataHandler = DuplicateDataHandler
+				.getInstance();
+		for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
+			if (stopCalled == 0) {
+				DuplicateArrayContainer container = dupDataHandler.container(i);
+				if (!container.hasData.get())
+					container.fillContainer();
+				send(container.data, container.filledDataSize);
+				flowControl(fcTimeGap);
+				container.readCompleted();
+			}
+		}
+		dupDataHandler.duplicationCompleted();
 		next.duplicationLatch.countDown();
 	}
 
