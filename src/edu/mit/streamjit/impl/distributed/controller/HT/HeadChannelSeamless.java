@@ -105,10 +105,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				graphSchedule = aim.graphSchedule();
 				sendData();
 				if (stopCalled == 1)
-					duplicator.duplicateSend(duplicationCount);
+					duplicator.duplicate(duplicationCount);
 				else if (stopCalled == 2) {
 					reqState();
-					duplicator.duplicateSend(duplicationCount);
+					duplicator.duplicate(duplicationCount);
 				}
 				// if (stopCalled == 1 || stopCalled == 2)
 				new DrainerThread().start();
@@ -389,7 +389,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		void initialDuplication();
 		void duplicationEnabled();
 		void prevDupCompleted();
-		void duplicateSend(int duplicationCount);
+		void duplicate(int duplicationCount);
 	}
 
 	private class Duplicator1 implements Duplicator {
@@ -421,7 +421,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 
 		@Override
-		public void duplicateSend(int duplicationCount) {
+		public void duplicate(int duplicationCount) {
 			flowControl(3);
 			duplicateOutputIndex = expectedOutput();
 			tbMerger.startMerge(duplicateOutputIndex, HeadChannelSeamless.this);
@@ -472,7 +472,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 
 		@Override
-		public void duplicateSend(int duplicationCount) {
+		public void duplicate(int duplicationCount) {
 			int rate = Math.max((int) (firingRate / 3), 1);
 			int itemRate = rate * graphSchedule.steadyIn;
 			limitedDuplicate(duplicationCount, itemRate);
