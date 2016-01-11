@@ -38,12 +38,12 @@ import edu.mit.streamjit.impl.common.Configuration.Parameter;
 import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.compiler2.Compiler2BlobFactory;
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager;
+import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.BlockingTCPNoParams;
 import edu.mit.streamjit.impl.distributed.controller.DistributedBlobFactory;
 import edu.mit.streamjit.impl.distributed.controller.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.controller.PartitionManager;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.controller.WorkerMachine;
-import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.BlockingTCPNoParams;
 import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.Pair;
@@ -84,6 +84,14 @@ public class ConfigurationEditor {
 		ConfigurationUtils.saveConfg(builder.build(), "444", appName);
 	}
 
+	/**
+	 * Uses {@link WorkerMachine} PartitionManager. Older method that was
+	 * implemented before {@link StreamJitApp}.
+	 * 
+	 * @param stream
+	 * @param noOfnodes
+	 * @return
+	 */
 	private static Pair<String, Integer> generate(OneToOneElement<?, ?> stream,
 			int noOfnodes) {
 		ConnectWorkersVisitor primitiveConnector = new ConnectWorkersVisitor();
@@ -133,6 +141,13 @@ public class ConfigurationEditor {
 		System.out.println("Successfully updated");
 	}
 
+	/**
+	 * Uses {@link HotSpotTuning} PartitionManager.
+	 * 
+	 * @param stream
+	 * @param noOfnodes
+	 * @return
+	 */
 	private static Pair<String, Integer> generate1(
 			OneToOneElement<?, ?> stream, int noOfnodes) {
 		StreamJitApp<?, ?> app = new StreamJitApp<>(stream);
