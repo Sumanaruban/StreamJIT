@@ -64,27 +64,6 @@ public class ConfigurationEditor {
 	}
 
 	/**
-	 * Reads a configuration and changes its multiplier value.
-	 */
-	private static void changeMultiplierVal(String appName, String namePrefix) {
-		Configuration config = ConfigurationUtils.readConfiguration(appName,
-				namePrefix);
-		if (config == null)
-			return;
-		Configuration.Builder builder = Configuration.builder(config);
-		IntParameter mulParam = config.getParameter("multiplier",
-				IntParameter.class);
-		if (mulParam != null) {
-			System.out.println("Multiplier values is " + mulParam.getValue());
-			builder.removeParameter(mulParam.getName());
-		}
-
-		IntParameter newMulParam = new IntParameter("multiplier", 1, 100, 100);
-		builder.addParameter(newMulParam);
-		ConfigurationUtils.saveConfg(builder.build(), "444", appName);
-	}
-
-	/**
 	 * Uses {@link WorkerMachine} PartitionManager. Older method that was
 	 * implemented before {@link StreamJitApp}.
 	 * 
@@ -166,27 +145,6 @@ public class ConfigurationEditor {
 	}
 
 	/**
-	 * Generates default cfg of {@link Compiler2BlobFactory}. No modification
-	 * done.
-	 * 
-	 * @param stream
-	 */
-	private static void generate2(OneToOneElement<?, ?> stream) {
-		ConnectWorkersVisitor primitiveConnector = new ConnectWorkersVisitor();
-		stream.visit(primitiveConnector);
-		Worker<?, ?> source = (Worker<?, ?>) primitiveConnector.getSource();
-		BlobFactory bf = new Compiler2BlobFactory();
-		// BlobFactory bf = new DistributedBlobFactory(1);
-
-		Configuration cfg = bf.getDefaultConfiguration(Workers
-				.getAllWorkersInGraph(source));
-
-		String appName = stream.getClass().getSimpleName();
-		String namePrefix = "hand_";
-		ConfigurationUtils.saveConfg(cfg, namePrefix, appName);
-	}
-
-	/**
 	 * This edit is for the configurations which are generated using
 	 * {@link HotSpotTuning} as {@link PartitionManager}.
 	 */
@@ -251,6 +209,27 @@ public class ConfigurationEditor {
 		System.out.println("Successfully updated");
 	}
 
+	/**
+	 * Generates default cfg of {@link Compiler2BlobFactory}. No modification
+	 * done.
+	 * 
+	 * @param stream
+	 */
+	private static void generate2(OneToOneElement<?, ?> stream) {
+		ConnectWorkersVisitor primitiveConnector = new ConnectWorkersVisitor();
+		stream.visit(primitiveConnector);
+		Worker<?, ?> source = (Worker<?, ?>) primitiveConnector.getSource();
+		BlobFactory bf = new Compiler2BlobFactory();
+		// BlobFactory bf = new DistributedBlobFactory(1);
+
+		Configuration cfg = bf.getDefaultConfiguration(Workers
+				.getAllWorkersInGraph(source));
+
+		String appName = stream.getClass().getSimpleName();
+		String namePrefix = "hand_";
+		ConfigurationUtils.saveConfg(cfg, namePrefix, appName);
+	}
+
 	private static void print(String cfgFilePath) {
 		Configuration cfg = ConfigurationUtils.readConfiguration(cfgFilePath);
 		if (cfg == null)
@@ -263,6 +242,27 @@ public class ConfigurationEditor {
 				System.out.println(sp.getName() + " - " + sp.getValue());
 			}
 		}
+	}
+
+	/**
+	 * Reads a configuration and changes its multiplier value.
+	 */
+	private static void changeMultiplierVal(String appName, String namePrefix) {
+		Configuration config = ConfigurationUtils.readConfiguration(appName,
+				namePrefix);
+		if (config == null)
+			return;
+		Configuration.Builder builder = Configuration.builder(config);
+		IntParameter mulParam = config.getParameter("multiplier",
+				IntParameter.class);
+		if (mulParam != null) {
+			System.out.println("Multiplier values is " + mulParam.getValue());
+			builder.removeParameter(mulParam.getName());
+		}
+
+		IntParameter newMulParam = new IntParameter("multiplier", 1, 100, 100);
+		builder.addParameter(newMulParam);
+		ConfigurationUtils.saveConfg(builder.build(), "444", appName);
 	}
 
 	@Deprecated
