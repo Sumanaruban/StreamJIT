@@ -210,6 +210,59 @@ public class ConfigurationEditor {
 	}
 
 	/**
+	 * Copy the partition info from one {@link Configuration} to another.
+	 * 
+	 * @param appName
+	 * @param namePrefix
+	 * @param maxWor
+	 */
+	private static void copyPartition(String appName, String frmCfgPrefix,
+			String toCfgPrefix, int maxWor) {
+		Configuration frmCfg = ConfigurationUtils.readConfiguration(appName,
+				frmCfgPrefix);
+		if (frmCfg == null)
+			return;
+		Configuration toCfg = ConfigurationUtils.readConfiguration(appName,
+				toCfgPrefix);
+		if (toCfg == null)
+			return;
+
+		Configuration.Builder builder = Configuration.builder(toCfg);
+
+		for (int i = 0; i <= maxWor; i++) {
+			String wrkrMachineName = String.format("worker%dtomachine", i);
+			String wrkrCutname = String.format("worker%dcut", i);
+
+			SwitchParameter<Integer> wrkrMachine = toCfg.getParameter(
+					wrkrMachineName, SwitchParameter.class, Integer.class);
+			IntParameter wrkrCut = toCfg.getParameter(wrkrCutname,
+					IntParameter.class);
+
+			if (wrkrMachine != null) {
+				System.out.println(wrkrMachine.toString());
+				SwitchParameter<Integer> frmWrkrMachine = frmCfg.getParameter(
+						wrkrMachineName, SwitchParameter.class, Integer.class);
+				builder.removeParameter(wrkrMachine.getName());
+				builder.addParameter(new SwitchParameter<Integer>(wrkrMachine
+						.getName(), Integer.class, frmWrkrMachine.getValue(),
+						wrkrMachine.getUniverse()));
+			}
+
+			if (wrkrCut != null) {
+				System.out.println(wrkrCut.toString());
+				IntParameter frmwrkrCut = frmCfg.getParameter(wrkrCutname,
+						IntParameter.class);
+				builder.removeParameter(wrkrCut.getName());
+				builder.addParameter(new IntParameter(wrkrCut.getName(),
+						wrkrCut.getRange(), frmwrkrCut.getValue()));
+			}
+		}
+
+		toCfg = builder.build();
+		ConfigurationUtils.saveConfg(toCfg, toCfgPrefix, appName);
+		System.out.println("Successfully updated");
+	}
+	/**
 	 * Generates default cfg of {@link Compiler2BlobFactory}. No modification
 	 * done.
 	 * 
