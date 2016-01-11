@@ -50,12 +50,11 @@ import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.IOInfo;
 import edu.mit.streamjit.impl.common.Workers;
-import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.controller.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.controller.PartitionManager;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio;
 import edu.mit.streamjit.util.ConfigurationUtils;
 
@@ -253,16 +252,16 @@ public class Utils {
 	 * @param stream
 	 * @throws IOException
 	 */
-	public static void generateBlobGraphs(OneToOneElement<?, ?> stream)
-			throws IOException {
+	public static void generateBlobGraphs(OneToOneElement<?, ?> stream,
+			int noOfMachines, int totalCfgs) throws IOException {
 		StreamJitApp<?, ?> app = new StreamJitApp<>(stream);
 		PartitionManager partitionManager = new HotSpotTuning(app);
 		partitionManager.getDefaultConfiguration(
-				Workers.getAllWorkersInGraph(app.source), 2);
+				Workers.getAllWorkersInGraph(app.source), noOfMachines);
 		ConfigurationManager cfgManager = new ConfigurationManager(app,
 				partitionManager);
 		Stopwatch sw = Stopwatch.createStarted();
-		for (Integer i = 1; i < 5010; i++) {
+		for (Integer i = 1; i <= totalCfgs; i++) {
 			String prefix = i.toString();
 			Configuration cfg = ConfigurationUtils.readConfiguration(app.name,
 					prefix);
@@ -285,7 +284,7 @@ public class Utils {
 	}
 
 	public static void main(String[] args) throws IOException {
-		generateBlobGraphs(new FMRadio.FMRadioCore());
+		generateBlobGraphs(new FMRadio.FMRadioCore(), 2, 5000);
 	}
 
 	/**
