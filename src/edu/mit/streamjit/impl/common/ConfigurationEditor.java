@@ -93,7 +93,7 @@ public class ConfigurationEditor {
 	 * This edit is for the configurations which are generated using
 	 * {@link WorkerMachine} as {@link PartitionManager}.
 	 */
-	private static void edit(String appName, String namePrefix, int maxWor)
+	private static void edit(String appName, String namePrefix, int totalWorkers)
 			throws NumberFormatException, IOException {
 		Configuration cfg = ConfigurationUtils.readConfiguration(appName,
 				namePrefix);
@@ -104,7 +104,7 @@ public class ConfigurationEditor {
 		BufferedReader keyinreader = new BufferedReader(new InputStreamReader(
 				System.in));
 
-		for (int i = 0; i < maxWor; i++) {
+		for (int i = 0; i < totalWorkers; i++) {
 			String s = String.format("worker%dtomachine", i);
 			SwitchParameter<Integer> p = (SwitchParameter<Integer>) cfg
 					.getParameter(s);
@@ -148,8 +148,8 @@ public class ConfigurationEditor {
 	 * This edit is for the configurations which are generated using
 	 * {@link HotSpotTuning} as {@link PartitionManager}.
 	 */
-	private static void edit1(String appName, String namePrefix, int maxWor)
-			throws NumberFormatException, IOException {
+	private static void edit1(String appName, String namePrefix,
+			int totalWorkers) throws NumberFormatException, IOException {
 		Configuration cfg = ConfigurationUtils.readConfiguration(appName,
 				namePrefix);
 		if (cfg == null)
@@ -159,12 +159,12 @@ public class ConfigurationEditor {
 		BufferedReader keyinreader = new BufferedReader(new InputStreamReader(
 				System.in));
 
-		for (int i = 0; i < maxWor; i++) {
+		for (int i = 0; i < totalWorkers; i++) {
 			String wrkrMachineName = String.format("worker%dtomachine", i);
 			String wrkrCutname = String.format("worker%dcut", i);
 
 			SwitchParameter<Integer> wrkrMachine = cfg.getParameter(
-					wrkrMachineName, SwitchParameter.class);
+					wrkrMachineName, SwitchParameter.class, Integer.class);
 			IntParameter wrkrCut = cfg.getParameter(wrkrCutname,
 					IntParameter.class);
 
@@ -214,10 +214,10 @@ public class ConfigurationEditor {
 	 * 
 	 * @param appName
 	 * @param namePrefix
-	 * @param maxWor
+	 * @param totalWorkers
 	 */
 	private static void copyPartition(String appName, String frmCfgPrefix,
-			String toCfgPrefix, int maxWor) {
+			String toCfgPrefix, int totalWorkers) {
 		Configuration frmCfg = ConfigurationUtils.readConfiguration(appName,
 				frmCfgPrefix);
 		if (frmCfg == null)
@@ -229,7 +229,7 @@ public class ConfigurationEditor {
 
 		Configuration.Builder builder = Configuration.builder(toCfg);
 
-		for (int i = 0; i <= maxWor; i++) {
+		for (int i = 0; i < totalWorkers; i++) {
 			String wrkrMachineName = String.format("worker%dtomachine", i);
 			String wrkrCutname = String.format("worker%dcut", i);
 
