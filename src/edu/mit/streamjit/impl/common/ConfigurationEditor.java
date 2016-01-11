@@ -61,6 +61,7 @@ public class ConfigurationEditor {
 		// edit1("FilterBankPipeline", "463", 83);
 		// print("4366_NestedSplitJoinCore.cfg");
 		// changeMultiplierVal("NestedSplitJoinCore","final");
+		// copyPartition("BeamFormer1Kernel", "1", "2", 100);
 	}
 
 	/**
@@ -239,7 +240,7 @@ public class ConfigurationEditor {
 					IntParameter.class);
 
 			if (wrkrMachine != null) {
-				System.out.println(wrkrMachine.toString());
+				// System.out.println(wrkrMachine.toString());
 				SwitchParameter<Integer> frmWrkrMachine = frmCfg.getParameter(
 						wrkrMachineName, SwitchParameter.class, Integer.class);
 				builder.removeParameter(wrkrMachine.getName());
@@ -249,7 +250,7 @@ public class ConfigurationEditor {
 			}
 
 			if (wrkrCut != null) {
-				System.out.println(wrkrCut.toString());
+				// System.out.println(wrkrCut.toString());
 				IntParameter frmwrkrCut = frmCfg.getParameter(wrkrCutname,
 						IntParameter.class);
 				builder.removeParameter(wrkrCut.getName());
@@ -260,8 +261,11 @@ public class ConfigurationEditor {
 
 		toCfg = builder.build();
 		ConfigurationUtils.saveConfg(toCfg, toCfgPrefix, appName);
-		System.out.println("Successfully updated");
+		System.out.println(String.format(
+				"Copied the partitions from cfg-%s to cfg-%s", frmCfgPrefix,
+				toCfgPrefix));
 	}
+
 	/**
 	 * Generates default cfg of {@link Compiler2BlobFactory}. No modification
 	 * done.
