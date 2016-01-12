@@ -74,9 +74,11 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private double firingRate = 10;
 
-	private final int fcTimeGap = 10; // 10s
+	public static final int fcTimeGap = 3; // 10s
 
 	private final Duplicator duplicator;
+
+	private int limittedFcTimeGap = fcTimeGap;
 
 	private Stopwatch asw;
 
@@ -110,6 +112,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				canWrite = true;
 				duplicator.initialDuplication();
 				sendData();
+				if (stopCalled == 4)
+					limittedSend();
 				if (stopCalled == 1)
 					duplicator.duplicate(duplicationCount);
 				else if (stopCalled == 2) {
@@ -129,10 +133,29 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	public void sendData() {
 		int read = 1;
-		while (stopCalled == 0) {
-			read = readBuffer.read(data, 0, data.length);
+		int size = data.length;
+		do {
+			read = readBuffer.read(data, 0, size);
 			send(data, read);
 			flowControl(fcTimeGap);
+			size = Math.min(data.length,
+					(int) (firingRate * graphSchedule.steadyIn));
+		} while (stopCalled == 0);
+		sendRemining();
+	}
+
+	private void limittedSend() {
+		int read = 1;
+		double fr = firingRate;
+		System.out.println(String.format(
+				"limittedSend: firingRate=%f, limittedFcTimeGap=%d  ",
+				firingRate, limittedFcTimeGap));
+		while (stopCalled == 4) {
+			int size = Math.min(data.length,
+					(int) (fr * graphSchedule.steadyIn));
+			read = readBuffer.read(data, 0, size);
+			send(data, read);
+			flowControl(limittedFcTimeGap);
 		}
 		sendRemining();
 	}
@@ -322,6 +345,12 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 	}
 
+	public void limitSend(int fcTimeGap) {
+		System.err.println("limitSend..limitSend..limitSend");
+		this.limittedFcTimeGap = fcTimeGap;
+		this.stopCalled = 4;
+	}
+
 	protected void fillUnprocessedData() {
 		throw new Error("Method not implemented");
 	}
@@ -485,7 +514,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			waitForDuplication();
 			System.out.println(aim.appInstId() + "-Starting to inject data");
 			for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
-				if (stopCalled == 0) {
+				if (stopCalled == 0 || stopCalled == 4) {
 					DuplicateArrayContainer container = dupDataHandler
 							.container(i);
 					if (!container.hasData.get())

@@ -65,6 +65,12 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		event("Cfg" + appinst.id);
 		AppInstanceManager aim = appManager.createNewAIM(appinst);
 		appManager.reset();
+		HeadChannelSeamless prevHeadChnl = null;
+		if (appManager.prevAIM != null) {
+			prevHeadChnl = appManager.prevAIM.headTailHandler
+					.headChannelSeamless();
+			prevHeadChnl.limitSend(1);
+		}
 		preCompilation(aim);
 		aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
 				true, tailMerger);
@@ -75,7 +81,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			HeadChannelSeamless curHeadChnl = appManager.curAIM.headTailHandler
 					.headChannelSeamless();
 			if (appManager.prevAIM != null) {
-				HeadChannelSeamless prevHeadChnl = appManager.prevAIM.headTailHandler
+				prevHeadChnl = appManager.prevAIM.headTailHandler
 						.headChannelSeamless();
 				curHeadChnl.duplicationEnabled();
 				connectWithPrevHeadChnl(prevHeadChnl, curHeadChnl);
@@ -85,6 +91,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			compiled(aim);
 			event("S-" + aim.appInstId());
 		} else {
+			if (prevHeadChnl != null)
+				prevHeadChnl.limitSend(HeadChannelSeamless.fcTimeGap);
 			// TODO : [2015-11-18]
 			// This calling causes java.lang.NullPointerException at
 			// edu.mit.streamjit.impl.distributed.HeadTailHandler.waitToStopHead(HeadTailHandler.java:167)
