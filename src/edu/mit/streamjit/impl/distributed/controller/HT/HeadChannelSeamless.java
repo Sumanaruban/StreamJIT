@@ -552,7 +552,6 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 		private void limitedDuplicate(int duplicationCount, int rate) {
 			System.out.println("limitedDuplication. Items per sec = " + rate);
-			flowControl(3);
 			duplicateOutputIndex = expectedOutput();
 			tbMerger.startMerge(duplicateOutputIndex, HeadChannelSeamless.this);
 			int itemsToSend = 0;
