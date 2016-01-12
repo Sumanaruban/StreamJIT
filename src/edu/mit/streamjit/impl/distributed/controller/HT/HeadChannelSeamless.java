@@ -123,6 +123,13 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		};
 	}
 
+	public void waitToStart() {
+		Stopwatch s = Stopwatch.createStarted();
+		waitForDuplication();
+		System.out.println(String.format("AIM-%d. waitToStart time = %dms",
+				aim.appInstId(), s.elapsed(TimeUnit.MILLISECONDS)));
+	}
+
 	public void sendData() {
 		int read = 1;
 		while (stopCalled == 0) {
@@ -473,6 +480,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 		@Override
 		public void initialDuplication() {
+			waitForDuplication();
+			System.out.println(aim.appInstId() + "-Starting to inject data");
 			for (int i = 0; i < DuplicateDataHandler.totalContainers; i++) {
 				if (stopCalled == 0) {
 					DuplicateArrayContainer container = dupDataHandler
@@ -499,6 +508,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 		@Override
 		public void duplicate(int duplicationCount) {
+			next.duplicator.prevDupCompleted();
 			System.out.println("Time between dup requested and dup started = "
 					+ asw.elapsed(TimeUnit.MILLISECONDS) + "ms.");
 			int rate = Math.max((int) (firingRate / 3), 1);
