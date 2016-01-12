@@ -87,6 +87,9 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 									curInfo.ht.tailCounter.count(),
 									duplicateOutputIndex));
 		int curDupData = curInfo.ht.tailCounter.count() - duplicateOutputIndex;
+		if (debug)
+			System.out.println(String.format("curDupData = %d, nextCount = %d",
+					curDupData, nextInfo.ht.tailCounter.count()));
 		trimResources();
 		timeout = false;
 		while (((nextCount = nextInfo.ht.tailCounter.count()) <= curDupData)
@@ -103,10 +106,6 @@ public class DynamicTailBufferMerger extends TailBufferMergerSeamless {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			if (debug)
-				System.out.println(String.format(
-						"curDupData = %d, nextCount = %d", curDupData,
-						nextCount));
 		}
 		stopTrimming = true;
 		hcSeamless.stop(false);
