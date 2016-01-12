@@ -78,6 +78,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final Duplicator duplicator;
 
+	private volatile CountDownLatch duplicationLatch;
+
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
 			ConnectionInfo conInfo, String bufferTokenName,
 			EventTimeLogger eLogger, Counter tailCounter,
@@ -334,6 +336,15 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		return reqStateAt;
 	}
 
+	private void waitForDuplication() {
+		if (duplicationLatch != null)
+			try {
+				duplicationLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+	}
+
 	public static int duplicationFiring() {
 		return duplicationFiring;
 	}
@@ -409,23 +420,12 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private class Duplicator1 implements Duplicator {
 
-		private volatile CountDownLatch duplicationLatch;
-
 		@Override
 		public void initialDuplication() {
 			waitForDuplication();
 		}
 
-		private void waitForDuplication() {
-			if (duplicationLatch == null)
-				return;
-			try {
-				duplicationLatch.await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
+		@Override
 		public void duplicationEnabled() {
 			duplicationLatch = new CountDownLatch(1);
 		}
