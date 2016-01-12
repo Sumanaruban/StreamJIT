@@ -3,7 +3,9 @@ package edu.mit.streamjit.impl.distributed.controller.HT;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 
 import edu.mit.streamjit.impl.blob.Blob.Token;
@@ -192,6 +194,9 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	}
 
 	private void flowControl(int timeGap) {
+		Stopwatch sw = null;
+		if (debugLevel > 0)
+			sw = Stopwatch.createStarted();
 		int expectedFiring = expectedFiring();
 		int currentFiring = 0;
 		int fcFiringGap = (int) (firingRate * timeGap);
@@ -207,19 +212,25 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			firingRate = firingRate(currentFiring() - currentFiring, sleepMills);
 			fcFiringGap = (int) (firingRate * timeGap);
 
-			if (debugLevel > 0)
+			if (debugLevel > 1)
 				System.out
 						.println(String
 								.format("flowControl : expectedFiring - %d, currentFiring = %d",
 										expectedFiring, currentFiring));
 		}
 
-		if (debugLevel > 0) {
+		if (debugLevel > 1) {
 			System.out.println(String.format(
 					"flowControl : expectedFiring - %d, currentFiring = %d",
 					expectedFiring, currentFiring));
 			System.out.println("flowControl Over................");
 		}
+		if (sw != null)
+			System.out
+					.println(String.format(
+							"%d-FLOW CONTROL time is %dms. timeGap is %ds",
+							aim.appInstId(), sw.elapsed(TimeUnit.MILLISECONDS),
+							timeGap));
 	}
 
 	private int expectedFiring() {
