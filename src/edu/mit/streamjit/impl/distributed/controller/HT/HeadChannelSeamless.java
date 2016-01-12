@@ -78,6 +78,8 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private final Duplicator duplicator;
 
+	private Stopwatch asw;
+
 	private volatile CountDownLatch duplicationLatch;
 
 	public HeadChannelSeamless(Buffer buffer, ConnectionProvider conProvider,
@@ -268,18 +270,21 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	public void duplicate(HeadChannelSeamless next) {
 		this.duplicationCount = Integer.MAX_VALUE;
 		this.next = next;
+		asw = Stopwatch.createStarted();
 		this.stopCalled = 1;
 	}
 
 	public void duplicateAndStop(int duplicationCount, HeadChannelSeamless next) {
 		this.duplicationCount = duplicationCount;
 		this.next = next;
+		asw = Stopwatch.createStarted();
 		this.stopCalled = 1;
 	}
 
 	public void reqStateAndDuplicate(HeadChannelSeamless next) {
 		this.duplicationCount = Integer.MAX_VALUE;
 		this.next = next;
+		asw = Stopwatch.createStarted();
 		this.stopCalled = 2;
 	}
 
@@ -287,6 +292,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 			HeadChannelSeamless next) {
 		this.duplicationCount = duplicationCount;
 		this.next = next;
+		asw = Stopwatch.createStarted();
 		this.stopCalled = 2;
 	}
 
@@ -483,18 +489,24 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 		@Override
 		public void duplicationEnabled() {
+			duplicationLatch = new CountDownLatch(1);
 		}
 
 		@Override
 		public void prevDupCompleted() {
-
+			duplicationLatch.countDown();
 		}
 
 		@Override
 		public void duplicate(int duplicationCount) {
+			System.out.println("Time between dup requested and dup started = "
+					+ asw.elapsed(TimeUnit.MILLISECONDS) + "ms.");
 			int rate = Math.max((int) (firingRate / 3), 1);
 			int itemRate = rate * graphSchedule.steadyIn;
+			Stopwatch sw = Stopwatch.createStarted();
 			limitedDuplicate(duplicationCount, itemRate);
+			System.out.println("limitedDuplicate time is "
+					+ sw.elapsed(TimeUnit.MILLISECONDS) + "ms");
 		}
 
 		private void limitedDuplicate(int duplicationCount, int rate) {
