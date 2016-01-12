@@ -124,10 +124,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	}
 
 	public void waitToStart() {
-		Stopwatch s = Stopwatch.createStarted();
-		waitForDuplication();
-		System.out.println(String.format("AIM-%d. waitToStart time = %dms",
-				aim.appInstId(), s.elapsed(TimeUnit.MILLISECONDS)));
+		duplicator.waitToStart();
 	}
 
 	public void sendData() {
@@ -426,6 +423,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private interface Duplicator {
 		void initialDuplication();
+		void waitToStart();
 		void duplicationEnabled();
 		void prevDupCompleted();
 		void duplicate(int duplicationCount);
@@ -467,6 +465,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				// next.flowControl(3);
 			}
 			next.duplicator.prevDupCompleted();
+		}
+
+		@Override
+		public void waitToStart() {
 		}
 	}
 
@@ -544,6 +546,14 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 						.println("ERROR: DuplicateDataHandler.totalContainers is not enough");
 			}
 			dupDataHandler.duplicationCompleted();
+		}
+
+		@Override
+		public void waitToStart() {
+			Stopwatch s = Stopwatch.createStarted();
+			waitForDuplication();
+			System.out.println(String.format("AIM-%d. waitToStart time = %dms",
+					aim.appInstId(), s.elapsed(TimeUnit.MILLISECONDS)));
 		}
 	}
 }
