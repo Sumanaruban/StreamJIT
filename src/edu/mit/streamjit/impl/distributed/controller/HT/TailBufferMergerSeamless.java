@@ -63,7 +63,7 @@ public abstract class TailBufferMergerSeamless implements TailBufferMerger {
 
 	private final EventTimeLogger eLogger;
 
-	protected static final boolean debug = false;
+	protected static final boolean debug = true;
 
 	public TailBufferMergerSeamless(Buffer tailBuffer, EventTimeLogger eLogger) {
 		this.tailBuffer = tailBuffer;
