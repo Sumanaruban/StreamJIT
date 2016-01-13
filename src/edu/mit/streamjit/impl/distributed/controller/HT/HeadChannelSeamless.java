@@ -361,7 +361,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 	private int requestState() {
 		int i = expectedFiring();
-		int reqStateAt = i + 500;
+		int reqStateAt = i + (int) (firingRate * 5);
 		for (Map.Entry<Token, Integer> en : graphSchedule.steadyRunCount
 				.entrySet()) {
 			Token blobID = en.getKey();
