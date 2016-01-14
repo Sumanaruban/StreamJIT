@@ -249,6 +249,10 @@ public class Utils {
 	 * TODO: This generation process is damn slow. Takes 40 mins to process 5000
 	 * cfgs.
 	 * 
+	 * </p> Before running this, make sure the app is reading the arguments from
+	 * {@link Options}, and the {@link Options#appArg1} and
+	 * {@link Options#appArg2} are similar to the configurations' values.
+	 * 
 	 * @param stream
 	 * @throws IOException
 	 */
