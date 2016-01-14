@@ -57,9 +57,12 @@ public class ThroughputGraphGenerator {
 		writer.write("set nokey\n");
 		writer.write("unset border\n");
 
+		writer.write("stats \"../tailBuffer.txt\" using 1 prefix \"x\" noout\n");
+		writer.write("set xrange [x_min:x_max]\n");
+
 		writer.write(String.format(
 				"stats \"%s\" using 3 prefix \"Throughput\" noout\n", tpfile));
-		writer.write("ymax=2*Throughput_max\n");
+		writer.write("ymax=1.5*Throughput_max\n");
 		writer.write("set yrange [0:ymax]\n");
 		writer.write("endPoint= 3*ymax/4" + "\n");
 
