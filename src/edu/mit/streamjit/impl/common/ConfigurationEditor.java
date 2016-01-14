@@ -246,7 +246,7 @@ public class ConfigurationEditor {
 				builder.removeParameter(wrkrMachine.getName());
 				builder.addParameter(new SwitchParameter<Integer>(wrkrMachine
 						.getName(), Integer.class, frmWrkrMachine.getValue(),
-						wrkrMachine.getUniverse()));
+						frmWrkrMachine.getUniverse()));
 			}
 
 			if (wrkrCut != null) {
@@ -255,7 +255,7 @@ public class ConfigurationEditor {
 						IntParameter.class);
 				builder.removeParameter(wrkrCut.getName());
 				builder.addParameter(new IntParameter(wrkrCut.getName(),
-						wrkrCut.getRange(), frmwrkrCut.getValue()));
+						frmwrkrCut.getRange(), frmwrkrCut.getValue()));
 			}
 		}
 
