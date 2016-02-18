@@ -22,10 +22,6 @@
 package edu.mit.streamjit.api;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import edu.mit.streamjit.impl.blob.AbstractWriteOnlyBuffer;
-import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.blob.Buffers;
-import edu.mit.streamjit.impl.common.OutputBufferFactory;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -36,8 +32,14 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.function.Consumer;
 
 import com.google.common.primitives.Primitives;
+
+import edu.mit.streamjit.impl.blob.AbstractWriteOnlyBuffer;
+import edu.mit.streamjit.impl.blob.Buffer;
+import edu.mit.streamjit.impl.blob.Buffers;
+import edu.mit.streamjit.impl.common.OutputBufferFactory;
 
 /**
  *
@@ -147,8 +149,8 @@ public class Output<O> {
 	}
 
 	/**
-	 * The return object of this method call, BinaryFileOutput, must be closed
-	 * properly.
+	 * Only primitives can be written to a binary file. The return object of
+	 * this method call, BinaryFileOutput, must be closed properly.
 	 * 
 	 * @param fc
 	 * @param type
@@ -180,13 +182,53 @@ public class Output<O> {
 		ByteBuffer buffer;
 		private final String path;
 		private final Class<?> type;
+		private final Consumer<Object> consumer;
+		private final int objectSize;
+
 		public BinaryFileOutputFactory(String path, Class<?> type) {
 			this.path = path;
 			this.type = type;
+			if (type == Byte.class) {
+				consumer = (t) -> buffer.put((byte) t);
+				objectSize = Byte.BYTES;
+			} else if (type == Short.class) {
+				consumer = (t) -> buffer.putShort((short) t);
+				objectSize = Short.BYTES;
+			} else if (type == Character.class) {
+				consumer = (t) -> buffer.putChar((char) t);
+				objectSize = Character.BYTES;
+			} else if (type == Integer.class) {
+				consumer = (t) -> buffer.putInt((int) t);
+				objectSize = Integer.BYTES;
+			} else if (type == Long.class) {
+				consumer = (t) -> buffer.putLong((long) t);
+				objectSize = Long.BYTES;
+			} else if (type == Float.class) {
+				consumer = (t) -> buffer.putFloat((float) t);
+				objectSize = Float.BYTES;
+			} else if (type == Double.class) {
+				consumer = (t) -> buffer.putDouble((double) t);
+				objectSize = Double.BYTES;
+			} else
+				throw new IllegalArgumentException(
+						"Unsupported BinayOutput Type" + type.getSimpleName());
 		}
 
 		@Override
 		public Buffer createWritableBuffer(int readerMinSize) {
+			init();
+			return new AbstractWriteOnlyBuffer() {
+				@Override
+				public boolean write(Object t) {
+					if (buffer.remaining() < objectSize)
+						flush();
+					consumer.accept(t);
+					return true;
+				}
+			};
+		}
+
+		private void init() {
 			try {
 				fc = new FileOutputStream(path).getChannel();
 			} catch (FileNotFoundException e) {
@@ -194,17 +236,6 @@ public class Output<O> {
 			}
 			buffer = ByteBuffer.allocateDirect(32_000);
 			buffer.clear();
-
-			return new AbstractWriteOnlyBuffer() {
-				@Override
-				public boolean write(Object t) {
-					float i = (float) t;
-					if (buffer.remaining() < 4)
-						flush();
-					buffer.putFloat(i);
-					return true;
-				}
-			};
 		}
 
 		private void flush() {
