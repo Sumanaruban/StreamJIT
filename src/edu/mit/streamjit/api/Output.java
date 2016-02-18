@@ -150,7 +150,8 @@ public class Output<O> {
 
 	/**
 	 * Only primitives can be written to a binary file. The return object of
-	 * this method call, BinaryFileOutput, must be closed properly.
+	 * this method call, BinaryFileOutput, must be closed properly. Use
+	 * {@link BinaryFileOutput#close()} to close the file.
 	 * 
 	 * @param fc
 	 * @param type
