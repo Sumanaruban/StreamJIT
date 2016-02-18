@@ -21,14 +21,23 @@
  */
 package edu.mit.streamjit.api;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import edu.mit.streamjit.impl.blob.AbstractWriteOnlyBuffer;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.Buffers;
 import edu.mit.streamjit.impl.common.OutputBufferFactory;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import com.google.common.primitives.Primitives;
 
 /**
  *
@@ -135,5 +144,92 @@ public class Output<O> {
 				};
 			}
 		});
+	}
+
+	/**
+	 * The return object of this method call, BinaryFileOutput, must be closed
+	 * properly.
+	 * 
+	 * @param fc
+	 * @param type
+	 * @param byteOrder
+	 * @return
+	 */
+	public static <O> BinaryFileOutput<O> toBinaryFile(String path,
+			Class<O> type) {
+		checkArgument(
+				Primitives.isWrapperType(type) && !type.equals(Void.class),
+				"not a wrapper type: %s", type);
+		return new BinaryFileOutput<>(new BinaryFileOutputFactory(path, type));
+	}
+
+	public static final class BinaryFileOutput<O> extends Output<O> {
+		private final BinaryFileOutputFactory output;
+		private BinaryFileOutput(BinaryFileOutputFactory output) {
+			super(output);
+			this.output = output;
+		}
+
+		public void close() {
+			output.close();
+		}
+	}
+
+	private static class BinaryFileOutputFactory extends OutputBufferFactory {
+		FileChannel fc;
+		ByteBuffer buffer;
+		private final String path;
+		private final Class<?> type;
+		public BinaryFileOutputFactory(String path, Class<?> type) {
+			this.path = path;
+			this.type = type;
+		}
+
+		@Override
+		public Buffer createWritableBuffer(int readerMinSize) {
+			try {
+				fc = new FileOutputStream(path).getChannel();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			buffer = ByteBuffer.allocateDirect(32_000);
+			buffer.clear();
+
+			return new AbstractWriteOnlyBuffer() {
+				@Override
+				public boolean write(Object t) {
+					float i = (float) t;
+					if (buffer.remaining() < 4)
+						flush();
+					buffer.putFloat(i);
+					return true;
+				}
+			};
+		}
+
+		private void flush() {
+			buffer.flip();
+			try {
+				fc.write(buffer);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			buffer.clear();
+		}
+
+		@Override
+		public String toString() {
+			return "Output.toBinaryFile(" + ", " + type.getSimpleName()
+					+ ".class, " + ")";
+		}
+
+		public void close() {
+			flush();
+			try {
+				fc.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
