@@ -1,5 +1,6 @@
 package edu.mit.streamjit.test.apps;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.nio.ByteOrder;
@@ -10,9 +11,14 @@ import java.util.Iterator;
 import com.google.common.collect.ImmutableList;
 import com.jeffreybosboom.serviceproviderprocessor.ServiceProvider;
 
+import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.Input;
+import edu.mit.streamjit.api.Output;
+import edu.mit.streamjit.api.Output.BinaryFileOutput;
 import edu.mit.streamjit.api.Pipeline;
+import edu.mit.streamjit.api.StreamCompiler;
+import edu.mit.streamjit.impl.compiler2.Compiler2StreamCompiler;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.test.Benchmark;
 import edu.mit.streamjit.test.Benchmark.Dataset;
@@ -26,6 +32,22 @@ import edu.mit.streamjit.test.SuppliedBenchmark;
  * @since 25 Jan, 2016
  */
 public class IncreasingWorkload {
+
+	public static void main(String[] args) throws InterruptedException,
+			IOException {
+		Path path = Paths.get("data/minimal100.in");
+		Input<Float> input = Input.fromBinaryFile(path, Float.class,
+				ByteOrder.LITTLE_ENDIAN);
+
+		BinaryFileOutput<Float> output = Output.toBinaryFile("incWorkload.out",
+				Float.class);
+
+		StreamCompiler sc = new Compiler2StreamCompiler();
+		CompiledStream st = sc.compile(new IncreasingWorkloadCore(), input,
+				output);
+		st.awaitDrained();
+		output.close();
+	}
 
 	@ServiceProvider(BenchmarkProvider.class)
 	public static class IncreasingWorkloadBenchmarkProvider implements
