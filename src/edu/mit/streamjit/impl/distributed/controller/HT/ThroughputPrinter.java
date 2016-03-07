@@ -161,6 +161,7 @@ public class ThroughputPrinter {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		tpStatistics.stop();
 	}
 
 	/**
@@ -243,6 +244,16 @@ public class ThroughputPrinter {
 				} catch (Exception e) {
 				}
 			return false;
+		}
+
+		void stop() {
+			if (writer != null)
+				try {
+					writer.flush();
+					writer.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 
 		void newThroughput(double throughput) {
