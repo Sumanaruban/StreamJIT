@@ -77,7 +77,7 @@ public class ThroughputPrinter {
 		this.eLogger = eLogger;
 		this.fileName = fileName;
 		this.isTimeInSeconds = Options.throughputMeasurementPeriod >= 1000;
-		this.tpStatistics = new TPStatistics();
+		this.tpStatistics = new TPStatistics(appName);
 		printThroughput(cfgPrefix);
 	}
 
@@ -217,18 +217,50 @@ public class ThroughputPrinter {
 		private int start = 0;
 		private int end = 0;
 
+		private FileWriter writer;
+
+		TPStatistics(String appName) {
+			initWriter(appName);
+		}
+
+		private void initWriter(String appName) {
+			String fileName = "TPStatistics.txt";
+			File f = new File(String.format("%s%s%s", appName, File.separator,
+					fileName));
+			boolean alreadyExists = f.exists();
+			writer = Utils.fileWriter(appName, fileName, true);
+			if (!alreadyExists) {
+				write("Cfg\t\tStart\t\tEnd\n");
+			}
+			write("----------------------------------------------------------\n");
+		}
+
+		boolean write(String msg) {
+			if (writer != null)
+				try {
+					writer.write(msg);
+					return true;
+				} catch (Exception e) {
+				}
+			return false;
+		}
+
 		void newThroughput(double throughput) {
 			cb.store(throughput);
 		}
 
 		public void cfgStarted(int appInstId) {
 			start = cb.tail;
-			System.out.println("Avegage throughput = " + averageTP(end, start));
+			double avgTP = averageTP(end, start);
+			System.out.println("Avegage throughput = " + avgTP);
+			write(String.format("\n%d\t\t%.2f\t\t", appInstId, avgTP));
 		}
 
 		public void cfgEnded(int appInstId) {
 			end = cb.tail;
-			System.out.println("Avegage throughput = " + averageTP(start, end));
+			double avgTP = averageTP(start, end);
+			System.out.println("Avegage throughput = " + avgTP);
+			write(String.format("%.2f", avgTP));
 		}
 
 		private double averageTP(int start, int end) {
