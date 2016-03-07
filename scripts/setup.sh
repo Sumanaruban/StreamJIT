@@ -6,7 +6,7 @@
 #and finally, calls run.sh.
 function createCTRLRSh(){
 	runfile="controller.sh"
-	res=$(get_prop "./options.properties" "tune")
+	res=$(get_prop "./options.properties" "run")
 	echo "#!/bin/bash" > $runfile
 	echo "#SBATCH --tasks-per-node=1" >> $runfile
 	echo "#SBATCH -N 1"  >> $runfile
