@@ -63,6 +63,8 @@ public class ThroughputPrinter {
 	 */
 	private final boolean isTimeInSeconds;
 
+	public final TPStatistics tpStatistics;
+
 	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
 			String cfgPrefix) {
 		this(counter, appName, eLogger, cfgPrefix, "throughput.txt");
@@ -75,6 +77,7 @@ public class ThroughputPrinter {
 		this.eLogger = eLogger;
 		this.fileName = fileName;
 		this.isTimeInSeconds = Options.throughputMeasurementPeriod >= 1000;
+		this.tpStatistics = new TPStatistics();
 		printThroughput(cfgPrefix);
 	}
 
@@ -113,6 +116,8 @@ public class ThroughputPrinter {
 				lastCount = currentCount;
 				lastNano = currentNano;
 				newThroughput(currentCount, throughput);
+				tpStatistics.newThroughput(throughput);
+
 			}
 		};
 	}
@@ -196,5 +201,94 @@ public class ThroughputPrinter {
 			} catch (Exception e) {
 			}
 		return false;
+	}
+
+	/**
+	 * @author sumanan
+	 * @since 7 Mar, 2016
+	 */
+	public static class TPStatistics {
+
+		// Lets initialize to keep throughput for 1000s.
+		int initSize = 1000_000 / Options.throughputMeasurementPeriod;
+
+		CircularBuffer cb = new CircularBuffer(initSize);
+
+		private int start = 0;
+		private int end = 0;
+
+		void newThroughput(double throughput) {
+			cb.store(throughput);
+		}
+
+		public void cfgStarted(int appInstId) {
+			start = cb.tail;
+			System.out.println("Avegage throughput = " + averageTP(end, start));
+		}
+
+		public void cfgEnded(int appInstId) {
+			end = cb.tail;
+			System.out.println("Avegage throughput = " + averageTP(start, end));
+		}
+
+		private double averageTP(int start, int end) {
+			double tot = 0.0;
+			double avg = 0.0;
+			if (start < end) {
+				for (int i = start; i < end; i++)
+					tot += cb.data[i];
+				avg = tot / (end - start);
+			} else {
+				for (int i = 0; i < end; i++)
+					tot += cb.data[i];
+				for (int i = start; i < cb.data.length; i++)
+					tot += cb.data[i];
+				avg = tot / (end + cb.data.length - start);
+			}
+			cb.head = end;
+			return avg;
+		}
+	}
+
+	/**
+	 * Copied from http://www.java2s.com/Tutorial/Java/
+	 * 0140__Collections/CircularBuffer.htm.
+	 * 
+	 * @author sumanan
+	 * @since 7 Mar, 2016
+	 */
+	static class CircularBuffer {
+		private double data[];
+		private volatile int head;
+		private volatile int tail;
+
+		public CircularBuffer(int number) {
+			data = new double[number];
+			head = 0;
+			tail = 0;
+		}
+
+		public boolean store(Double value) {
+			if (!bufferFull()) {
+				data[tail++] = value;
+				if (tail == data.length) {
+					tail = 0;
+				}
+				return true;
+			} else {
+				new IllegalStateException("Buffer is full").printStackTrace();
+				return false;
+			}
+		}
+
+		private boolean bufferFull() {
+			if (tail + 1 == head) {
+				return true;
+			}
+			if (tail == (data.length - 1) && head == 0) {
+				return true;
+			}
+			return false;
+		}
 	}
 }

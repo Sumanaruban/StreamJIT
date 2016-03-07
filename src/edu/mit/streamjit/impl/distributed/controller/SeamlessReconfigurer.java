@@ -89,6 +89,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			aim.startChannels();
 			curHeadChnl.waitToStart();
 			compiled(aim);
+			appinst.app.tp.tpStatistics.cfgStarted(aim.appInstId());
 			event("S-" + aim.appInstId());
 		} else {
 			if (prevHeadChnl != null)
@@ -127,6 +128,7 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			tailMerger.startMerge();
 			tailMerger.appInstStopped(aim.appInstId());
 		}
+		aim.appInst.app.tp.tpStatistics.cfgEnded(aim.appInstId());
 		event("F-" + aim.appInstId());
 	}
 
