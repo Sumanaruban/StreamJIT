@@ -16,6 +16,7 @@ import edu.mit.streamjit.impl.common.drainer.AbstractDrainer.DrainDataAction;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
+import edu.mit.streamjit.impl.distributed.controller.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.node.BlockingInputChannel;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 
@@ -121,6 +122,14 @@ public class TailChannels {
 
 		private final ThroughputPrinter throughputPrinter;
 
+		/**
+		 * [8-3-2016] Measuring throughput here becomes unnecessary as we
+		 * measure the ultimate throughput at tail buffer. See
+		 * {@link DistributedStreamCompiler#measureThroughput}. This flag is
+		 * added to turn on/off the measurement here.
+		 */
+		private final boolean needTPPrinter = false;
+
 		private final String cfgPrefix;
 
 		protected final EventTimeLogger eLogger;
@@ -161,7 +170,7 @@ public class TailChannels {
 				pLogger.start();
 			} else
 				pLogger = null;
-			if (Options.throughputMeasurementPeriod > 0)
+			if (needTPPrinter && Options.throughputMeasurementPeriod > 0)
 				throughputPrinter = new ThroughputPrinter(this, appName,
 						eLogger, cfgPrefix);
 			else
