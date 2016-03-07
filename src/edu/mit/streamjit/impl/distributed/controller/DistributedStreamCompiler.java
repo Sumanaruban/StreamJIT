@@ -30,8 +30,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.collect.ImmutableMap;
-
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Input;
 import edu.mit.streamjit.api.Input.ManualInput;
@@ -41,7 +39,6 @@ import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.Splitjoin;
 import edu.mit.streamjit.api.StreamCompiler;
 import edu.mit.streamjit.api.Worker;
-import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Configuration;
@@ -280,13 +277,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 			head = new HeadBuffer(head, drainer);
 		}
 
-		ImmutableMap.Builder<Token, Buffer> bufferMapBuilder = ImmutableMap
-				.<Token, Buffer> builder();
-
-		bufferMapBuilder.put(app.headToken, head);
-		bufferMapBuilder.put(app.tailToken, app.tail);
-
-		app.bufferMap = bufferMapBuilder.build();
+		app.headBuffer = head;
 		return needTermination;
 	}
 

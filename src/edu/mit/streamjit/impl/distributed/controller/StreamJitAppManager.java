@@ -96,7 +96,7 @@ public class StreamJitAppManager {
 		this.ep = new ErrorProcessorImpl();
 
 		appDrainer = new AppDrainer();
-		this.reconfigurer = reconfigurer(app.tail);
+		this.reconfigurer = reconfigurer(app.tailBuffer);
 		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
 		profiler = setupProfiler();
 	}

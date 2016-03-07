@@ -94,8 +94,6 @@ public class StreamJitApp<I, O> {
 
 	final OneToOneElement<I, O> streamGraph;
 
-	public ImmutableMap<Token, Buffer> bufferMap;
-
 	public final List<MessageConstraint> constraints;
 
 	public final Visualizer visualizer;
@@ -113,9 +111,11 @@ public class StreamJitApp<I, O> {
 
 	public final Token tailToken;
 
-	private final boolean measureThroughput = true;
+	public Buffer headBuffer;
 
-	public final Buffer tail;
+	public final Buffer tailBuffer;
+
+	private final boolean measureThroughput = true;
 
 	public final ThroughputPrinter tp;
 
@@ -143,7 +143,7 @@ public class StreamJitApp<I, O> {
 		logger = new TimeLoggers.FileTimeLogger(name);
 
 		Pair<Buffer, ThroughputPrinter> p = tailBuffer(output);
-		tail = p.first;
+		tailBuffer = p.first;
 		tp = p.second;
 	}
 
@@ -202,12 +202,9 @@ public class StreamJitApp<I, O> {
 			}
 		};
 
-		for (Map.Entry<Token, Buffer> en : bufferMap.entrySet()) {
-			if (en.getKey().equals(headToken))
-				bufMapBuilder.put(headToken, head);
-			else
-				bufMapBuilder.put(en);
-		}
+		bufMapBuilder.put(headToken, head);
+		bufMapBuilder.put(tailToken, tailBuffer);
+
 		return bufMapBuilder.build();
 	}
 

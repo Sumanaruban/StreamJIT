@@ -72,8 +72,8 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 			prevHeadChnl.limitSend(1);
 		}
 		preCompilation(aim);
-		aim.headTailHandler.setupHeadTail(bufferMap(aim.appInstId()), aim,
-				true, tailMerger);
+		aim.headTailHandler.setupHeadTail(appinst.app.headBuffer,
+				bufProvider.newBuffer(), aim, true, tailMerger);
 		tailMerger.newAppInst(aim.headTailHandler.headTail(), skipCount());
 		boolean isCompiled = aim.postCompilation();
 
@@ -154,14 +154,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 				"TailBufferMergerStateless");
 		t.start();
 		return t;
-	}
-
-	ImmutableMap<Token, Buffer> bufferMap(int appInstId) {
-		ImmutableMap.Builder<Token, Buffer> builder = ImmutableMap.builder();
-		builder.put(appManager.app.headToken,
-				appManager.app.bufferMap.get(appManager.app.headToken));
-		builder.put(appManager.app.tailToken, bufProvider.newBuffer());
-		return builder.build();
 	}
 
 	int skipCount() {

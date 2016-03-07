@@ -2,8 +2,6 @@ package edu.mit.streamjit.impl.distributed.controller;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
-
 import edu.mit.streamjit.api.CompiledStream;
 import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
@@ -78,9 +76,8 @@ class HeadTailHandler {
 	 * @param cfg
 	 * @param bufferMap
 	 */
-	void setupHeadTail(ImmutableMap<Token, Buffer> bufferMap,
-			AppInstanceManager aim, boolean needSeamless,
-			TailBufferMerger tbMerger) {
+	void setupHeadTail(Buffer head, Buffer tail, AppInstanceManager aim,
+			boolean needSeamless, TailBufferMerger tbMerger) {
 		Map<Token, ConnectionInfo> conInfoMap = aim.conInfoMap;
 		int multiplier = aim.appInst.multiplier;
 		ConnectionInfo tailconInfo = conInfoMap.get(app.tailToken);
@@ -89,20 +86,15 @@ class HeadTailHandler {
 				|| tailconInfo.getDstID() == controller.controllerNodeID : "Tail channel should ends at the controller. "
 				+ tailconInfo;
 
-		if (!bufferMap.containsKey(app.tailToken))
-			throw new IllegalArgumentException(
-					"No tail buffer in the passed bufferMap.");
-
 		HeadTail.Builder builder = HeadTail.builder();
 		builder.appInstId(aim.appInstId());
 		int skipCount = Math.max(Options.outputCount, multiplier * 5);
-		Buffer tb = bufferMap.get(app.tailToken);
-		BufferWriteCounter bc = new BufferWriteCounter(tb);
-		builder.tailBuffer(tb);
+		BufferWriteCounter bc = new BufferWriteCounter(tail);
+		builder.tailBuffer(tail);
 		builder.tailCounter(bc);
 		tailChannel = tailChannel(bc, tailconInfo, skipCount, aim.appInst,
 				aim.eLogger);
-		setHead(conInfoMap, bufferMap, aim, bc, needSeamless, tbMerger);
+		setHead(conInfoMap, head, aim, bc, needSeamless, tbMerger);
 		headTail = builder.build();
 	}
 
@@ -132,33 +124,28 @@ class HeadTailHandler {
 		}
 	}
 
-	private void setHead(Map<Token, ConnectionInfo> conInfoMap,
-			ImmutableMap<Token, Buffer> bufferMap, AppInstanceManager aim,
-			Counter tailCounter, boolean needSeamless, TailBufferMerger tbMerger) {
+	private void setHead(Map<Token, ConnectionInfo> conInfoMap, Buffer head,
+			AppInstanceManager aim, Counter tailCounter, boolean needSeamless,
+			TailBufferMerger tbMerger) {
 		ConnectionInfo headconInfo = conInfoMap.get(app.headToken);
 		assert headconInfo != null : "No head connection info exists in conInfoMap";
 		assert headconInfo.getSrcID() == controller.controllerNodeID
 				|| headconInfo.getDstID() == controller.controllerNodeID : "Head channel should start from the controller. "
 				+ headconInfo;
 
-		if (!bufferMap.containsKey(app.headToken))
-			throw new IllegalArgumentException(
-					"No head buffer in the passed bufferMap.");
-
-		Buffer b = bufferMap.get(app.headToken);
 		ConnectionProvider c = controller.getConProvider();
 		String name = String.format("HC-%s - %d", app.headToken.toString(),
 				aim.appInst.id);
 
 		if (needSeamless)
-			headChannel = new HeadChannelSeamless(b, c, headconInfo, name,
+			headChannel = new HeadChannelSeamless(head, c, headconInfo, name,
 					aim.eLogger, tailCounter, aim, tbMerger);
 		else {
 			if (headconInfo instanceof TCPConnectionInfo)
-				headChannel = new HeadChannels.TCPHeadChannel(b, c,
+				headChannel = new HeadChannels.TCPHeadChannel(head, c,
 						headconInfo, name, 0, aim.eLogger);
 			else if (headconInfo instanceof AsyncTCPConnectionInfo)
-				headChannel = new HeadChannels.AsyncHeadChannel(b, c,
+				headChannel = new HeadChannels.AsyncHeadChannel(head, c,
 						headconInfo, name, 0, aim.eLogger);
 			else
 				throw new IllegalStateException(
