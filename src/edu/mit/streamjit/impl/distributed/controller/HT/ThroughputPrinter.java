@@ -13,6 +13,7 @@ import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.Pair;
 
 /**
  * Periodically prints the number of outputs received by a {@link Counter}.
@@ -231,7 +232,7 @@ public class ThroughputPrinter {
 			boolean alreadyExists = f.exists();
 			writer = Utils.fileWriter(appName, fileName, true);
 			if (!alreadyExists) {
-				write("Cfg\t\tStart\t\tEnd\n");
+				write("Cfg\t\tStart\t\tDur\t\tEnd\t\tDur\n");
 			}
 			write("----------------------------------------------------------\n");
 		}
@@ -262,34 +263,39 @@ public class ThroughputPrinter {
 
 		public void cfgStarted(int appInstId) {
 			start = cb.tail;
-			double avgTP = averageTP(end, start);
-			System.out.println("Avegage throughput = " + avgTP);
-			write(String.format("\n%d\t\t%.2f\t\t", appInstId, avgTP));
+			Pair<Double, Integer> p = averageTP(end, start);
+			System.out.println("Avegage throughput = " + p.first);
+			write(String.format("\n%d\t\t%.2f\t\t%d\t\t", appInstId, p.first,
+					p.second));
 		}
 
 		public void cfgEnded(int appInstId) {
 			end = cb.tail;
-			double avgTP = averageTP(start, end);
-			System.out.println("Avegage throughput = " + avgTP);
-			write(String.format("%.2f", avgTP));
+			Pair<Double, Integer> p = averageTP(start, end);
+			System.out.println("Avegage throughput = " + p.first);
+			write(String.format("%.2f\t\t%d", p.first, p.second));
 		}
 
-		private double averageTP(int start, int end) {
+		private Pair<Double, Integer> averageTP(int start, int end) {
 			double tot = 0.0;
 			double avg = 0.0;
+			Integer dur = 0;
+
 			if (start < end) {
+				dur = (end - start);
 				for (int i = start; i < end; i++)
 					tot += cb.data[i];
-				avg = tot / (end - start);
+				avg = tot / dur;
 			} else {
+				dur = (cb.data.length + end - start);
 				for (int i = 0; i < end; i++)
 					tot += cb.data[i];
 				for (int i = start; i < cb.data.length; i++)
 					tot += cb.data[i];
-				avg = tot / (end + cb.data.length - start);
+				avg = tot / dur;
 			}
 			cb.head = end;
-			return avg;
+			return new Pair<Double, Integer>(avg, dur);
 		}
 	}
 
