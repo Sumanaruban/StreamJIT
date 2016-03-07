@@ -258,7 +258,7 @@ public class Utils {
 	 */
 	public static void generateBlobGraphs(OneToOneElement<?, ?> stream,
 			int noOfMachines, int totalCfgs) throws IOException {
-		StreamJitApp<?, ?> app = new StreamJitApp<>(stream);
+		StreamJitApp<?, ?> app = new StreamJitApp<>(stream, null);
 		PartitionManager partitionManager = new HotSpotTuning(app);
 		partitionManager.getDefaultConfiguration(
 				Workers.getAllWorkersInGraph(app.source), noOfMachines);

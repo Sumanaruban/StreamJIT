@@ -19,10 +19,10 @@ import edu.mit.streamjit.impl.common.Configuration.SwitchParameter;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.controller.HotSpotTuning;
 import edu.mit.streamjit.impl.distributed.controller.PartitionManager;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
-import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.test.apps.channelvocoder7.ChannelVocoder7;
 import edu.mit.streamjit.test.apps.filterbank6.FilterBank6;
 import edu.mit.streamjit.test.apps.fmradio.FMRadio.FMRadioBenchmarkProvider;
@@ -207,7 +207,7 @@ public class ConfigToCSVConverter {
 
 		GraphPropertyPrognosticatorInfo(int nodes) {
 			OneToOneElement<?, ?> streamGraph = streamGraph();
-			this.app = new StreamJitApp<>(streamGraph);
+			this.app = new StreamJitApp<>(streamGraph, null);
 			prog = new GraphPropertyPrognosticator(app);
 			PartitionManager partitionManager = new HotSpotTuning(app);
 			partitionManager.getDefaultConfiguration(

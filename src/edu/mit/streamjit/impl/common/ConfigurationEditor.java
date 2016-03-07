@@ -130,7 +130,7 @@ public class ConfigurationEditor {
 	 */
 	private static Pair<String, Integer> generate1(
 			OneToOneElement<?, ?> stream, int noOfnodes) {
-		StreamJitApp<?, ?> app = new StreamJitApp<>(stream);
+		StreamJitApp<?, ?> app = new StreamJitApp<>(stream, null);
 		int noofwrks = Workers.getIdentifier(app.sink) + 1;
 		PartitionManager partitionManager = new HotSpotTuning(app);
 		ConnectionManager conManger = new BlockingTCPNoParams(0);

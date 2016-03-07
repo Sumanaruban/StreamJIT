@@ -86,7 +86,7 @@ public class StreamJitAppManager {
 	private final Map<Integer, AppInstanceManager> AIMs = new HashMap<>();
 
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
-			ConnectionManager conManager, Buffer tailBuffer) {
+			ConnectionManager conManager) {
 		noOfnodes = controller.getAllNodeIDs().size();
 		this.controller = controller;
 		this.app = app;
@@ -96,7 +96,7 @@ public class StreamJitAppManager {
 		this.ep = new ErrorProcessorImpl();
 
 		appDrainer = new AppDrainer();
-		this.reconfigurer = reconfigurer(tailBuffer);
+		this.reconfigurer = reconfigurer(app.tail);
 		setNewApp(); // TODO: Makes IO communication. Find a good calling place.
 		profiler = setupProfiler();
 	}

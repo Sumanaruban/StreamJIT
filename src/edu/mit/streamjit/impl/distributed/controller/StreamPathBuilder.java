@@ -164,7 +164,8 @@ public class StreamPathBuilder {
 
 	public static void main(String[] args) {
 		OneToOneElement<?, ?> stream = new FilterBank6.FilterBankPipeline();
-		new StreamJitApp<>(stream); // Connects the stream into stream graph.
+		new StreamJitApp<>(stream, null); // Connects the stream into stream
+											// graph.
 		StreamPathBuilder.paths(stream);
 	}
 }

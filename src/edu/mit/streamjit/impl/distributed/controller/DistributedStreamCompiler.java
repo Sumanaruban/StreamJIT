@@ -44,10 +44,8 @@ import edu.mit.streamjit.api.Worker;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.BlobFactory;
 import edu.mit.streamjit.impl.blob.Buffer;
-import edu.mit.streamjit.impl.common.BufferWriteCounter;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.InputBufferFactory;
-import edu.mit.streamjit.impl.common.OutputBufferFactory;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
@@ -64,7 +62,6 @@ import edu.mit.streamjit.tuner.OnlineTuner;
 import edu.mit.streamjit.tuner.Reconfigurer;
 import edu.mit.streamjit.tuner.Verifier;
 import edu.mit.streamjit.util.ConfigurationUtils;
-import edu.mit.streamjit.util.Pair;
 
 /**
  * 
@@ -92,8 +89,6 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	 * Total number of nodes including controller node.
 	 */
 	private int noOfnodes;
-
-	private final boolean measureThroughput = true;
 
 	/**
 	 * Run the whole application on the controller node. No distributions. See
@@ -141,7 +136,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 
 	public <I, O> CompiledStream compile(OneToOneElement<I, O> stream,
 			Input<I> input, Output<O> output) {
-		StreamJitApp<I, O> app = new StreamJitApp<>(stream);
+		StreamJitApp<I, O> app = new StreamJitApp<>(stream, output);
 		Controller controller = establishController();
 
 		PartitionManager partitionManager = new HotSpotTuning(app);
@@ -152,22 +147,17 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		AppInstance appinst = setConfiguration(controller, app,
 				partitionManager, conManager, cfgManager);
 
-		Pair<Buffer, ThroughputPrinter> p = tailBuffer(output, app);
-		Buffer tail = p.first;
-		ThroughputPrinter tp = p.second;
-
 		StreamJitAppManager manager = new StreamJitAppManager(controller, app,
-				conManager, tail);
+				conManager);
 		// final AbstractDrainer drainer = new DistributedDrainer(app, logger,
 		// manager);
 		// drainer.setAppInstance(appinst);
 
-		boolean needTermination = setBufferMap(input, tail, manager.appDrainer,
-				app);
+		boolean needTermination = setBufferMap(input, manager.appDrainer, app);
 
 		manager.reconfigurer.reconfigure(appinst);
 		CompiledStream cs = new DistributedCompiledStream(manager.appDrainer,
-				tp);
+				app.tp);
 
 		if (Options.run > 0 && this.cfg != null) {
 			Reconfigurer configurer = new Reconfigurer(manager, app, cfgManager);
@@ -264,7 +254,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 	/**
 	 * Sets head and tail buffers.
 	 */
-	private <I, O> boolean setBufferMap(Input<I> input, Buffer tail,
+	private <I, O> boolean setBufferMap(Input<I> input,
 			final AppDrainer drainer, StreamJitApp<I, O> app) {
 		// TODO: derive a algorithm to find good buffer size and use here.
 		Buffer head = InputBufferFactory.unwrap(input).createReadableBuffer(
@@ -294,33 +284,10 @@ public class DistributedStreamCompiler implements StreamCompiler {
 				.<Token, Buffer> builder();
 
 		bufferMapBuilder.put(app.headToken, head);
-		bufferMapBuilder.put(app.tailToken, tail);
+		bufferMapBuilder.put(app.tailToken, app.tail);
 
 		app.bufferMap = bufferMapBuilder.build();
 		return needTermination;
-	}
-
-	private <O> Pair<Buffer, ThroughputPrinter> tailBuffer(Output<O> output,
-			StreamJitApp<?, ?> app) {
-		Buffer tail = OutputBufferFactory.unwrap(output).createWritableBuffer(
-				10000);
-		return measureThroughput(tail, app);
-	}
-
-	private Pair<Buffer, ThroughputPrinter> measureThroughput(
-			Buffer tailBuffer, StreamJitApp<?, ?> app) {
-		ThroughputPrinter tp;
-		Buffer b;
-		if (measureThroughput) {
-			BufferWriteCounter bc = new BufferWriteCounter(tailBuffer);
-			tp = new ThroughputPrinter(bc, app.name, null,
-					"DistributedStreamCompiler", "tailBuffer.txt");
-			b = bc;
-		} else {
-			b = tailBuffer;
-			tp = null;
-		}
-		return new Pair<Buffer, ThroughputPrinter>(b, tp);
 	}
 
 	private <I, O> AppInstance setConfiguration(Controller controller,

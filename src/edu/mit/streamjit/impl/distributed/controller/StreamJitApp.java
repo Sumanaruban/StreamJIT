@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.mit.streamjit.api.Filter;
 import edu.mit.streamjit.api.OneToOneElement;
+import edu.mit.streamjit.api.Output;
 import edu.mit.streamjit.api.Pipeline;
 import edu.mit.streamjit.api.Portal;
 import edu.mit.streamjit.api.Splitjoin;
@@ -42,9 +43,11 @@ import edu.mit.streamjit.impl.blob.Blob;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
+import edu.mit.streamjit.impl.common.BufferWriteCounter;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
 import edu.mit.streamjit.impl.common.MessageConstraint;
+import edu.mit.streamjit.impl.common.OutputBufferFactory;
 import edu.mit.streamjit.impl.common.Portals;
 import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.VerifyStreamGraph;
@@ -54,6 +57,7 @@ import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
+import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputPrinter;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.interp.Interpreter;
 import edu.mit.streamjit.tuner.EventTimeLogger;
@@ -109,12 +113,18 @@ public class StreamJitApp<I, O> {
 
 	public final Token tailToken;
 
+	private final boolean measureThroughput = true;
+
+	public final Buffer tail;
+
+	public final ThroughputPrinter tp;
+
 	// TODO: Make these variables final. Or add getter setter methods.
 	// Stream graph's total input and output rates when multiplier == 1.
 	public int steadyIn = -1;
 	public int steadyOut = -1;
 
-	public StreamJitApp(OneToOneElement<I, O> streamGraph) {
+	public StreamJitApp(OneToOneElement<I, O> streamGraph, Output<O> output) {
 		this.streamGraph = streamGraph;
 		Pair<Worker<I, ?>, Worker<?, O>> srcSink = visit(streamGraph);
 		this.name = streamGraph.getClass().getSimpleName();
@@ -131,6 +141,10 @@ public class StreamJitApp<I, O> {
 		headToken = Token.createOverallInputToken(source);
 		tailToken = Token.createOverallOutputToken(sink);
 		logger = new TimeLoggers.FileTimeLogger(name);
+
+		Pair<Buffer, ThroughputPrinter> p = tailBuffer(output);
+		tail = p.first;
+		tp = p.second;
 	}
 
 	private EventTimeLogger eventTimeLogger() {
@@ -302,5 +316,29 @@ public class StreamJitApp<I, O> {
 				return true;
 		}
 		return false;
+	}
+
+	private Pair<Buffer, ThroughputPrinter> tailBuffer(Output<O> output) {
+		if (output == null)
+			return new Pair<Buffer, ThroughputPrinter>(null, null);
+
+		Buffer tail = OutputBufferFactory.unwrap(output).createWritableBuffer(
+				10000);
+		return measureThroughput(tail);
+	}
+
+	private Pair<Buffer, ThroughputPrinter> measureThroughput(Buffer tailBuffer) {
+		ThroughputPrinter tp;
+		Buffer b;
+		if (measureThroughput) {
+			BufferWriteCounter bc = new BufferWriteCounter(tailBuffer);
+			tp = new ThroughputPrinter(bc, name, null, "StreamJitApp",
+					"tailBuffer.txt");
+			b = bc;
+		} else {
+			b = tailBuffer;
+			tp = null;
+		}
+		return new Pair<Buffer, ThroughputPrinter>(b, tp);
 	}
 }
