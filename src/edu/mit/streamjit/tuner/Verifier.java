@@ -212,11 +212,11 @@ public class Verifier implements Runnable {
 	private void logBegining(String cfgPrefix) {
 		configurer.mLogger.bTuningRound(cfgPrefix);
 		configurer.mLogger.bEvent("serialcfg");
-		configurer.logger.newConfiguration(cfgPrefix);
+		configurer.app.logger.newConfiguration(cfgPrefix);
 	}
 
 	private void logEnding(long time, String cfgPrefix) {
-		configurer.logger.logRunTime(time);
+		configurer.app.logger.newConfiguration(cfgPrefix);
 		configurer.prognosticator.time(time);
 		configurer.mLogger.eTuningRound(cfgPrefix);
 	}

@@ -37,7 +37,6 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.blob.DrainData;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.Configuration.IntParameter;
-import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
@@ -77,8 +76,6 @@ public class StreamJitAppManager {
 
 	private volatile AppStatus status;
 
-	private final TimeLogger logger;
-
 	volatile AppInstanceManager prevAIM = null;
 	volatile AppInstanceManager curAIM = null;
 
@@ -89,13 +86,12 @@ public class StreamJitAppManager {
 	private final Map<Integer, AppInstanceManager> AIMs = new HashMap<>();
 
 	public StreamJitAppManager(Controller controller, StreamJitApp<?, ?> app,
-			ConnectionManager conManager, TimeLogger logger, Buffer tailBuffer) {
+			ConnectionManager conManager, Buffer tailBuffer) {
 		noOfnodes = controller.getAllNodeIDs().size();
 		this.controller = controller;
 		this.app = app;
 		this.conManager = conManager;
-		this.logger = logger;
-		this.timeInfoProcessor = new SNTimeInfoProcessorImpl(logger);
+		this.timeInfoProcessor = new SNTimeInfoProcessorImpl(app.logger);
 		this.status = AppStatus.NOT_STARTED;
 		this.ep = new ErrorProcessorImpl();
 
@@ -170,7 +166,7 @@ public class StreamJitAppManager {
 					"Couldn't create a new AIM as already two AppInstances are running. Drain the current AppInstance first.");
 
 		prevAIM = curAIM;
-		curAIM = new AppInstanceManager(appinst, logger, this);
+		curAIM = new AppInstanceManager(appinst, this);
 		AIMs.put(curAIM.appInstId(), curAIM);
 		return curAIM;
 	}
@@ -253,7 +249,7 @@ public class StreamJitAppManager {
 		else
 			drainDataMap = previousAim.appInst.getDrainData();
 		System.out.println("drainDataMap.size() = " + drainDataMap.size());
-		logger.compilationStarted();
+		app.logger.compilationStarted();
 		currentAim.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString1(jsonStirng,
@@ -266,7 +262,7 @@ public class StreamJitAppManager {
 	void preCompilation(AppInstanceManager currentAim,
 			ImmutableMap<Token, Integer> drainDataSize) {
 		String jsonStirng = currentAim.dynamicCfg(connectionsInUse());
-		logger.compilationStarted();
+		app.logger.compilationStarted();
 		currentAim.eLogger.bEvent("compilation");
 		for (int nodeID : controller.getAllNodeIDs()) {
 			ConfigurationString json = new ConfigurationString.ConfigurationString2(

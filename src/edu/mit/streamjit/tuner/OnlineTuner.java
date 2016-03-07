@@ -50,7 +50,7 @@ public class OnlineTuner implements Runnable {
 		this.cfgManager = configurer.cfgManager;
 		this.tuner = new TCPTuner();
 		this.needTermination = needTermination;
-		this.logger = configurer.logger;
+		this.logger = configurer.app.logger;
 		this.prognosticator = configurer.prognosticator;
 		this.mLogger = app.eLogger;
 		this.currentBestTime = Integer.MAX_VALUE;

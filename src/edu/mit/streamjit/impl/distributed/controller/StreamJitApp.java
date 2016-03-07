@@ -46,6 +46,7 @@ import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.ConnectWorkersVisitor;
 import edu.mit.streamjit.impl.common.MessageConstraint;
 import edu.mit.streamjit.impl.common.Portals;
+import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.VerifyStreamGraph;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.common.drainer.BlobGraph;
@@ -97,6 +98,8 @@ public class StreamJitApp<I, O> {
 
 	public final EventTimeLogger eLogger;
 
+	public final TimeLogger logger;
+
 	/**
 	 * is app stateful?
 	 */
@@ -127,6 +130,7 @@ public class StreamJitApp<I, O> {
 		stateful = isGraphStateful();
 		headToken = Token.createOverallInputToken(source);
 		tailToken = Token.createOverallOutputToken(sink);
+		logger = new TimeLoggers.FileTimeLogger(name);
 	}
 
 	private EventTimeLogger eventTimeLogger() {

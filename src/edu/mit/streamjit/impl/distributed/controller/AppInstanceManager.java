@@ -104,11 +104,10 @@ public class AppInstanceManager {
 
 	public final EventTimeLogger eLogger;
 
-	AppInstanceManager(AppInstance appInst, TimeLogger logger,
-			StreamJitAppManager appManager) {
+	AppInstanceManager(AppInstance appInst, StreamJitAppManager appManager) {
 		this.appInst = appInst;
 		this.appManager = appManager;
-		this.logger = logger;
+		this.logger = appInst.app.logger;
 		this.eLogger = new PrefixedEventTimeLogger(appInst.app.eLogger,
 				new Integer(appInst.id).toString());
 		// TODO:

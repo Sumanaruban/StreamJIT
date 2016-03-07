@@ -1,14 +1,13 @@
 package edu.mit.streamjit.tuner;
 
 import edu.mit.streamjit.impl.common.Configuration;
-import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.distributed.common.AppStatus;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager;
+import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager;
-import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.util.Pair;
 
@@ -24,16 +23,14 @@ public class Reconfigurer {
 	final StreamJitAppManager manager;
 	final StreamJitApp<?, ?> app;
 	final ConfigurationManager cfgManager;
-	final TimeLogger logger;
 	final ConfigurationPrognosticator prognosticator;
 	final EventTimeLogger mLogger;
 
 	public Reconfigurer(StreamJitAppManager manager, StreamJitApp<?, ?> app,
-			ConfigurationManager cfgManager, TimeLogger logger) {
+			ConfigurationManager cfgManager) {
 		this.manager = manager;
 		this.app = app;
 		this.cfgManager = cfgManager;
-		this.logger = logger;
 		this.prognosticator = prognosticator(app);
 		this.mLogger = app.eLogger;
 	}

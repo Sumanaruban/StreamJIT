@@ -48,7 +48,6 @@ import edu.mit.streamjit.impl.common.BufferWriteCounter;
 import edu.mit.streamjit.impl.common.Configuration;
 import edu.mit.streamjit.impl.common.InputBufferFactory;
 import edu.mit.streamjit.impl.common.OutputBufferFactory;
-import edu.mit.streamjit.impl.common.TimeLogger;
 import edu.mit.streamjit.impl.common.Workers;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewConfiguration;
@@ -157,9 +156,8 @@ public class DistributedStreamCompiler implements StreamCompiler {
 		Buffer tail = p.first;
 		ThroughputPrinter tp = p.second;
 
-		TimeLogger logger = new TimeLoggers.FileTimeLogger(app.name);
 		StreamJitAppManager manager = new StreamJitAppManager(controller, app,
-				conManager, logger, tail);
+				conManager, tail);
 		// final AbstractDrainer drainer = new DistributedDrainer(app, logger,
 		// manager);
 		// drainer.setAppInstance(appinst);
@@ -172,8 +170,7 @@ public class DistributedStreamCompiler implements StreamCompiler {
 				tp);
 
 		if (Options.run > 0 && this.cfg != null) {
-			Reconfigurer configurer = new Reconfigurer(manager, app,
-					cfgManager, logger);
+			Reconfigurer configurer = new Reconfigurer(manager, app, cfgManager);
 			tuneOrVerify(configurer, needTermination);
 		} else {
 			runFixedCfg(Options.boundaryChannelRatio, manager.appDrainer,
