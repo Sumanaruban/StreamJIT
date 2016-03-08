@@ -325,12 +325,14 @@ public class ThroughputPrinter {
 			Integer dur = 0;
 
 			if (start < end) {
-				dur = (end - start);
+				dur = (end - start) * Options.throughputMeasurementPeriod
+						/ 1000;
 				for (int i = start; i < end; i++)
 					tot += cb.data[i];
 				avg = tot / dur;
 			} else {
-				dur = (cb.data.length + end - start);
+				dur = (cb.data.length + end - start)
+						* Options.throughputMeasurementPeriod / 1000;
 				for (int i = 0; i < end; i++)
 					tot += cb.data[i];
 				for (int i = start; i < cb.data.length; i++)
