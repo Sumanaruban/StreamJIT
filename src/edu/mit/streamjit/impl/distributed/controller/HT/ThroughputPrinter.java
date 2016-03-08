@@ -63,7 +63,7 @@ public class ThroughputPrinter {
 	 */
 	private final boolean isTimeInSeconds;
 
-	public final TPStatistics tpStatistics;
+	public final TPStatisticsImpl tpStatistics;
 
 	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
 			String cfgPrefix) {
@@ -77,7 +77,7 @@ public class ThroughputPrinter {
 		this.eLogger = eLogger;
 		this.fileName = fileName;
 		this.isTimeInSeconds = Options.throughputMeasurementPeriod >= 1000;
-		this.tpStatistics = new TPStatistics(appName);
+		this.tpStatistics = new TPStatisticsImpl(appName);
 		printThroughput(cfgPrefix);
 	}
 

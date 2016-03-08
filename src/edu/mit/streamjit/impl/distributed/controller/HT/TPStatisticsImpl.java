@@ -16,7 +16,7 @@ import edu.mit.streamjit.util.Pair;
  * @author sumanan
  * @since 7 Mar, 2016
  */
-public class TPStatistics {
+public class TPStatisticsImpl {
 
 	// Lets initialize to keep throughput for 1000s.
 	int initSize = 1000_000 / Options.throughputMeasurementPeriod;
@@ -46,7 +46,7 @@ public class TPStatistics {
 	 */
 	private int appInstCount = 0;
 
-	TPStatistics(String appName) {
+	TPStatisticsImpl(String appName) {
 		String fileName = "TPStatistics.txt";
 		File f = new File(String.format("%s%s%s", appName, File.separator,
 				fileName));
