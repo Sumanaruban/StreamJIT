@@ -241,6 +241,7 @@ public class ThroughputPrinter {
 			if (!alreadyExists) {
 				write("cfg-Configuration, Avg:-Non-overlap average throughput\n");
 				write("O-Avg:-Overlap runs average throughput, Dur:-Avg measured duration\n");
+				write("Detected drop is written in (dropAvg,dropPercentage,dropDuration) format\n");
 				write("Cfg\t\tAvg\t\tDur\t\tO-Avg\t\tDur\n");
 			}
 			write("----------------------------------------------------------\n");
@@ -270,7 +271,7 @@ public class ThroughputPrinter {
 			Pair<Double, Integer> p = averageTP(dropStartIdx, dropEndIdx);
 			double dropAvg = p.first;
 			double dropPercentage = 100 - 100 * dropAvg / startAvg;
-			String msg = String.format("(%.2f\t%.2f\t%d)\t\t", dropAvg,
+			String msg = String.format("(%.2f,%.2f,%d)\t\t", dropAvg,
 					dropPercentage, p.second);
 			write(msg);
 			System.out.println(msg);
