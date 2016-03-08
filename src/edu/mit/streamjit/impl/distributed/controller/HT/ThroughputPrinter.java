@@ -225,38 +225,6 @@ public class ThroughputPrinter {
 			initWriter(appName);
 		}
 
-		private void initWriter(String appName) {
-			String fileName = "TPStatistics.txt";
-			File f = new File(String.format("%s%s%s", appName, File.separator,
-					fileName));
-			boolean alreadyExists = f.exists();
-			writer = Utils.fileWriter(appName, fileName, true);
-			if (!alreadyExists) {
-				write("Cfg\t\tStart\t\tDur\t\tEnd\t\tDur\n");
-			}
-			write("----------------------------------------------------------\n");
-		}
-
-		boolean write(String msg) {
-			if (writer != null)
-				try {
-					writer.write(msg);
-					return true;
-				} catch (Exception e) {
-				}
-			return false;
-		}
-
-		void stop() {
-			if (writer != null)
-				try {
-					writer.flush();
-					writer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-		}
-
 		void newThroughput(double throughput) {
 			cb.store(throughput);
 		}
@@ -296,6 +264,38 @@ public class ThroughputPrinter {
 			}
 			cb.head = end;
 			return new Pair<Double, Integer>(avg, dur);
+		}
+
+		private void initWriter(String appName) {
+			String fileName = "TPStatistics.txt";
+			File f = new File(String.format("%s%s%s", appName, File.separator,
+					fileName));
+			boolean alreadyExists = f.exists();
+			writer = Utils.fileWriter(appName, fileName, true);
+			if (!alreadyExists) {
+				write("Cfg\t\tStart\t\tDur\t\tEnd\t\tDur\n");
+			}
+			write("----------------------------------------------------------\n");
+		}
+
+		boolean write(String msg) {
+			if (writer != null)
+				try {
+					writer.write(msg);
+					return true;
+				} catch (Exception e) {
+				}
+			return false;
+		}
+
+		void stop() {
+			if (writer != null)
+				try {
+					writer.flush();
+					writer.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 	}
 
