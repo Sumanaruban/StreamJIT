@@ -219,10 +219,18 @@ public class ThroughputPrinter {
 		private int startIdx = 0;
 		private int endIdx = 0;
 
-		private FileWriter writer;
+		private final FileWriter writer;
 
 		TPStatistics(String appName) {
-			initWriter(appName);
+			String fileName = "TPStatistics.txt";
+			File f = new File(String.format("%s%s%s", appName, File.separator,
+					fileName));
+			boolean alreadyExists = f.exists();
+			writer = Utils.fileWriter(appName, fileName, true);
+			if (!alreadyExists) {
+				write("Cfg\t\tStart\t\tDur\t\tEnd\t\tDur\n");
+			}
+			write("----------------------------------------------------------\n");
 		}
 
 		void newThroughput(double throughput) {
@@ -264,18 +272,6 @@ public class ThroughputPrinter {
 			}
 			cb.head = end;
 			return new Pair<Double, Integer>(avg, dur);
-		}
-
-		private void initWriter(String appName) {
-			String fileName = "TPStatistics.txt";
-			File f = new File(String.format("%s%s%s", appName, File.separator,
-					fileName));
-			boolean alreadyExists = f.exists();
-			writer = Utils.fileWriter(appName, fileName, true);
-			if (!alreadyExists) {
-				write("Cfg\t\tStart\t\tDur\t\tEnd\t\tDur\n");
-			}
-			write("----------------------------------------------------------\n");
 		}
 
 		boolean write(String msg) {
