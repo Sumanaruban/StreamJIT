@@ -357,12 +357,12 @@ public class ThroughputPrinter {
 			double avgDownTime = totalzeroTP
 					* Options.throughputMeasurementPeriod / totalReconfigs;
 			write("\n-----------------------------------------\n");
-			write(String.format("Average Drop Duration = %.2f\n",
+			write(String.format("Average Drop Duration = %.2fms\n",
 					avgDropDuration));
-			write(String.format("Average Work Lost = %.2f\n", avgWorkLost));
+			write(String.format("Average Work Lost = %.2fms\n", avgWorkLost));
 			write(String.format("Average Drop Percentage = %.2f\n",
 					avgDropPercentage));
-			write(String.format("Average Down Time = %.2f\n", avgDownTime));
+			write(String.format("Average Down Time = %.2fms\n", avgDownTime));
 		}
 
 		boolean write(String msg) {
