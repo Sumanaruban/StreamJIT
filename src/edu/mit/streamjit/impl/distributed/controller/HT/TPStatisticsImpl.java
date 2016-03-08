@@ -18,8 +18,8 @@ import edu.mit.streamjit.util.Pair;
  */
 public class TPStatisticsImpl implements TPStatistics {
 
-	// Lets initialize to keep throughput for 1000s.
-	int initSize = 1000_000 / Options.throughputMeasurementPeriod;
+	int initSize = 10 * (Options.skipMills + Options.steadyMills)
+			/ Options.throughputMeasurementPeriod;
 
 	CircularBuffer cb = new CircularBuffer(initSize);
 
