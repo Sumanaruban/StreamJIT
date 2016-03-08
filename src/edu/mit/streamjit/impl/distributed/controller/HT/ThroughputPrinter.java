@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.Options;
@@ -233,7 +234,9 @@ public class ThroughputPrinter {
 		final List<Drop> drops = new ArrayList<Drop>(Options.tuningRounds * 3);
 		int totalReconfigs = 0;
 
-		private volatile int zeroTP = 0;
+		private final AtomicInteger zeroTP = new AtomicInteger(0);
+
+		private int totalzeroTP = 0;
 
 		/**
 		 * No of running {@link AppInstance}s.
@@ -247,12 +250,14 @@ public class ThroughputPrinter {
 			boolean alreadyExists = f.exists();
 			writer = Utils.fileWriter(appName, fileName, true);
 			if (!alreadyExists) {
-				write("cfg-Configuration, Avg:-Non-overlap average throughput\n");
+				write("####################################################################\n");
+				write("cfg-Configuration, Avg:-Non-overlap average throughput, DT:- Down Time\n");
 				write("O-Avg:-Overlap runs average throughput, Dur:-Avg measured duration\n");
 				write("Detected drop is written in (dropAvg,dropPercentage,dropDuration) format\n");
-				write("Cfg\t\tAvg\t\tDur\t\tO-Avg\t\tDur\n");
+				write("####################################################################\n\n");
+				write("Cfg\t\tAvg\t\tDur\t\tO-Avg\t\tDur\t\tDT\n");
 			}
-			write("----------------------------------------------------------\n");
+			write("--------------------------------------------------------------\n");
 		}
 
 		void newThroughput(double throughput) {
@@ -269,7 +274,7 @@ public class ThroughputPrinter {
 					dropFinished();
 				}
 				if (throughput == 0)
-					zeroTP++;
+					zeroTP.incrementAndGet();
 			} else if (isDropStarted) {
 				dropFinished();
 			}
@@ -280,8 +285,7 @@ public class ThroughputPrinter {
 			dropEndIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(dropStartIdx, dropEndIdx);
 			double dropAvg = p.first;
-			double downTime = zeroTP * Options.throughputMeasurementPeriod;
-			Drop d = new Drop(startAvg, dropAvg, p.second, downTime);
+			Drop d = new Drop(startAvg, dropAvg, p.second);
 			drops.add(d);
 			String msg = d.toString();
 			write(msg + "\t");
@@ -301,13 +305,18 @@ public class ThroughputPrinter {
 			appInstCount--;
 			endIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(startIdx, endIdx);
+			int z = zeroTP.get();
+			int downTime = z * Options.throughputMeasurementPeriod;
+			totalzeroTP += z;
+			zeroTP.set(0);
 
 			if (appInstCount == 1) {
-				write(String.format("\n%d\t\t%.2f\t\t%d\t\t%.2f\t\t%d\n",
-						appInstId, startAvg, startAvgDur, p.first, p.second));
+				write(String.format("\n%d\t\t%.2f\t\t%d\t\t%.2f\t\t%d\t\t%d\n",
+						appInstId, startAvg, startAvgDur, p.first, p.second,
+						downTime));
 			} else
-				write(String.format("\n%d\t\t%.2f\t\t%d\n", appInstId, p.first,
-						p.second));
+				write(String.format("\n%d\t\t%.2f\t\t%d\t\t\t\t\t\t%d\n",
+						appInstId, p.first, p.second, downTime));
 		}
 
 		private Pair<Double, Integer> averageTP(int start, int end) {
@@ -345,12 +354,15 @@ public class ThroughputPrinter {
 			double avgDropPercentage = totDrop / totDropDuration;
 			double avgDropDuration = totDropDuration / totalReconfigs;
 			double avgWorkLost = workLost / totalReconfigs;
+			double avgDownTime = totalzeroTP
+					* Options.throughputMeasurementPeriod / totalReconfigs;
 			write("\n-----------------------------------------\n");
 			write(String.format("Average Drop Duration = %.2f\n",
 					avgDropDuration));
 			write(String.format("Average Work Lost = %.2f\n", avgWorkLost));
 			write(String.format("Average Drop Percentage = %.2f\n",
 					avgDropPercentage));
+			write(String.format("Average Down Time = %.2f\n", avgDownTime));
 		}
 
 		boolean write(String msg) {
@@ -422,18 +434,16 @@ public class ThroughputPrinter {
 		final double dropAvg;
 		final double dropPercentage;
 		final int dropDuration;
-		final double downTime;
-		Drop(double startAvg, double dropAvg, int dropDuration, double downTime) {
+		Drop(double startAvg, double dropAvg, int dropDuration) {
 			this.startAvg = startAvg;
 			this.dropAvg = dropAvg;
 			this.dropDuration = dropDuration;
-			this.downTime = downTime;
 			this.dropPercentage = 100 - 100 * dropAvg / startAvg;
 		}
 
 		public String toString() {
-			return String.format("(%.2f,%.2f,%d,%.2f)", dropAvg,
-					dropPercentage, dropDuration, downTime);
+			return String.format("(%.2f,%.2f,%d)", dropAvg, dropPercentage,
+					dropDuration);
 		}
 	}
 }
