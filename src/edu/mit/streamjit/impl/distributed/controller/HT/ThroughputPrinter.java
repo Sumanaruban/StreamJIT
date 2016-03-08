@@ -216,8 +216,8 @@ public class ThroughputPrinter {
 
 		CircularBuffer cb = new CircularBuffer(initSize);
 
-		private int start = 0;
-		private int end = 0;
+		private int startIdx = 0;
+		private int endIdx = 0;
 
 		private FileWriter writer;
 
@@ -262,16 +262,16 @@ public class ThroughputPrinter {
 		}
 
 		public void cfgStarted(int appInstId) {
-			start = cb.tail;
-			Pair<Double, Integer> p = averageTP(end, start);
+			startIdx = cb.tail;
+			Pair<Double, Integer> p = averageTP(endIdx, startIdx);
 			System.out.println("Avegage throughput = " + p.first);
 			write(String.format("\n%d\t\t%.2f\t\t%d\t\t", appInstId, p.first,
 					p.second));
 		}
 
 		public void cfgEnded(int appInstId) {
-			end = cb.tail;
-			Pair<Double, Integer> p = averageTP(start, end);
+			endIdx = cb.tail;
+			Pair<Double, Integer> p = averageTP(startIdx, endIdx);
 			System.out.println("Avegage throughput = " + p.first);
 			write(String.format("%.2f\t\t%d", p.first, p.second));
 		}
