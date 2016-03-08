@@ -322,23 +322,21 @@ public class ThroughputPrinter {
 		private Pair<Double, Integer> averageTP(int start, int end) {
 			double tot = 0.0;
 			double avg = 0.0;
-			Integer dur = 0;
+			int dur = 0;
 
 			if (start < end) {
-				dur = (end - start) * Options.throughputMeasurementPeriod
-						/ 1000;
+				dur = (end - start) * Options.throughputMeasurementPeriod;
 				for (int i = start; i < end; i++)
 					tot += cb.data[i];
-				avg = tot / dur;
 			} else {
 				dur = (cb.data.length + end - start)
-						* Options.throughputMeasurementPeriod / 1000;
+						* Options.throughputMeasurementPeriod;
 				for (int i = 0; i < end; i++)
 					tot += cb.data[i];
 				for (int i = start; i < cb.data.length; i++)
 					tot += cb.data[i];
-				avg = tot / dur;
 			}
+			avg = 1000 * tot / dur;
 			cb.head = end;
 			return new Pair<Double, Integer>(avg, dur);
 		}
