@@ -221,7 +221,8 @@ public class ThroughputPrinter {
 
 		private int startIdx = 0;
 		private int endIdx = 0;
-		private double startAvg = 0.0;
+		private volatile double startAvg = 0.0;
+		private int startAvgDur = 0;
 
 		private boolean isDropStarted = false;
 		private int dropStartIdx = 0;
@@ -279,7 +280,7 @@ public class ThroughputPrinter {
 			Drop d = new Drop(startAvg, dropAvg, dropPercentage, p.second);
 			drops.add(d);
 			String msg = d.toString();
-			write(msg + "\t\t");
+			write(msg + "\t");
 			System.out.println(msg);
 		}
 
@@ -289,17 +290,20 @@ public class ThroughputPrinter {
 			startIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(endIdx, startIdx);
 			startAvg = p.first;
-			System.out.println("Avegage throughput = " + p.first);
-			write(String.format("\n%d\t\t%.2f\t\t%d\t\t", appInstId, p.first,
-					p.second));
+			startAvgDur = p.second;
 		}
 
 		public void cfgEnded(int appInstId) {
 			appInstCount--;
 			endIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(startIdx, endIdx);
-			System.out.println("Avegage throughput = " + p.first);
-			write(String.format("%.2f\t\t%d\t\t", p.first, p.second));
+
+			if (appInstCount == 1) {
+				write(String.format("\n%d\t\t%.2f\t\t%d\t\t%.2f\t\t%d\n",
+						appInstId, startAvg, startAvgDur, p.first, p.second));
+			} else
+				write(String.format("\n%d\t\t%.2f\t\t%d\n", appInstId, p.first,
+						p.second));
 		}
 
 		private Pair<Double, Integer> averageTP(int start, int end) {
@@ -330,7 +334,7 @@ public class ThroughputPrinter {
 			double workLost = 0;
 			for (Drop d : drops) {
 				totDropDuration += d.dropDuration;
-				totDrop = d.dropPercentage * d.dropDuration;
+				totDrop += d.dropPercentage * d.dropDuration;
 				workLost += ((d.startAvg - d.dropAvg) * d.dropDuration)
 						/ d.startAvg;
 			}
