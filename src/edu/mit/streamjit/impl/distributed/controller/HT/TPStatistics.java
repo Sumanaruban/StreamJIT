@@ -14,4 +14,22 @@ public interface TPStatistics {
 
 	void newThroughput(double throughput);
 
+	public static class EmptyTPStatistics implements TPStatistics {
+
+		@Override
+		public void cfgStarted(int appInstId) {
+		}
+
+		@Override
+		public void cfgEnded(int appInstId) {
+		}
+
+		@Override
+		public void stop() {
+		}
+
+		@Override
+		public void newThroughput(double throughput) {
+		}
+	}
 }
