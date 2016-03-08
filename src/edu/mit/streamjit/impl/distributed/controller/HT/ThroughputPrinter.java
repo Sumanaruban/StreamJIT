@@ -233,6 +233,8 @@ public class ThroughputPrinter {
 		final List<Drop> drops = new ArrayList<Drop>(Options.tuningRounds * 3);
 		int totalReconfigs = 0;
 
+		private volatile int zeroTP = 0;
+
 		/**
 		 * No of running {@link AppInstance}s.
 		 */
@@ -266,6 +268,8 @@ public class ThroughputPrinter {
 				} else if (isDropStarted && throughput > 0.8 * startAvg) {
 					dropFinished();
 				}
+				if (throughput == 0)
+					zeroTP++;
 			} else if (isDropStarted) {
 				dropFinished();
 			}
@@ -276,8 +280,8 @@ public class ThroughputPrinter {
 			dropEndIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(dropStartIdx, dropEndIdx);
 			double dropAvg = p.first;
-			double dropPercentage = 100 - 100 * dropAvg / startAvg;
-			Drop d = new Drop(startAvg, dropAvg, dropPercentage, p.second);
+			double downTime = zeroTP * Options.throughputMeasurementPeriod;
+			Drop d = new Drop(startAvg, dropAvg, p.second, downTime);
 			drops.add(d);
 			String msg = d.toString();
 			write(msg + "\t");
@@ -418,17 +422,18 @@ public class ThroughputPrinter {
 		final double dropAvg;
 		final double dropPercentage;
 		final int dropDuration;
-		Drop(double startAvg, double dropAvg, double dropPercentage,
-				int dropDuration) {
+		final double downTime;
+		Drop(double startAvg, double dropAvg, int dropDuration, double downTime) {
 			this.startAvg = startAvg;
 			this.dropAvg = dropAvg;
-			this.dropPercentage = dropPercentage;
 			this.dropDuration = dropDuration;
+			this.downTime = downTime;
+			this.dropPercentage = 100 - 100 * dropAvg / startAvg;
 		}
 
 		public String toString() {
-			return String.format("(%.2f,%.2f,%d)", dropAvg, dropPercentage,
-					dropDuration);
+			return String.format("(%.2f,%.2f,%d,%.2f)", dropAvg,
+					dropPercentage, dropDuration, downTime);
 		}
 	}
 }
