@@ -218,8 +218,18 @@ public class ThroughputPrinter {
 
 		private int startIdx = 0;
 		private int endIdx = 0;
+		private double startAvg = 0.0;
+
+		private boolean drop = false;
+		private int dropStartIdx = 0;
+		private int dropEndIdx = 0;
 
 		private final FileWriter writer;
+
+		/**
+		 * No of running {@link AppInstance}s.
+		 */
+		private int appInstCount = 0;
 
 		TPStatistics(String appName) {
 			String fileName = "TPStatistics.txt";
@@ -235,17 +245,46 @@ public class ThroughputPrinter {
 
 		void newThroughput(double throughput) {
 			cb.store(throughput);
+			checkDrop(throughput);
+		}
+
+		private void checkDrop(double throughput) {
+			if (appInstCount == 2) {
+				if (!drop && throughput < 0.8 * startAvg) {
+					drop = true;
+					dropStartIdx = cb.tail;
+				} else if (drop && throughput > 0.8 * startAvg) {
+					dropFinished();
+				}
+			} else if (drop) {
+				dropFinished();
+			}
+		}
+
+		private void dropFinished() {
+			drop = false;
+			dropEndIdx = cb.tail;
+			Pair<Double, Integer> p = averageTP(dropStartIdx, dropEndIdx);
+			double dropAvg = p.first;
+			double dropPercentage = 100 - 100 * dropAvg / startAvg;
+			String msg = String.format("(%.2f\t\t%.2f\t\t%d)", dropAvg,
+					dropPercentage, p.second);
+			write(msg);
+			System.out.println(msg);
 		}
 
 		public void cfgStarted(int appInstId) {
+			appInstCount++;
 			startIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(endIdx, startIdx);
+			startAvg = p.first;
 			System.out.println("Avegage throughput = " + p.first);
 			write(String.format("\n%d\t\t%.2f\t\t%d\t\t", appInstId, p.first,
 					p.second));
 		}
 
 		public void cfgEnded(int appInstId) {
+			appInstCount--;
 			endIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(startIdx, endIdx);
 			System.out.println("Avegage throughput = " + p.first);
