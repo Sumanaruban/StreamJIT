@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
+import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.Pair;
 
@@ -238,7 +239,9 @@ public class ThroughputPrinter {
 			boolean alreadyExists = f.exists();
 			writer = Utils.fileWriter(appName, fileName, true);
 			if (!alreadyExists) {
-				write("Cfg\t\tStart\t\tDur\t\tEnd\t\tDur\n");
+				write("cfg-Configuration, Avg:-Non-overlap average throughput\n");
+				write("O-Avg:-Overlap runs average throughput, Dur:-Avg measured duration\n");
+				write("Cfg\t\tAvg\t\tDur\t\tO-Avg\t\tDur\n");
 			}
 			write("----------------------------------------------------------\n");
 		}
@@ -267,7 +270,7 @@ public class ThroughputPrinter {
 			Pair<Double, Integer> p = averageTP(dropStartIdx, dropEndIdx);
 			double dropAvg = p.first;
 			double dropPercentage = 100 - 100 * dropAvg / startAvg;
-			String msg = String.format("(%.2f\t\t%.2f\t\t%d)", dropAvg,
+			String msg = String.format("(%.2f\t%.2f\t%d)\t\t", dropAvg,
 					dropPercentage, p.second);
 			write(msg);
 			System.out.println(msg);
@@ -288,7 +291,7 @@ public class ThroughputPrinter {
 			endIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(startIdx, endIdx);
 			System.out.println("Avegage throughput = " + p.first);
-			write(String.format("%.2f\t\t%d", p.first, p.second));
+			write(String.format("%.2f\t\t%d\t\t", p.first, p.second));
 		}
 
 		private Pair<Double, Integer> averageTP(int start, int end) {
