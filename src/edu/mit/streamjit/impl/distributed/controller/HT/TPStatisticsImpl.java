@@ -223,17 +223,23 @@ public class TPStatisticsImpl implements TPStatistics {
 			tail = 0;
 		}
 
+		/**
+		 * Overwrite if the buffer is full. i.e., discard from oldest entry.
+		 * 
+		 * @param value
+		 * @return
+		 */
 		public boolean store(Double value) {
-			if (!bufferFull()) {
-				data[tail++] = value;
-				if (tail == data.length) {
-					tail = 0;
-				}
-				return true;
-			} else {
-				new IllegalStateException("Buffer is full").printStackTrace();
-				return false;
+			// if (!bufferFull()) {
+			data[tail++] = value;
+			if (tail == data.length) {
+				tail = 0;
 			}
+			return true;
+			// } else {
+			// new IllegalStateException("Buffer is full").printStackTrace();
+			// return false;
+			// }
 		}
 
 		private boolean bufferFull() {
