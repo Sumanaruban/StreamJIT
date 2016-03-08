@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -221,11 +223,14 @@ public class ThroughputPrinter {
 		private int endIdx = 0;
 		private double startAvg = 0.0;
 
-		private boolean drop = false;
+		private boolean isDropStarted = false;
 		private int dropStartIdx = 0;
 		private int dropEndIdx = 0;
 
 		private final FileWriter writer;
+
+		final List<Drop> drops = new ArrayList<Drop>(Options.tuningRounds * 3);
+		int totalReconfigs = 0;
 
 		/**
 		 * No of running {@link AppInstance}s.
@@ -254,30 +259,32 @@ public class ThroughputPrinter {
 
 		private void checkDrop(double throughput) {
 			if (appInstCount == 2) {
-				if (!drop && throughput < 0.8 * startAvg) {
-					drop = true;
+				if (!isDropStarted && throughput < 0.8 * startAvg) {
+					isDropStarted = true;
 					dropStartIdx = cb.tail;
-				} else if (drop && throughput > 0.8 * startAvg) {
+				} else if (isDropStarted && throughput > 0.8 * startAvg) {
 					dropFinished();
 				}
-			} else if (drop) {
+			} else if (isDropStarted) {
 				dropFinished();
 			}
 		}
 
 		private void dropFinished() {
-			drop = false;
+			isDropStarted = false;
 			dropEndIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(dropStartIdx, dropEndIdx);
 			double dropAvg = p.first;
 			double dropPercentage = 100 - 100 * dropAvg / startAvg;
-			String msg = String.format("(%.2f,%.2f,%d)\t\t", dropAvg,
-					dropPercentage, p.second);
-			write(msg);
+			Drop d = new Drop(startAvg, dropAvg, dropPercentage, p.second);
+			drops.add(d);
+			String msg = d.toString();
+			write(msg + "\t\t");
 			System.out.println(msg);
 		}
 
 		public void cfgStarted(int appInstId) {
+			totalReconfigs++;
 			appInstCount++;
 			startIdx = cb.tail;
 			Pair<Double, Integer> p = averageTP(endIdx, startIdx);
@@ -317,6 +324,27 @@ public class ThroughputPrinter {
 			return new Pair<Double, Integer>(avg, dur);
 		}
 
+		private void totalStats() {
+			double totDrop = 0;
+			int totDropDuration = 0;
+			double workLost = 0;
+			for (Drop d : drops) {
+				totDropDuration += d.dropDuration;
+				totDrop = d.dropPercentage * d.dropDuration;
+				workLost += ((d.startAvg - d.dropAvg) * d.dropDuration)
+						/ d.startAvg;
+			}
+			double avgDropPercentage = totDrop / totDropDuration;
+			double avgDropDuration = totDropDuration / totalReconfigs;
+			double avgWorkLost = workLost / totalReconfigs;
+			write("\n-----------------------------------------\n");
+			write(String.format("Average Drop Duration = %.2f\n",
+					avgDropDuration));
+			write(String.format("Average Work Lost = %.2f\n", avgWorkLost));
+			write(String.format("Average Drop Percentage = %.2f\n",
+					avgDropPercentage));
+		}
+
 		boolean write(String msg) {
 			if (writer != null)
 				try {
@@ -328,6 +356,7 @@ public class ThroughputPrinter {
 		}
 
 		void stop() {
+			totalStats();
 			if (writer != null)
 				try {
 					writer.flush();
@@ -377,6 +406,25 @@ public class ThroughputPrinter {
 				return true;
 			}
 			return false;
+		}
+	}
+
+	static class Drop {
+		final double startAvg;
+		final double dropAvg;
+		final double dropPercentage;
+		final int dropDuration;
+		Drop(double startAvg, double dropAvg, double dropPercentage,
+				int dropDuration) {
+			this.startAvg = startAvg;
+			this.dropAvg = dropAvg;
+			this.dropPercentage = dropPercentage;
+			this.dropDuration = dropDuration;
+		}
+
+		public String toString() {
+			return String.format("(%.2f,%.2f,%d)", dropAvg, dropPercentage,
+					dropDuration);
 		}
 	}
 }
