@@ -16,7 +16,7 @@ import edu.mit.streamjit.util.Pair;
  * @author sumanan
  * @since 7 Mar, 2016
  */
-public class TPStatisticsImpl {
+public class TPStatisticsImpl implements TPStatistics {
 
 	// Lets initialize to keep throughput for 1000s.
 	int initSize = 1000_000 / Options.throughputMeasurementPeriod;
@@ -63,7 +63,7 @@ public class TPStatisticsImpl {
 		write("--------------------------------------------------------------\n");
 	}
 
-	void newThroughput(double throughput) {
+	public void newThroughput(double throughput) {
 		cb.store(throughput);
 		checkDrop(throughput);
 	}
@@ -95,6 +95,14 @@ public class TPStatisticsImpl {
 		System.out.println(msg);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * edu.mit.streamjit.impl.distributed.controller.HT.TPStatistics#cfgStarted
+	 * (int)
+	 */
+	@Override
 	public void cfgStarted(int appInstId) {
 		totalReconfigs++;
 		appInstCount++;
@@ -104,6 +112,14 @@ public class TPStatisticsImpl {
 		startAvgDur = p.second;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * edu.mit.streamjit.impl.distributed.controller.HT.TPStatistics#cfgEnded
+	 * (int)
+	 */
+	@Override
 	public void cfgEnded(int appInstId) {
 		appInstCount--;
 		endIdx = cb.tail;
@@ -178,7 +194,7 @@ public class TPStatisticsImpl {
 		return false;
 	}
 
-	void stop() {
+	public void stop() {
 		totalStats();
 		if (writer != null)
 			try {

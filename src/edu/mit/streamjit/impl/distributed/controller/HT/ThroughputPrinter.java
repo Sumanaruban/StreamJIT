@@ -63,7 +63,7 @@ public class ThroughputPrinter {
 	 */
 	private final boolean isTimeInSeconds;
 
-	public final TPStatisticsImpl tpStatistics;
+	public final TPStatistics tpStatistics;
 
 	ThroughputPrinter(Counter counter, String appName, EventTimeLogger eLogger,
 			String cfgPrefix) {
