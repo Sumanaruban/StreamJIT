@@ -85,7 +85,7 @@ public class BlockingOutputChannel implements BoundaryOutputChannel {
 		this.conInfo = conInfo;
 		this.stopFlag = new AtomicBoolean(false);
 		this.isFinal = false;
-		this.name = "TCPOutputChannel - " + bufferTokenName;
+		this.name = "BlockingOutputChnl-" + bufferTokenName;
 		this.debugLevel = debugLevel;
 		this.unProcessedData = null;
 		count = 0;

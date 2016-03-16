@@ -94,7 +94,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 		this.buffer = buffer;
 		this.conProvider = conProvider;
 		this.conInfo = conInfo;
-		this.name = "TCPInputChannel - " + bufferTokenName;
+		this.name = "BlockingInputChnl-" + bufferTokenName;
 		this.debugLevel = debugLevel;
 		this.softClosed = false;
 		this.extraBuffer = null;
