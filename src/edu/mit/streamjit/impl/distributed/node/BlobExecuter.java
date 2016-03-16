@@ -246,6 +246,8 @@ class BlobExecuter {
 
 		volatile int stopping = 0;
 
+		volatile boolean setAffinity = false;
+
 		final boolean logTime;
 
 		BlobThread2(Runnable coreCode, BlobExecuter be, String name,
@@ -271,10 +273,11 @@ class BlobExecuter {
 				while (true) {
 					if (stopping == 0)
 						coreCode.run();
-					else if (stopping == 1)
-						setAffinity();
 					else
 						break;
+
+					if (setAffinity)
+						setAffinity();
 				}
 			} catch (Error | Exception e) {
 				System.out.println(Thread.currentThread().getName()
@@ -293,7 +296,7 @@ class BlobExecuter {
 		private void setAffinity() {
 			if (cores != null && cores.size() > 0)
 				Affinity.setThreadAffinity(cores);
-			stopping = 0;
+			setAffinity = false;
 		}
 
 		private void logFiringTime() {
@@ -323,7 +326,7 @@ class BlobExecuter {
 
 		private void updateAffinity(Set<Integer> cores) {
 			this.cores = cores;
-			stopping = 1;
+			setAffinity = true;
 		}
 	}
 }
