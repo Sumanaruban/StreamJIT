@@ -30,7 +30,6 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.common.TCPConnection.TCPConnectionInfo;
@@ -240,10 +239,10 @@ public interface Connection {
 		public abstract Connection makeConnection(int nodeID,
 				NetworkInfo networkInfo, int timeOut);
 
-		public abstract BoundaryInputChannel inputChannel(Token t, int bufSize,
-				ConnectionProvider conProvider);
+		public abstract BoundaryInputChannel inputChannel(String name,
+				int bufSize, ConnectionProvider conProvider);
 
-		public abstract BoundaryOutputChannel outputChannel(Token t,
+		public abstract BoundaryOutputChannel outputChannel(String name,
 				int bufSize, ConnectionProvider conProvider);
 	}
 
@@ -271,13 +270,13 @@ public interface Connection {
 		}
 
 		@Override
-		public BoundaryInputChannel inputChannel(Token t, int bufSize,
+		public BoundaryInputChannel inputChannel(String name, int bufSize,
 				ConnectionProvider conProvider) {
 			throw new java.lang.Error("This method is not supposed to call");
 		}
 
 		@Override
-		public BoundaryOutputChannel outputChannel(Token t, int bufSize,
+		public BoundaryOutputChannel outputChannel(String name, int bufSize,
 				ConnectionProvider conProvider) {
 			throw new java.lang.Error("This method is not supposed to call");
 		}

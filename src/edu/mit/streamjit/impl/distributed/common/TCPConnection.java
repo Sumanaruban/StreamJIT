@@ -29,7 +29,6 @@ import java.io.OptionalDataException;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.node.BlockingInputChannel;
@@ -283,17 +282,16 @@ public class TCPConnection implements Connection {
 		}
 
 		@Override
-		public BoundaryInputChannel inputChannel(Token t, int bufSize,
+		public BoundaryInputChannel inputChannel(String name, int bufSize,
 				ConnectionProvider conProvider) {
-			return new BlockingInputChannel(bufSize, conProvider, this,
-					t.toString(), 0);
+			return new BlockingInputChannel(bufSize, conProvider, this, name, 0);
 		}
 
 		@Override
-		public BoundaryOutputChannel outputChannel(Token t, int bufSize,
+		public BoundaryOutputChannel outputChannel(String name, int bufSize,
 				ConnectionProvider conProvider) {
-			return new BlockingOutputChannel(bufSize, conProvider, this,
-					t.toString(), 0);
+			return new BlockingOutputChannel(bufSize, conProvider, this, name,
+					0);
 		}
 	}
 }

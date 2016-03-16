@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import edu.mit.streamjit.impl.blob.AbstractWriteOnlyBuffer;
-import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryInputChannel;
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannel.BoundaryOutputChannel;
 import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
@@ -767,16 +766,15 @@ public class AsyncTCPConnection implements Connection {
 		}
 
 		@Override
-		public BoundaryInputChannel inputChannel(Token t, int bufSize,
+		public BoundaryInputChannel inputChannel(String name, int bufSize,
 				ConnectionProvider conProvider) {
-			return new BlockingInputChannel(bufSize, conProvider, this,
-					t.toString(), 0);
+			return new BlockingInputChannel(bufSize, conProvider, this, name, 0);
 		}
 
 		@Override
-		public BoundaryOutputChannel outputChannel(Token t, int bufSize,
+		public BoundaryOutputChannel outputChannel(String name, int bufSize,
 				ConnectionProvider conProvider) {
-			return new AsyncOutputChannel(conProvider, this, t.toString(), 0);
+			return new AsyncOutputChannel(conProvider, this, name, 0);
 		}
 	}
 

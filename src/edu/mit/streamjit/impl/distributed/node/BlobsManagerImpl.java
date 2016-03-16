@@ -359,8 +359,8 @@ public class BlobsManagerImpl implements BlobsManager {
 		ImmutableMap.Builder<Token, BoundaryInputChannel> inputChannelMap = new ImmutableMap.Builder<>();
 		for (Token t : inputTokens) {
 			ConnectionInfo conInfo = conInfoMap.get(t);
-			inputChannelMap.put(t,
-					conInfo.inputChannel(t, bufferMap.get(t), conProvider));
+			inputChannelMap.put(t, conInfo.inputChannel(t.toString(),
+					bufferMap.get(t), conProvider));
 		}
 		return inputChannelMap.build();
 	}
@@ -370,8 +370,8 @@ public class BlobsManagerImpl implements BlobsManager {
 		ImmutableMap.Builder<Token, BoundaryOutputChannel> outputChannelMap = new ImmutableMap.Builder<>();
 		for (Token t : outputTokens) {
 			ConnectionInfo conInfo = conInfoMap.get(t);
-			outputChannelMap.put(t,
-					conInfo.outputChannel(t, bufferMap.get(t), conProvider));
+			outputChannelMap.put(t, conInfo.outputChannel(t.toString(),
+					bufferMap.get(t), conProvider));
 		}
 		return outputChannelMap.build();
 	}
