@@ -118,24 +118,19 @@ public class StreamJitAppManager {
 	}
 
 	Reconfigurer reconfigurer(Buffer tailBuffer) {
+		boolean adaptiveReconfig = Options.Reconfigurer == 2 ? true : false;
+		boolean stateful = Options.useDrainData ? app.stateful : false;
+
 		switch (Options.Reconfigurer) {
 			case 0 :
 				return new PauseResumeReconfigurer(this);
-			case 1 : {
-				if (app.stateful)
-					return new SeamlessStatefulReconfigurer(this, tailBuffer,
-							false);
-				else
-					return new SeamlessStatelessReconfigurer(this, tailBuffer,
-							false);
-			}
 			default : {
-				if (app.stateful)
+				if (stateful)
 					return new SeamlessStatefulReconfigurer(this, tailBuffer,
-							true);
+							adaptiveReconfig);
 				else
 					return new SeamlessStatelessReconfigurer(this, tailBuffer,
-							true);
+							adaptiveReconfig);
 			}
 		}
 	}
