@@ -71,7 +71,7 @@ public class OnlineTuner implements Runnable {
 			startTuner();
 			mLogger.eEvent("startTuner");
 			Pair<Boolean, Integer> ret;
-
+			dynamism.init();
 			System.out.println("New tune run.............");
 			while (configurer.manager.getStatus() != AppStatus.STOPPED) {
 				mLogger.bTuningRound(++round);
@@ -256,6 +256,13 @@ public class OnlineTuner implements Runnable {
 		private final int bestcfgMinutes = 3;
 		private final boolean penalize = Options.penalize;
 
+		public void init() {
+			if (Options.dynType == 3) {
+				for (int i = 1; i <= totalDyn; i++)
+					cfgManager.nodeDown(i);
+			}
+		}
+
 		/**
 		 * Pausing condition of the online tuning.
 		 */
@@ -299,6 +306,9 @@ public class OnlineTuner implements Runnable {
 				case 2 :
 					blockNode();
 					break;
+				case 3 :
+					unblockNode();
+					break;
 				default :
 					blockNode();
 					break;
@@ -331,6 +341,12 @@ public class OnlineTuner implements Runnable {
 		private void blockNode() {
 			System.err.println(String.format("Blocking Node-%d...", blockNode));
 			cfgManager.nodeDown(blockNode++);
+		}
+
+		private void unblockNode() {
+			System.err.println(String.format("Unblocking Node-%d...",
+					blockNode));
+			cfgManager.nodeUp(blockNode++);
 		}
 
 		private void blockCores() {
