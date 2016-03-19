@@ -263,17 +263,6 @@ public class OnlineTuner implements Runnable {
 			}
 		}
 
-		/**
-		 * Pausing condition of the online tuning.
-		 */
-		private boolean pauseTuning(int round) {
-			if (round - cfgManager.rejectCount > initialTuningCount
-					+ (dynCount * dynTuningCount)) {
-				return true;
-			}
-			return false;
-		}
-
 		private void endOfTuningRound(int round) {
 			if (pauseTuning(round)) {
 				Configuration bestCfg = bestCfgs.get(dynCount);
@@ -297,6 +286,17 @@ public class OnlineTuner implements Runnable {
 			}
 		}
 
+		/**
+		 * Pausing condition of the online tuning.
+		 */
+		private boolean pauseTuning(int round) {
+			if (round - cfgManager.rejectCount > initialTuningCount
+					+ (dynCount * dynTuningCount)) {
+				return true;
+			}
+			return false;
+		}
+
 		private void simulateDynamism() {
 			System.err.println("simulateDynamism");
 			switch (Options.dynType) {
@@ -317,6 +317,37 @@ public class OnlineTuner implements Runnable {
 			dynCount++;
 		}
 
+		private void blockCores() {
+			System.err.println("blockCores...");
+
+			Set<Integer> cores = new HashSet<>();
+			int noOfCorestoBlock = Options.maxNumCores;
+			if (Options.blockCorePattern == 1 || Options.blockCorePattern == 2)
+				noOfCorestoBlock = Options.maxNumCores / 2;
+
+			for (int i = 0; i < noOfCorestoBlock; i++)
+				cores.add(i);
+
+			int noOfNodestoBlock = cfgManager.noOfMachines() - 1;
+			if (Options.blockCorePattern == 2 || Options.blockCorePattern == 3)
+				noOfNodestoBlock = noOfNodestoBlock / 2;
+
+			for (int i = 1; i <= noOfNodestoBlock; i++)
+				configurer.manager.blockCores(i, cores);
+		}
+
+		int blockNode = 1;
+		private void blockNode() {
+			System.err.println(String.format("Blocking Node-%d...", blockNode));
+			cfgManager.nodeDown(blockNode++);
+		}
+
+		private void unblockNode() {
+			System.err.println(String
+					.format("Unblocking Node-%d...", blockNode));
+			cfgManager.nodeUp(blockNode++);
+		}
+
 		private void runBestCfg(Configuration config) {
 			System.err.println("Configuring with the best cfg..");
 			String cfgPrefix = ConfigurationUtils.getConfigPrefix(config);
@@ -335,37 +366,6 @@ public class OnlineTuner implements Runnable {
 			}
 			System.err.println(String.format("bestCfgs-%s, Runtime=%d",
 					cfgPrefix, time));
-		}
-
-		int blockNode = 1;
-		private void blockNode() {
-			System.err.println(String.format("Blocking Node-%d...", blockNode));
-			cfgManager.nodeDown(blockNode++);
-		}
-
-		private void unblockNode() {
-			System.err.println(String.format("Unblocking Node-%d...",
-					blockNode));
-			cfgManager.nodeUp(blockNode++);
-		}
-
-		private void blockCores() {
-			System.err.println("blockCores...");
-
-			Set<Integer> cores = new HashSet<>();
-			int noOfCorestoBlock = Options.maxNumCores;
-			if (Options.blockCorePattern == 1 || Options.blockCorePattern == 2)
-				noOfCorestoBlock = Options.maxNumCores / 2;
-
-			for (int i = 0; i < noOfCorestoBlock; i++)
-				cores.add(i);
-
-			int noOfNodestoBlock = cfgManager.noOfMachines() - 1;
-			if (Options.blockCorePattern == 2 || Options.blockCorePattern == 3)
-				noOfNodestoBlock = noOfNodestoBlock / 2;
-
-			for (int i = 1; i <= noOfNodestoBlock; i++)
-				configurer.manager.blockCores(i, cores);
 		}
 
 		private void summarize(int round) {
