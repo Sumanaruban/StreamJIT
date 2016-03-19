@@ -119,7 +119,7 @@ public class OnlineTuner implements Runnable {
 					break;
 				}
 				mLogger.eTuningRound();
-				if (dynamism.dynCount > 1) {
+				if (dynamism.stopDyn) {
 					System.err.println("DynTest over");
 					break;
 				}
@@ -240,7 +240,16 @@ public class OnlineTuner implements Runnable {
 	}
 
 	private class DynamismTester {
+		/**
+		 * Total dynamisms to simulate. After initialTuningCount a new dynamism
+		 * will be simulated for every dynTuningCount of tuning rounds.
+		 */
+		private final int totalDyn = Options.blockCore ? 1 : 3;
+		/**
+		 * No of dynamism simulated.
+		 */
 		private int dynCount = 0;
+		private boolean stopDyn = false;
 		private final int initialTuningCount = Options.initialTuningCount;
 		private final int dynTuningCount = Options.dynTuningCount;
 		private final int bestcfgMinutes = 3;
@@ -266,8 +275,8 @@ public class OnlineTuner implements Runnable {
 				bestCfg = ConfigurationUtils.addConfigPrefix(bestCfg,
 						newcfgPrefix);
 				runBestCfg(bestCfg);
-				if (dynCount > 0) {
-					dynCount++;
+				if (dynCount == totalDyn) {
+					stopDyn = true;
 					return;
 				}
 				simulateDynamism();
@@ -310,9 +319,10 @@ public class OnlineTuner implements Runnable {
 					cfgPrefix, time));
 		}
 
+		int blockNode = 1;
 		private void blockNode() {
-			System.err.println("blockNode...");
-			cfgManager.nodeDown(1);
+			System.err.println(String.format("Blocking Node-%d...", blockNode));
+			cfgManager.nodeDown(blockNode++);
 		}
 
 		private void blockCores() {
