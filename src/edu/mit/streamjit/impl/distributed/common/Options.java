@@ -195,7 +195,16 @@ public final class Options {
 
 	public static final int initialTuningCount;
 	public static final int dynTuningCount;
-	public static final boolean blockCore;
+
+	/**
+	 * <ol>
+	 * <li>1 - Block Cores.
+	 * <li>2 - Block Node
+	 * <li>3 - Unblock Node
+	 * <li>default: Block Node
+	 * </ol>
+	 */
+	public static final int dynType;
 	public static final boolean penalize;
 	public static final int blockCorePattern;
 
@@ -243,7 +252,7 @@ public final class Options {
 		initialTuningCount = Integer.parseInt(prop
 				.getProperty("initialTuningCount"));
 		dynTuningCount = Integer.parseInt(prop.getProperty("dynTuningCount"));
-		blockCore = Boolean.parseBoolean(prop.getProperty("blockCore"));
+		dynType = Integer.parseInt(prop.getProperty("dynType"));
 		penalize = Boolean.parseBoolean(prop.getProperty("penalize"));
 		blockCorePattern = Integer.parseInt(prop
 				.getProperty("blockCorePattern"));
@@ -281,7 +290,7 @@ public final class Options {
 		setProperty(prop, "noOutputTimeLimit", noOutputTimeLimit);
 		setProperty(prop, "initialTuningCount", initialTuningCount);
 		setProperty(prop, "dynTuningCount", dynTuningCount);
-		setProperty(prop, "blockCore", blockCore);
+		setProperty(prop, "dynType", dynType);
 		setProperty(prop, "penalize", penalize);
 		setProperty(prop, "blockCorePattern", blockCorePattern);
 		return prop;

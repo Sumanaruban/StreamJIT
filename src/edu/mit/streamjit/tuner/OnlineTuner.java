@@ -137,6 +137,7 @@ public class OnlineTuner implements Runnable {
 		mLogger.eEvent("tuningFinished");
 		dynamism.summarize(round);
 	}
+
 	private void startTuner() throws IOException {
 		String relativeTunerPath = String.format(
 				"lib%sopentuner%sstreamjit%sstreamjit2.py", File.separator,
@@ -244,7 +245,7 @@ public class OnlineTuner implements Runnable {
 		 * Total dynamisms to simulate. After initialTuningCount a new dynamism
 		 * will be simulated for every dynTuningCount of tuning rounds.
 		 */
-		private final int totalDyn = Options.blockCore ? 1 : 3;
+		private final int totalDyn = Options.dynType == 1 ? 1 : 3;
 		/**
 		 * No of dynamism simulated.
 		 */
@@ -291,10 +292,17 @@ public class OnlineTuner implements Runnable {
 
 		private void simulateDynamism() {
 			System.err.println("simulateDynamism");
-			if (Options.blockCore)
-				blockCores();
-			else
-				blockNode();
+			switch (Options.dynType) {
+				case 1 :
+					blockCores();
+					break;
+				case 2 :
+					blockNode();
+					break;
+				default :
+					blockNode();
+					break;
+			}
 			currentBestTime = Integer.MAX_VALUE;
 			dynCount++;
 		}
