@@ -255,7 +255,7 @@ public class OnlineTuner implements Runnable {
 		private final int dynTuningCount = Options.dynTuningCount;
 		private final int bestcfgMinutes = 3;
 		private final boolean penalize = Options.penalize;
-		DynType4 dynType4 = new DynType4();
+		DynType4 dynType4;
 
 		public void init() {
 			totalDyn = Options.dynType == 1 ? 1
@@ -265,6 +265,7 @@ public class OnlineTuner implements Runnable {
 					cfgManager.nodeDown(i);
 			}
 			if (Options.dynType == 4) {
+				dynType4 = new DynType4();
 				dynType4.initBlockCores();
 				totalDyn = Integer.MAX_VALUE;
 			}
