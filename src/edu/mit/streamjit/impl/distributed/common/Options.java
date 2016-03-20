@@ -201,6 +201,8 @@ public final class Options {
 	 * <li>1 - Block Cores.
 	 * <li>2 - Block Node
 	 * <li>3 - Unblock Node
+	 * <li>4 - Start with blocking some cores and time to time move the
+	 * occupation to different nodes.
 	 * <li>default: Block Node
 	 * </ol>
 	 */
