@@ -260,13 +260,13 @@ public class OnlineTuner implements Runnable {
 		public void init() {
 			totalDyn = Options.dynType == 1 ? 1
 					: (cfgManager.noOfMachines() - 1) / 2;
-			if (Options.dynType == 4) {
-				dynType4.initBlockCores();
-				totalDyn = Integer.MAX_VALUE;
-			}
 			if (Options.dynType == 3) {
 				for (int i = 1; i <= totalDyn; i++)
 					cfgManager.nodeDown(i);
+			}
+			if (Options.dynType == 4) {
+				dynType4.initBlockCores();
+				totalDyn = Integer.MAX_VALUE;
 			}
 		}
 
