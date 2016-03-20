@@ -34,9 +34,22 @@ public abstract class CTRLRSimulateDynamism implements CTRLRMessageElement {
 		}
 	}
 
+	public static final class UnblockCores extends CTRLRSimulateDynamism {
+		private static final long serialVersionUID = 1L;
+		public final Set<Integer> coreSet;
+
+		public UnblockCores(Set<Integer> coreSet) {
+			this.coreSet = coreSet;
+		}
+
+		@Override
+		public void process(CTRLRDynamismProcessor dynProcessor) {
+			dynProcessor.process(this);
+		}
+	}
+
 	public interface CTRLRDynamismProcessor {
-
 		public void process(BlockCores blockCores);
-
+		public void process(UnblockCores unblockCores);
 	}
 }

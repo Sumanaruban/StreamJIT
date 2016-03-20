@@ -450,7 +450,7 @@ public class OnlineTuner implements Runnable {
 						break;
 				}
 
-				// configurer.manager.unblockCores(fromNode, cores);
+				configurer.manager.unblockCores(fromNode, cores);
 				configurer.manager.blockCores(toNode, cores);
 
 				if (curCore == noOfCorestoBlock) {

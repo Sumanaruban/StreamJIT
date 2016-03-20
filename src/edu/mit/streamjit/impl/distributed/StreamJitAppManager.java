@@ -50,6 +50,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement.DrainType;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.BlockCores;
+import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.UnblockCores;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.BufferSizes;
 import edu.mit.streamjit.impl.distributed.common.CompilationInfo.CompilationInfoProcessor;
@@ -459,6 +460,14 @@ public class StreamJitAppManager {
 		BlockCores bc = new BlockCores(cores);
 		controller.send(nodeID, bc);
 	}
+
+	public void unblockCores(int nodeID, Set<Integer> cores) {
+		System.out.println(String.format("Unlocking cores %s of node %d",
+				cores.toString(), nodeID));
+		UnblockCores ubc = new UnblockCores(cores);
+		controller.send(nodeID, ubc);
+	}
+
 	/**
 	 * {@link AppStatusProcessor} at {@link Controller} side.
 	 * 

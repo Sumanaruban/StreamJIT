@@ -36,6 +36,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism;
 import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.BlockCores;
 import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.CTRLRDynamismProcessor;
+import edu.mit.streamjit.impl.distributed.common.CTRLRSimulateDynamism.UnblockCores;
 import edu.mit.streamjit.impl.distributed.common.Command;
 import edu.mit.streamjit.impl.distributed.common.Command.CommandProcessor;
 import edu.mit.streamjit.impl.distributed.common.ConfigurationString;
@@ -258,6 +259,17 @@ public class CTRLRMessageVisitorImpl implements CTRLRMessageVisitor {
 				BlockCore bt = new BlockCore(name(core), core);
 				bt.start();
 				blockThreads.put(core, bt);
+			}
+		}
+
+		@Override
+		public void process(UnblockCores unblockCores) {
+			for (Integer core : unblockCores.coreSet) {
+				BlockCore bt = blockThreads.remove(core);
+				if (bt == null)
+					new IllegalArgumentException(name(core)
+							+ " is unblocked already").printStackTrace();
+				bt.requestStop();
 			}
 		}
 
