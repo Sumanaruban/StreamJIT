@@ -245,7 +245,7 @@ public class OnlineTuner implements Runnable {
 		 * Total dynamisms to simulate. After initialTuningCount a new dynamism
 		 * will be simulated for every dynTuningCount of tuning rounds.
 		 */
-		private final int totalDyn = Options.dynType == 1 ? 1 : 3;
+		private int totalDyn;
 		/**
 		 * No of dynamism simulated.
 		 */
@@ -255,8 +255,15 @@ public class OnlineTuner implements Runnable {
 		private final int dynTuningCount = Options.dynTuningCount;
 		private final int bestcfgMinutes = 3;
 		private final boolean penalize = Options.penalize;
+		DynType4 dynType4 = new DynType4();
 
 		public void init() {
+			totalDyn = Options.dynType == 1 ? 1
+					: (cfgManager.noOfMachines() - 1) / 2;
+			if (Options.dynType == 4) {
+				dynType4.initBlockCores();
+				totalDyn = Integer.MAX_VALUE;
+			}
 			if (Options.dynType == 3) {
 				for (int i = 1; i <= totalDyn; i++)
 					cfgManager.nodeDown(i);
@@ -308,6 +315,9 @@ public class OnlineTuner implements Runnable {
 					break;
 				case 3 :
 					unblockNode();
+					break;
+				case 4 :
+					dynType4.moveOccupation();
 					break;
 				default :
 					blockNode();
@@ -394,6 +404,67 @@ public class OnlineTuner implements Runnable {
 				return newtime;
 			}
 			return time;
+		}
+
+		private class DynType4 {
+
+			final int noOfNodestoBlock;
+			final int noOfCorestoBlock;
+
+			/**
+			 * No of cores up at each simulate dynamism.
+			 */
+			final int coreStep;
+
+			int fromNode = 1;
+			int toNode;
+			int curCore = 0;
+
+			DynType4() {
+				noOfCorestoBlock = Options.maxNumCores / 2;
+				noOfNodestoBlock = (cfgManager.noOfMachines() - 1) / 2;
+				coreStep = (int) Math.ceil(Options.maxNumCores / 10);
+				toNode = (cfgManager.noOfMachines() - 1);
+			}
+
+			/**
+			 * Block 50% of the cores for half of the machines.
+			 */
+			private void initBlockCores() {
+				System.err.println("initBlockCores...");
+
+				Set<Integer> cores = new HashSet<>();
+
+				for (int i = 0; i < noOfCorestoBlock; i++)
+					cores.add(i);
+
+				for (int i = 1; i <= noOfNodestoBlock; i++)
+					configurer.manager.blockCores(i, cores);
+			}
+
+			void moveOccupation() {
+				Set<Integer> cores = new HashSet<>();
+				for (int i = 0; i < coreStep; i++) {
+					cores.add(curCore++);
+					if (curCore == noOfCorestoBlock)
+						break;
+				}
+
+				// configurer.manager.unblockCores(fromNode, cores);
+				configurer.manager.blockCores(toNode, cores);
+
+				if (curCore == noOfCorestoBlock) {
+					curCore = 0;
+					toNode--;
+					fromNode++;
+				}
+
+				if (fromNode > noOfNodestoBlock)
+					stopDyn = true;
+
+				if (fromNode >= toNode)
+					stopDyn = true;
+			}
 		}
 	}
 }
