@@ -168,7 +168,7 @@ class HeadTailHandler {
 	}
 
 	void waitToStopHead() {
-		if (headChannel != null) {
+		if (headThread != null) {
 			try {
 				headThread.join();
 			} catch (InterruptedException e) {
@@ -191,7 +191,7 @@ class HeadTailHandler {
 	}
 
 	void waitToStopTail() {
-		if (tailChannel != null) {
+		if (tailThread != null) {
 			try {
 				tailThread.join();
 			} catch (InterruptedException e) {

@@ -94,9 +94,6 @@ public abstract class SeamlessReconfigurer implements Reconfigurer {
 		} else {
 			if (prevHeadChnl != null)
 				prevHeadChnl.limitSend(HeadChannelSeamless.fcTimeGap);
-			// TODO : [2015-11-18]
-			// This calling causes java.lang.NullPointerException at
-			// edu.mit.streamjit.impl.distributed.HeadTailHandler.waitToStopHead(HeadTailHandler.java:167)
 			aim.drainingFinished(false);
 		}
 
