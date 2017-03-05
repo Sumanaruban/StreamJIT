@@ -21,11 +21,12 @@
  */
 package edu.mit.streamjit.api;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
@@ -160,10 +161,12 @@ public class Output<O> {
 	 */
 	public static <O> BinaryFileOutput<O> toBinaryFile(String path,
 			Class<O> type) {
-		checkArgument(
-				Primitives.isWrapperType(type) && !type.equals(Void.class),
-				"not a wrapper type: %s", type);
-		return new BinaryFileOutput<>(new BinaryFileOutputFactory(path, type));
+		FileOutputBufferFactory of;
+		if (Primitives.isWrapperType(type) && !type.equals(Void.class))
+			of = new BinaryFileOutputFactory(path, type);
+		else
+			of = new ObjectFileOutputFactory(path);
+		return new BinaryFileOutput<>(of);
 	}
 
 	public static final class BinaryFileOutput<O> extends Output<O> {
@@ -178,6 +181,10 @@ public class Output<O> {
 		}
 	}
 
+	/**
+	 * @author Sumanaruban Rajadurai (Suman)
+	 * @since 5 Mar 2017
+	 */
 	private static abstract class FileOutputBufferFactory
 			extends
 				OutputBufferFactory {
@@ -267,6 +274,83 @@ public class Output<O> {
 			flush();
 			try {
 				fc.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * @author Sumanaruban Rajadurai (Suman)
+	 * @since 5 Mar 2017
+	 */
+	private static class ObjectFileOutputFactory extends FileOutputBufferFactory{
+		private final String path;
+		ObjectOutputStream oos;
+		FileOutputStream file;
+
+		private ObjectFileOutputFactory(String path) {
+			this.path = path;
+
+		}
+
+		@Override
+		public Buffer createWritableBuffer(int writerMinSize) {
+			init();
+			return new AbstractWriteOnlyBuffer() {
+
+				int n = 0;
+
+				@Override
+				public boolean write(Object t) {
+					boolean ret;
+					try {
+						oos.writeObject(t);
+						ret = true;
+						reset();
+					} catch (IOException e) {
+						e.printStackTrace();
+						ret = false;
+					}
+					return ret;
+				}
+
+				/**
+				 * ObjectOutputStream keeps the references of the all objects
+				 * that are written, disallows garbage collection. So if we
+				 * write too many objects, we will get OutOfMemoryError after
+				 * some time. To solve this, we need to reset ObjectOutputStream
+				 * time-to-time.
+				 * 
+				 * @throws IOException
+				 */
+				private final void reset() throws IOException {
+					n++;
+					if (n > 5000) {
+						n = 0;
+						oos.reset();
+					}
+				}
+			};
+		}
+
+		private void init() {
+			try {
+				file = new FileOutputStream(path, false);
+				OutputStream buffer = new BufferedOutputStream(file);
+				this.oos = new ObjectOutputStream(buffer);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void close() {
+			try {
+				oos.flush();
+				file.flush();
+				oos.close();
+				file.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
