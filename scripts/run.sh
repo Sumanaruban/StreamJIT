@@ -52,10 +52,10 @@ echo $out
 jobid=$(jobId)
 nodelistline=$(nodelistLine)
 nodeid=$(nodeID)
+echo "Controller is running on Lanka"$nodeid "node"
 
-ip=$(($nodeid+10))	#In Lanka cluster, a node's ip address is 128.30.116.[Node number + 10]. 
+ip=$((10#$nodeid+10))	#In Lanka cluster, a node's ip address is 128.30.116.[Node number + 10].
 			#Here $ip variable contains only the last byte of the ip address.
-echo $ip
 verifyIP
 
 for (( c=0; c<$snInstances; c++ ))
