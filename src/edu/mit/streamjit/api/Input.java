@@ -21,11 +21,11 @@
  */
 package edu.mit.streamjit.api;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -125,34 +125,114 @@ public class Input<I> {
 		});
 	}
 
-	public static <I> Input<I> fromBinaryFile(Path path, Class<I> type, ByteOrder byteOrder) {
-		checkArgument(Primitives.isWrapperType(type) && !type.equals(Void.class), "not a wrapper type: %s", type);
-		class BinaryFileRealInput extends InputBufferFactory {
-			private final Path path;
-			private final Class<?> type;
-			private final ByteOrder byteOrder;
-			private BinaryFileRealInput(Path path, Class<?> type, ByteOrder byteOrder) {
-				this.path = path;
-				this.type = type;
-				this.byteOrder = byteOrder;
+	private static class BinaryFileRealInput extends InputBufferFactory {
+		private final Path path;
+		private final Class<?> type;
+		private final ByteOrder byteOrder;
+		private BinaryFileRealInput(Path path, Class<?> type,
+				ByteOrder byteOrder) {
+			this.path = path;
+			this.type = type;
+			this.byteOrder = byteOrder;
+		}
+		@Override
+		public Buffer createReadableBuffer(int readerMinSize) {
+			MappedByteBuffer file = null;
+			try (FileChannel fc = FileChannel.open(path,
+					StandardOpenOption.READ)) {
+				file = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+			} catch (IOException ex) {
+				throw new RuntimeException(ex);
 			}
-			@Override
-			public Buffer createReadableBuffer(int readerMinSize) {
-				MappedByteBuffer file = null;
-				try (FileChannel fc = FileChannel.open(path, StandardOpenOption.READ)) {
-					file = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-				} catch (IOException ex) {
-					throw new RuntimeException(ex);
-				}
-				file.order(byteOrder);
-				return NIOBuffers.wrap(file, type);
-			}
-			@Override
-			public String toString(){
-				return "Input.fromBinaryFile("+path+", "+type.getSimpleName()+".class, "+byteOrder+")";
+			file.order(byteOrder);
+			return NIOBuffers.wrap(file, type);
+		}
+		@Override
+		public String toString() {
+			return "Input.fromBinaryFile(" + path + ", " + type.getSimpleName()
+					+ ".class, " + byteOrder + ")";
+		}
+	}
+
+	/**
+	 * Reads serialized objects from a file. TODO: Need to close the file once
+	 * reading is completed.
+	 * 
+	 * @author Sumanaruban Rajadurai (Suman)
+	 * @since 5 Mar 2017
+	 */
+	private static class ObjectFileInputFactory extends InputBufferFactory {
+
+		private final Path path;
+		FileInputStream fin;
+		ObjectInputStream ois;
+
+		private ObjectFileInputFactory(Path path) {
+			this.path = path;
+		}
+
+		@Override
+		public Buffer createReadableBuffer(int readerMinSize) {
+			init();
+			return new ObjectBuffer(ois);
+		}
+
+		private void init() {
+			try {
+				fin = new FileInputStream(path.toString());
+				ois = new ObjectInputStream(fin);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
-		return new Input<>(new BinaryFileRealInput(path, type, byteOrder));
+	}
+
+	private static class ObjectBuffer extends AbstractReadOnlyBuffer {
+		Object next;
+		ObjectInputStream ois;
+
+		private ObjectBuffer(ObjectInputStream ois) {
+			this.ois = ois;
+			try {
+				this.next = ois.readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public int size() {
+			int size = next == null ? 0 : 1;
+			return size;
+		}
+
+		@Override
+		public Object read() {
+			Object cur = next;
+			try {
+				next = ois.readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+				next = null;
+			}
+			return cur;
+		}
+	};
+
+	/**
+	 * TODO: Need to close the file once reading is completed.
+	 * 
+	 * @param path
+	 * @param type
+	 * @param byteOrder
+	 * @return
+	 */
+	public static <I> Input<I> fromBinaryFile(Path path, Class<I> type,
+			ByteOrder byteOrder) {
+		if (Primitives.isWrapperType(type) && !type.equals(Void.class))
+			return new Input<>(new BinaryFileRealInput(path, type, byteOrder));
+		else
+			return new Input<>(new ObjectFileInputFactory(path));
 	}
 
 	/**
@@ -266,6 +346,13 @@ public class Input<I> {
 		});
 	}
 
+	/**
+	 * Reads a text file and returns each line as a stream data item. TODO: Need
+	 * to close the file once reading is completed.
+	 * 
+	 * @author Sumanaruban Rajadurai (Suman)
+	 * @since 5 Mar 2017
+	 */
 	private static class TextFileBuffer extends AbstractReadOnlyBuffer {
 
 		final BufferedReader reader;
@@ -294,6 +381,13 @@ public class Input<I> {
 		}
 	}
 
+	/**
+	 * Reads a text file and returns each line as a stream data item. TODO: Need
+	 * to close the file once reading is completed.
+	 * 
+	 * @param path
+	 * @return
+	 */
 	public static Input<String> fromTextFile(Path path) {
 		class TextFileInput extends InputBufferFactory {
 			final Path path;
