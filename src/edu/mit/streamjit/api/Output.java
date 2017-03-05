@@ -167,8 +167,8 @@ public class Output<O> {
 	}
 
 	public static final class BinaryFileOutput<O> extends Output<O> {
-		private final BinaryFileOutputFactory output;
-		private BinaryFileOutput(BinaryFileOutputFactory output) {
+		private final FileOutputBufferFactory output;
+		private BinaryFileOutput(FileOutputBufferFactory output) {
 			super(output);
 			this.output = output;
 		}
@@ -178,7 +178,15 @@ public class Output<O> {
 		}
 	}
 
-	private static class BinaryFileOutputFactory extends OutputBufferFactory {
+	private static abstract class FileOutputBufferFactory
+			extends
+				OutputBufferFactory {
+		public abstract void close();
+	}
+
+	private static class BinaryFileOutputFactory
+			extends
+				FileOutputBufferFactory {
 		FileChannel fc;
 		ByteBuffer buffer;
 		private final String path;
