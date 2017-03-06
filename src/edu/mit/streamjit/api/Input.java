@@ -204,12 +204,11 @@ public class Input<I> {
 		@Override
 		public Object read() {
 			Object o = null;
-			if (size() > 0) {
-				try {
+			try {
+				if (fin.available() > 0)
 					o = ois.readObject();
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
 			}
 			return o;
 		}
@@ -352,28 +351,32 @@ public class Input<I> {
 	private static class TextFileBuffer extends AbstractReadOnlyBuffer {
 
 		final BufferedReader reader;
-		String next;
 
 		TextFileBuffer(Path path) throws IOException {
 			this.reader = new BufferedReader(new FileReader(path.toFile()));
-			next = reader.readLine();
-		}
-
-		@Override
-		public String read() {
-			String cur = next;
-			try {
-				next = reader.readLine();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return cur;
 		}
 
 		@Override
 		public int size() {
-			int size = next == null ? 0 : 1;
-			return size;
+			boolean ready = false;
+			try {
+				ready = reader.ready();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return ready ? 1 : 0;
+		}
+
+		@Override
+		public String read() {
+			String s = null;
+			try {
+				if (reader.ready())
+					s = reader.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return s;
 		}
 	}
 
