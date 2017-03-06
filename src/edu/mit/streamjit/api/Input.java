@@ -188,34 +188,35 @@ public class Input<I> {
 	}
 
 	private static class ObjectBuffer extends AbstractReadOnlyBuffer {
-		Object next;
 		ObjectInputStream ois;
 
 		private ObjectBuffer(ObjectInputStream ois) {
 			this.ois = ois;
-			try {
-				this.next = ois.readObject();
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-			}
 		}
 
 		@Override
 		public int size() {
-			int size = next == null ? 0 : 1;
-			return size;
+			int size = 0;
+			try {
+				size = ois.available();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return size > 0 ? 1 : 0;
+
 		}
 
 		@Override
 		public Object read() {
-			Object cur = next;
-			try {
-				next = ois.readObject();
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-				next = null;
+			Object o = null;
+			if (size() > 0) {
+				try {
+					o = ois.readObject();
+				} catch (ClassNotFoundException | IOException e) {
+					e.printStackTrace();
+				}
 			}
-			return cur;
+			return o;
 		}
 	};
 
