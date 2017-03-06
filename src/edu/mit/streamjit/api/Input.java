@@ -164,8 +164,6 @@ public class Input<I> {
 	private static class ObjectFileInputFactory extends InputBufferFactory {
 
 		private final Path path;
-		FileInputStream fin;
-		ObjectInputStream ois;
 
 		private ObjectFileInputFactory(Path path) {
 			this.path = path;
@@ -173,37 +171,34 @@ public class Input<I> {
 
 		@Override
 		public Buffer createReadableBuffer(int readerMinSize) {
-			init();
-			return new ObjectBuffer(ois);
-		}
-
-		private void init() {
-			try {
-				fin = new FileInputStream(path.toString());
-				ois = new ObjectInputStream(fin);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			return new ObjectBuffer(path);
 		}
 	}
 
 	private static class ObjectBuffer extends AbstractReadOnlyBuffer {
 		ObjectInputStream ois;
+		FileInputStream fin;
 
-		private ObjectBuffer(ObjectInputStream ois) {
-			this.ois = ois;
+		private ObjectBuffer(Path path) {
+			try {
+				fin = new FileInputStream(path.toString());
+				ois = new ObjectInputStream(fin);
+			} catch (IOException e) {
+				fin = null;
+				ois = null;
+				e.printStackTrace();
+			}
 		}
 
 		@Override
 		public int size() {
 			int size = 0;
 			try {
-				size = ois.available();
+				size = fin.available();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			return size > 0 ? 1 : 0;
-
 		}
 
 		@Override
