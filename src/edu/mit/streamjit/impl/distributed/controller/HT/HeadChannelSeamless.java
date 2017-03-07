@@ -115,10 +115,10 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 				if (stopCalled == 4)
 					limittedSend();
 				if (stopCalled == 1)
-					duplicator.duplicate(duplicationCount);
+					duplicator.finalDuplication(duplicationCount);
 				else if (stopCalled == 2) {
 					reqState();
-					duplicator.duplicate(duplicationCount);
+					duplicator.finalDuplication(duplicationCount);
 				}
 				// if (stopCalled == 1 || stopCalled == 2)
 				new DrainerThread().start();
@@ -455,7 +455,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		void waitToStart();
 		void duplicationEnabled();
 		void prevDupCompleted();
-		void duplicate(int duplicationCount);
+		void finalDuplication(int duplicationCount);
 	}
 
 	private class Duplicator1 implements Duplicator {
@@ -476,7 +476,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 
 		@Override
-		public void duplicate(int duplicationCount) {
+		public void finalDuplication(int duplicationCount) {
 			flowControl(3);
 			duplicateOutputIndex = expectedOutput();
 			tbMerger.startMerge(duplicateOutputIndex, HeadChannelSeamless.this);
@@ -538,7 +538,7 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 
 		@Override
-		public void duplicate(int duplicationCount) {
+		public void finalDuplication(int duplicationCount) {
 			next.duplicator.prevDupCompleted();
 			System.out.println("Time between dup requested and dup started = "
 					+ asw.elapsed(TimeUnit.MILLISECONDS) + "ms.");
