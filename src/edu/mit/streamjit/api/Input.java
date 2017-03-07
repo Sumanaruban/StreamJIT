@@ -202,7 +202,7 @@ public class Input<I> {
 		}
 
 		@Override
-		public Object read() {
+		public synchronized Object read() {
 			Object o = null;
 			try {
 				if (fin.available() > 0)
