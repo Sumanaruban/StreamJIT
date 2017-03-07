@@ -17,6 +17,7 @@ import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionInfo;
 import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
+import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.impl.distributed.controller.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.controller.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.controller.HT.DuplicateDataHandler.DuplicateArrayContainer;
@@ -451,13 +452,34 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 	}
 
 	private interface Duplicator {
+		/**
+		 * This should be called at the beginning of an {@link AppInstance}'s
+		 * execution. Based on duplication policy, input data may be duplicated
+		 * between this and the previous {@link AppInstance}.
+		 */
 		void initialDuplication();
 		void waitToStart();
 		void duplicationEnabled();
 		void prevDupCompleted();
+		/**
+		 * This should be called at the end of an {@link AppInstance}'s
+		 * execution. Based on duplication policy, input data may be duplicated
+		 * between this and the next {@link AppInstance}.
+		 * 
+		 * @param duplicationCount
+		 */
 		void finalDuplication(int duplicationCount);
 	}
 
+	/**
+	 * Performs no initial duplication. During the final duplication, it
+	 * duplicates the data items between the current and the next
+	 * {@link AppInstance}. This duplicator will send the data to the next
+	 * {@link AppInstance}.
+	 * 
+	 * @author suman
+	 *
+	 */
 	private class Duplicator1 implements Duplicator {
 
 		@Override
@@ -501,6 +523,19 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 		}
 	}
 
+	/**
+	 * The current {@link AppInstance}'s duplicator and the next
+	 * {@link AppInstance}'s duplicator perform the duplication in parallel.
+	 * Whoever runs first (Leading duplicator) will read data from the input
+	 * stream, fill {@link DuplicateArrayContainer}, send the filled data to
+	 * it's {@link AppInstance} and leaves the data at the
+	 * {@link DuplicateArrayContainer} for the tailing duplicator to send.
+	 * Tailing duplicator reads the data from {@link DuplicateArrayContainer},
+	 * sends the data, and clears the container.
+	 * 
+	 * @author suman
+	 *
+	 */
 	private class Duplicator2 implements Duplicator {
 
 		final DuplicateDataHandler dupDataHandler;
@@ -539,7 +574,12 @@ public class HeadChannelSeamless implements BoundaryOutputChannel, Counter {
 
 		@Override
 		public void finalDuplication(int duplicationCount) {
-			next.duplicator.prevDupCompleted();
+			next.duplicator.prevDupCompleted(); // Allows the next duplicator to
+												// start duplication. The next
+												// will run
+												// #initialDuplication() while
+												// this is running
+												// finalDuplication().
 			System.out.println("Time between dup requested and dup started = "
 					+ asw.elapsed(TimeUnit.MILLISECONDS) + "ms.");
 			int rate = Math.max((int) (firingRate / 3), 1);
