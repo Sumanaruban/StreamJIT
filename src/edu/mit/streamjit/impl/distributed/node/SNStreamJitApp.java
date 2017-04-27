@@ -146,10 +146,7 @@ public class SNStreamJitApp {
 	private ClassLoader classLoader() {
 		String jarFilePath = (String) staticConfig
 				.getExtraData(GlobalConstants.JARFILE_PATH);
-
 		checkNotNull(jarFilePath);
-		jarFilePath = this.getClass().getProtectionDomain().getCodeSource()
-				.getLocation().getPath();
 		File jarFile = new java.io.File(jarFilePath);
 		if (!jarFile.exists()) {
 			System.out.println("Jar file not found....");

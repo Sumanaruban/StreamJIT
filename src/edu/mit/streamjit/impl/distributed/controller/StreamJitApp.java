@@ -131,7 +131,7 @@ public class StreamJitApp<I, O> {
 		this.topLevelClass = streamGraph.getClass().getName();
 		this.source = srcSink.first;
 		this.sink = srcSink.second;
-		this.jarFilePath = this.getClass().getProtectionDomain()
+		this.jarFilePath = streamGraph.getClass().getProtectionDomain()
 				.getCodeSource().getLocation().getPath();
 		this.constraints = getConstrains();
 		Utils.newApp(name);
