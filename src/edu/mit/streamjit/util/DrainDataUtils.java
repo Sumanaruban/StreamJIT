@@ -13,6 +13,11 @@ import java.io.ObjectOutputStream;
 import edu.mit.streamjit.impl.blob.Blob.Token;
 import edu.mit.streamjit.impl.blob.DrainData;
 
+/**
+ * @author Sumanaruban Rajadurai (Suman)
+ *
+ * @since 04 Sep, 2015
+ */
 public class DrainDataUtils {
 
 	/**
