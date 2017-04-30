@@ -9,6 +9,7 @@ import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewCon
 import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
+import edu.mit.streamjit.util.EventTimeLogger;
 import edu.mit.streamjit.util.Pair;
 
 /**

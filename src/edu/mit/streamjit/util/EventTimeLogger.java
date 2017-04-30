@@ -1,4 +1,4 @@
-package edu.mit.streamjit.tuner;
+package edu.mit.streamjit.util;
 
 import java.io.IOException;
 import java.io.OutputStream;

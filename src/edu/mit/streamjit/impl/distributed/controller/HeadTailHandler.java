@@ -23,8 +23,8 @@ import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannel;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailChannels;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * {@link StreamJitAppManager} refactored and its Head, Tail channel related

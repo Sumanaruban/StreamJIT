@@ -38,7 +38,7 @@ import edu.mit.streamjit.impl.distributed.common.Ipv4Validator;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * In StreamJit's jargon "Stream node" means a computing node that runs part or

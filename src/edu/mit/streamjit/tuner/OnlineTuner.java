@@ -19,6 +19,7 @@ import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewCon
 import edu.mit.streamjit.impl.distributed.controller.StreamJitApp;
 import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputGraphGenerator;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.EventTimeLogger;
 import edu.mit.streamjit.util.Pair;
 import edu.mit.streamjit.util.TimeLogProcessor;
 import edu.mit.streamjit.util.json.Jsonifiers;

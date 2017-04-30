@@ -60,9 +60,9 @@ import edu.mit.streamjit.impl.distributed.controller.ConfigurationManager.NewCon
 import edu.mit.streamjit.impl.distributed.controller.HT.ThroughputPrinter;
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.interp.Interpreter;
-import edu.mit.streamjit.tuner.EventTimeLogger;
-import edu.mit.streamjit.tuner.EventTimeLogger.FileEventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 import edu.mit.streamjit.util.Pair;
+import edu.mit.streamjit.util.EventTimeLogger.FileEventTimeLogger;
 
 /**
  * This class contains all static information about the current StreamJit

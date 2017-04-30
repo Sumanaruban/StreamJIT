@@ -3,8 +3,8 @@ package edu.mit.streamjit.impl.distributed.controller;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.Reconfigurer;
-import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * Performs Pause and Resume reconfiguration.

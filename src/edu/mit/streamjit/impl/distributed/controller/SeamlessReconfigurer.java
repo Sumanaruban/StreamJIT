@@ -17,8 +17,8 @@ import edu.mit.streamjit.impl.distributed.controller.HT.HeadChannelSeamless;
 import edu.mit.streamjit.impl.distributed.controller.HT.StaticTailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger;
 import edu.mit.streamjit.impl.distributed.controller.HT.TailBufferMerger.BufferProvider;
-import edu.mit.streamjit.tuner.EventTimeLogger;
 import edu.mit.streamjit.util.ConfigurationUtils;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * TODO: This class could be improved in object oriented design aspect.

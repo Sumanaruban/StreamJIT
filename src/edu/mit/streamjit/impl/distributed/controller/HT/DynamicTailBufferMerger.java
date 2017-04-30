@@ -12,7 +12,7 @@ import edu.mit.streamjit.impl.blob.Buffer;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.CTRLRDrainElement;
 import edu.mit.streamjit.impl.distributed.common.Options;
-import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * {@link TailBufferMerger} that performs dynamic switching. That is, skips to

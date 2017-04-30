@@ -18,7 +18,7 @@ import edu.mit.streamjit.impl.distributed.common.Connection.ConnectionProvider;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.DistributedStreamCompiler;
 import edu.mit.streamjit.impl.distributed.node.BlockingInputChannel;
-import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 public class TailChannels {
 

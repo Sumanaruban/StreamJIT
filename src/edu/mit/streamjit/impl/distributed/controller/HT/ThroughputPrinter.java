@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import edu.mit.streamjit.impl.common.Counter;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.common.Utils;
-import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * Periodically prints the number of outputs received by a {@link Counter}.

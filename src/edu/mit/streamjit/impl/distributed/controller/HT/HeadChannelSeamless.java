@@ -21,7 +21,7 @@ import edu.mit.streamjit.impl.distributed.controller.AppInstance;
 import edu.mit.streamjit.impl.distributed.controller.AppInstanceManager;
 import edu.mit.streamjit.impl.distributed.controller.BufferSizeCalc.GraphSchedule;
 import edu.mit.streamjit.impl.distributed.controller.HT.DuplicateDataHandler.DuplicateArrayContainer;
-import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * 

@@ -51,11 +51,11 @@ import edu.mit.streamjit.impl.distributed.controller.BufferSizeCalc.GraphSchedul
 import edu.mit.streamjit.impl.distributed.node.StreamNode;
 import edu.mit.streamjit.impl.distributed.profiler.SNProfileElement;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.tuner.EventTimeLogger;
-import edu.mit.streamjit.tuner.EventTimeLogger.PrefixedEventTimeLogger;
 import edu.mit.streamjit.util.CollectionUtils;
 import edu.mit.streamjit.util.ConfigurationUtils;
 import edu.mit.streamjit.util.DrainDataUtils;
+import edu.mit.streamjit.util.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger.PrefixedEventTimeLogger;
 
 /**
  * This class is responsible to manage an {@link AppInstance} including

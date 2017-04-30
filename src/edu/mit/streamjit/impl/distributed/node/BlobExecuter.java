@@ -25,8 +25,8 @@ import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.InputCha
 import edu.mit.streamjit.impl.distributed.common.BoundaryChannelManager.OutputChannelManager;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
-import edu.mit.streamjit.tuner.EventTimeLogger;
-import edu.mit.streamjit.tuner.EventTimeLogger.PrefixedEventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger.PrefixedEventTimeLogger;
 import edu.mit.streamjit.util.affinity.Affinity;
 
 /**

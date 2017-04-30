@@ -31,7 +31,7 @@ import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager;
 import edu.mit.streamjit.impl.distributed.controller.StreamJitAppManager.AppDrainer;
 import edu.mit.streamjit.impl.distributed.node.AsyncOutputChannel;
 import edu.mit.streamjit.impl.distributed.node.BlockingOutputChannel;
-import edu.mit.streamjit.tuner.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger;
 
 /**
  * Head Channel is just a wrapper to TCPOutputChannel that skips
