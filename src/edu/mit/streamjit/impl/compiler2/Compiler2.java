@@ -194,6 +194,7 @@ public class Compiler2 {
 	private final List<ReadInstruction> readInstructions = new ArrayList<>();
 	private final List<WriteInstruction> writeInstructions = new ArrayList<>();
 	private final List<DrainInstruction> drainInstructions = new ArrayList<>();
+
 	public Compiler2(Set<Worker<?, ?>> workers, Configuration config, int maxNumCores, DrainData initialState, Input<?> input, Output<?> output) {
 		this.workers = ImmutableSet.copyOf(workers);
 		Map<Class<?>, ActorArchetype> archetypesBuilder = new HashMap<>();
@@ -221,26 +222,7 @@ public class Compiler2 {
 		this.config = config;
 		this.maxNumCores = maxNumCores;
 		this.initialState = initialState;
-		ImmutableMap.Builder<Token, ImmutableList<Object>> initialStateDataMapBuilder = ImmutableMap.builder();
-		if (initialState != null) {
-			for (Table.Cell<Actor, Actor, Storage> cell : storageTable.cellSet()) {
-				Token tok;
-				if (cell.getRowKey() instanceof TokenActor)
-					tok = ((TokenActor)cell.getRowKey()).token();
-				else if (cell.getColumnKey() instanceof TokenActor)
-					tok = ((TokenActor)cell.getColumnKey()).token();
-				else
-					tok = new Token(((WorkerActor)cell.getRowKey()).worker(),
-							((WorkerActor)cell.getColumnKey()).worker());
-				ImmutableList<Object> data = initialState.getData(tok);
-				if (data != null && !data.isEmpty()) {
-					initialStateDataMapBuilder.put(tok, data);
-					cell.getValue().initialData().add(Pair.make(data, IndexFunction.identity()));
-					drainDataStorages.put(tok, cell.getValue());
-				}
-			}
-		}
-		this.initialStateDataMap = initialStateDataMapBuilder.build();
+		this.initialStateDataMap = initialState(initialState, storageTable);
 		this.overallInput = input;
 		this.overallOutput = output;
 	}
@@ -270,6 +252,34 @@ public class Compiler2 {
 			dataBuilder.put(en.getKey(), ImmutableList.copyOf(bufArray));
 		}
 		return new DrainData(dataBuilder.build(), ImmutableTable.of());
+	}
+
+	private ImmutableMap<Token, ImmutableList<Object>> initialState(
+			DrainData initialState,
+			Table<Actor, Actor, Storage> storageTable) {
+		ImmutableMap.Builder<Token, ImmutableList<Object>> initialStateDataMapBuilder = ImmutableMap
+				.builder();
+		if (initialState != null) {
+			for (Table.Cell<Actor, Actor, Storage> cell : storageTable
+					.cellSet()) {
+				Token tok;
+				if (cell.getRowKey() instanceof TokenActor)
+					tok = ((TokenActor) cell.getRowKey()).token();
+				else if (cell.getColumnKey() instanceof TokenActor)
+					tok = ((TokenActor) cell.getColumnKey()).token();
+				else
+					tok = new Token(((WorkerActor) cell.getRowKey()).worker(),
+							((WorkerActor) cell.getColumnKey()).worker());
+				ImmutableList<Object> data = initialState.getData(tok);
+				if (data != null && !data.isEmpty()) {
+					initialStateDataMapBuilder.put(tok, data);
+					cell.getValue().initialData()
+							.add(Pair.make(data, IndexFunction.identity()));
+					drainDataStorages.put(tok, cell.getValue());
+				}
+			}
+		}
+		return initialStateDataMapBuilder.build();
 	}
 
 	public Blob compile() {
