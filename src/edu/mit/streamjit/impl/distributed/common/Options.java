@@ -101,6 +101,13 @@ public final class Options {
 	public static final int run;
 
 	/**
+	 * Reduce Search Space (rss). Currently, search space becomes huge. Nearly
+	 * 10^12000 possible configurations, which is insanely huge and OpenTuner
+	 * cannot handle it effectively.
+	 */
+	public static final boolean rss = true;
+
+	/**
 	 * Decides how to start the opentuner. In first 2 cases, controller starts
 	 * opentuner and establishes connection with it on a random port no range
 	 * from 5000-65536. User can provide port no in 3 case.

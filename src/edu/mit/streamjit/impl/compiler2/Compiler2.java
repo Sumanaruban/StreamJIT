@@ -115,15 +115,16 @@ public class Compiler2 {
 //			new ArrayifyIndexFunctionTransformer(false),
 //			new ArrayifyIndexFunctionTransformer(true)
 	);
-	public static final RemovalStrategy REMOVAL_STRATEGY = new BitsetRemovalStrategy();
+	public static final RemovalStrategy REMOVAL_STRATEGY = Options.rss? new AlwaysStrategy(): new BitsetRemovalStrategy();
 	public static final FusionStrategy FUSION_STRATEGY = new BitsetFusionStrategy();
-	public static final UnboxingStrategy UNBOXING_STRATEGY = new BitsetUnboxingStrategy();
+	public static final UnboxingStrategy UNBOXING_STRATEGY = Options.rss? new AlwaysStrategy() :new BitsetUnboxingStrategy();
 	public static final AllocationStrategy ALLOCATION_STRATEGY = new SubsetBiasAllocationStrategy(Options.maxNumCores);
-	public static final StorageStrategy INTERNAL_STORAGE_STRATEGY = new TuneInternalStorageStrategy();
+	public static final StorageStrategy INTERNAL_STORAGE_STRATEGY = Options.rss? new StandardInternalStorageStrategy() :new TuneInternalStorageStrategy();
 	//TODO: TuneExternalStorageStrategy has some indexing bug. Fix it and use it. Temporarily, we are using
 	// StandardExternalStorageStrategy.
 	public static final StorageStrategy EXTERNAL_STORAGE_STRATEGY = new StandardExternalStorageStrategy();
-	public static final SwitchingStrategy SWITCHING_STRATEGY = SwitchingStrategy.tunePerWorker();
+	public static final SwitchingStrategy SWITCHING_STRATEGY = Options.rss? SwitchingStrategy.lookupswitch() :SwitchingStrategy.tunePerWorker();
+
 	private static final AtomicInteger PACKAGE_NUMBER = new AtomicInteger();
 	private final ImmutableSet<Worker<?, ?>> workers;
 	private final ImmutableSet<ActorArchetype> archetypes;
