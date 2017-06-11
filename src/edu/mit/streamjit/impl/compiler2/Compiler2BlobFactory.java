@@ -63,22 +63,23 @@ public final class Compiler2BlobFactory implements BlobFactory {
 		Compiler2.INTERNAL_STORAGE_STRATEGY.makeParameters(workers, builder);
 		Compiler2.EXTERNAL_STORAGE_STRATEGY.makeParameters(workers, builder);
 		Compiler2.SWITCHING_STRATEGY.makeParameters(workers, builder);
-		for (Worker<?, ?> w : workers)
-			for (int i = 0; i < Compiler2.ALLOCATION_STRATEGY.maxNumCores(); ++i) {
-				int id = Workers.getIdentifier(w);
-//				List<String> names = new ArrayList<>();
-//				for (int j = 0; j < w.getPopRates().size(); ++j)
-//					names.add(String.format("Core%dWorker%dInput%dIndexFxnTransformer", i, id, j));
-//				for (int j = 0; j < w.getPushRates().size(); ++j)
-//					names.add(String.format("Core%dWorker%dOutput%dIndexFxnTransformer", i, id, j));
-//				for (String name : names)
-//					builder.addParameter(new Configuration.SwitchParameter<>(name, IndexFunctionTransformer.class,
+		if(!Options.rss){
+			for (Worker<?, ?> w : workers)
+				for (int i = 0; i < Compiler2.ALLOCATION_STRATEGY.maxNumCores(); ++i) {
+					int id = Workers.getIdentifier(w);
+//					List<String> names = new ArrayList<>();
+//					for (int j = 0; j < w.getPopRates().size(); ++j)
+//						names.add(String.format("Core%dWorker%dInput%dIndexFxnTransformer", i, id, j));
+//					for (int j = 0; j < w.getPushRates().size(); ++j)
+//						names.add(String.format("Core%dWorker%dOutput%dIndexFxnTransformer", i, id, j));
+//					for (String name : names)
+//						builder.addParameter(new Configuration.SwitchParameter<>(name, IndexFunctionTransformer.class,
 //							Compiler2.INDEX_FUNCTION_TRANSFORMERS.asList().get(0),
 //							Compiler2.INDEX_FUNCTION_TRANSFORMERS));
-
-				builder.addParameter(new Configuration.IntParameter(String.format("UnrollCore%dGroup%d", i, id),
-						1, 1024, 1));
-			}
+					builder.addParameter(new Configuration.IntParameter(String.format("UnrollCore%dGroup%d", i, id),
+							1, 1024, 1));
+				}
+		}
 		builder.addParameter(Configuration.SwitchParameter.create("UsePeekableBuffer", true));
 		//Init scheduling trades off between firings during the init schedule
 		//and resulting extra buffering.  My ILP solver interface only supports

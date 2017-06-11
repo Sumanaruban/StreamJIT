@@ -1070,8 +1070,12 @@ public class Compiler2 {
 			ImmutableMap.Builder<ActorGroup, Integer> unrollFactors = ImmutableMap.builder();
 			for (ActorGroup g : groups) {
 				if (g.isTokenGroup()) continue;
-				IntParameter param = config.getParameter(String.format("UnrollCore%dGroup%d", i, g.id()), IntParameter.class);
-				unrollFactors.put(g, param.getValue());
+				int unrollFactor = 1;
+				if(!Options.rss){
+					IntParameter param = config.getParameter(String.format("UnrollCore%dGroup%d", i, g.id()), IntParameter.class);
+					unrollFactor = param.getValue();
+				}
+				unrollFactors.put(g, unrollFactor);
 			}
 
 			ssCores.add(new Core(CollectionUtils.union(steadyStateStorage, internalStorage), (table, wa) -> SWITCHING_STRATEGY.createSwitch(table, wa, config), unrollFactors.build(), inputTransformers.build(), outputTransformers.build()));
