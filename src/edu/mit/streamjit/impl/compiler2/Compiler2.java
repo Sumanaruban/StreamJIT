@@ -118,7 +118,9 @@ public class Compiler2 {
 	public static final RemovalStrategy REMOVAL_STRATEGY = Options.rss? new AlwaysStrategy(): new BitsetRemovalStrategy();
 	public static final FusionStrategy FUSION_STRATEGY = new BitsetFusionStrategy();
 	public static final UnboxingStrategy UNBOXING_STRATEGY = Options.rss? new AlwaysStrategy() :new BitsetUnboxingStrategy();
-	public static final AllocationStrategy ALLOCATION_STRATEGY = new SubsetBiasAllocationStrategy(Options.maxNumCores);
+	public static final AllocationStrategy ALLOCATION_STRATEGY = Options.rss
+			? new FullDataParallelAllocationStrategy(Options.maxNumCores)
+			: new SubsetBiasAllocationStrategy(Options.maxNumCores);
 	public static final StorageStrategy INTERNAL_STORAGE_STRATEGY = Options.rss? new StandardInternalStorageStrategy() :new TuneInternalStorageStrategy();
 	//TODO: TuneExternalStorageStrategy has some indexing bug. Fix it and use it. Temporarily, we are using
 	// StandardExternalStorageStrategy.
