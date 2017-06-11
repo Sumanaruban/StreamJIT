@@ -37,6 +37,7 @@ import edu.mit.streamjit.impl.compiler2.Compiler2BlobFactory;
 import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.controller.ConnectionManager.BlockingTCPNoParams;
 import edu.mit.streamjit.impl.interp.Interpreter.InterpreterBlobFactory;
+import edu.mit.streamjit.util.ConfigurationUtils;
 
 /**
  * This BlobFactory is not for any specific blob implementation. Internally, it
@@ -109,7 +110,10 @@ public class DistributedBlobFactory implements BlobFactory {
 
 		connectionManager.addConnectionParameters(builder, workers);
 		// addMaxCoreParam(builder);
-		return builder.build();
+		Configuration cfg = builder.build();
+		if (Options.debug)
+			ConfigurationUtils.printSearchSpaceSize(cfg);
+		return cfg;
 	}
 
 	private void addMaxCoreParam(Configuration.Builder builder) {
