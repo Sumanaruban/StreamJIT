@@ -50,7 +50,7 @@ public class HorizontalPartitioner<I, O> extends AbstractPartitioner<I, O> {
 	 */
 	private Map<Integer, Set<Worker<?, ?>>> levelMap;
 
-	public List<Set<Worker<?, ?>>> PatririonEquallyImplementation(
+	public List<Set<Worker<?, ?>>> patririonEquallyImpl(
 			OneToOneElement<I, O> streamGraph, Worker<I, ?> source,
 			Worker<?, O> sink, int noOfPartitions) {
 

@@ -52,7 +52,7 @@ public abstract class AbstractPartitioner<I, O> implements Partitioner<I, O> {
 	 */
 	protected int graphDepth;
 
-	protected abstract List<Set<Worker<?, ?>>> PatririonEquallyImplementation(
+	protected abstract List<Set<Worker<?, ?>>> patririonEquallyImpl(
 			OneToOneElement<I, O> streamGraph, Worker<I, ?> source,
 			Worker<?, O> sink, int noOfPartitions);
 
@@ -67,7 +67,7 @@ public abstract class AbstractPartitioner<I, O> implements Partitioner<I, O> {
 			Worker<?, O> sink, int noOfPartitions) {
 		preProcessStreamGraph(streamGraph, source, sink);
 		assert graphDepth >= noOfPartitions : "Stream graph's depth is smaller than the number of partitions";
-		List<Set<Worker<?, ?>>> partitioinList = PatririonEquallyImplementation(
+		List<Set<Worker<?, ?>>> partitioinList = patririonEquallyImpl(
 				streamGraph, source, sink, noOfPartitions);
 		verifyPartition(partitioinList);
 		return partitioinList;
