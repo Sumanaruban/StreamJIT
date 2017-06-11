@@ -108,6 +108,11 @@ public final class Options {
 	public static final boolean rss = true;
 
 	/**
+	 * In this mode, StreamJIT will printout debug messages.
+	 */
+	public static final boolean debug = true;
+
+	/**
 	 * Decides how to start the opentuner. In first 2 cases, controller starts
 	 * opentuner and establishes connection with it on a random port no range
 	 * from 5000-65536. User can provide port no in 3 case.
