@@ -201,6 +201,7 @@ public class ConfigurationUtils {
 			}
 
 			else if (p.getClass() == Configuration.FloatParameter.class) {
+				floatparam++;
 				FloatParameter i = (FloatParameter) p;
 				sssize += Math.log10((i.getMax() - i.getMin()) * 1000);
 			} else
