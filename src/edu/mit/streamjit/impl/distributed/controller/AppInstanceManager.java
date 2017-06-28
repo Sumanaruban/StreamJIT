@@ -136,7 +136,10 @@ public class AppInstanceManager {
 		headTailHandler.waitToStopHead();
 		headTailHandler.stopTail(isFinal);
 		headTailHandler.waitToStopTail();
-		conInfoMap = null;
+		// conInfoMap = null; Bug fix. We shouldn't use prevAIM's connections to
+		// the currentAIM. At the SN side, multiple threads (prevAIM's and
+		// curAIM's threads) may try to access the same connection, which will
+		// throw IO exception and ultimately crashes the connection.
 		appManager.drainingFinished(isFinal, this);
 
 		long time = eLogger.eEvent("draining");
