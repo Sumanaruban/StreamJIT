@@ -218,6 +218,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 		} catch (IOException e) {
 			// TODO: Verify the program quality. Try to reconnect until it
 			// is told to stop.
+			e.printStackTrace();
 			try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e1) {
@@ -344,6 +345,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				System.out
 						.println(name
 								+ " discardAll:Closing by IOException. Not by softClose.");
+				e.printStackTrace();
 				hasData = false;
 			}
 		} while (hasData);
@@ -357,6 +359,7 @@ public class BlockingInputChannel implements BoundaryInputChannel {
 				connection = conProvider.getConnection(conInfo);
 				return;
 			} catch (IOException e) {
+				e.printStackTrace();
 				try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e1) {
