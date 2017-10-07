@@ -216,7 +216,7 @@ public class Verifier implements Runnable {
 	}
 
 	private void logEnding(long time, String cfgPrefix) {
-		configurer.app.logger.newConfiguration(cfgPrefix);
+		configurer.app.logger.logRunTime(time);
 		configurer.prognosticator.time(time);
 		configurer.mLogger.eTuningRound(cfgPrefix);
 	}
