@@ -22,7 +22,10 @@
 package edu.mit.streamjit.impl.distributed.node;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -422,7 +425,28 @@ public class BlobsManagerImpl implements BlobsManager {
 		public void processSTART() {
 			start();
 			System.out.println("StraemJit app is running...");
-			Utils.printMemoryStatus();
+			logMemoryStatus();
+		}
+
+		public void logMemoryStatus() {
+			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+			Calendar cal = Calendar.getInstance();
+			long heapMaxSize = Runtime.getRuntime().maxMemory();
+			long heapSize = Runtime.getRuntime().totalMemory();
+			long heapFreeSize = Runtime.getRuntime().freeMemory();
+			int MEGABYTE = 1024 * 1024;
+			streamNode.eventTimeLogger.log(dateFormat.format(cal.getTime())
+					+ "\n");
+			streamNode.eventTimeLogger.log(String.format(
+					"heapMaxSize = %dMB\n",
+					heapMaxSize
+							/ MEGABYTE));
+			streamNode.eventTimeLogger.log(String
+					.format("heapSize = %dMB\n", heapSize / MEGABYTE));
+			streamNode.eventTimeLogger.log(String.format(
+					"heapFreeSize = %dMB\n",
+					heapFreeSize
+							/ MEGABYTE));
 		}
 
 		@Override

@@ -13,31 +13,26 @@ import edu.mit.streamjit.impl.distributed.common.Utils;
 public class HeapSummarizer {
 
 	public static void main(String[] args) throws IOException {
-		summarizeHeap("FMRadioCore");
+		summarizeHeap("FMRadioCore", "", 0);
 	}
 
-	public static void summarizeHeap(String appName) throws IOException {
+	public static void summarizeHeap(String appName, String fileName, int nodeID)
+			throws IOException {
 		File summaryDir = new File(String.format("%s%ssummary", appName,
 				File.separator));
 		Utils.createDir(summaryDir.getPath());
-		File f1 = writeHeapStat(
-				String.format("%s%sslurm-662553.out", appName, File.separator),
-				summaryDir);
-		File f2 = writeHeapStat(
-				String.format("%s%sslurm-662554.out", appName, File.separator),
-				summaryDir);
-		File f = makeHeapPlotFile(summaryDir, appName, f1.getName(),
-				f2.getName());
+		File f1 = writeHeapStat(fileName,
+				summaryDir, nodeID);
+		File f = makeHeapPlotFile(summaryDir, f1.getName(), nodeID);
 		TimeLogProcessor.plot(summaryDir, f);
 	}
 
-	private static File writeHeapStat(String fileName, File outDir)
+	private static File writeHeapStat(String fileName, File outDir, int nodeID)
 			throws IOException {
 		List<Integer> heapSize = processSNHeap(fileName, "heapSize");
 		List<Integer> heapMaxSize = processSNHeap(fileName, "heapMaxSize");
 		List<Integer> heapFreeSize = processSNHeap(fileName, "heapFreeSize");
-		File f = new File(fileName);
-		String outFileName = String.format("%s_heapStatus.txt", f.getName());
+		String outFileName = String.format("node%d_heapStatus.txt", nodeID);
 		File outFile = new File(outDir, outFileName);
 		FileWriter writer = new FileWriter(outFile, false);
 		for (int i = 0; i < heapSize.size(); i++) {
@@ -72,21 +67,26 @@ public class HeapSummarizer {
 		return ret;
 	}
 
-	private static File makeHeapPlotFile(File dir, String name,
-			String dataFile1, String dataFile2) throws IOException {
+	private static File makeHeapPlotFile(File dir,
+			String dataFile1, int nodeID) throws IOException {
 		boolean pdf = true;
-		File plotfile = new File(dir, "heapplot.plt");
+		String basename = String.format("node%d", nodeID);
+		String plotFileName = String.format("%s_heapplot.plt", basename);
+		File plotfile = new File(dir, plotFileName);
 		FileWriter writer = new FileWriter(plotfile, false);
+
 		if (pdf) {
 			writer.write("set terminal pdf enhanced color\n");
-			writer.write(String.format("set output \"%sHeap.pdf\"\n", name));
+			writer.write(String
+					.format("set output \"%s_Heap.pdf\"\n", basename));
 		} else {
 			writer.write("set terminal postscript eps enhanced color\n");
-			writer.write(String.format("set output \"%sHeap.eps\"\n", name));
+			writer.write(String
+					.format("set output \"%s_Heap.eps\"\n", basename));
 		}
 		writer.write("set ylabel \"Memory(MB)\"\n");
 		writer.write("set xlabel \"Tuning Rounds\"\n");
-		writer.write(String.format("set title \"%sHeap\"\n", name));
+		writer.write(String.format("set title \"%s Heap\"\n", basename));
 		writer.write("set grid\n");
 		writer.write("#set yrange [0:*]\n");
 
@@ -95,14 +95,7 @@ public class HeapSummarizer {
 						+ "\"%s\" using 1:3 with linespoints title \"Heap Size\","
 						+ "\"%s\" using 1:4 with linespoints title \"Heap Max Size\" \n",
 						dataFile1, dataFile1, dataFile1));
-		writer.write(String
-				.format("plot \"%s\" using 1:2 with linespoints title \"Heap Free Size\","
-						+ "\"%s\" using 1:3 with linespoints title \"Heap Size\","
-						+ "\"%s\" using 1:4 with linespoints title \"Heap Max Size\" \n",
-						dataFile2, dataFile2, dataFile2));
-
 		writer.close();
 		return plotfile;
 	}
-
 }

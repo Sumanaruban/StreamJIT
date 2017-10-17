@@ -235,6 +235,9 @@ public interface EventTimeLogger {
 	 * 
 	 */
 	public static class FileEventTimeLogger extends EventTimeLoggerImpl {
+
+		private String fullFileName;
+
 		/**
 		 * @param appName
 		 * @param fileNameSuffix
@@ -253,6 +256,13 @@ public interface EventTimeLogger {
 			super(Utils.fileWriter(appName,
 					String.format("eventTime_%s.txt", fileNameSuffix)),
 					needSynchronized, reportInSeconds);
+			this.fullFileName = String.format("%s%seventTime_%s.txt", appName,
+					java.io.File.separator, fileNameSuffix);
+		}
+
+		public String getfullFileName()
+		{
+			return fullFileName;
 		}
 	}
 

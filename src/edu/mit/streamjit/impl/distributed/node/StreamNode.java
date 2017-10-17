@@ -30,7 +30,6 @@ import java.util.Map;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageElement.CTRLRMessageElementHolder;
 import edu.mit.streamjit.impl.distributed.common.CTRLRMessageVisitor;
 import edu.mit.streamjit.impl.distributed.common.Command;
-import edu.mit.streamjit.impl.distributed.common.ConfigurationString.ConfigurationProcessor;
 import edu.mit.streamjit.impl.distributed.common.Connection;
 import edu.mit.streamjit.impl.distributed.common.ConnectionFactory;
 import edu.mit.streamjit.impl.distributed.common.GlobalConstants;
@@ -39,6 +38,8 @@ import edu.mit.streamjit.impl.distributed.common.Options;
 import edu.mit.streamjit.impl.distributed.profiler.Profiler;
 import edu.mit.streamjit.impl.distributed.runtimer.Controller;
 import edu.mit.streamjit.util.EventTimeLogger;
+import edu.mit.streamjit.util.EventTimeLogger.FileEventTimeLogger;
+import edu.mit.streamjit.util.HeapSummarizer;
 
 /**
  * In StreamJit's jargon "Stream node" means a computing node that runs part or
@@ -70,7 +71,7 @@ public class StreamNode extends Thread {
 	 */
 	private Map<Integer, CTRLRMessageVisitorImpl> messageVisitors;
 
-	public final ConfigurationProcessor jp;
+	public final ConfigurationProcessorImpl jp;
 
 	public EventTimeLogger eventTimeLogger;
 
@@ -208,6 +209,18 @@ public class StreamNode extends Thread {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+
+		if (eventTimeLogger != null
+				&& eventTimeLogger instanceof FileEventTimeLogger) {
+			String fileName = ((FileEventTimeLogger) eventTimeLogger)
+					.getfullFileName();
+			try {
+				HeapSummarizer
+						.summarizeHeap(jp.app.appName, fileName, myNodeID);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**

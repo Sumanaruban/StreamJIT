@@ -36,7 +36,7 @@ public class ConfigurationProcessorImpl implements ConfigurationProcessor {
 
 	private StreamNode streamNode;
 
-	private SNStreamJitApp app;
+	SNStreamJitApp app;
 
 	private BlobCreator blobCreator;
 
