@@ -52,6 +52,7 @@ class PauseResumeReconfigurer implements Reconfigurer {
 
 		if (isCompiled) {
 			start(aim);
+			appinst.app.tp.tpStatistics.cfgStarted(aim.appInstId());
 			event("S-" + aim.appInstId());
 		} else {
 			aim.drainingFinished(false);

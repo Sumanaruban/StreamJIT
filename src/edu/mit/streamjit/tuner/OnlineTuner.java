@@ -78,7 +78,9 @@ public class OnlineTuner implements Runnable {
 
 			System.out.println("New tune run.............");
 			while (configurer.manager.getStatus() != AppStatus.STOPPED) {
-				mLogger.bTuningRound(new Integer(++round).toString());
+				String r = new Integer(++round).toString();
+				mLogger.bTuningRound(r);
+				configurer.app.logger.newConfiguration(r);
 				mLogger.bEvent("serialcfg");
 				NewConfiguration newconfig = listener.nextConfig();
 				logger.logSearchTime(searchTimeSW
