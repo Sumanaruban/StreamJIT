@@ -16,7 +16,7 @@ function createCTRLRSh(){
 	if [ "$res" -eq "1" ];then
 		echo "mkdir -p $2" >> $runfile
 		echo "cd $2" >> $runfile
-		echo "srun python ../lib/opentuner/streamjit/streamjit2.py 12563 &" >> $runfile
+		echo "srun python ../autotuner/streamjit2.py 12563 &" >> $runfile
 		echo "cd .." >> $runfile
 	fi
 	echo "srun -l ../bin/java/jdk1.8.0_31/bin/java -Xmx120G -XX:InitialCodeCacheSize=1G -XX:ReservedCodeCacheSize=2G -jar $1.jar $3" >> $runfile
@@ -38,7 +38,7 @@ function createSNSh(){
 function creatdirs(){
 	mkdir -p $1
 	ln -s /data/scratch/sumanan/data $1/data
-	ln -s /data/scratch/sumanan/lib $1/lib
+	ln -s /data/scratch/sumanan/autotuner $1/autotuner
 	cd $1
 }
 
@@ -51,7 +51,7 @@ set_prop(){
 }
 
 function copyOTScripts(){
-        parent="/data/scratch/sumanan/lib/opentuner"
+        parent="/data/scratch/sumanan/autotuner"
         dir="Adjbuf"
         if [ "$1" = "seam" ]; then
                 dir="Seamless"

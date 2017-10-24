@@ -4,7 +4,7 @@ Run the edu.mit.streamjit.tuner.ConfigGenerator.java to generate configuration i
 
 Build the edu.mit.streamjit.tuner.RunApp.java and export it as runnable jar in to stramjit folder.
 
-Run lib/opentuner/streamjit/tuner2.py.
+Run ./autotuner/tuner2.py.
 
 Notes - tuner2.py reads streamjit.db and tunes all entries in the apps table sequentially. If you are only interested in a single app then you can comment everything inside the __main__ block and just call the start(PROGRAM_NAME).
 

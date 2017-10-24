@@ -107,8 +107,7 @@ public class ConfigGenerator {
 				confString, jarFilePath, className));
 
 		String tunerPath = String.format(
-				"lib%sopentuner%sstreamjit%stuner2.py", File.separator,
-				File.separator, File.separator);
+				"autotuner%stuner2.py", File.separator);
 
 		// new ProcessBuilder("xterm", "-e", "python", tunerPath).start();
 	}
