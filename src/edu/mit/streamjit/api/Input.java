@@ -36,6 +36,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.RandomAccess;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Primitives;
@@ -406,5 +408,47 @@ public class Input<I> {
 			}
 		}
 		return new Input<>(new TextFileInput(path));
+	}
+
+	/**
+	 * Creates an Input containing the elements in the given Iterator.
+	 * <p/>
+	 * Only size elements will be returned, even if the iterator has more
+	 * elements. (If the iterator has fewer elements, a NoSuchElementException
+	 * will be thrown in the stream.)
+	 * <p/>
+	 * The returned Input does not remove elements from the iterator as they are
+	 * consumed.
+	 * <p/>
+	 * Because iterators cannot be reset, the returned Input can only be used
+	 * once.
+	 * @param <I> the type of Input to create
+	 * @param iterator the iterator
+	 * @param size the number of elements in the given iterator
+	 * @return an Input containing the elements in the given iterator
+	 */
+	public static <I> Input<I> fromQueue(final BlockingQueue<? extends I> queue) {
+		return new Input<>(new InputBufferFactory() {
+			@Override
+			public Buffer createReadableBuffer(int readerMinSize) {
+				return new AbstractReadOnlyBuffer() {
+					@Override
+					public Object read() {
+						I val = null;
+						try {
+							val = queue.poll(10, TimeUnit.SECONDS);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						return val;
+					}
+					@Override
+					public int size() {
+						// return queue.size();
+						return Integer.MAX_VALUE;
+					}
+				};
+			}
+		});
 	}
 }
