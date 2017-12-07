@@ -93,7 +93,6 @@ public class StateSizeVsReconfig2 {
 		}
 
 		private void initList(int length) {
-			System.out.println("*****initList******");
 			data = new ArrayList<>(length);
 			for (int i = 0; i < length; i++) {
 				data.add(56.56);
