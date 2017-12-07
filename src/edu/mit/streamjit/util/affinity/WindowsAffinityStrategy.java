@@ -40,7 +40,7 @@ final class WindowsAffinityStrategy implements AffinityStrategy {
 		Pointer<Long> tbi = null;
 		try {
 			tbi = Pointer.allocateLongs(ntdll.QUADWORD_SIZEOF_THREAD_BASIC_INFORMATION);
-			int ret = ntdll.NtQueryInformationThread(kernel32.GetCurrentThread(), ntdll.THREAD_BASIC_INFORMATION_CLASS, tbi, tbi.getValidBytes(), Pointer.NULL);
+			int ret = ntdll.NtQueryInformationThread(kernel32.GetCurrentThread(), ntdll.THREAD_BASIC_INFORMATION_CLASS, tbi, tbi.getValidBytes(), (Pointer<Long>) Pointer.NULL);
 			if (!ntdll.NT_SUCCESS(ret))
 				throw new RuntimeException(Integer.toHexString(ret));
 			return tbi.get(ntdll.AFFINITY_MASK_OFFSET_THREAD_BASIC_INFORMATION);
