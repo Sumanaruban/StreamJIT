@@ -1692,7 +1692,8 @@ public final class Compiler {
 				}
 			});
 			Configuration config = Configuration.builder().addParameter(new Configuration.SwitchParameter<>("channelFactory", ChannelFactory.class, universe.get(0), universe)).build();
-			Blob interp = new Interpreter.InterpreterBlobFactory().makeBlob(workers, config, 1, null /* TODO */);
+			DrainData dd = null;
+			Blob interp = new Interpreter.InterpreterBlobFactory().makeBlob(workers, config, 1, dd /* TODO */);
 			interp.installBuffers(buffers);
 			Runnable interpCode = interp.getCoreCode(0);
 			final AtomicBoolean interpFinished = new AtomicBoolean();
@@ -1723,6 +1724,30 @@ public final class Compiler {
 				assert i == 0;
 				list.add(obj);
 			}
+		}
+
+		@Override
+		public int getMinimumSteadyBufferCapacity(Token token) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getMinimumInitBufferCapacity(Token token) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public void insertDrainData(DrainData initialState)
+				throws IllegalStateException {
+			// TODO Auto-generated method stub
+		}
+
+		@Override
+		public ExecutionStatistics getExecutionStatistics() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 
